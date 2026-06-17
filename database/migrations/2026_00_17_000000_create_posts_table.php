@@ -18,7 +18,7 @@ return new class extends Migration
             $table->integer('specialty_id')->nullable()->index();
             $table->enum('post_type', ['news', 'service', 'guide', 'announcement'])->default('news')->index();
             $table->integer('view_count')->default(0);
-            $table->foreignId('author_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('author_id')->constrained('users')->restrictOnDelete();
             $table->boolean('is_published')->default(false)->index();
             $table->timestamp('published_at')->nullable();
             $table->timestamps();

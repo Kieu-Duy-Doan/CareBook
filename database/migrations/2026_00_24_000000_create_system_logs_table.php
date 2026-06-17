@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('system_logs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('user_id')->nullable()->constrained('users')->restrictOnDelete();
             $table->string('action', 100);
             $table->string('module', 50)->nullable();
             $table->string('ref_type', 50)->nullable();
