@@ -158,5 +158,37 @@ class RoomController extends Controller
         return back()->with('success', 'Đã cập nhật trạng thái phòng.');
     }
 
-    
+    public function destroy($id)
+    {
+        $room = Room::findOrFail($id);
+
+        $hasActiveAppointments = \App\Models\Appointment::where('room_id', $room->id)
+            ->whereIn('status', ['pending', 'checked_in', 'examining'])
+            ->exists();
+
+        if ($hasActiveAppointments) {
+            return back()->with('error', 'Không thể xoá phòng đang có lịch hẹn chờ khám hoặc đang khám.');
+        }
+
+        $room->specialties()->detach();
+        $room->delete();
+
+        return back()->with('success', 'Đã xoá phòng thành công.');
+    }
+
+    public function show($id)
+    {
+        $room = Room::with([
+            'specialties',
+            'workSchedules.doctor.user'
+        ])->findOrFail($id);
+
+        $todayAppointments = $room->appointments()
+            ->with(['patientProfile', 'doctorProfile.user'])
+            ->whereDate('appointment_date', \Carbon\Carbon::today())
+            ->orderBy('appointment_time')
+            ->get();
+
+        return view('admin.rooms.show', compact('room', 'todayAppointments'));
+    }
 }
