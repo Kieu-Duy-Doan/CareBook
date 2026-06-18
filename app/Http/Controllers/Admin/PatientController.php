@@ -184,4 +184,119 @@ class PatientController extends Controller
             'patient', 'appointmentStats', 'recentAppointments', 'logs'
         ));
     }
+    public function edit($id)
+    {
+        $patient = User::with('patientProfiles')
+            ->where('role', 'patient')
+            ->findOrFail($id);
+
+        // Lấy hồ sơ bản thân (is_self=1) để edit
+        $selfProfile = $patient->patientProfiles->where('is_self', 1)->first();
+
+        return view('admin.patients.edit', compact('patient', 'selfProfile'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $patient = User::with('patientProfiles')
+            ->where('role', 'patient')
+            ->findOrFail($id);
+
+        $validated = $request->validate([
+            'full_name' => 'required|string|max:100',
+            'phone'     => ['required', 'string', 'max:15', "unique:users,phone,$id", 'regex:/^(0[35789])[0-9]{8}$/'],
+            'username'  => ['nullable', 'string', 'max:50', "unique:users,username,$id", 'regex:/^[a-zA-Z0-9_.]*$/'],
+            'id_card'   => ['required', 'string', "unique:users,id_card,$id", 'regex:/^([0-9]{9}|[0-9]{12})$/'],
+            'email'     => "nullable|email|max:150|unique:users,email,$id",
+            // Hồ sơ bản thân
+            'profile_full_name' => 'nullable|string|max:100',
+            'date_of_birth'     => 'required|date|before:today',
+            'gender'            => 'required|in:male,female,other',
+            'profile_phone'     => 'nullable|string|max:15',
+            'address'           => 'nullable|string',
+            'occupation'        => 'nullable|string|max:100',
+            'ethnicity'         => 'nullable|string|max:50',
+            'insurance_code'    => 'nullable|string|max:20',
+            'insurance_place'   => 'nullable|string|max:255',
+            'insurance_expiry'  => 'nullable|date',
+            'symptom_notes'     => 'nullable|string',
+        ], [
+            'full_name.required'  => 'Vui lòng nhập họ tên.',
+            'phone.required'      => 'Vui lòng nhập số điện thoại.',
+            'phone.unique'        => 'Số điện thoại đã được sử dụng.',
+            'phone.regex'         => 'Số điện thoại không đúng định dạng Việt Nam.',
+            'username.unique'     => 'Tên đăng nhập đã tồn tại.',
+            'username.regex'      => 'Tên đăng nhập không được chứa ký tự đặc biệt.',
+            'id_card.required'    => 'Vui lòng nhập số CCCD/CMND.',
+            'id_card.regex'       => 'Số CCCD/CMND không đúng định dạng (phải là 9 hoặc 12 chữ số).',
+            'id_card.unique'      => 'Số CCCD/CMND đã được sử dụng.',
+            'email.unique'        => 'Email đã được sử dụng.',
+            'date_of_birth.required' => 'Vui lòng nhập ngày sinh.',
+            'date_of_birth.before'=> 'Ngày sinh không hợp lệ.',
+            'gender.required'     => 'Vui lòng chọn giới tính.',
+        ]);
+
+        DB::transaction(function() use ($patient, $validated) {
+            $userData = [
+                'full_name' => $validated['full_name'],
+                'phone'     => $validated['phone'],
+                'username'  => $validated['username'] ?? $validated['phone'],
+                'id_card'   => $validated['id_card'],
+                'email'     => $validated['email'] ?? null,
+            ];
+            $patient->update($userData);
+
+            // Update hoặc tạo hồ sơ bản thân
+            $patient->patientProfiles()->updateOrCreate(
+                ['is_self' => 1],
+                [
+                    'full_name'       => $validated['profile_full_name'] ?? $validated['full_name'],
+                    'date_of_birth'   => $validated['date_of_birth'],
+                    'gender'          => $validated['gender'],
+                    'id_card'         => $validated['id_card'],
+                    'phone'           => $validated['profile_phone'] ?? $validated['phone'],
+                    'address'         => $validated['address'] ?? null,
+                    'occupation'      => $validated['occupation'] ?? null,
+                    'ethnicity'       => $validated['ethnicity'] ?? null,
+                    'insurance_code'  => $validated['insurance_code'] ?? null,
+                    'insurance_place' => $validated['insurance_place'] ?? null,
+                    'insurance_expiry'=> $validated['insurance_expiry'] ?? null,
+                    'symptom_notes'   => $validated['symptom_notes'] ?? null,
+                ]
+            );
+
+            SystemLog::create([
+                'user_id'     => auth()->id(),
+                'action'      => 'PATIENT_UPDATED',
+                'module'      => 'patients',
+                'ref_type'    => 'users',
+                'ref_id'      => $patient->id,
+                'description' => 'Cập nhật thông tin bệnh nhân: ' . $validated['full_name'],
+                'ip_address'  => request()->ip(),
+            ]);
+        });
+
+        return redirect()->route('admin.patients.edit', $id)
+            ->with('success', 'Cập nhật thông tin bệnh nhân thành công.');
+    }
+
+    public function toggleActive($id)
+    {
+        $patient = User::where('role', 'patient')->findOrFail($id);
+        $patient->update(['is_active' => !$patient->is_active]);
+
+        SystemLog::create([
+            'user_id'     => auth()->id(),
+            'action'      => $patient->is_active ? 'PATIENT_UNLOCKED' : 'PATIENT_LOCKED',
+            'module'      => 'patients',
+            'ref_type'    => 'users',
+            'ref_id'      => $patient->id,
+            'description' => ($patient->is_active ? 'Mở khoá' : 'Khoá') . ' bệnh nhân: ' . $patient->full_name,
+            'ip_address'  => request()->ip(),
+        ]);
+
+        return redirect()->back()->with('success',
+            $patient->is_active ? 'Đã mở khoá tài khoản bệnh nhân.' : 'Đã khoá tài khoản bệnh nhân.'
+        );
+    }
 }
