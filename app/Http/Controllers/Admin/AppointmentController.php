@@ -375,4 +375,13 @@ class AppointmentController extends Controller
 
         return redirect()->route('admin.appointments.index')->with('success', 'Cập nhật lịch hẹn thành công.');
     }
+
+
+    public function destroy($id)
+    {
+        $appointment = Appointment::findOrFail($id);
+        $appointment->delete();
+
+        return redirect()->route('admin.appointments.index')->with('success', 'Xoá lịch hẹn thành công.');
+    }
 }
