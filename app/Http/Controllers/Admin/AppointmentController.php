@@ -269,4 +269,110 @@ class AppointmentController extends Controller
 
         return redirect()->route('admin.appointments.index')->with('success', 'Tạo lịch hẹn mới thành công.');
     }
+
+    public function edit($id)
+    {
+        $appointment = Appointment::findOrFail($id);
+        $patients = PatientProfile::orderBy('full_name')->get();
+        $specialties = Specialty::where('is_active', true)->orderBy('name')->get();
+        $doctors = DoctorProfile::with('user')->whereHas('user', fn($q) => $q->where('is_active', true))->get();
+        $rooms = Room::where('is_active', true)->orderBy('name')->get();
+        $users = User::where('is_active', true)->orderBy('full_name')->get();
+
+        return view('admin.appointments.edit', compact('appointment', 'patients', 'specialties', 'doctors', 'rooms', 'users'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $appointment = Appointment::findOrFail($id);
+
+        $request->validate([
+            'patient_profile_id' => 'required|exists:patient_profiles,id',
+            'specialty_id'       => 'required|exists:specialties,id',
+            'doctor_profile_id'  => 'required|exists:doctor_profiles,id',
+            'room_id'            => 'required|exists:rooms,id',
+            'appointment_date'   => 'required|date',
+            'appointment_time'   => 'required',
+            'status'             => 'required|in:pending,checked_in,examining,completed,cancelled,absent',
+            'source'             => 'required|in:web,counter,chatbot',
+            'reason'             => 'required|string',
+            'receptionist_note'  => 'nullable|string',
+
+            // Vitals
+            'vital_pulse'        => 'nullable|integer|min:0',
+            'vital_systolic_bp'  => 'nullable|integer|min:0',
+            'vital_diastolic_bp' => 'nullable|integer|min:0',
+            'vital_temperature'  => 'nullable|numeric|min:0',
+            'vital_respiratory'  => 'nullable|integer|min:0',
+            'vital_spo2'         => 'nullable|numeric|min:0',
+            'vital_weight_kg'    => 'nullable|numeric|min:0',
+            'vital_height_cm'    => 'nullable|numeric|min:0',
+            'vital_bmi'          => 'nullable|numeric|min:0',
+            'vital_note'         => 'nullable|string',
+            'measured_by'        => 'nullable|exists:users,id',
+        ]);
+
+        $exists = Appointment::where('doctor_profile_id', $request->doctor_profile_id)
+            ->whereDate('appointment_date', $request->appointment_date)
+            ->whereTime('appointment_time', $request->appointment_time)
+            ->where('id', '!=', $id)
+            ->exists();
+
+        if ($exists) {
+            return back()->withErrors(['appointment_time' => 'Bác sĩ đã có lịch hẹn vào ngày và khung giờ này. Vui lòng chọn khung giờ khác.'])->withInput();
+        }
+
+        $patient = PatientProfile::findOrFail($request->patient_profile_id);
+        $doctor = DoctorProfile::findOrFail($request->doctor_profile_id);
+
+        $oldStatus = $appointment->status;
+        $newStatus = $request->status;
+
+        $appointment->patient_profile_id = $request->patient_profile_id;
+        $appointment->booked_by_user_id = $patient->owner_id ?? Auth::id();
+        $appointment->specialty_id = $request->specialty_id;
+        $appointment->doctor_level = $doctor->level;
+        $appointment->room_id = $request->room_id;
+        $appointment->doctor_profile_id = $request->doctor_profile_id;
+        $appointment->appointment_date = $request->appointment_date;
+        $appointment->appointment_time = $request->appointment_time;
+        $appointment->reason = $request->reason;
+        $appointment->status = $request->status;
+        $appointment->source = $request->source;
+        $appointment->receptionist_note = $request->receptionist_note;
+
+        $appointment->vital_pulse = $request->vital_pulse;
+        $appointment->vital_systolic_bp = $request->vital_systolic_bp;
+        $appointment->vital_diastolic_bp = $request->vital_diastolic_bp;
+        $appointment->vital_temperature = $request->vital_temperature;
+        $appointment->vital_respiratory = $request->vital_respiratory;
+        $appointment->vital_spo2 = $request->vital_spo2;
+        $appointment->vital_weight_kg = $request->vital_weight_kg;
+        $appointment->vital_height_cm = $request->vital_height_cm;
+        $appointment->vital_bmi = $request->vital_bmi;
+        $appointment->vital_note = $request->vital_note;
+        $appointment->measured_by = $request->measured_by;
+
+        if (in_array($newStatus, ['checked_in', 'examining', 'completed']) && is_null($appointment->checked_in_at)) {
+            $appointment->checked_in_at = now();
+        }
+        if ($newStatus === 'completed' && is_null($appointment->completed_at)) {
+            $appointment->completed_at = now();
+        }
+
+        $appointment->save();
+
+        if ($oldStatus !== $newStatus) {
+            AppointmentLog::create([
+                'appointment_id' => $appointment->id,
+                'old_status'     => $oldStatus,
+                'new_status'     => $newStatus,
+                'action'         => 'ADMIN_UPDATE',
+                'changed_by'     => Auth::id(),
+                'reason'         => 'Cập nhật lịch hẹn và trạng thái bởi Quản trị viên',
+            ]);
+        }
+
+        return redirect()->route('admin.appointments.index')->with('success', 'Cập nhật lịch hẹn thành công.');
+    }
 }
