@@ -153,4 +153,35 @@ class PatientController extends Controller
         return redirect()->route('admin.patients.index')
             ->with('success', 'Thêm bệnh nhân thành công.');
     }
+    public function show($id)
+    {
+        $patient = User::with(['patientProfiles'])
+            ->where('role', 'patient')
+            ->findOrFail($id);
+
+        // Lịch hẹn của tất cả hồ sơ
+        $profileIds = $patient->patientProfiles->pluck('id');
+
+        $appointmentStats = [
+            'total'     => Appointment::whereIn('patient_profile_id', $profileIds)->count(),
+            'pending'   => Appointment::whereIn('patient_profile_id', $profileIds)->where('status', 'pending')->count(),
+            'completed' => Appointment::whereIn('patient_profile_id', $profileIds)->where('status', 'completed')->count(),
+            'cancelled' => Appointment::whereIn('patient_profile_id', $profileIds)->where('status', 'cancelled')->count(),
+        ];
+
+        $recentAppointments = Appointment::with(['doctor.user', 'specialty'])
+            ->whereIn('patient_profile_id', $profileIds)
+            ->latest('appointment_date')
+            ->limit(5)
+            ->get();
+
+        $logs = SystemLog::where('user_id', $id)
+            ->latest('created_at')
+            ->limit(10)
+            ->get();
+
+        return view('admin.patients.show', compact(
+            'patient', 'appointmentStats', 'recentAppointments', 'logs'
+        ));
+    }
 }
