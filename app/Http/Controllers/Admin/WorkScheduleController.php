@@ -446,4 +446,54 @@ class WorkScheduleController extends Controller
 
         return back()->with('success', 'Đã xoá ca trực thành công.');
     }
+
+    public function storeOverride(Request $request)
+    {
+        try {
+            $request->validate([
+                'doctor_profile_id' => 'required|exists:doctor_profiles,id',
+                'room_id' => 'nullable|exists:rooms,id',
+                'override_date' => 'required|date|after_or_equal:today',
+                'type' => 'required|in:close,extra',
+                'start_time' => 'required_if:type,extra|nullable|date_format:H:i',
+                'end_time' => 'required_if:type,extra|nullable|date_format:H:i|after:start_time',
+                'reason' => 'nullable|string|max:255'
+            ], [
+                'required_if' => 'Vui lòng nhập giờ nếu là thêm ca.'
+            ]);
+
+            $override = ScheduleOverride::create([
+                'doctor_profile_id' => $request->doctor_profile_id,
+                'room_id' => $request->room_id,
+                'override_date' => $request->override_date,
+                'type' => $request->type,
+                'start_time' => $request->start_time,
+                'end_time' => $request->end_time,
+                'reason' => $request->reason,
+                'created_by' => Auth::id(),
+            ]);
+
+            SystemLog::create([
+                'user_id' => Auth::id(),
+                'action' => 'SCHEDULE_OVERRIDE_CREATED',
+                'module' => 'schedule_override',
+                'ref_type' => 'schedule_override',
+                'ref_id' => $override->id,
+                'description' => 'Thêm ngoại lệ lịch ' . $override->type,
+                'ip_address' => request()->ip()
+            ]);
+
+            return back()->with('success', 'Đã thêm ngoại lệ lịch thành công.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            dd($e->errors());
+        }
+    }
+
+    public function destroyOverride($id)
+    {
+        $override = ScheduleOverride::findOrFail($id);
+        $override->delete();
+
+        return back()->with('success', 'Đã xoá ngoại lệ lịch thành công.');
+    }
 }
