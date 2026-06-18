@@ -181,4 +181,32 @@ public function store(Request $request)
 
         return back()->with('success', 'Đã xoá chuyên khoa thành công.');
     }
+
+    public function show($id)
+    {
+        $specialty = Specialty::with(['doctors.user', 'rooms'])->findOrFail($id);
+        
+        return view('admin.specialties.show', compact('specialty'));
+    }
+
+    public function addDoctor(Request $request, $id)
+    {
+        $specialty = Specialty::findOrFail($id);
+        $doctorId = $request->input('doctor_id');
+        $isPrimary = $request->input('is_primary', 0);
+
+        $specialty->doctors()->attach($doctorId, ['is_primary' => $isPrimary]);
+
+        SystemLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'SPECIALTY_DOCTOR_ADDED',
+            'module' => 'specialty_management',
+            'ref_type' => 'specialty',
+            'ref_id' => $specialty->id,
+            'description' => 'Thêm bác sĩ vào chuyên khoa: ' . $specialty->name,
+            'ip_address' => request()->ip()
+        ]);
+
+        return back()->with('success', 'Đã thêm bác sĩ vào chuyên khoa.');
+    }
 }
