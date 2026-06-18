@@ -53,3 +53,21 @@ class ReceptionistController extends Controller
 
         return view('admin.receptionists.index', compact('receptionists', 'stats', 'departments'));
     }
+    public function create()
+    {
+        // Tự động sinh mã nhân viên kế tiếp (LT001, LT002, ...)
+        $latestStaff = StaffProfile::where('employee_code', 'regexp', '^LT[0-9]+$')
+            ->orderByRaw('CAST(SUBSTRING(employee_code, 3) AS UNSIGNED) DESC')
+            ->first();
+
+        $nextNumber = 1;
+        if ($latestStaff) {
+            $numberStr = substr($latestStaff->employee_code, 2);
+            if (is_numeric($numberStr)) {
+                $nextNumber = (int)$numberStr + 1;
+            }
+        }
+        $nextEmployeeCode = 'LT' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+
+        return view('admin.receptionists.create', compact('nextEmployeeCode'));
+    }
