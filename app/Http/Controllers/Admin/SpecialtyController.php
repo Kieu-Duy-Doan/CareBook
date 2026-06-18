@@ -232,4 +232,48 @@ public function store(Request $request)
         }
         return back()->with('success', 'Đã xóa bác sĩ khỏi chuyên khoa.');
     }
+
+    public function addRoom(Request $request, $id)
+    {
+        $specialty = Specialty::findOrFail($id);
+        $roomId = $request->input('room_id');
+        $isPrimary = $request->input('is_primary', 0);
+
+        $specialty->rooms()->attach($roomId, ['is_primary' => $isPrimary]);
+
+        SystemLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'SPECIALTY_ROOM_ADDED',
+            'module' => 'specialty_management',
+            'ref_type' => 'specialty',
+            'ref_id' => $specialty->id,
+            'description' => 'Thêm phòng vào chuyên khoa: ' . $specialty->name,
+            'ip_address' => request()->ip()
+        ]);
+
+        return back()->with('success', 'Đã thêm phòng vào chuyên khoa.');
+    }
+
+    public function removeRoom(Request $request, $id)
+    {
+        $specialty = Specialty::findOrFail($id);
+        $roomId = $request->input('room_id');
+
+        $specialty->rooms()->detach($roomId);
+
+        SystemLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'SPECIALTY_ROOM_REMOVED',
+            'module' => 'specialty_management',
+            'ref_type' => 'specialty',
+            'ref_id' => $specialty->id,
+            'description' => 'Xóa phòng khỏi chuyên khoa: ' . $specialty->name,
+            'ip_address' => request()->ip()
+        ]);
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Đã xóa phòng khỏi chuyên khoa.']);
+        }
+        return back()->with('success', 'Đã xóa phòng khỏi chuyên khoa.');
+    }
 }
