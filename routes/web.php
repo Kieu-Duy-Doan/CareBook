@@ -36,14 +36,14 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
             Route::put('/{id}', [\App\Http\Controllers\Admin\ReceptionistController::class, 'update'])->name('update');
             Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\ReceptionistController::class, 'toggleActive'])->name('toggle-active');
     });
-    Route::prefix('doctors')->name('doctors.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\Admin\DoctorController::class, 'index'])->name('index');
-            Route::get('/create', [\App\Http\Controllers\Admin\DoctorController::class, 'create'])->name('create');
-            Route::post('/', [\App\Http\Controllers\Admin\DoctorController::class, 'store'])->name('store');
-            Route::get('/{id}', [\App\Http\Controllers\Admin\DoctorController::class, 'show'])->name('show');
-            Route::get('/{id}/edit', [\App\Http\Controllers\Admin\DoctorController::class, 'edit'])->name('edit');
-            Route::put('/{id}', [\App\Http\Controllers\Admin\DoctorController::class, 'update'])->name('update');
-            Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\DoctorController::class, 'toggleActive'])->name('toggle-active');
+     Route::prefix('patients')->name('patients.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\PatientController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Admin\PatientController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Admin\PatientController::class, 'store'])->name('store');
+            Route::get('/{id}', [\App\Http\Controllers\Admin\PatientController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [\App\Http\Controllers\Admin\PatientController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [\App\Http\Controllers\Admin\PatientController::class, 'update'])->name('update');
+            Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\PatientController::class, 'toggleActive'])->name('toggle-active');
     });
     Route::prefix('specialties')->name('specialties.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\SpecialtyController::class, 'index'])->name('index');
