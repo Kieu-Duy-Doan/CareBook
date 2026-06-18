@@ -11,7 +11,7 @@
             start_time: '',
             end_time: '',
             slot_duration_minutes: 15,
-            max_slots: 30,
+            max_slots: 2,
             is_active: true
         },
         fillSchedule(data) {
@@ -654,22 +654,6 @@
                                     </label>
                                 </div>
                             </div>
-
-                            {{-- <div x-show="overrideType === 'extra'" class="grid grid-cols-2 gap-4"
-                                style="display: none;">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Giờ bắt đầu <span
-                                            class="text-red-500">*</span></label>
-                                    <input type="time" name="start_time" :required="overrideType === 'extra'"
-                                        class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 text-sm outline-none">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Giờ kết thúc <span
-                                            class="text-red-500">*</span></label>
-                                    <input type="time" name="end_time" :required="overrideType === 'extra'"
-                                        class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 text-sm outline-none">
-                                </div>
-                            </div> --}}
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Lý do ghi chú</label>

@@ -50,4 +50,63 @@ class WorkScheduleController extends Controller
 
         return view('admin.work-schedules.index', compact('schedules', 'doctors', 'rooms', 'overrides'));
     }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'doctor_profile_id' => 'required|exists:doctor_profiles,id',
+            'room_id' => 'required|exists:rooms,id',
+            'day_of_week' => 'required|integer|between:1,7',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i|after:start_time',
+            'slot_duration_minutes' => 'required|integer|min:5|max:120',
+            'max_slots' => 'required|integer|min:1|max:100',
+            'is_active' => 'boolean'
+        ]);
+
+        $existsRoom = WorkSchedule::where('doctor_profile_id', $request->doctor_profile_id)
+            ->where('room_id', $request->room_id)
+            ->where('day_of_week', $request->day_of_week)
+            ->exists();
+
+        if ($existsRoom) {
+            return back()->with('error', 'Bác sĩ này đã có lịch tại phòng này vào thứ đã chọn.');
+        }
+
+        $existsTime = WorkSchedule::where('doctor_profile_id', $request->doctor_profile_id)
+            ->where('day_of_week', $request->day_of_week)
+            ->where('is_active', true)
+            ->where(function ($query) use ($request) {
+                $query->where('start_time', '<', $request->end_time)
+                    ->where('end_time', '>', $request->start_time);
+            })
+            ->exists();
+
+        if ($existsTime) {
+            return back()->with('error', 'Bác sĩ đã có lịch làm việc trùng thời gian.');
+        }
+
+        $schedule = WorkSchedule::create([
+            'doctor_profile_id' => $request->doctor_profile_id,
+            'room_id' => $request->room_id,
+            'day_of_week' => $request->day_of_week,
+            'start_time' => $request->start_time,
+            'end_time' => $request->end_time,
+            'slot_duration_minutes' => $request->slot_duration_minutes,
+            'max_slots' => $request->max_slots,
+            'is_active' => $request->has('is_active'),
+        ]);
+
+        SystemLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'WORK_SCHEDULE_CREATED',
+            'module' => 'work_schedule',
+            'ref_type' => 'work_schedule',
+            'ref_id' => $schedule->id,
+            'description' => 'Thêm ca trực cho bác sĩ ID ' . $schedule->doctor_profile_id,
+            'ip_address' => request()->ip()
+        ]);
+
+        return back()->with('success', 'Đã thêm ca trực thành công.');
+    }
 }
