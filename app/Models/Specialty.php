@@ -1,7 +1,6 @@
 <?php 
 namespace App\Models;
 
-use App\Models\Room;
 use Illuminate\Database\Eloquent\Model;
 
 class Specialty extends Model {
