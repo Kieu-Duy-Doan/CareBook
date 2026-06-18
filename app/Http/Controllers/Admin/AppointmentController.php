@@ -384,4 +384,100 @@ class AppointmentController extends Controller
 
         return redirect()->route('admin.appointments.index')->with('success', 'Xoá lịch hẹn thành công.');
     }
+
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,checked_in,examining,completed,cancelled,absent',
+            'reason' => 'nullable|string|max:500'
+        ]);
+
+        $appointment = Appointment::findOrFail($id);
+        $oldStatus = $appointment->status;
+        $newStatus = $request->status;
+
+        if ($oldStatus !== $newStatus) {
+            $appointment->status = $newStatus;
+            $appointment->save();
+
+            AppointmentLog::create([
+                'appointment_id' => $appointment->id,
+                'old_status' => $oldStatus,
+                'new_status' => $newStatus,
+                'action' => 'ADMIN_STATUS_CHANGE',
+                'changed_by' => Auth::id(),
+                'reason' => $request->reason,
+            ]);
+        }
+
+        return back()->with('success', 'Đã cập nhật trạng thái lịch hẹn thành công.');
+    }
+
+    public function exportCsv(Request $request)
+    {
+        // Áp dụng cùng filter như index nhưng không paginate
+        $query = Appointment::with(['patientProfile', 'doctor.user', 'specialty', 'room'])->latest('appointment_date')->latest('appointment_time');
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('appointment_date', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('appointment_date', '<=', $request->date_to);
+        }
+        if ($request->filled('doctor_id')) {
+            $query->where('doctor_profile_id', $request->doctor_id);
+        }
+        if ($request->filled('specialty_id')) {
+            $query->where('specialty_id', $request->specialty_id);
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('source')) {
+            $query->where('source', $request->source);
+        }
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('appointment_code', 'like', '%' . $request->search . '%')
+                    ->orWhereHas(
+                        'patientProfile',
+                        fn($pq) =>
+                        $pq->where('full_name', 'like', '%' . $request->search . '%')
+                    );
+            });
+        }
+
+        $appointments = $query->get();
+
+        $filename = 'lich-hen-' . now()->format('Ymd-His') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+
+        $callback = function () use ($appointments) {
+            $file = fopen('php://output', 'w');
+            // BOM để Excel đọc UTF-8 đúng
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            // Header row
+            fputcsv($file, ['Mã LH', 'Bệnh nhân', 'Bác sĩ', 'Chuyên khoa', 'Phòng', 'Ngày khám', 'Giờ khám', 'Trạng thái', 'Nguồn', 'Ngày đặt']);
+            foreach ($appointments as $a) {
+                fputcsv($file, [
+                    $a->appointment_code,
+                    $a->patientProfile->full_name ?? '',
+                    $a->doctor->full_title ?? '',
+                    $a->specialty->name ?? '',
+                    $a->room->name ?? '',
+                    $a->appointment_date ? $a->appointment_date->format('d/m/Y') : '',
+                    $a->appointment_time ? substr($a->appointment_time, 0, 5) : '',
+                    $a->status_label ?? $a->status,
+                    $a->source_label ?? $a->source,
+                    $a->created_at->format('d/m/Y H:i'),
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }
