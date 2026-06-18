@@ -7,6 +7,7 @@ use App\Models\SystemLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class SpecialtyController extends Controller {
 public function index() 
@@ -104,5 +105,37 @@ public function store(Request $request)
         ]);
 
         return back()->with('success', 'Đã cập nhật chuyên khoa thành công.');
+    }
+
+    public function toggleActive($id)
+    {
+        $specialty = Specialty::findOrFail($id);
+        $specialty->is_active = !$specialty->is_active;
+        $specialty->save();
+
+        SystemLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'SPECIALTY_TOGGLED',
+            'module' => 'specialty_management',
+            'ref_type' => 'specialty',
+            'ref_id' => $specialty->id,
+            'description' => ($specialty->is_active ? 'Hiển thị' : 'Ẩn') . ' chuyên khoa: ' . $specialty->name,
+            'ip_address' => request()->ip()
+        ]);
+
+        return back()->with('success', 'Đã cập nhật trạng thái chuyên khoa.');
+    }
+    
+    public function updateOrder(Request $request, $id)
+    {
+        $request->validate([
+            'display_order' => 'required|integer|min:0',
+        ]);
+
+        $specialty = Specialty::findOrFail($id);
+        $specialty->display_order = $request->display_order;
+        $specialty->save();
+
+        return response()->json(['success' => true]);
     }
 }
