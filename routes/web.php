@@ -16,4 +16,5 @@ Route::prefix('specialties')->name('specialties.')->group(function () {
             Route::post('/{id}/rooms/remove', [\App\Http\Controllers\Admin\SpecialtyController::class, 'removeRoom'])->name('remove-room');
 });
 
+
 ?>
