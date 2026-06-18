@@ -78,3 +78,13 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\AppointmentLogController::class, 'index'])->name('index');
     });
 });
+
+
+// API routes (normally in routes/api.php, placing here for convenience)
+Route::prefix('api')->name('api.')->group(function () {
+    // Lấy danh sách bác sĩ theo chuyên khoa
+    Route::get('/doctors/by-specialty/{specialtyId}', [\App\Http\Controllers\Api\DoctorController::class, 'getBySpecialty'])->name('doctors.by-specialty');
+
+    // Lấy danh lịch làm việc theo bác sĩ và ngày
+    Route::get('/work-schedule/by-doctor-date/{doctorId}/{appointmentDate}', [\App\Http\Controllers\Api\WorkScheduleController::class, 'getWorkSchedule'])->name('work-schedule');
+});
