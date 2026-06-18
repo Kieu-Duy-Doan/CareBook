@@ -21,12 +21,17 @@ public function index()
     }
 public function store(Request $request)
     {
+        \Log::info('Specialty store: Request received', [
+            'has_image' => $request->hasFile('image'),
+            'name' => $request->name,
+        ]);
+
         $request->validate([
             'name' => 'required|string|max:150|unique:specialties,name',
             'description' => 'nullable|string',
             'display_order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
-            'image' => 'nullable|file|mimes:jpg,jpeg,png,svg|max:2048',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,svg,webp|max:2048',
         ], [
             'name.required' => 'Vui lòng nhập tên chuyên khoa.',
             'name.unique' => 'Tên chuyên khoa đã tồn tại.',
@@ -40,12 +45,13 @@ public function store(Request $request)
             'is_active' => $request->has('is_active'),
         ];
 
-        if ($request->hasFile('image') && $request->file('image')->isValid()) {
-            $path = $request->file('image')->store('specialties', 'public');
-            $data['image_url'] = $path;
-        };
+        if ($imagePath = $this->uploadImage($request)) {
+            $data['image_url'] = $imagePath;
+            \Log::info('Specialty store: Image stored', ['image_url' => $imagePath]);
+        }
 
         $specialty = Specialty::create($data);
+        \Log::info('Specialty store: Specialty created', ['id' => $specialty->id, 'image_url' => $specialty->image_url]);
 
         SystemLog::create([
             'user_id' => Auth::id(),
@@ -69,7 +75,7 @@ public function store(Request $request)
             'description' => 'nullable|string',
             'display_order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
-            'image' => 'nullable|file|mimes:jpg,jpeg,png,svg|max:2048',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,svg,webp|max:2048',
         ], [
             'name.required' => 'Vui lòng nhập tên chuyên khoa.',
             'name.unique' => 'Tên chuyên khoa đã tồn tại.',
@@ -83,13 +89,11 @@ public function store(Request $request)
             'is_active' => $request->has('is_active'),
         ];
 
-         if ($request->hasFile('image') && $request->file('image')->isValid()) {
+        if ($imagePath = $this->uploadImage($request)) {
             if ($specialty->image_url) {
                 Storage::disk('public')->delete($specialty->image_url);
             }
-            
-            $path = $request->file('image')->store('specialties', 'public');
-            $data['image_url'] = $path;
+            $data['image_url'] = $imagePath;
         }
 
         $specialty->update($data);
@@ -124,6 +128,42 @@ public function store(Request $request)
         ]);
 
         return back()->with('success', 'Đã cập nhật trạng thái chuyên khoa.');
+    }
+
+    protected function uploadImage(Request $request)
+    {
+        if (! $request->hasFile('image')) {
+            \Log::warning('Image upload: No file received in request');
+            return null;
+        }
+
+        $file = $request->file('image');
+        \Log::info('Image upload: File received', [
+            'name' => $file->getClientOriginalName(),
+            'size' => $file->getSize(),
+            'mime' => $file->getMimeType(),
+        ]);
+
+        if (! $file->isValid()) {
+            \Log::error('Image upload: File validation failed', [
+                'error' => $file->getErrorMessage(),
+            ]);
+            return null;
+        }
+
+        try {
+            $path = $file->store('specialties', 'public');
+            $normalizedPath = str_replace('\\', '/', $path);
+            \Log::info('Image upload: File stored successfully', [
+                'path' => $normalizedPath,
+            ]);
+            return $normalizedPath;
+        } catch (\Exception $e) {
+            \Log::error('Image upload: Storage failed', [
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
     }
 
     public function updateOrder(Request $request, $id)

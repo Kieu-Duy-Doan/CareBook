@@ -75,7 +75,7 @@
                     <button @click="showAddDoctor = true" class="inline-flex items-center text-sm text-green-600 hover:text-green-800 font-medium bg-green-50 px-3 py-1.5 rounded hover:bg-green-100 transition-colors">
                         <i class="fa-solid fa-plus mr-1"></i> Thêm
                     </button>
-                    <a href="{{ route('admin.doctors.index') }}?specialty_id={{ $specialty->id }}" class="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 font-medium bg-blue-50 px-3 py-1.5 rounded hover:bg-blue-100 transition-colors">
+                    <a href="{{ Route::has('admin.doctors.index') ? route('admin.doctors.index') . '?specialty_id=' . $specialty->id : '#' }}" class="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 font-medium bg-blue-50 px-3 py-1.5 rounded hover:bg-blue-100 transition-colors">
                         Xem tất cả <i class="fa-solid fa-arrow-right ml-2"></i>
                     </a>
                 </div>
@@ -117,7 +117,11 @@
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex justify-end gap-2">
-                                    <a href="{{ route('admin.doctors.show', $doctor->id) }}" class="text-blue-600 hover:text-blue-900" title="Xem chi tiết"><i class="fa-solid fa-eye"></i></a>
+                                    @if(Route::has('admin.doctors.show'))
+                                        <a href="{{ route('admin.doctors.show', $doctor->id) }}" class="text-blue-600 hover:text-blue-900" title="Xem chi tiết"><i class="fa-solid fa-eye"></i></a>
+                                    @else
+                                        <span class="text-gray-400" title="Route bác sĩ chưa có"><i class="fa-solid fa-eye-slash"></i></span>
+                                    @endif
                                     <button @click="deleteHandler('{{ route('admin.specialties.remove-doctor', $specialty->id) }}', 'Đã xóa bác sĩ khỏi chuyên khoa.', {{ $doctor->id }}, 'doctor')" :disabled="deleteInProgress" class="text-red-600 hover:text-red-900 disabled:opacity-50" title="Xóa"><i class="fa-solid fa-trash"></i></button>
                                 </div>
                             </td>

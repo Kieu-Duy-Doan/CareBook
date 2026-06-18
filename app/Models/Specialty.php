@@ -16,6 +16,11 @@ class Specialty extends Model {
         'is_active' => 'boolean',
     ];
 
+    public function getImageUrlAttribute($value)
+    {
+        return $value ? str_replace('\\', '/', $value) : null;
+    }
+
     public function rooms()
     {
         return $this->belongsToMany(Room::class, 'specialty_rooms')->withPivot('is_primary');

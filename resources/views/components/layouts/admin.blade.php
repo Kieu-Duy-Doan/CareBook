@@ -44,19 +44,19 @@
 
                 <!-- Sub-menu -->
                 <div x-show="openUsers" x-transition class="ml-2 mt-1 space-y-1">
-                    <a href="{{ route('admin.users.index') }}"
+                    <a href="{{ Route::has('admin.users.index') ? route('admin.users.index') : '#' }}"
                        class="flex items-center px-3 py-2 rounded-md text-sm
                               {{ request()->routeIs('admin.users.*') ? 'bg-blue-50/50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
                         <i class="fa-solid fa-list w-6 text-center mr-2"></i>
                         Tất cả tài khoản
                     </a>
-                    <a href="{{ route('admin.doctors.index') }}"
+                    <a href="{{ Route::has('admin.doctors.index') ? route('admin.doctors.index') : '#' }}"
                        class="flex items-center px-3 py-2 rounded-md text-sm
                               {{ request()->routeIs('admin.doctors.*') ? 'bg-purple-50 text-purple-700 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
                         <i class="fa-solid fa-user-doctor w-6 text-center mr-2"></i>
                         Bác sĩ
                     </a>
-                    <a href="{{ route('admin.receptionists.index') }}"
+                    <a href="{{ Route::has('admin.receptionists.index') ? route('admin.receptionists.index') : '#' }}"
                        class="flex items-center px-3 py-2 rounded-md text-sm
                               {{ request()->routeIs('admin.receptionists.*') ? 'bg-orange-50 text-orange-700 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
                         <i class="fa-solid fa-user-tie w-6 text-center mr-2"></i>
@@ -70,19 +70,19 @@
                     </a>
                 </div>
             </div>
-            <a href="{{ route('admin.specialties.index') }}" class="{{ request()->routeIs('admin.specialties.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+            <a href="{{ Route::has('admin.specialties.index') ? route('admin.specialties.index') : '#' }}" class="{{ request()->routeIs('admin.specialties.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                 <i class="fa-solid fa-stethoscope w-6 text-center mr-2 {{ request()->routeIs('admin.specialties.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i> Chuyên khoa
             </a>
-            <a href="{{ route('admin.rooms.index') }}" class="{{ request()->routeIs('admin.rooms.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+            <a href="{{ Route::has('admin.rooms.index') ? route('admin.rooms.index') : '#' }}" class="{{ request()->routeIs('admin.rooms.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                 <i class="fa-solid fa-door-open w-6 text-center mr-2 {{ request()->routeIs('admin.rooms.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i> Phòng khám
             </a>
-            <a href="{{ route('admin.work-schedules.index') }}" class="{{ request()->routeIs('admin.work-schedules.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+            <a href="{{ Route::has('admin.work-schedules.index') ? route('admin.work-schedules.index') : '#' }}" class="{{ request()->routeIs('admin.work-schedules.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                 <i class="fa-solid fa-calendar-days w-6 text-center mr-2 {{ request()->routeIs('admin.work-schedules.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i> Lịch làm việc
             </a>
-            <a href="{{ route('admin.appointments.index') }}" class="{{ request()->routeIs('admin.appointments.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+            <a href="{{ Route::has('admin.appointments.index') ? route('admin.appointments.index') : '#' }}" class="{{ request()->routeIs('admin.appointments.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                 <i class="fa-solid fa-calendar-check w-6 text-center mr-2 {{ request()->routeIs('admin.appointments.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i> Lịch hẹn
             </a>
-            <a href="{{ route('admin.posts.index') }}" class="{{ request()->routeIs('admin.posts.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+            <a href="{{ Route::has('admin.posts.index') ? route('admin.posts.index') : '#' }}" class="{{ request()->routeIs('admin.posts.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                 <i class="fa-solid fa-newspaper w-6 text-center mr-2 {{ request()->routeIs('admin.posts.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i> Bài viết (CMS)
             </a>
 
@@ -90,16 +90,16 @@
                 Hệ thống
             </div>
             
-            <a href="{{ route('admin.chatbot.index') }}" class="{{ request()->routeIs('admin.chatbot.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+            <a href="{{ Route::has('admin.chatbot.index') ? route('admin.chatbot.index') : '#' }}" class="{{ request()->routeIs('admin.chatbot.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                 <i class="fa-solid fa-robot w-6 text-center mr-2 {{ request()->routeIs('admin.chatbot.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i> Cấu hình Chatbot
             </a>
-            <a href="{{ route('admin.faqs.index') }}" class="{{ request()->routeIs('admin.faqs.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+            <a href="{{ Route::has('admin.faqs.index') ? route('admin.faqs.index') : '#' }}" class="{{ request()->routeIs('admin.faqs.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                 <i class="fa-solid fa-circle-question w-6 text-center mr-2 {{ request()->routeIs('admin.faqs.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i> Câu hỏi thường gặp
             </a>
-            <a href="{{ route('admin.notifications.index') }}" class="{{ request()->routeIs('admin.notifications.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+            <a href="{{ Route::has('admin.notifications.index') ? route('admin.notifications.index') : '#' }}" class="{{ request()->routeIs('admin.notifications.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                 <i class="fa-solid fa-bell w-6 text-center mr-2 {{ request()->routeIs('admin.notifications.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i> Thông báo
             </a>
-            <a href="{{ route('admin.settings.index') }}" class="{{ request()->routeIs('admin.settings.*') || request()->routeIs('admin.settings.logs') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+            <a href="{{ Route::has('admin.settings.index') ? route('admin.settings.index') : '#' }}" class="{{ request()->routeIs('admin.settings.*') || request()->routeIs('admin.settings.logs') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                 <i class="fa-solid fa-gear w-6 text-center mr-2 {{ request()->routeIs('admin.settings.*') || request()->routeIs('admin.settings.logs') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i> Cài đặt hệ thống
             </a>
         </div>
