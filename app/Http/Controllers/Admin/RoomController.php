@@ -7,6 +7,7 @@ use App\Models\Specialty;
 use App\Models\SystemLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class RoomController extends Controller
 {
@@ -88,6 +89,73 @@ class RoomController extends Controller
             ]);
         });
         return redirect()->route('admin.rooms.index')->with('success', 'Đã thêm phòng thành công.');
+    }
+
+    public function edit($id)
+    {
+        $room = Room::with('specialties')->findOrFail($id);
+        $specialties = Specialty::where('is_active', true)->orderBy('name')->get();
+        return view('admin.rooms.edit', compact('room', 'specialties'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $room = Room::findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|max:150',
+            'room_number' => 'nullable|string|max:20',
+            'building' => 'nullable|string|max:50',
+            'floor' => 'nullable|string|max:10',
+            'room_type' => 'required|in:examination,diagnostic,surgery,other',
+            'capacity' => 'nullable|integer|min:1|max:200',
+            'is_active' => 'boolean',
+            'specialty_ids' => 'nullable|array',
+            'specialty_ids.*' => 'exists:specialties,id',
+        ]);
+
+        DB::transaction(function () use ($request, $room) {
+            $room->update([
+                'name' => $request->name,
+                'room_number' => $request->room_number,
+                'building' => $request->building,
+                'floor' => $request->floor,
+                'room_type' => $request->room_type,
+                'capacity' => $request->capacity,
+                'is_active' => $request->has('is_active'),
+            ]);
+
+            if ($request->has('specialty_ids')) {
+                $syncData = [];
+                foreach ($request->specialty_ids as $spId) {
+                    $syncData[$spId] = ['is_primary' => false];
+                }
+                $room->specialties()->sync($syncData);
+            } else {
+                $room->specialties()->detach();
+            }
+
+            SystemLog::create([
+                'user_id' => Auth::id(),
+                'action' => 'ROOM_UPDATED',
+                'module' => 'room_management',
+                'ref_type' => 'room',
+                'ref_id' => $room->id,
+                'description' => 'Cập nhật phòng khám: ' . $room->name,
+                'ip_address' => request()->ip()
+            ]);
+        });
+
+        return redirect()->route('admin.rooms.index')->with('success', 'Đã cập nhật phòng thành công.');
+    }
+    
+    public function toggleActive($id)
+    {
+        $room = Room::findOrFail($id);
+        $room->is_active = !$room->is_active;
+        $room->save();
+
+        return back()->with('success', 'Đã cập nhật trạng thái phòng.');
     }
 
     
