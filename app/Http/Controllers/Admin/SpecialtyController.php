@@ -125,7 +125,7 @@ public function store(Request $request)
 
         return back()->with('success', 'Đã cập nhật trạng thái chuyên khoa.');
     }
-    
+
     public function updateOrder(Request $request, $id)
     {
         $request->validate([
@@ -137,5 +137,48 @@ public function store(Request $request)
         $specialty->save();
 
         return response()->json(['success' => true]);
+    }
+
+    public function destroy($id)
+    {
+        $specialty = Specialty::withCount('doctors')->findOrFail($id);
+
+        if ($specialty->doctors_count > 0) {
+            return back()->with('error', 'Không thể xoá chuyên khoa đang có bác sĩ hoạt động.');
+        }
+
+        $hasActiveAppointments = \App\Models\Appointment::where('specialty_id', $specialty->id)
+            ->whereIn('status', ['pending', 'checked_in', 'examining'])
+            ->exists();
+
+        if ($hasActiveAppointments) {
+            return back()->with('error', 'Không thể xoá chuyên khoa đang có lịch hẹn chờ khám hoặc đang khám.');
+        }
+
+        $name = $specialty->name;
+        $imageUrl = $specialty->image_url;
+
+        // specialties has ManyToMany with rooms and doctor_profiles.
+        $specialty->rooms()->detach();
+        $specialty->doctors()->detach();
+
+        $specialty->delete(); // Now safe to delete the main record.
+
+        // Delete image file
+        if ($imageUrl) {
+            Storage::disk('public')->delete($imageUrl);
+        }
+
+        SystemLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'SPECIALTY_DELETED',
+            'module' => 'specialty_management',
+            'ref_type' => 'specialty',
+            'ref_id' => $id,
+            'description' => 'Xoá chuyên khoa: ' . $name,
+            'ip_address' => request()->ip()
+        ]);
+
+        return back()->with('success', 'Đã xoá chuyên khoa thành công.');
     }
 }
