@@ -53,4 +53,18 @@
             </div>
         </div>
     </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8" x-data="specialtyManager()" @notify.window="successMessage = $event.detail.message; setTimeout(() => successMessage = '', 3000)">
+        <!-- Success Notification -->
+        <div x-show="successMessage" x-transition class="col-span-full mb-6 bg-green-50 text-green-800 rounded-lg p-4 flex items-center border border-green-200" style="display: none;">
+            <i class="fa-solid fa-check-circle mr-3 text-lg"></i>
+            <span x-text="successMessage" class="text-sm font-medium flex-1"></span>
+            <button @click="successMessage = ''" class="text-green-600 hover:text-green-800">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        
+    </div>
+
 </x-layouts.admin>

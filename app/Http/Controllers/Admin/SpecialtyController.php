@@ -209,4 +209,27 @@ public function store(Request $request)
 
         return back()->with('success', 'Đã thêm bác sĩ vào chuyên khoa.');
     }
+
+    public function removeDoctor(Request $request, $id)
+    {
+        $specialty = Specialty::findOrFail($id);
+        $doctorId = $request->input('doctor_id');
+
+        $specialty->doctors()->detach($doctorId);
+
+        SystemLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'SPECIALTY_DOCTOR_REMOVED',
+            'module' => 'specialty_management',
+            'ref_type' => 'specialty',
+            'ref_id' => $specialty->id,
+            'description' => 'Xóa bác sĩ khỏi chuyên khoa: ' . $specialty->name,
+            'ip_address' => request()->ip()
+        ]);
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Đã xóa bác sĩ khỏi chuyên khoa.']);
+        }
+        return back()->with('success', 'Đã xóa bác sĩ khỏi chuyên khoa.');
+    }
 }
