@@ -66,4 +66,15 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::patch('/{id}/status', [\App\Http\Controllers\Admin\AppointmentController::class, 'updateStatus'])->name('update-status');
         Route::delete('/{id}', [\App\Http\Controllers\Admin\AppointmentController::class, 'destroy'])->name('destroy');
     });
+
+    // Giám sát Khám Lâm sàng
+    Route::prefix('clinical-visits')->name('clinical-visits.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\ClinicalVisitController::class, 'index'])->name('index');
+        Route::get('/{id}', [\App\Http\Controllers\Admin\ClinicalVisitController::class, 'show'])->name('show');
+    });
+
+    // Nhật ký lịch hẹn
+    Route::prefix('appointment-logs')->name('appointment-logs.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\AppointmentLogController::class, 'index'])->name('index');
+    });
 });
