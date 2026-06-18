@@ -6,6 +6,7 @@ use App\Models\Specialty;
 use App\Models\SystemLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class SpecialtyController extends Controller {
 public function index() 
@@ -56,5 +57,52 @@ public function store(Request $request)
         ]);
 
         return back()->with('success', 'Đã thêm chuyên khoa thành công.');
+    }
+
+    public function update(Request $request, $id)
+    {
+        $specialty = Specialty::findOrFail($id);
+
+        $request->validate([
+            'name' => ['required', 'string', 'max:150', Rule::unique('specialties')->ignore($specialty->id)],
+            'description' => 'nullable|string',
+            'display_order' => 'nullable|integer|min:0',
+            'is_active' => 'boolean',
+            'image' => 'nullable|file|mimes:jpg,jpeg,png,svg|max:2048',
+        ], [
+            'name.required' => 'Vui lòng nhập tên chuyên khoa.',
+            'name.unique' => 'Tên chuyên khoa đã tồn tại.',
+            'display_order.min' => 'Thứ tự không hợp lệ.',
+        ]);
+
+        $data = [
+            'name' => $request->name,
+            'description' => $request->description,
+            'display_order' => $request->display_order ?? 0,
+            'is_active' => $request->has('is_active'),
+        ];
+
+         if ($request->hasFile('image') && $request->file('image')->isValid()) {
+            if ($specialty->image_url) {
+                Storage::disk('public')->delete($specialty->image_url);
+            }
+            
+            $path = $request->file('image')->store('specialties', 'public');
+            $data['image_url'] = $path;
+        }
+
+        $specialty->update($data);
+
+        SystemLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'SPECIALTY_UPDATED',
+            'module' => 'specialty_management',
+            'ref_type' => 'specialty',
+            'ref_id' => $specialty->id,
+            'description' => 'Cập nhật chuyên khoa: ' . $specialty->name,
+            'ip_address' => request()->ip()
+        ]);
+
+        return back()->with('success', 'Đã cập nhật chuyên khoa thành công.');
     }
 }
