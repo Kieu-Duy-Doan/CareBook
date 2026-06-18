@@ -1,12 +1,10 @@
-<?php
-
+<?php 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Specialty extends Model
-{
-    protected $fillable = [
+class Specialty extends Model {
+   protected $fillable = [
         'name',
         'description',
         'image_url',
@@ -14,12 +12,9 @@ class Specialty extends Model
         'is_active',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'is_active' => 'boolean',
-        ];
-    }
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
 
     public function rooms()
     {
@@ -31,3 +26,4 @@ class Specialty extends Model
         return $this->belongsToMany(DoctorProfile::class, 'doctor_specialties')->withPivot('is_primary');
     }
 }
+?>
