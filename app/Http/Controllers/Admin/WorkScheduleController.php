@@ -417,4 +417,33 @@ class WorkScheduleController extends Controller
 
         return back()->with('success', 'Đã thay đổi trạng thái ca trực.');
     }
+
+    public function destroy($id)
+    {
+        $schedule = WorkSchedule::findOrFail($id);
+
+        $hasActiveAppointments = \App\Models\Appointment::where('doctor_profile_id', $schedule->doctor_profile_id)
+            ->whereIn('status', ['pending', 'checked_in'])
+            ->whereRaw('DAYOFWEEK(appointment_date) = ?', [($schedule->day_of_week % 7) + 1])
+            ->where('appointment_date', '>=', now()->toDateString())
+            ->exists();
+
+        if ($hasActiveAppointments) {
+            session()->flash('warning', 'Ca trực đã được xoá nhưng bác sĩ này đang có lịch hẹn chờ khám vào thứ tương ứng. Hãy kiểm tra lại lịch hẹn.');
+        }
+
+        $schedule->delete();
+
+        SystemLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'WORK_SCHEDULE_DELETED',
+            'module' => 'work_schedule',
+            'ref_type' => 'work_schedule',
+            'ref_id' => $id,
+            'description' => 'Xoá ca trực',
+            'ip_address' => request()->ip()
+        ]);
+
+        return back()->with('success', 'Đã xoá ca trực thành công.');
+    }
 }
