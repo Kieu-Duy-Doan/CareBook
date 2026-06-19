@@ -123,6 +123,12 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
             Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'toggleActive'])->name('toggle-active');
             Route::delete('/{id}', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'destroy'])->name('destroy');
         });
+
+        // Responses (Nested inside Intents)
+        Route::post('/{intent_id}/responses', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'storeResponse'])->name('responses.store');
+        Route::put('/{intent_id}/responses/{id}', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'updateResponse'])->name('responses.update');
+        Route::patch('/{intent_id}/responses/{id}/toggle-active', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'toggleResponseActive'])->name('responses.toggle-active');
+        Route::delete('/{intent_id}/responses/{id}', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'destroyResponse'])->name('responses.destroy');
     });
 
     // Thông báo
