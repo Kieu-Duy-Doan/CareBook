@@ -163,4 +163,5 @@ Route::prefix('api')->name('api.')->group(function () {
 
     // Lấy danh lịch làm việc theo bác sĩ và ngày
     Route::get('/work-schedule/by-doctor-date/{doctorId}/{appointmentDate}', [\App\Http\Controllers\Api\WorkScheduleController::class, 'getWorkSchedule'])->name('work-schedule');
+    Route::post('/chatbot/message', [\App\Http\Controllers\Api\ChatbotController::class, 'sendMessage'])->name('chatbot.message');
 });
