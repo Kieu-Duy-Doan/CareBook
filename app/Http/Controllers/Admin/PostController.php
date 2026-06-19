@@ -178,4 +178,27 @@ class PostController extends Controller
         return back()->with('success', 'Đã thay đổi trạng thái đăng bài.');
     }
 
+     public function destroy($id)
+    {
+        $post = Post::findOrFail($id);
+
+        if ($post->thumbnail_url) {
+            $oldPath = str_replace('/storage/', '', $post->thumbnail_url);
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+        }
+
+        $post->delete();
+
+        SystemLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'POST_DELETED',
+            'module' => 'cms',
+            'ref_type' => 'post',
+            'ref_id' => $id,
+            'description' => 'Xoá bài viết',
+            'ip_address' => request()->ip()
+        ]);
+
+        return redirect()->route('admin.posts.index')->with('success', 'Đã xoá bài viết thành công.');
+    }
 }
