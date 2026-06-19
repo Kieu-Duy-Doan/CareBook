@@ -164,5 +164,18 @@ class PostController extends Controller
 
         return redirect()->route('admin.posts.edit', $post->id)->with('success', 'Đã cập nhật bài viết thành công.');
     }
+     public function togglePublish($id)
+    {
+        $post = Post::findOrFail($id);
+        $post->is_published = !$post->is_published;
+
+        if ($post->is_published && is_null($post->published_at)) {
+            $post->published_at = now();
+        }
+
+        $post->save();
+
+        return back()->with('success', 'Đã thay đổi trạng thái đăng bài.');
+    }
 
 }
