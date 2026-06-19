@@ -71,7 +71,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Chuyên khoa khám <span
                                     class="text-red-500">*</span></label>
-                            <select name="specialty_id" required
+                            <select name="specialty_id" onchange="handleSpecialtyChange(event)" required
                                 class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
                                 <option value="">-- Chọn chuyên khoa --</option>
                                 @foreach ($specialties as $sp)
@@ -87,7 +87,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Bác sĩ khám <span
                                     class="text-red-500">*</span></label>
-                            <select name="doctor_profile_id" required
+                            <select name="doctor_profile_id" required onchange="handleDoctorOrAppointmentChange(event)"
                                 class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
                                 <option value="">-- Chọn bác sĩ --</option>
                                 @foreach ($doctors as $doc)
@@ -100,38 +100,33 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Phòng khám <span
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Ngày hẹn khám <span
                                     class="text-red-500">*</span></label>
-                            <select name="room_id" required
-                                class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
-                                <option value="">-- Chọn phòng khám --</option>
-                                @foreach ($rooms as $rm)
-                                    <option value="{{ $rm->id }}"
-                                        {{ old('room_id', $appointment->room_id) == $rm->id ? 'selected' : '' }}>
-                                        {{ $rm->name }} ({{ $rm->room_number }})
-                                    </option>
-                                @endforeach
-                            </select>
+                            <input type="date" name="appointment_date"
+                                value="{{ old('appointment_date', $appointment->appointment_date ? $appointment->appointment_date->toDateString() : '') }}"
+                                required onchange="handleDoctorOrAppointmentChange(event)"
+                                class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Ngày hẹn khám <span
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Giờ khám <span
                                     class="text-red-500">*</span></label>
-                            <input type="date" name="appointment_date"
-                                value="{{ old('appointment_date', $appointment->appointment_date ? $appointment->appointment_date->toDateString() : '') }}"
-                                required
-                                class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none">
+                            <div id='time_infomation'
+                                class="block w-full py-2 px-3 border border-gray-300 rounded-lg bg-gray-50 text-sm text-gray-700">
+                                Đang tải lịch hẹn...
+                            </div>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Giờ khám <span
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Phòng khám <span
                                     class="text-red-500">*</span></label>
-                            <input type="time" name="appointment_time"
-                                value="{{ old('appointment_time', $appointment->appointment_time ? substr($appointment->appointment_time, 0, 5) : '') }}"
-                                required
-                                class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none">
+                            <input type="hidden" name="room_id" value="{{ old('room_id', $appointment->room_id) }}">
+                            <div id='room_infomation'
+                                class="block w-full py-2 px-3 border border-gray-300 rounded-lg bg-gray-50 text-sm text-gray-700 font-medium">
+                                Đang tải thông tin phòng...
+                            </div>
                         </div>
                     </div>
 
@@ -347,4 +342,164 @@
             </button>
         </div>
     </form>
+
+    @php
+        $initDate = $appointment->appointment_date ? $appointment->appointment_date->toDateString() : '';
+        $initTime = $appointment->appointment_time ? substr($appointment->appointment_time, 0, 5) : '';
+        $initRoomName = $appointment->room ? $appointment->room->name . ' - ' . $appointment->room->room_number : '';
+    @endphp
+    <script>
+        const initialSpecialty = @json(old('specialty_id', $appointment->specialty_id));
+        const initialDoctor = @json(old('doctor_profile_id', $appointment->doctor_profile_id));
+        const initialDate = @json(old('appointment_date', $initDate));
+        const initialTime = @json(old('appointment_time', $initTime));
+        const initialRoomId = @json(old('room_id', $appointment->room_id));
+        const initialRoomName = @json($initRoomName);
+    </script>
+
+    <script>
+        const specialtySelect = document.querySelector('select[name="specialty_id"]');
+        const doctorSelect = document.querySelector('select[name="doctor_profile_id"]');
+        const appointmentDateSelect = document.querySelector('input[name="appointment_date"]');
+
+        const timeAppointment = document.querySelector('#time_infomation');
+        const roomInput = document.querySelector('input[name="room_id"]');
+        const roomInfo = document.querySelector('#room_infomation');
+
+        function renderDoctors(doctors) {
+            doctorSelect.innerHTML = '<option value="">-- Chọn bác sĩ --</option>';
+
+            if (doctors.length === 0) {
+                const option = document.createElement('option');
+                option.textContent = 'Không có bác sĩ nào thuộc chuyên khoa';
+                option.disabled = true;
+                doctorSelect.appendChild(option);
+                return;
+            }
+            doctors.forEach(doctor => {
+                const option = document.createElement('option');
+                option.value = doctor.id;
+                option.textContent = doctor.user.full_name;
+                if (doctor.id == initialDoctor) {
+                    option.selected = true;
+                }
+                doctorSelect.appendChild(option);
+            });
+        }
+
+        function renderTimeAppointment(times) {
+            if (!times || times.length === 0) {
+                timeAppointment.innerHTML = 'Không có lịch khám trong ngày này.';
+                roomInput.value = '';
+                roomInfo.textContent = 'Vui lòng chọn ngày có lịch khám';
+                return;
+            }
+
+            const div = document.createElement('div');
+            div.classList.add('flex', 'flex-wrap', 'gap-3');
+
+            let hasChecked = false;
+
+            const htmls = times.map((slot, index) => {
+                const isChecked = slot.time === initialTime;
+                if (isChecked) hasChecked = true;
+                
+                // Nếu ca này đang được chọn (lịch cũ), không chặn dù nó báo is_full = true
+                const disabled = (slot.is_full && !isChecked) ? 'disabled' : '';
+                const labelClass = (slot.is_full && !isChecked) 
+                    ? 'block px-4 py-2 border border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed rounded-lg'
+                    : 'block px-4 py-2 border border-green-500 rounded-lg cursor-pointer peer-checked:bg-green-500 peer-checked:text-white';
+                    
+                const roomDisplay = slot.room ? `${slot.room.name} - ${slot.room.room_number}` : '';
+                const roomId = slot.room ? slot.room.id : '';
+
+                return `
+                    <div>
+                        <input type="radio" name="appointment_time" value="${slot.time}" id="time_${index}"
+                            class="hidden peer" data-room-id="${roomId}" data-room-name="${roomDisplay}" ${disabled} ${isChecked ? 'checked' : ''}>
+
+                        <label for="time_${index}" class="${labelClass}">
+                            ${slot.time}
+                        </label>
+                    </div>
+                `;
+            }).join('');
+
+            div.innerHTML = htmls;
+            timeAppointment.innerHTML = '';
+            timeAppointment.appendChild(div);
+
+            const appointmentTimes = document.querySelectorAll('input[name="appointment_time"]');
+
+            appointmentTimes.forEach(radio => {
+                radio.addEventListener('change', (event) => {
+                    const selected = event.target;
+                    roomInput.value = selected.dataset.roomId;
+                    roomInfo.textContent = selected.dataset.roomName;
+                });
+            });
+            
+            // Tự động set thông tin phòng nếu có radio checked
+            const checkedRadio = document.querySelector('input[name="appointment_time"]:checked');
+            if(checkedRadio) {
+                roomInput.value = checkedRadio.dataset.roomId;
+                roomInfo.textContent = checkedRadio.dataset.roomName;
+            } else if (!hasChecked) {
+                roomInput.value = '';
+                roomInfo.textContent = 'Vui lòng chọn ca khám';
+            }
+        }
+        
+        function handleSpecialtyChange(event) {
+            doctorSelect.innerHTML = '<option value="">Đang tải bác sĩ...</option>';
+            let specialtyId = event.target.value;
+
+            if (specialtyId) {
+                axios
+                    .get('/api/doctors/by-specialty/' + specialtyId)
+                    .then((response) => {
+                        renderDoctors(response.data.data);
+                    })
+                    .catch((error) => {
+                        const option = document.createElement('option');
+                        option.textContent = 'Có lỗi xảy ra vui lòng thử lại!';
+                        option.disabled = true;
+                        doctorSelect.appendChild(option);
+                    });
+            } else {
+                doctorSelect.innerHTML = '<option value="">-- Chọn bác sĩ --</option>';
+            }
+            timeAppointment.innerHTML = 'Vui lòng chọn bác sĩ và ngày khám';
+            roomInfo.textContent = 'Vui lòng chọn bác sĩ và ngày khám';
+            roomInput.value = '';
+        }
+
+        function handleDoctorOrAppointmentChange(event) {
+            let doctorId = doctorSelect.value;
+            let appointmentDate = appointmentDateSelect.value;
+
+            if (doctorId && appointmentDate) {
+                timeAppointment.innerHTML = 'Đang tải lịch hẹn...';
+                axios
+                    .get('/api/work-schedule/by-doctor-date/' + doctorId + '/' + appointmentDate)
+                    .then((response) => {
+                        renderTimeAppointment(response.data.data.today_schedule);
+                    })
+                    .catch((error) => {
+                        timeAppointment.innerHTML = 'Có lỗi xảy ra vui lòng thử lại!';
+                        console.log(error);
+                    });
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (initialDoctor && initialDate) {
+                if (initialRoomId) {
+                    roomInput.value = initialRoomId;
+                    roomInfo.textContent = initialRoomName || 'Đang tải thông tin phòng...';
+                }
+                handleDoctorOrAppointmentChange();
+            }
+        });
+    </script>
 </x-layouts.admin>

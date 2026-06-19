@@ -174,7 +174,7 @@
                                 Giờ khám</th>
                             <th scope="col"
                                 class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Slot tối đa</th>
+                                Số slot trong 1 ca khám</th>
                             <th scope="col"
                                 class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Thời lượng</th>
@@ -607,10 +607,11 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Phòng khám</label>
-                                <select name="room_id"
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Phòng khám <span
+                                        class="text-red-500">*</span></label>
+                                <select name="room_id" required
                                     class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 text-sm outline-none bg-white">
-                                    <option value="">Tất cả phòng (Áp dụng chung)</option>
+                                    <option value="">--Vui lòng chọn phòng--</option>
                                     @foreach ($rooms as $room)
                                         <option value="{{ $room->id }}">{{ $room->name }}
                                             {{ $room->room_number ? '(' . $room->room_number . ')' : '' }}</option>

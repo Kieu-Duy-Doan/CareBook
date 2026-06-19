@@ -120,13 +120,25 @@ class WorkScheduleController extends Controller
                 ->with('room')
                 ->get();
 
-            $overrides = ScheduleOverride::where('doctor_profile_id', $doctorId)
+            $allOverrides = ScheduleOverride::where('doctor_profile_id', $doctorId)
                 ->whereDate('override_date', $carbonDate->toDateString())
-                ->where('type', 'extra')
                 ->with('room')
                 ->get();
 
-            // dd($todaySchedules->toArray(), $overrides->toArray());
+            $closeOverrides = $allOverrides->where('type', 'close');
+            $overrides = $allOverrides->where('type', 'extra')->values();
+
+            if ($closeOverrides->isNotEmpty()) {
+                $todaySchedules = $todaySchedules->reject(function ($schedule) use ($closeOverrides) {
+                    foreach ($closeOverrides as $close) {
+                        if (substr($close->start_time, 0, 5) === substr($schedule->start_time, 0, 5) &&
+                            substr($close->end_time, 0, 5) === substr($schedule->end_time, 0, 5)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                })->values();
+            }
 
             if ($todaySchedules->isEmpty() && $overrides->isEmpty()) {
                 return response()->json([
@@ -139,6 +151,19 @@ class WorkScheduleController extends Controller
             }
 
 
+            $appointmentsCountRaw = \App\Models\Appointment::where('doctor_profile_id', $doctorId)
+                ->whereDate('appointment_date', $carbonDate->toDateString())
+                ->where('status', '!=', 'cancelled')
+                ->select('appointment_time', \DB::raw('COUNT(*) as count'))
+                ->groupBy('appointment_time')
+                ->pluck('count', 'appointment_time')->toArray();
+
+            $appointmentsCount = [];
+            foreach ($appointmentsCountRaw as $time => $count) {
+                $formattedTime = substr($time, 0, 5);
+                $appointmentsCount[$formattedTime] = ($appointmentsCount[$formattedTime] ?? 0) + $count;
+            }
+
             $slots = [];
 
             // Nếu lịch hằng ngày không trống
@@ -148,6 +173,7 @@ class WorkScheduleController extends Controller
                     $startTime = $todaySchedule->start_time;
                     $endTime = $todaySchedule->end_time;
                     $duration = $todaySchedule->slot_duration_minutes;
+                    $maxSlots = $todaySchedule->max_slots;
 
 
                     $current = Carbon::createFromFormat('H:i:s', $startTime);
@@ -156,10 +182,13 @@ class WorkScheduleController extends Controller
                     while ($current->lt($end)) {
 
                         $slot = $current->copy();
+                        $timeStr = $slot->format('H:i');
+                        $isFull = ($appointmentsCount[$timeStr] ?? 0) >= $maxSlots;
 
                         $slotNormals[] = [
-                            'time' => $slot->format('H:i'),
+                            'time' => $timeStr,
                             'room' => $todaySchedule->room,
+                            'is_full' => $isFull,
                         ];
 
                         $current->addMinutes($duration);
@@ -174,6 +203,7 @@ class WorkScheduleController extends Controller
                     $startTime = $override->start_time;
                     $endTime = $override->end_time;
                     $duration = $override->slot_duration_minutes ?? 15;
+                    $maxSlots = $override->max_slots ?? 2;
 
 
                     $current = Carbon::createFromFormat('H:i:s', $startTime);
@@ -182,10 +212,13 @@ class WorkScheduleController extends Controller
                     while ($current->lt($end)) {
 
                         $slot = $current->copy();
+                        $timeStr = $slot->format('H:i');
+                        $isFull = ($appointmentsCount[$timeStr] ?? 0) >= $maxSlots;
 
                         $slotOverrides[] = [
-                            'time' => $slot->format('H:i'),
+                            'time' => $timeStr,
                             'room' => $override->room,
+                            'is_full' => $isFull,
                         ];
 
                         $current->addMinutes($duration);

@@ -208,14 +208,15 @@ class AppointmentController extends Controller
             'measured_by'        => 'nullable|exists:users,id',
         ]);
 
-        // Tránh trùng lịch hẹn của cùng 1 bác sĩ tại cùng ngày và giờ
-        $exists = Appointment::where('doctor_profile_id', $request->doctor_profile_id)
+        // Kiểm tra xem bệnh nhân này đã có lịch hẹn với cùng bác sĩ, cùng ngày và cùng giờ chưa
+        $exists = Appointment::where('patient_profile_id', $request->patient_profile_id)
+            ->where('doctor_profile_id', $request->doctor_profile_id)
             ->whereDate('appointment_date', $request->appointment_date)
             ->whereTime('appointment_time', $request->appointment_time)
             ->exists();
 
         if ($exists) {
-            return back()->withErrors(['appointment_time' => 'Bác sĩ đã có lịch hẹn vào ngày và khung giờ này. Vui lòng chọn khung giờ khác.'])->withInput();
+            return back()->withErrors(['appointment_time' => 'Bệnh nhân này đã có lịch hẹn với bác sĩ vào ngày và khung giờ này. Vui lòng chọn khung giờ khác.'])->withInput();
         }
 
         $patient = PatientProfile::findOrFail($request->patient_profile_id);
@@ -275,7 +276,14 @@ class AppointmentController extends Controller
         $appointment = Appointment::findOrFail($id);
         $patients = PatientProfile::orderBy('full_name')->get();
         $specialties = Specialty::where('is_active', true)->orderBy('name')->get();
-        $doctors = DoctorProfile::with('user')->whereHas('user', fn($q) => $q->where('is_active', true))->get();
+        
+        $currentSpecialtyId = old('specialty_id', $appointment->specialty_id);
+        
+        $doctors = DoctorProfile::with('user')
+            ->whereHas('user', fn($q) => $q->where('is_active', true))
+            ->whereHas('specialties', fn($q) => $q->where('specialties.id', $currentSpecialtyId))
+            ->get();
+            
         $rooms = Room::where('is_active', true)->orderBy('name')->get();
         $users = User::where('is_active', true)->orderBy('full_name')->get();
 
@@ -312,14 +320,16 @@ class AppointmentController extends Controller
             'measured_by'        => 'nullable|exists:users,id',
         ]);
 
-        $exists = Appointment::where('doctor_profile_id', $request->doctor_profile_id)
+        // Kiểm tra xem bệnh nhân này đã có lịch hẹn với cùng bác sĩ, cùng ngày và cùng giờ chưa (trừ lịch hiện tại)
+        $exists = Appointment::where('patient_profile_id', $request->patient_profile_id)
+            ->where('doctor_profile_id', $request->doctor_profile_id)
             ->whereDate('appointment_date', $request->appointment_date)
             ->whereTime('appointment_time', $request->appointment_time)
             ->where('id', '!=', $id)
             ->exists();
 
         if ($exists) {
-            return back()->withErrors(['appointment_time' => 'Bác sĩ đã có lịch hẹn vào ngày và khung giờ này. Vui lòng chọn khung giờ khác.'])->withInput();
+            return back()->withErrors(['appointment_time' => 'Bệnh nhân này đã có lịch hẹn với bác sĩ vào ngày và khung giờ này. Vui lòng chọn khung giờ khác.'])->withInput();
         }
 
         $patient = PatientProfile::findOrFail($request->patient_profile_id);
@@ -380,9 +390,18 @@ class AppointmentController extends Controller
     public function destroy($id)
     {
         $appointment = Appointment::findOrFail($id);
-        $appointment->delete();
 
-        return redirect()->route('admin.appointments.index')->with('success', 'Xoá lịch hẹn thành công.');
+        try {
+            DB::transaction(function () use ($appointment) {
+                // Xoá logs liên quan trước (do có ràng buộc restrictOnDelete)
+                $appointment->logs()->delete();
+                $appointment->delete();
+            });
+
+            return redirect()->route('admin.appointments.index')->with('success', 'Xoá lịch hẹn thành công.');
+        } catch (\Exception $e) {
+            return redirect()->route('admin.appointments.index')->with('error', 'Không thể xoá lịch hẹn này. Lịch hẹn có thể đang liên kết với dữ liệu khác trong hệ thống.');
+        }
     }
 
     public function updateStatus(Request $request, $id)

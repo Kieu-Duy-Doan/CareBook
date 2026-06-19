@@ -35,6 +35,18 @@
         </div>
     @endif
 
+    @if (session('error'))
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 6000)" style="display: none;"
+            class="bg-red-50 text-red-800 p-4 rounded-lg mb-6 flex items-center justify-between border border-red-200">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-circle-exclamation text-red-500"></i>
+                {{ session('error') }}
+            </div>
+            <button @click="show=false" class="text-red-500 hover:text-red-700"><i
+                    class="fa-solid fa-xmark"></i></button>
+        </div>
+    @endif
+
     <!-- FILTER FORM -->
     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
         <form action="{{ route('admin.appointments.index') }}" method="GET" class="space-y-4">

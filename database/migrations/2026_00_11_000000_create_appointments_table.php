@@ -40,8 +40,6 @@ return new class extends Migration
 
             $table->foreign('specialty_id')->references('id')->on('specialties')->restrictOnDelete();
             $table->foreign('room_id')->references('id')->on('rooms')->restrictOnDelete();
-
-            $table->unique(['doctor_profile_id', 'appointment_date', 'appointment_time'], 'appt_doc_date_time_unique');
         });
     }
 

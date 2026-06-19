@@ -38,6 +38,8 @@
                         <i class="fa-solid fa-times-circle mr-1"></i> Tạm ngưng
                     </span>
                 @endif
+                
+                @if(!isset($isOverride))
                 <form action="{{ route('admin.work-schedules.toggle-active', $schedule->id) }}" method="POST"
                     class="mt-1">
                     @csrf @method('PATCH')
@@ -45,6 +47,7 @@
                         {{ $schedule->is_active ? 'Chuyển sang Tạm ngưng' : 'Kích hoạt lại ca này' }}
                     </button>
                 </form>
+                @endif
             </div>
         </div>
 

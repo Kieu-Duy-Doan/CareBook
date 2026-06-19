@@ -64,6 +64,14 @@ class WorkScheduleController extends Controller
             'is_active' => 'boolean'
         ]);
 
+        $isValidTime = ($request->start_time === '07:00' && $request->end_time === '11:00') ||
+                       ($request->start_time === '13:00' && $request->end_time === '17:00');
+
+        if (!$isValidTime) {
+            return back()->with('error', 'Thời gian ca trực chỉ được phép là Sáng (07:00 - 11:00) hoặc Chiều (13:00 - 17:00).')->withInput();
+        }
+
+        // Kiểm tra bác sĩ được chọn đã có lịch làm việc tại phòng này vào thứ đã chọn chưa
         $existsRoom = WorkSchedule::where('doctor_profile_id', $request->doctor_profile_id)
             ->where('room_id', $request->room_id)
             ->where('day_of_week', $request->day_of_week)
@@ -72,6 +80,8 @@ class WorkScheduleController extends Controller
         if ($existsRoom) {
             return back()->with('error', 'Bác sĩ này đã có lịch tại phòng này vào thứ đã chọn.');
         }
+
+        // Kiểm tra bác sĩ được chọn đã có ca làm việc trùng thời gian vào thứ đã chọn chưa
 
         $existsTime = WorkSchedule::where('doctor_profile_id', $request->doctor_profile_id)
             ->where('day_of_week', $request->day_of_week)
@@ -84,6 +94,20 @@ class WorkScheduleController extends Controller
 
         if ($existsTime) {
             return back()->with('error', 'Bác sĩ đã có lịch làm việc trùng thời gian.');
+        }
+
+        // Kiểm tra lịch đăng ký có trùng với lịch hay phòng bác sĩ khác không
+        $existsTimeAndRoomWithOthers = WorkSchedule::where('day_of_week', $request->day_of_week)
+            ->where('is_active', true)
+            ->where('room_id', $request->room_id)
+            ->where(function ($query) use ($request) {
+                $query->where('start_time', '<', $request->end_time)
+                    ->where('end_time', '>', $request->start_time);
+            })
+            ->exists();
+
+        if ($existsTimeAndRoomWithOthers) {
+            return back()->with('error', 'Lịch này đã có bác sĩ khác làm việc.');
         }
 
         $schedule = WorkSchedule::create([
@@ -131,14 +155,18 @@ class WorkScheduleController extends Controller
 
         // dd($overrides->toArray());
 
-        // Lấy danh sách lịch hẹn sắp tới thuộc ca trực này
+        $targetIsoDay = $schedule->day_of_week - 1;
+        if ($targetIsoDay == 0) {
+            $targetIsoDay = 7;
+        }
+        $targetDate = $weekStart->copy()->addDays($targetIsoDay - 1);
+
+        // Lấy danh sách lịch hẹn trong tuần này thuộc ca trực này
         $upcomingAppointments = \App\Models\Appointment::with(['patientProfile.user'])
             ->where('doctor_profile_id', $schedule->doctor_profile_id)
-            ->whereRaw('DAYOFWEEK(appointment_date) = ?', [$schedule->day_of_week])
-            ->where('appointment_date', '>=', now()->toDateString())
+            ->whereDate('appointment_date', $targetDate)
             ->whereTime('appointment_time', '>=', $schedule->start_time)
             ->whereTime('appointment_time', '<', $schedule->end_time)
-            ->orderBy('appointment_date')
             ->orderBy('appointment_time')
             ->paginate(15);
 
@@ -235,40 +263,51 @@ class WorkScheduleController extends Controller
 
     public function showOverride($id)
     {
-        // dd('show override', $id);
         $overrideSchedule = ScheduleOverride::with(['doctor.user', 'room'])->findOrFail($id);
 
-        $schedule = WorkSchedule::with(['doctor.user', 'room'])->findOrFail($overrideSchedule->doctor_profile_id);
+        $dayOfWeek = Carbon::parse($overrideSchedule->override_date)->dayOfWeekIso + 1;
+        if ($dayOfWeek == 8) {
+            $dayOfWeek = 1;
+        }
 
-        dd($overrideSchedule->toArray());
+        // Tạo mock schedule để hiển thị trên view
+        $schedule = new WorkSchedule([
+            'id' => $overrideSchedule->id,
+            'doctor_profile_id' => $overrideSchedule->doctor_profile_id,
+            'room_id' => $overrideSchedule->room_id,
+            'day_of_week' => $dayOfWeek,
+            'start_time' => $overrideSchedule->start_time,
+            'end_time' => $overrideSchedule->end_time,
+            'slot_duration_minutes' => 15,
+            'is_active' => true,
+        ]);
+
+        $schedule->setRelation('doctor', $overrideSchedule->doctor);
+        $schedule->setRelation('room', $overrideSchedule->room);
+
+        $startMin = (int)date('H', strtotime($schedule->start_time)) * 60 + (int)date('i', strtotime($schedule->start_time));
+        $endMin = (int)date('H', strtotime($schedule->end_time)) * 60 + (int)date('i', strtotime($schedule->end_time));
+        $duration = $schedule->slot_duration_minutes;
+        $slotsCount = $duration > 0 ? floor(($endMin - $startMin) / $duration) : 0;
+        $schedule->max_slots = $slotsCount;
 
         $today = Carbon::today();
-        // $today = Carbon::parse('2026-06-28');
-
         $weekStart = $today->copy()->startOfWeek(Carbon::MONDAY);
         $weekEnd = $today->copy()->endOfWeek(Carbon::SUNDAY);
-
-        // dd($weekStart->toDateString(), $weekEnd->toDateString());
 
         $overrides = ScheduleOverride::with('room')->where('doctor_profile_id', $schedule->doctor_profile_id)
             ->whereBetween('override_date', [$weekStart, $weekEnd])
             ->get();
 
-
-        // dd($overrides->toArray());
-
-        // Lấy danh sách lịch hẹn sắp tới thuộc ca trực này
+        // Lấy danh sách lịch hẹn sắp tới thuộc ca ngoại lệ này
         $upcomingAppointments = \App\Models\Appointment::with(['patientProfile.user'])
             ->where('doctor_profile_id', $schedule->doctor_profile_id)
-            ->whereRaw('DAYOFWEEK(appointment_date) = ?', [$overrideSchedule->override_date->dayOfWeekIso + 1])
-            ->where('appointment_date', '>=', now()->toDateString())
+            ->whereDate('appointment_date', $overrideSchedule->override_date)
             ->whereTime('appointment_time', '>=', $overrideSchedule->start_time)
             ->whereTime('appointment_time', '<', $overrideSchedule->end_time)
             ->orderBy('appointment_date')
             ->orderBy('appointment_time')
             ->paginate(15);
-
-        // dd($upcomingAppointments->toArray());
 
         // Lấy lịch làm việc cả tuần của bác sĩ này
         $weeklySchedules = WorkSchedule::with('room')
@@ -278,24 +317,20 @@ class WorkScheduleController extends Controller
             ->get()
             ->groupBy('day_of_week');
 
-        // dd($weeklySchedules->toArray());
-
         if (!empty($overrides)) {
             foreach ($overrides as $override) {
-                $dayOfWeek = Carbon::parse($override['override_date'])->dayOfWeekIso + 1;
-
-                if ($dayOfWeek == 8) {
-                    $dayOfWeek = 1;
+                $ovDayOfWeek = Carbon::parse($override['override_date'])->dayOfWeekIso + 1;
+                if ($ovDayOfWeek == 8) {
+                    $ovDayOfWeek = 1;
                 }
-                // dd($override->toArray(), $dayOfWeek);
 
-                if (!isset($weeklySchedules[$dayOfWeek])) {
-                    $weeklySchedules[$dayOfWeek] = [
+                if (!isset($weeklySchedules[$ovDayOfWeek])) {
+                    $weeklySchedules[$ovDayOfWeek] = [
                         [
                             'id' => $override->id,
                             "doctor_profile_id" => $override['doctor_profile_id'],
                             "room_id" => $override['room_id'],
-                            "day_of_week" => $dayOfWeek,
+                            "day_of_week" => $ovDayOfWeek,
                             "start_time" => $override['start_time'],
                             "end_time" => $override['end_time'],
                             "slot_duration_minutes" => 15,
@@ -305,32 +340,22 @@ class WorkScheduleController extends Controller
                             'room' => $override['room']
                         ]
                     ];
-
                     continue;
                 }
 
-                foreach ($weeklySchedules[$dayOfWeek] as $key => $schedule) {
-                    // // dd($override->toArray());
-                    // dd([
-                    //     'override' => $override->start_time,
-                    //     'schedule' => $schedule->start_time,
-                    //     'equal' => $override->start_time == $schedule->start_time,
-                    // ]);
-
+                foreach ($weeklySchedules[$ovDayOfWeek] as $key => $ws) {
                     if (
                         $override->type == 'close' &&
-                        $override->start_time == $schedule->start_time &&
-                        $override->end_time == $schedule->end_time
+                        $override->start_time == $ws->start_time &&
+                        $override->end_time == $ws->end_time
                     ) {
-                        unset($weeklySchedules[$dayOfWeek][$key]);
-                    } elseif (
-                        $override->type === 'extra'
-                    ) {
-                        $weeklySchedules[$dayOfWeek][] = [
+                        unset($weeklySchedules[$ovDayOfWeek][$key]);
+                    } elseif ($override->type === 'extra') {
+                        $weeklySchedules[$ovDayOfWeek][] = [
                             'id' => $override->id,
                             "doctor_profile_id" => $override['doctor_profile_id'],
                             "room_id" => $override['room_id'],
-                            "day_of_week" => $dayOfWeek,
+                            "day_of_week" => $ovDayOfWeek,
                             "start_time" => $override['start_time'],
                             "end_time" => $override['end_time'],
                             "slot_duration_minutes" => 15,
@@ -344,20 +369,9 @@ class WorkScheduleController extends Controller
             }
         }
 
-        // dd($weeklySchedules->toArray());
+        $isOverride = true;
 
-        // dd($schedule->toArray());
-
-        // dd((int)date('H', strtotime($schedule->start_time)));
-
-        // dd(get_debug_type($minute));
-        // Tạo mảng slot giờ khám để hiển thị (tùy chọn)
-        $startMin = (int)date('H', strtotime($schedule->start_time)) * 60 + (int)date('i', strtotime($schedule->start_time));
-        $endMin = (int)date('H', strtotime($schedule->end_time)) * 60 + (int)date('i', strtotime($schedule->end_time));
-        $duration = $schedule->slot_duration_minutes;
-        $slotsCount = $duration > 0 ? floor(($endMin - $startMin) / $duration) : 0;
-
-        return view('admin.work-schedules.show', compact('schedule', 'upcomingAppointments', 'slotsCount', 'weeklySchedules'));
+        return view('admin.work-schedules.show', compact('schedule', 'upcomingAppointments', 'slotsCount', 'weeklySchedules', 'isOverride'));
     }
 
     public function update(Request $request, $id)
@@ -374,6 +388,13 @@ class WorkScheduleController extends Controller
             'max_slots' => 'required|integer|min:1|max:100',
             'is_active' => 'boolean'
         ]);
+
+        $isValidTime = ($request->start_time === '07:00' && $request->end_time === '11:00') ||
+                       ($request->start_time === '13:00' && $request->end_time === '17:00');
+
+        if (!$isValidTime) {
+            return back()->with('error', 'Thời gian ca trực chỉ được phép là Sáng (07:00 - 11:00) hoặc Chiều (13:00 - 17:00).')->withInput();
+        }
 
         $exists = WorkSchedule::where('doctor_profile_id', $request->doctor_profile_id)
             ->where('room_id', $request->room_id)
@@ -452,15 +473,82 @@ class WorkScheduleController extends Controller
         try {
             $request->validate([
                 'doctor_profile_id' => 'required|exists:doctor_profiles,id',
-                'room_id' => 'nullable|exists:rooms,id',
+                'room_id' => 'required|exists:rooms,id',
                 'override_date' => 'required|date|after_or_equal:today',
                 'type' => 'required|in:close,extra',
-                'start_time' => 'required_if:type,extra|nullable|date_format:H:i',
-                'end_time' => 'required_if:type,extra|nullable|date_format:H:i|after:start_time',
+                'start_time' => 'required|date_format:H:i',
+                'end_time' => 'required|date_format:H:i|after:start_time',
                 'reason' => 'nullable|string|max:255'
             ], [
-                'required_if' => 'Vui lòng nhập giờ nếu là thêm ca.'
+                'start_time.required' => 'Vui lòng nhập giờ bắt đầu.',
+                'end_time.required' => 'Vui lòng nhập giờ kết thúc.',
             ]);
+
+            $isValidTime = ($request->start_time === '07:00' && $request->end_time === '11:00') ||
+                           ($request->start_time === '13:00' && $request->end_time === '17:00');
+
+            if (!$isValidTime) {
+                return back()->with('error', 'Thời gian ca trực chỉ được phép là Sáng (07:00 - 11:00) hoặc Chiều (13:00 - 17:00).')->withInput();
+            }
+
+            $dayOfWeek = Carbon::parse($request->override_date)->dayOfWeekIso + 1;
+            if ($dayOfWeek == 8) {
+                $dayOfWeek = 1;
+            }
+
+            $overlapQuery = WorkSchedule::where('doctor_profile_id', $request->doctor_profile_id)
+                ->where('day_of_week', $dayOfWeek)
+                ->where('is_active', true)
+                ->where(function ($query) use ($request) {
+                    $query->where('start_time', '<', $request->end_time)
+                        ->where('end_time', '>', $request->start_time);
+                });
+
+            if ($request->filled('room_id')) {
+                $overlapQuery->where('room_id', $request->room_id);
+            }
+
+            $existsTime = $overlapQuery->exists();
+
+            if ($request->type === 'extra') {
+                if ($existsTime) {
+                    return back()->with('error', 'Không thể thêm ca. Bác sĩ đã có lịch làm việc trùng thời gian này.');
+                }
+
+                if ($request->filled('room_id')) {
+                    $existsWithOtherDoctors = WorkSchedule::where('day_of_week', $dayOfWeek)
+                        ->where('is_active', true)
+                        ->where('room_id', $request->room_id)
+                        ->where('doctor_profile_id', '!=', $request->doctor_profile_id)
+                        ->where(function ($query) use ($request) {
+                            $query->where('start_time', '<', $request->end_time)
+                                ->where('end_time', '>', $request->start_time);
+                        })
+                        ->exists();
+
+                    if ($existsWithOtherDoctors) {
+                        return back()->with('error', 'Không thể thêm ca. Phòng này đã có bác sĩ khác làm việc theo lịch định kỳ.');
+                    }
+
+                    $existsOverrideWithOtherDoctors = ScheduleOverride::where('override_date', $request->override_date)
+                        ->where('type', 'extra')
+                        ->where('room_id', $request->room_id)
+                        ->where('doctor_profile_id', '!=', $request->doctor_profile_id)
+                        ->where(function ($query) use ($request) {
+                            $query->where('start_time', '<', $request->end_time)
+                                ->where('end_time', '>', $request->start_time);
+                        })
+                        ->exists();
+
+                    if ($existsOverrideWithOtherDoctors) {
+                        return back()->with('error', 'Không thể thêm ca. Phòng này đã có bác sĩ khác đăng ký ca ngoại lệ.');
+                    }
+                }
+            }
+
+            if ($request->type === 'close' && !$existsTime) {
+                return back()->with('error', 'Không thể đóng ca. Không có lịch làm việc nào trùng thời gian này để đóng.');
+            }
 
             $override = ScheduleOverride::create([
                 'doctor_profile_id' => $request->doctor_profile_id,
@@ -485,7 +573,7 @@ class WorkScheduleController extends Controller
 
             return back()->with('success', 'Đã thêm ngoại lệ lịch thành công.');
         } catch (\Illuminate\Validation\ValidationException $e) {
-            dd($e->errors());
+            return back()->withErrors($e->errors())->withInput();
         }
     }
 

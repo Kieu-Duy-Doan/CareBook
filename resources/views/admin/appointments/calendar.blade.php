@@ -365,19 +365,17 @@
             );
 
             htmls = times.map((slot, index) => {
+                const disabled = slot.is_full ? 'disabled' : '';
+                const labelClass = slot.is_full 
+                    ? 'block px-4 py-2 border border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed rounded-lg'
+                    : 'block px-4 py-2 border border-green-500 rounded-lg cursor-pointer peer-checked:bg-green-500 peer-checked:text-white';
+                    
                 return `
                     <div>
                         <input type="radio" name="appointment_time" value="${slot.time}" id="time_${index}"
-                            class="hidden peer" data-room-id="${slot.room.id}" data-room-name="${slot.room.name} - ${slot.room.room_number} - ${slot.room.building}">
+                            class="hidden peer" data-room-id="${slot.room.id}" data-room-name="${slot.room.name} - ${slot.room.room_number} - ${slot.room.building}" ${disabled}>
 
-                        <label for="time_${index}"
-                            class="
-                                block px-4 py-2
-                                border border-green-500
-                                rounded-lg cursor-pointer
-                                peer-checked:bg-green-500
-                                peer-checked:text-white
-                            ">
+                        <label for="time_${index}" class="${labelClass}">
                             ${slot.time}
                         </label>
                     </div>
