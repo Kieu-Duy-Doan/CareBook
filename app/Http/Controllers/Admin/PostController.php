@@ -95,5 +95,74 @@ class PostController extends Controller
 
         return redirect()->route('admin.posts.index')->with('success', 'Đã thêm bài viết thành công.');
     }
+     public function edit($id)
+    {
+        $post = Post::with('specialty')->findOrFail($id);
+        $specialties = Specialty::where('is_active', true)->orderBy('name')->get();
+        return view('admin.posts.edit', compact('post', 'specialties'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $post = Post::findOrFail($id);
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'slug' => ['nullable', 'string', 'max:300', Rule::unique('posts')->ignore($post->id)],
+            'summary' => 'nullable|string',
+            'content' => 'required|string',
+            'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'specialty_id' => 'nullable|exists:specialties,id',
+            'post_type' => 'required|in:news,service,guide,announcement',
+            'is_published' => 'boolean',
+        ]);
+
+        $slug = $request->slug ?: Str::slug($request->title);
+        $originalSlug = $slug;
+        $counter = 1;
+        while (Post::where('slug', $slug)->where('id', '!=', $post->id)->exists()) {
+            $slug = $originalSlug . '-' . $counter++;
+        }
+
+        $isPublished = $request->has('is_published');
+        $publishedAt = $post->published_at;
+        if ($isPublished && !$post->is_published && is_null($publishedAt)) {
+            $publishedAt = now();
+        }
+
+        $thumbnailUrl = $post->thumbnail_url;
+        if ($request->hasFile('thumbnail')) {
+            if ($thumbnailUrl) {
+                $oldPath = str_replace('/storage/', '', $thumbnailUrl);
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+            }
+            $path = $request->file('thumbnail')->store('posts', 'public');
+            $thumbnailUrl = '/storage/' . $path;
+        }
+
+        $post->update([
+            'title' => $request->title,
+            'slug' => $slug,
+            'summary' => $request->summary,
+            'content' => $request->content,
+            'thumbnail_url' => $thumbnailUrl,
+            'specialty_id' => $request->specialty_id,
+            'post_type' => $request->post_type,
+            'is_published' => $isPublished,
+            'published_at' => $publishedAt,
+        ]);
+
+        SystemLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'POST_UPDATED',
+            'module' => 'cms',
+            'ref_type' => 'post',
+            'ref_id' => $post->id,
+            'description' => 'Cập nhật bài viết: ' . $post->title,
+            'ip_address' => request()->ip()
+        ]);
+
+        return redirect()->route('admin.posts.edit', $post->id)->with('success', 'Đã cập nhật bài viết thành công.');
+    }
 
 }
