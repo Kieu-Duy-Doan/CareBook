@@ -35,4 +35,13 @@ class PostController extends Controller
 
         return view('admin.posts.index', compact('posts', 'specialties'));
     }
+
+    public function create()
+    {
+        $specialties = Specialty::where('is_active', true)->orderBy('name')->get();
+        return view('admin.posts.create', compact('specialties'));
+    }
+
+
+
 }
