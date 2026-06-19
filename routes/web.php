@@ -111,6 +111,14 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\AppointmentLogController::class, 'index'])->name('index');
     });
 
+    // Chatbot
+    Route::prefix('chatbot')->name('chatbot.')->group(function () {
+        // Intents
+        Route::prefix('intents')->name('intents.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'index'])->name('index');
+        });
+    });
+
     // Thông báo
     Route::prefix('notifications')->name('notifications.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\NotificationController::class, 'index'])->name('index');
