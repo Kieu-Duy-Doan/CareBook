@@ -98,18 +98,7 @@
                     class="fa-solid fa-clock-rotate-left w-5 text-center mr-3 {{ request()->routeIs('admin.appointment-logs.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
                 Nhật ký lịch hẹn
             </a>
-            <a href="{{ route('admin.reviews.index') }}"
-                class="{{ request()->routeIs('admin.reviews.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
-                <i
-                    class="fa-solid fa-star w-5 text-center mr-3 {{ request()->routeIs('admin.reviews.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
-                Đánh giá & Phản hồi
-            </a>
-            <a href="{{ route('admin.posts.index') }}"
-                class="{{ request()->routeIs('admin.posts.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
-                <i
-                    class="fa-regular fa-newspaper w-5 text-center mr-3 {{ request()->routeIs('admin.posts.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
-                Bài viết (CMS)
-            </a>
+
 
             <!-- HỆ THỐNG -->
             <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-4 mb-1">
@@ -117,15 +106,15 @@
             </div>
 
             <!-- QUẢN LÝ CHATBOT -->
-            <div x-data="{ openChatbot: {{ request()->routeIs('admin.faqs.*', 'admin.chatbot.*') ? 'true' : 'false' }} }">
+            <div x-data="{ openChatbot: {{ request()->routeIs('admin.chatbot.*') ? 'true' : 'false' }} }">
                 <button @click="openChatbot = !openChatbot"
                     class="w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium mt-1
-                               {{ request()->routeIs('admin.faqs.*', 'admin.chatbot.*')
+                               {{ request()->routeIs('admin.chatbot.*')
                                    ? 'bg-blue-50 text-blue-600'
                                    : 'text-gray-700 hover:bg-gray-100' }}">
                     <span class="flex items-center">
                         <i
-                            class="fa-solid fa-robot w-5 text-center mr-3 {{ request()->routeIs('admin.faqs.*', 'admin.chatbot.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
+                            class="fa-solid fa-robot w-5 text-center mr-3 {{ request()->routeIs('admin.chatbot.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
                         Quản lý Chatbot
                     </span>
                     <i class="fa-solid fa-chevron-down text-xs transition-transform"
@@ -137,11 +126,6 @@
                         class="flex items-center px-3 py-2 rounded-md text-sm
                               {{ request()->routeIs('admin.chatbot.intents.*') ? 'bg-blue-50/50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
                         Kịch bản & Phản hồi
-                    </a>
-                    <a href="{{ route('admin.faqs.index') }}"
-                        class="flex items-center px-3 py-2 rounded-md text-sm
-                              {{ request()->routeIs('admin.faqs.*') ? 'bg-blue-50/50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
-                        Câu hỏi thường gặp
                     </a>
                     <a href="{{ route('admin.chatbot.sessions.index') }}"
                         class="flex items-center px-3 py-2 rounded-md text-sm
