@@ -2,15 +2,24 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+
+// Home
+Route::get('/', function () {
+    return view('welcome');
+})->name('home');
+
+
+Route::middleware('auth')->group(function () {
+    Route::get('/dashboard', [AuthController::class, 'redirectToDashboard'])->name('dashboard');
+});
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
-    Route::get('/', function () {
-        return view('admin.dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\UserController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\Admin\UserController::class, 'create'])->name('create');
