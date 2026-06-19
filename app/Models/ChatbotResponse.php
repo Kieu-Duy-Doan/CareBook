@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class ChatbotResponse extends Model
 {
     public $timestamps = false;
-
     protected $fillable = [
         'intent_id',
         'content',
@@ -16,7 +15,6 @@ class ChatbotResponse extends Model
         'is_active',
         'created_at',
     ];
-
     protected function casts(): array
     {
         return [
@@ -24,7 +22,6 @@ class ChatbotResponse extends Model
             'created_at' => 'datetime',
         ];
     }
-
     public function intent()
     {
         return $this->belongsTo(ChatbotIntent::class, 'intent_id');

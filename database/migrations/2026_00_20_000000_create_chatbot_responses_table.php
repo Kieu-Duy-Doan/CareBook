@@ -17,10 +17,9 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->timestamp('created_at')->useCurrent();
 
-            $table->foreign('intent_id')->references('id')->on('chatbot_intents')->restrictOnDelete();
+            $table->foreign('intent_id')->references('id')->on('chatbot_intents')->onDelete('cascade');
         });
     }
-
     public function down(): void
     {
         Schema::dropIfExists('chatbot_responses');

@@ -7,14 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 class ChatSession extends Model
 {
     public $timestamps = false;
-
     protected $fillable = [
         'user_id',
         'session_token',
+        'status',
         'ended_at',
         'created_at',
     ];
-
     protected function casts(): array
     {
         return [
@@ -22,12 +21,10 @@ class ChatSession extends Model
             'created_at' => 'datetime',
         ];
     }
-
     public function user()
     {
         return $this->belongsTo(User::class);
     }
-
     public function messages()
     {
         return $this->hasMany(ChatMessage::class, 'session_id');

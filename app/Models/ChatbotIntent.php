@@ -16,7 +16,6 @@ class ChatbotIntent extends Model
         'is_active',
         'created_at',
     ];
-
     protected function casts(): array
     {
         return [
@@ -24,7 +23,6 @@ class ChatbotIntent extends Model
             'created_at' => 'datetime',
         ];
     }
-
     public function responses()
     {
         return $this->hasMany(ChatbotResponse::class, 'intent_id');

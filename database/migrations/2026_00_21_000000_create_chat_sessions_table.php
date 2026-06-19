@@ -10,13 +10,13 @@ return new class extends Migration
     {
         Schema::create('chat_sessions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained('users')->restrictOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
             $table->string('session_token', 100)->unique();
-            $table->timestamp('ended_at')->nullable();
+            $table->enum('status', ['active', 'closed'])->default('active');
             $table->timestamp('created_at')->useCurrent();
+            $table->timestamp('ended_at')->nullable();
         });
     }
-
     public function down(): void
     {
         Schema::dropIfExists('chat_sessions');

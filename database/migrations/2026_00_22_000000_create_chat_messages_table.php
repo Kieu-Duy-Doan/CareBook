@@ -10,16 +10,15 @@ return new class extends Migration
     {
         Schema::create('chat_messages', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('session_id')->index()->constrained('chat_sessions')->restrictOnDelete();
-            $table->enum('sender', ['user', 'bot']);
-            $table->text('message');
-            $table->integer('intent_id')->nullable();
-            $table->timestamp('created_at')->useCurrent();
-
-            $table->foreign('intent_id')->references('id')->on('chatbot_intents')->restrictOnDelete();
+            $table->foreignId('session_id')->index()->constrained('chat_sessions')->onDelete('cascade');
+            $table->enum('role', ['user', 'assistant']);
+            $table->text('content');
+            $table->string('intent_detected', 100)->nullable();
+            $table->boolean('is_flagged')->default(false)->index();
+            $table->json('metadata')->nullable();
+            $table->timestamp('created_at')->useCurrent()->index();
         });
     }
-
     public function down(): void
     {
         Schema::dropIfExists('chat_messages');
