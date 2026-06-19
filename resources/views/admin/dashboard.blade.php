@@ -277,4 +277,166 @@
         </div>
 
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const brandColors = ['#0ea5e9', '#14b8a6', '#6366f1', '#f59e0b', '#ec4899', '#8b5cf6', '#10b981',
+                '#f43f5e'
+            ];
+            const trendLabels = @json($trendLabels);
+            const trendData = @json($trendData);
+            const pieLabels = @json($pieLabels);
+            const pieData = @json($pieData);
+
+            // Gán màu cho legend
+            pieLabels.forEach((label, i) => {
+                const legendDot = document.getElementById('legend-color-' + i);
+                if (legendDot) {
+                    legendDot.style.backgroundColor = brandColors[i % brandColors.length];
+                }
+            });
+
+            function drawLineChart(canvasId, labels, data) {
+                const canvas = document.getElementById(canvasId);
+                if (!canvas) return;
+                const parent = canvas.parentElement;
+                const dpr = window.devicePixelRatio || 1;
+                const rect = parent.getBoundingClientRect();
+
+                canvas.width = rect.width * dpr;
+                canvas.height = rect.height * dpr;
+
+                const ctx = canvas.getContext('2d');
+                ctx.scale(dpr, dpr);
+
+                const width = rect.width;
+                const height = rect.height;
+                const padding = {
+                    top: 30,
+                    right: 30,
+                    bottom: 40,
+                    left: 40
+                };
+
+                const chartWidth = width - padding.left - padding.right;
+                const chartHeight = height - padding.top - padding.bottom;
+
+                const maxVal = Math.max(...data, 5);
+                const minVal = 0;
+
+                ctx.clearRect(0, 0, width, height);
+                ctx.beginPath();
+                ctx.strokeStyle = '#f3f4f6';
+                ctx.lineWidth = 1;
+                const gridRows = 5;
+                for (let i = 0; i <= gridRows; i++) {
+                    const y = padding.top + chartHeight - (i * chartHeight / gridRows);
+                    ctx.moveTo(padding.left, y);
+                    ctx.lineTo(width - padding.right, y);
+                    ctx.fillStyle = '#9ca3af';
+                    ctx.font = '10px sans-serif';
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'middle';
+                    const labelVal = Math.round(minVal + (i * (maxVal - minVal) / gridRows));
+                    ctx.fillText(labelVal, padding.left - 10, y);
+                }
+                ctx.stroke();
+                if (data.length === 0) return;
+
+                const stepX = chartWidth / (data.length > 1 ? data.length - 1 : 1);
+                const gradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
+                gradient.addColorStop(0, 'rgba(14, 165, 233, 0.2)');
+                gradient.addColorStop(1, 'rgba(14, 165, 233, 0)');
+
+                ctx.beginPath();
+                ctx.moveTo(padding.left, padding.top + chartHeight);
+                for (let i = 0; i < data.length; i++) {
+                    const x = padding.left + i * stepX;
+                    const y = padding.top + chartHeight - ((data[i] - minVal) / (maxVal - minVal) * chartHeight);
+                    ctx.lineTo(x, y);
+                }
+                ctx.lineTo(padding.left + (data.length - 1) * stepX, padding.top + chartHeight);
+                ctx.fillStyle = gradient;
+                ctx.fill();
+                ctx.beginPath();
+                ctx.strokeStyle = '#0ea5e9';
+                ctx.lineWidth = 3;
+                ctx.lineJoin = 'round';
+                ctx.lineCap = 'round';
+                for (let i = 0; i < data.length; i++) {
+                    const x = padding.left + i * stepX;
+                    const y = padding.top + chartHeight - ((data[i] - minVal) / (maxVal - minVal) * chartHeight);
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+                for (let i = 0; i < data.length; i++) {
+                    const x = padding.left + i * stepX;
+                    const y = padding.top + chartHeight - ((data[i] - minVal) / (maxVal - minVal) * chartHeight);
+                    ctx.beginPath();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.strokeStyle = '#0ea5e9';
+                    ctx.lineWidth = 2;
+                    ctx.arc(x, y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.fillStyle = '#6b7280';
+                    ctx.font = '11px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(labels[i], x, padding.top + chartHeight + 10);
+                    if (data[i] > 0) {
+                        ctx.fillStyle = '#1f2937';
+                        ctx.font = 'bold 10px sans-serif';
+                        ctx.fillText(data[i], x, y - 15);
+                    }
+                }
+            }
+
+            function drawDonutChart(canvasId, data, colors) {
+                const canvas = document.getElementById(canvasId);
+                if (!canvas) return;
+
+                const dpr = window.devicePixelRatio || 1;
+                const rect = canvas.parentElement.getBoundingClientRect();
+
+                canvas.width = rect.width * dpr;
+                canvas.height = rect.height * dpr;
+
+                const ctx = canvas.getContext('2d');
+                ctx.scale(dpr, dpr);
+
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const radius = Math.min(centerX, centerY) - 10;
+                const thickness = 20;
+
+                const total = data.reduce((sum, val) => sum + val, 0);
+                if (total === 0) return;
+
+                let startAngle = -Math.PI / 2;
+
+                for (let i = 0; i < data.length; i++) {
+                    const sliceAngle = (data[i] / total) * 2 * Math.PI;
+                    const endAngle = startAngle + sliceAngle;
+
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                    ctx.lineWidth = thickness;
+                    ctx.strokeStyle = colors[i % colors.length];
+                    ctx.stroke();
+                    startAngle = endAngle;
+                }
+            }
+
+            // Gọi hàm vẽ
+            drawLineChart('trendChart', trendLabels, trendData);
+            drawDonutChart('specialtyChart', pieData, brandColors);
+
+            // Xử lý Resize Window để vẽ lại biểu đồ cho Responsive
+            window.addEventListener('resize', () => {
+                drawLineChart('trendChart', trendLabels, trendData);
+                drawDonutChart('specialtyChart', pieData, brandColors);
+            });
+        });
+    </script>
 </x-layouts.admin>
