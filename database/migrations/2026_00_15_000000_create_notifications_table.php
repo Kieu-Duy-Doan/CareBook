@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('notifications', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->index()->constrained('users')->restrictOnDelete();
+            $table->foreignId('user_id')->index()->constrained('users')->onDelete('cascade');
             $table->string('title', 255);
             $table->text('content');
             $table->enum('type', ['appointment', 'result', 'system', 'reminder'])->index();

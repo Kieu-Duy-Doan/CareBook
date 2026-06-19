@@ -111,6 +111,15 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\AppointmentLogController::class, 'index'])->name('index');
     });
 
+    // Thông báo
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\NotificationController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Admin\NotificationController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Admin\NotificationController::class, 'store'])->name('store');
+        Route::delete('/', [\App\Http\Controllers\Admin\NotificationController::class, 'destroy'])->name('destroy');
+        Route::post('/resend', [\App\Http\Controllers\Admin\NotificationController::class, 'resend'])->name('resend');
+    });
+
 
     // Cài đặt
     Route::prefix('settings')->name('settings.')->group(function () {

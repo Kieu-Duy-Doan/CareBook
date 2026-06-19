@@ -4,11 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Notification extends Model
-{
-    public $timestamps = false;
+class Notification extends Model {
+        public $timestamps = false
 
-    protected $fillable = [
+        protected $fillable = [
         'user_id',
         'title',
         'content',
@@ -21,6 +20,7 @@ class Notification extends Model
         'is_read',
         'created_at',
     ];
+
 
     protected function casts(): array
     {
@@ -37,6 +37,7 @@ class Notification extends Model
         return $this->belongsTo(User::class);
     }
 
+
     public function getTypeLabelAttribute(): string
     {
         return match($this->type) {
@@ -47,6 +48,7 @@ class Notification extends Model
             default       => 'Khác',
         };
     }
+
 
     public function getChannelLabelAttribute(): string
     {

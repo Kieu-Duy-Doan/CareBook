@@ -20,8 +20,8 @@
         </div>
         <div class="content">
             <h2>{{ $title }}</h2>
-            <p>{{ $content }}</p>
-            
+            <div style="margin-bottom: 20px;">{!! nl2br(e($content)) !!}</div>
+
             <p>Trân trọng,<br>Đội ngũ Carebook</p>
         </div>
         <div class="footer">
