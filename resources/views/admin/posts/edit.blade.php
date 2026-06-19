@@ -150,7 +150,58 @@
         </div>
     </form>
 
+    <script>
+        // Alpine component for Image Upload Preview
+        function imageUploader(initialUrl) {
+            return {
+                imageUrl: initialUrl,
+                fileChosen(event) {
+                    this.fileToDataUrl(event, src => this.imageUrl = src)
+                },
+                fileToDataUrl(event, callback) {
+                    if (! event.target.files.length) return
+                    let file = event.target.files[0],
+                        reader = new FileReader()
+                    reader.readAsDataURL(file)
+                    reader.onload = e => callback(e.target.result)
+                }
+            }
+        }
 
+        // Auto-generate Slug from Title using pure JS
+        document.addEventListener('DOMContentLoaded', function() {
+            const titleInput = document.getElementById('title');
+            const slugInput = document.getElementById('slug');
+            let isSlugEdited = slugInput.value.trim() !== '';
 
+            // Chặn auto-gen nếu user cố tình tự gõ slug
+            slugInput.addEventListener('input', function() {
+                isSlugEdited = this.value.trim() !== '';
+            });
 
+            titleInput.addEventListener('input', function() {
+                if (!isSlugEdited) {
+                    let title = this.value;
+                    let slug = title.toLowerCase();
+                    slug = slug.replace(/á|à|ả|ạ|ã|ă|ắ|ằ|ẳ|ẵ|ặ|â|ấ|ầ|ẩ|ẫ|ậ/gi, 'a');
+                    slug = slug.replace(/é|è|ẻ|ẽ|ẹ|ê|ế|ề|ể|ễ|ệ/gi, 'e');
+                    slug = slug.replace(/i|í|ì|ỉ|ĩ|ị/gi, 'i');
+                    slug = slug.replace(/ó|ò|ỏ|õ|ọ|ô|ố|ồ|ổ|ỗ|ộ|ơ|ớ|ờ|ở|ỡ|ợ/gi, 'o');
+                    slug = slug.replace(/ú|ù|ủ|ũ|ụ|ư|ứ|ừ|ử|ữ|ự/gi, 'u');
+                    slug = slug.replace(/ý|ỳ|ỷ|ỹ|ỵ/gi, 'y');
+                    slug = slug.replace(/đ/gi, 'd');
+                    slug = slug.replace(/\`|\~|\!|\@|\#|\||\$|\%|\^|\&|\*|\(|\)|\+|\=|\,|\.|\/|\?|\>|\<|\'|\"|\:|\;|_/gi, '');
+                    slug = slug.replace(/ /gi, "-");
+                    slug = slug.replace(/\-\-\-\-\-/gi, '-');
+                    slug = slug.replace(/\-\-\-\-/gi, '-');
+                    slug = slug.replace(/\-\-\-/gi, '-');
+                    slug = slug.replace(/\-\-/gi, '-');
+                    slug = '@' + slug + '@';
+                    slug = slug.replace(/\@\-|\-\@|\@/gi, '');
+
+                    slugInput.value = slug;
+                }
+            });
+        });
+    </script>
 </x-layouts.admin>
