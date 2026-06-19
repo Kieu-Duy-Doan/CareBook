@@ -89,7 +89,7 @@
             <div class="mt-4 mb-2 px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 Hệ thống
             </div>
-            
+
             <a href="{{ Route::has('admin.chatbot.index') ? route('admin.chatbot.index') : '#' }}" class="{{ request()->routeIs('admin.chatbot.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                 <i class="fa-solid fa-robot w-6 text-center mr-2 {{ request()->routeIs('admin.chatbot.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i> Cấu hình Chatbot
             </a>
@@ -99,8 +99,8 @@
             <a href="{{ Route::has('admin.notifications.index') ? route('admin.notifications.index') : '#' }}" class="{{ request()->routeIs('admin.notifications.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                 <i class="fa-solid fa-bell w-6 text-center mr-2 {{ request()->routeIs('admin.notifications.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i> Thông báo
             </a>
-            <a href="{{ Route::has('admin.settings.index') ? route('admin.settings.index') : '#' }}" class="{{ request()->routeIs('admin.settings.*') || request()->routeIs('admin.settings.logs') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
-                <i class="fa-solid fa-gear w-6 text-center mr-2 {{ request()->routeIs('admin.settings.*') || request()->routeIs('admin.settings.logs') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i> Cài đặt hệ thống
+            <a href="{{ route('admin.settings.index') }}" class="{{ request()->routeIs('admin.settings.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1 mb-4">
+                <i class="fa-solid fa-gear w-5 text-center mr-3 {{ request()->routeIs('admin.settings.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i> Cài đặt hệ thống
             </a>
         </div>
 
@@ -140,7 +140,7 @@
                     <i class="fa-regular fa-bell text-xl"></i>
                     <span class="absolute top-0 right-0 -mt-1 -mr-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">3</span>
                 </button>
-                
+
                 <div x-data="{ userMenuOpen: false }" class="relative">
                     <button @click="userMenuOpen = !userMenuOpen" @click.outside="userMenuOpen = false" class="flex items-center gap-2 text-sm text-gray-700 hover:text-gray-900 focus:outline-none">
                         <div class="h-8 w-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
@@ -148,7 +148,7 @@
                         </div>
                         <i class="fa-solid fa-chevron-down text-xs text-gray-400"></i>
                     </button>
-                    
+
                     <div x-show="userMenuOpen" style="display: none;" class="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none" x-transition>
                         <div class="px-4 py-2 border-b border-gray-100">
                             <p class="text-sm text-gray-900 font-medium">{{ Auth::user()->full_name }}</p>

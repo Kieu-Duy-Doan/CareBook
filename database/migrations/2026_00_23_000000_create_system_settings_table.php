@@ -9,11 +9,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('system_settings', function (Blueprint $table) {
-            $table->integer('id')->autoIncrement();
+            $table->increments('id');
             $table->string('key', 100)->unique();
-            $table->text('value')->nullable();
+            $table->text('value');
+            $table->enum('data_type', ['string', 'integer', 'boolean', 'json'])->default('string');
             $table->string('description', 255)->nullable();
-            $table->foreignId('updated_by')->nullable()->constrained('users')->restrictOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
         });
     }

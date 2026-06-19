@@ -11,6 +11,7 @@ class SystemSetting extends Model
     protected $fillable = [
         'key',
         'value',
+        'data_type',
         'description',
         'updated_by',
         'updated_at',
