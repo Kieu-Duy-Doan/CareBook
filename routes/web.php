@@ -122,13 +122,20 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
             Route::put('/{id}', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'update'])->name('update');
             Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'toggleActive'])->name('toggle-active');
             Route::delete('/{id}', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'destroy'])->name('destroy');
-        });
 
-        // Responses (Nested inside Intents)
-        Route::post('/{intent_id}/responses', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'storeResponse'])->name('responses.store');
-        Route::put('/{intent_id}/responses/{id}', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'updateResponse'])->name('responses.update');
-        Route::patch('/{intent_id}/responses/{id}/toggle-active', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'toggleResponseActive'])->name('responses.toggle-active');
-        Route::delete('/{intent_id}/responses/{id}', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'destroyResponse'])->name('responses.destroy');
+
+            // Responses (Nested inside Intents)
+            Route::post('/{intent_id}/responses', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'storeResponse'])->name('responses.store');
+            Route::put('/{intent_id}/responses/{id}', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'updateResponse'])->name('responses.update');
+            Route::patch('/{intent_id}/responses/{id}/toggle-active', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'toggleResponseActive'])->name('responses.toggle-active');
+            Route::delete('/{intent_id}/responses/{id}', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'destroyResponse'])->name('responses.destroy');
+        });
+        // Sessions
+        Route::prefix('sessions')->name('sessions.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\ChatSessionController::class, 'index'])->name('index');
+            Route::get('/{id}', [\App\Http\Controllers\Admin\ChatSessionController::class, 'show'])->name('show');
+            Route::patch('/messages/{id}/flag', [\App\Http\Controllers\Admin\ChatSessionController::class, 'toggleFlag'])->name('messages.flag');
+        });
     });
 
     // Thông báo
