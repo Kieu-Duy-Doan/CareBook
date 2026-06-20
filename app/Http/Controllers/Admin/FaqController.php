@@ -107,4 +107,36 @@ class FaqController extends Controller
 
         return redirect()->route('admin.faqs.edit', $faq->id)->with('success', 'Đã cập nhật FAQ thành công.');
     }
+
+    public function toggleActive($id)
+    {
+        $faq = Faq::findOrFail($id);
+        $faq->is_active = !$faq->is_active;
+        $faq->save();
+
+        return back()->with('success', 'Đã thay đổi trạng thái FAQ.');
+    }
+
+    public function destroy($id)
+    {
+        $faq = Faq::findOrFail($id);
+
+        if ($faq->view_count > 0 && $faq->is_active == 1) {
+            return back()->with('error', 'Chỉ cho phép xoá khi lượt xem bằng 0 hoặc FAQ đang tắt.');
+        }
+
+        $faq->delete();
+
+        SystemLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'FAQ_DELETED',
+            'module' => 'faq',
+            'ref_type' => 'faq',
+            'ref_id' => $id,
+            'description' => 'Xoá FAQ',
+            'ip_address' => request()->ip()
+        ]);
+
+        return back()->with('success', 'Đã xoá FAQ thành công.');
+    }
 }

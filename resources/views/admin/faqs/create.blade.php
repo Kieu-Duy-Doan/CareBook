@@ -1,1 +1,75 @@
+<x-layouts.admin title="Thêm FAQ mới">
+    <div class="mb-6">
+        <a href="{{ route('admin.faqs.index') }}" class="text-sm font-medium text-gray-500 hover:text-blue-600 transition-colors mb-2 inline-block">
+            <i class="fa-solid fa-arrow-left mr-1"></i> Quay lại Danh sách FAQ
+        </a>
+        <h2 class="text-2xl font-bold text-gray-900 mt-2">Thêm Câu hỏi mới (FAQ)</h2>
+    </div>
 
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <form action="{{ route('admin.faqs.store') }}" method="POST" class="p-6">
+            @csrf
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Cột chính (Câu hỏi & Trả lời) -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Câu hỏi (Question) <span class="text-red-500">*</span></label>
+                        <input type="text" name="question" value="{{ old('question') }}" required
+                            class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-base font-medium outline-none" placeholder="Nhập câu hỏi thường gặp...">
+                        @error('question') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nội dung Trả lời (Answer) <span class="text-red-500">*</span></label>
+                        <textarea name="answer" rows="8" required
+                            class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none font-mono" placeholder="Nhập câu trả lời chi tiết...">{{ old('answer') }}</textarea>
+                        @error('answer') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+
+                <!-- Cột phụ (Phân loại & Keywords) -->
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Chuyên khoa áp dụng</label>
+                        <select name="specialty_id" class="block w-full py-2.5 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
+                            <option value="">-- Dùng chung (Tất cả chuyên khoa) --</option>
+                            @foreach($specialties as $sp)
+                                <option value="{{ $sp->id }}" {{ old('specialty_id') == $sp->id ? 'selected' : '' }}>{{ $sp->name }}</option>
+                            @endforeach
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Gắn FAQ này vào một chuyên khoa cụ thể hoặc để trống nếu là câu hỏi chung.</p>
+                        @error('specialty_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Từ khóa nhận diện (Keywords)</label>
+                        <textarea name="keywords" rows="3"
+                            class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none" placeholder="Ví dụ: giờ làm việc, lịch mở cửa, thời gian khám...">{{ old('keywords') }}</textarea>
+                        <p class="text-xs text-gray-500 mt-1">Cách nhau bằng dấu phẩy. Giúp Chatbot AI nhận diện được ý định của bệnh nhân tốt hơn.</p>
+                        @error('keywords') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="pt-2">
+                        <label class="flex items-center cursor-pointer bg-gray-50 p-3 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
+                            <div class="relative">
+                                <input type="checkbox" name="is_active" value="1" class="sr-only peer" {{ old('is_active', '1') == '1' ? 'checked' : '' }}>
+                                <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </div>
+                            <span class="ms-3 text-sm font-medium text-gray-800">Hiển thị FAQ này</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 pt-5 border-t border-gray-100 flex justify-end gap-3">
+                <a href="{{ route('admin.faqs.index') }}" class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    Hủy bỏ
+                </a>
+                <button type="submit" class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-save"></i> Lưu Câu hỏi
+                </button>
+            </div>
+        </form>
+    </div>
+</x-layouts.admin>
