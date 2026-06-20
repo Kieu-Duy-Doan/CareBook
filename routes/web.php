@@ -171,6 +171,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::get('/{id}/edit', [\App\Http\Controllers\Admin\FaqController::class, 'edit'])->name('edit');
         Route::put('/{id}', [\App\Http\Controllers\Admin\FaqController::class, 'update'])->name('update');
         Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\FaqController::class, 'toggleActive'])->name('toggle-active');
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\FaqController::class, 'destroy'])->name('destroy');
     });
 });
 
