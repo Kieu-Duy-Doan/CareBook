@@ -20,7 +20,7 @@ class Post extends Model
         'published_at',
     ];
 
-    protected function casts(): array
+protected function casts(): array
     {
         return [
             'is_published' => 'boolean',
