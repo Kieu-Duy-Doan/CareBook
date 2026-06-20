@@ -399,12 +399,11 @@
                     </div>
 
                     <div class="lg:col-span-3">
-                        <select name="user_id"
+                        <select name="user_id" id="filter-user-id"
                             class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
                             <option value="">Tất cả người thực hiện</option>
                             @foreach ($users as $user)
-                                <option value="{{ $user->id }}"
-                                    {{ request('user_id') == $user->id ? 'selected' : '' }}>{{ $user->full_name }}
+                                <option value="{{ $user->id }}" selected>{{ $user->full_name }}
                                 </option>
                             @endforeach
                         </select>
@@ -591,4 +590,53 @@
             </div>
         </div>
     </div>
+    
+    <x-slot name="styles">
+        <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+        <style>
+            .ts-control {
+                border-radius: 0.5rem !important;
+                border-color: #d1d5db !important;
+                padding: 0.5rem 0.75rem !important;
+                min-height: 38px;
+            }
+            .ts-dropdown {
+                border-radius: 0.5rem !important;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+            }
+        </style>
+    </x-slot>
+
+    <x-slot name="scripts">
+        <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const selectUser = document.getElementById('filter-user-id');
+                if (selectUser) {
+                    new TomSelect(selectUser, {
+                        valueField: 'id',
+                        labelField: 'text',
+                        searchField: 'text',
+                        placeholder: 'Tất cả người thực hiện',
+                        allowEmptyOption: true,
+                        load: function(query, callback) {
+                            if (!query.length) return callback();
+                            fetch(`{{ route('admin.users.ajax-search') }}?q=${encodeURIComponent(query)}`)
+                                .then(response => response.json())
+                                .then(json => {
+                                    callback(json.items);
+                                }).catch(()=>{
+                                    callback();
+                                });
+                        },
+                        render: {
+                            no_results: function(data, escape) {
+                                return '<div class="no-results p-2 text-gray-500">Không tìm thấy</div>';
+                            }
+                        }
+                    });
+                }
+            });
+        </script>
+    </x-slot>
 </x-layouts.admin>

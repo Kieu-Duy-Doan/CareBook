@@ -41,10 +41,11 @@
                     <div class="p-6 md:p-8 space-y-6">
                         <!-- Người nhận -->
                         <div>
+                            <!-- Ô chọn người nhận, đã chuyển sang dùng TomSelect gọi API để không load toàn bộ user -->
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Người nhận <span class="text-red-500">*</span></label>
                             <select name="user_ids[]" id="choices-users" multiple="multiple" class="w-full" required>
                                 @foreach($users as $user)
-                                    <option value="{{ $user->id }}" {{ is_array(old('user_ids')) && in_array($user->id, old('user_ids')) ? 'selected' : '' }}>
+                                    <option value="{{ $user->id }}" selected>
                                         {{ $user->full_name }} ({{ $user->email ?? 'Không có email' }}) - {{ ucfirst($user->role) }}
                                     </option>
                                 @endforeach
@@ -60,6 +61,7 @@
 
                         <!-- Nội dung -->
                         <div>
+                            <!-- Ô nhập nội dung chi tiết của thông báo -->
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Thông điệp chi tiết <span class="text-red-500">*</span></label>
                             <textarea name="content" rows="6" required placeholder="Nhập nội dung chi tiết bạn muốn gửi đến người nhận..." class="w-full border-gray-200 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors bg-gray-50 focus:bg-white resize-y p-4">{{ old('content') }}</textarea>
                         </div>
@@ -90,6 +92,7 @@
 
                         <!-- Kênh gửi -->
                         <div>
+                            <!-- Cho phép người dùng chọn gửi thông báo ngay trên web hay bắn thẳng email -->
                             <label class="block text-sm font-semibold text-gray-700 mb-3">Kênh gửi <span class="text-red-500">*</span></label>
                             <div class="space-y-3">
                                 <label class="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors group">
@@ -122,8 +125,8 @@
                 </div>
 
                 <!-- Submit Button -->
-                <button type="submit" class="w-full py-4 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200 transition-all font-bold text-base flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30">
-                    <i class="fa-solid fa-paper-plane"></i> Phát hành Thông báo
+                <button type="submit" id="btn-submit" class="w-full py-4 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200 transition-all font-bold text-base flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30">
+                    <i class="fa-solid fa-paper-plane" id="btn-icon"></i> <span id="btn-text">Phát hành Thông báo</span>
                 </button>
             </div>
         </div>
@@ -172,13 +175,45 @@
             new TomSelect(selectEl, {
                 plugins: ['remove_button'],
                 placeholder: 'Nhập tên hoặc email...',
-                searchField: ['text', 'value'],
-                maxOptions: 50,
+                valueField: 'id',
+                labelField: 'text',
+                searchField: 'text',
+                
+                // Tự động gọi lên API tìm người dùng mỗi khi gõ phím, thay vì load sẵn hàng chục ngàn người
+                load: function(query, callback) {
+                    if (!query.length) return callback();
+                    fetch(`{{ route('admin.users.ajax-search') }}?q=${encodeURIComponent(query)}`)
+                        .then(response => response.json())
+                        .then(json => {
+                            callback(json.items);
+                        }).catch(()=>{
+                            callback();
+                        });
+                },
                 render: {
                     no_results: function(data, escape) {
                         return '<div class="no-results p-2 text-gray-500">Không tìm thấy người dùng phù hợp</div>';
+                    },
+                    option: function(item, escape) {
+                        return `<div class="p-2"><span class="font-medium text-gray-900">${escape(item.text)}</span></div>`;
+                    },
+                    item: function(item, escape) {
+                        return `<div class="item">${escape(item.text)}</div>`;
                     }
                 }
+            });
+        }
+
+        // Chống bấm đúp chuột (double-click) gây ra 2 thông báo trùng nhau
+        const formEl = document.querySelector('form');
+        const btnSubmit = document.getElementById('btn-submit');
+        if (formEl && btnSubmit) {
+            formEl.addEventListener('submit', function() {
+                // Đổi nút sang trạng thái đang xử lý
+                btnSubmit.disabled = true;
+                btnSubmit.classList.add('opacity-75', 'cursor-not-allowed');
+                document.getElementById('btn-icon').className = 'fa-solid fa-spinner fa-spin';
+                document.getElementById('btn-text').innerText = 'Đang xử lý...';
             });
         }
     });

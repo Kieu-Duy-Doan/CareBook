@@ -21,6 +21,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::prefix('users')->name('users.')->group(function () {
+        Route::get('/ajax-search', [\App\Http\Controllers\Admin\UserController::class, 'ajaxSearch'])->name('ajax-search');
         Route::get('/', [\App\Http\Controllers\Admin\UserController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\Admin\UserController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\Admin\UserController::class, 'store'])->name('store');
@@ -171,6 +172,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
 
     // Thông báo
     Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/search-users', [\App\Http\Controllers\Admin\NotificationController::class, 'searchUsers'])->name('search-users');
         Route::get('/', [\App\Http\Controllers\Admin\NotificationController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\Admin\NotificationController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\Admin\NotificationController::class, 'store'])->name('store');

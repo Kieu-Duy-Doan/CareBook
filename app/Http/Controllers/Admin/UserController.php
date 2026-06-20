@@ -10,6 +10,33 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
+    // Hàm cung cấp API tìm kiếm người dùng (để các ô chọn người chạy nhanh hơn, không bị đơ)
+    public function ajaxSearch(Request $request)
+    {
+        // Nhận chữ người dùng gõ vào ô tìm kiếm
+        $search = $request->query('q');
+        
+        $query = User::select('id', 'full_name', 'email', 'role')->where('is_active', true);
+        
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('full_name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+        
+        $users = $query->limit(50)->get();
+        
+        return response()->json([
+            'items' => $users->map(function($user) {
+                return [
+                    'id' => $user->id,
+                    'text' => $user->full_name . ' (' . ($user->email ?? 'Không có email') . ') - ' . ucfirst($user->role)
+                ];
+            })
+        ]);
+    }
+
     public function index(Request $request)
     {
         // Stats

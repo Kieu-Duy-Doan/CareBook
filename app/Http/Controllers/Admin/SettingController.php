@@ -68,7 +68,14 @@ class SettingController extends Controller
 
         // 4. Phân trang danh sách lịch sử (30 dòng/trang) và lấy thông tin user
         $logs = $query->paginate(30)->withQueryString();
-        $users = User::where('is_active', true)->orderBy('full_name')->get();
+        
+        $users = [];
+        if ($request->filled('user_id')) {
+            $selectedUser = \App\Models\User::find($request->user_id);
+            if ($selectedUser) {
+                $users = [$selectedUser];
+            }
+        }
         
         // Lấy danh sách tên các module có sẵn
         $modules = SystemLog::MODULES;
