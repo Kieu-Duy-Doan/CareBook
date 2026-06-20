@@ -137,7 +137,7 @@
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Nội dung trả lời
                                         *</label>
                                     <textarea name="content" required rows="5"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+                                        class="w-full px-4 py-3 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
                                     <p class="text-xs text-gray-500 mt-1">Hỗ trợ placeholders:
                                         <code>@{{ ten_nguoi_dung }}</code>, <code>@{{ ten_chuyen_khoa }}</code>
                                     </p>
@@ -146,7 +146,7 @@
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Độ ưu tiên (Priority)
                                         *</label>
                                     <input type="number" name="priority" value="1" min="1" required
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        class="w-full px-4 py-3 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 </div>
                             </div>
                         </div>

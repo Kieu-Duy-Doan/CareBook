@@ -117,19 +117,19 @@
                                         *</label>
                                     <input type="text" name="intent_name" required pattern="[a-z0-9_]+"
                                         placeholder="vd: ask_price"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        class="w-full px-4 py-3 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                     <p class="text-xs text-gray-500 mt-1">Chỉ dùng chữ thường, số và dấu gạch dưới.</p>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Mô tả *</label>
                                     <input type="text" name="description" required
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        class="w-full px-4 py-3 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Hành động (Action)
                                         *</label>
                                     <select name="action" required
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        class="w-full px-4 py-3 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                         <option value="faq_lookup">Tra cứu FAQ</option>
                                         <option value="guide_booking">Hướng dẫn Đặt khám</option>
                                         <option value="introduce_specialty">Giới thiệu Chuyên khoa</option>
@@ -140,7 +140,7 @@
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Ví dụ câu hỏi của
                                         khách</label>
                                     <textarea name="example_phrases" rows="3" placeholder="Giá khám là bao nhiêu│Khám tốn bao tiền"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+                                        class="w-full px-4 py-3 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
                                     <p class="text-xs text-gray-500 mt-1">Phân cách các câu bằng ký tự │ (Shift + \ trên
                                         đa số bàn phím)</p>
                                 </div>
