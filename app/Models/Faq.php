@@ -14,14 +14,12 @@ class Faq extends Model
         'view_count',
         'is_active',
     ];
-
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
         ];
     }
-
     public function specialty()
     {
         return $this->belongsTo(Specialty::class);

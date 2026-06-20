@@ -109,9 +109,7 @@
             <div x-data="{ openChatbot: {{ request()->routeIs('admin.chatbot.*') ? 'true' : 'false' }} }">
                 <button @click="openChatbot = !openChatbot"
                     class="w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium mt-1
-                               {{ request()->routeIs('admin.chatbot.*')
-                                   ? 'bg-blue-50 text-blue-600'
-                                   : 'text-gray-700 hover:bg-gray-100' }}">
+                               {{ request()->routeIs('admin.chatbot.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }}">
                     <span class="flex items-center">
                         <i
                             class="fa-solid fa-robot w-5 text-center mr-3 {{ request()->routeIs('admin.chatbot.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
@@ -127,6 +125,11 @@
                               {{ request()->routeIs('admin.chatbot.intents.*') ? 'bg-blue-50/50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
                         Kịch bản & Phản hồi
                     </a>
+                    <a href="{{ route('admin.faqs.index') }}"
+                        class="flex items-center px-3 py-2 rounded-md text-sm
+                              {{ request()->routeIs('admin.faqs.*') ? 'bg-blue-50/50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
+                        Câu hỏi thường gặp
+                    </a>
                     <a href="{{ route('admin.chatbot.sessions.index') }}"
                         class="flex items-center px-3 py-2 rounded-md text-sm
                               {{ request()->routeIs('admin.chatbot.sessions.*') ? 'bg-blue-50/50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
@@ -134,6 +137,7 @@
                     </a>
                 </div>
             </div>
+
 
             <!-- Single System Menus -->
             <a href="{{ route('admin.notifications.index') }}"

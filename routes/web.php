@@ -147,6 +147,13 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         });
     });
 
+    Route::prefix('faqs')->name('faqs.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\FaqController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Admin\FaqController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Admin\FaqController::class, 'store'])->name('store');
+    });
+
+
     // Thông báo
     Route::prefix('notifications')->name('notifications.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\NotificationController::class, 'index'])->name('index');
