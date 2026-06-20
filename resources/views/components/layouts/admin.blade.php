@@ -90,7 +90,7 @@
                 class="{{ request()->routeIs('admin.clinical-visits.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
                 <i
                     class="fa-solid fa-microscope w-5 text-center mr-3 {{ request()->routeIs('admin.clinical-visits.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
-                Giám sát Khám LS
+                Giám sát khám lâm sàng
             </a>
             <a href="{{ Route::has('admin.appointment-logs.index') ? route('admin.appointment-logs.index') : '#' }}"
                 class="{{ request()->routeIs('admin.appointment-logs.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
@@ -107,7 +107,6 @@
                 Bài viết
             </a>
 
-            <!-- HỆ THỐNG -->
             <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-4 mb-1">
                 Hệ thống
             </div>
@@ -120,7 +119,7 @@
                     <span class="flex items-center">
                         <i
                             class="fa-solid fa-robot w-5 text-center mr-3 {{ request()->routeIs('admin.chatbot.*', 'admin.faqs.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
-                        Quản lý Chatbot
+                        Quản lý chatbot
                     </span>
                     <i class="fa-solid fa-chevron-down text-xs transition-transform"
                         :class="openChatbot ? 'rotate-180' : ''"></i>
@@ -130,7 +129,7 @@
                     <a href="{{ route('admin.chatbot.intents.index') }}"
                         class="flex items-center px-3 py-2 rounded-md text-sm
                               {{ request()->routeIs('admin.chatbot.intents.*') ? 'bg-blue-50/50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
-                        Kịch bản & Phản hồi
+                        Kịch bản & phản hồi
                     </a>
                     <a href="{{ route('admin.faqs.index') }}"
                         class="flex items-center px-3 py-2 rounded-md text-sm
@@ -140,7 +139,7 @@
                     <a href="{{ route('admin.chatbot.sessions.index') }}"
                         class="flex items-center px-3 py-2 rounded-md text-sm
                               {{ request()->routeIs('admin.chatbot.sessions.*') ? 'bg-blue-50/50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
-                        Lịch sử Chat
+                        Lịch sử chat
                     </a>
                 </div>
             </div>
@@ -219,7 +218,7 @@
                             <p class="text-xs text-gray-500 truncate">{{ Auth::user()->email ?? Auth::user()->phone }}
                             </p>
                         </div>
-                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Hồ sơ cá
+                        <a href="{{ route('admin.users.show', Auth::id()) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Hồ sơ cá
                             nhân</a>
                         <form action="{{ route('logout') }}" method="POST">
                             @csrf

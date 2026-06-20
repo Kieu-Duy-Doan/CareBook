@@ -26,6 +26,8 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::get('/create', [\App\Http\Controllers\Admin\UserController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\Admin\UserController::class, 'store'])->name('store');
         Route::get('/{id}', [\App\Http\Controllers\Admin\UserController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [\App\Http\Controllers\Admin\UserController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [\App\Http\Controllers\Admin\UserController::class, 'update'])->name('update');
         Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\UserController::class, 'toggleActive'])->name('toggle-active');
     });
     Route::prefix('doctors')->name('doctors.')->group(function () {

@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             AppointmentSeeder::class,
             ChatbotSeeder::class,
             FaqSeeder::class,
+            PostSeeder::class,
         ]);
     }
 }

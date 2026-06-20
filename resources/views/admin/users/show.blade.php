@@ -1,4 +1,4 @@
-<x-layouts.admin title="Chi tiết Quản trị viên">
+<x-layouts.admin title="Chi tiết quản trị viên">
     <div class="space-y-6">
         <!-- Header -->
         <div class="flex items-center justify-between">
@@ -17,8 +17,13 @@
                 </div>
             </div>
             
-            <div>
-                <a href="{{ route('admin.users.index') }}" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition flex items-center gap-2">
+            <div class="flex items-center gap-3">
+                @if($user->role === 'admin')
+                <a href="{{ route('admin.users.edit', $user->id) }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2 shadow-sm text-sm font-medium">
+                    <i class="fa-solid fa-pen-to-square"></i> Sửa thông tin
+                </a>
+                @endif
+                <a href="{{ route('admin.users.index') }}" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition flex items-center gap-2 text-sm font-medium">
                     <i class="fa-solid fa-arrow-left"></i> Quay lại
                 </a>
             </div>

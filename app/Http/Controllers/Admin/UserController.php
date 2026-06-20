@@ -97,6 +97,61 @@ class UserController extends Controller
         $logs = SystemLog::where('user_id', $id)->latest()->limit(10)->get();
         return view('admin.users.show', compact('user', 'logs'));
     }
+    public function edit($id)
+    {
+        $user = User::findOrFail($id);
+        
+        // Hiện tại chỉ hỗ trợ sửa tài khoản Admin qua controller này
+        if ($user->role !== 'admin') {
+            return redirect()->route('admin.users.show', $id)->with('error', 'Chỉ có thể sửa thông tin của Quản trị viên tại đây.');
+        }
+
+        return view('admin.users.edit', compact('user'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+        
+        if ($user->role !== 'admin') {
+            return redirect()->route('admin.users.show', $id)->with('error', 'Chỉ có thể sửa thông tin của Quản trị viên tại đây.');
+        }
+
+        $validated = $request->validate([
+            'full_name' => 'required|string|max:255',
+            'phone'     => 'required|string|max:20|unique:users,phone,' . $user->id,
+            'email'     => 'nullable|email|max:255|unique:users,email,' . $user->id,
+            'id_card'   => 'nullable|string|max:20',
+            'password'  => 'nullable|string|min:6',
+        ], [
+            'full_name.required' => 'Vui lòng nhập họ tên.',
+            'phone.required' => 'Vui lòng nhập số điện thoại.',
+            'phone.unique' => 'Số điện thoại này đã được sử dụng.',
+            'email.unique' => 'Email này đã được sử dụng.',
+            'password.min' => 'Mật khẩu phải có ít nhất 6 ký tự.'
+        ]);
+
+        if (empty($validated['password'])) {
+            unset($validated['password']);
+        } else {
+            $validated['password'] = \Illuminate\Support\Facades\Hash::make($validated['password']);
+        }
+
+        $user->update($validated);
+
+        SystemLog::create([
+            'user_id'     => auth()->id(),
+            'action'      => 'USER_UPDATED',
+            'module'      => 'users',
+            'ref_type'    => 'users',
+            'ref_id'      => $user->id,
+            'description' => 'Cập nhật thông tin Quản trị viên: ' . $user->full_name,
+            'ip_address'  => request()->ip(),
+        ]);
+
+        return redirect()->route('admin.users.show', $user->id)->with('success', 'Đã cập nhật thông tin thành công.');
+    }
+
     public function toggleActive($id)
     {
         // Không cho khoá chính mình

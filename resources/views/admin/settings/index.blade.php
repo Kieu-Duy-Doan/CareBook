@@ -1,6 +1,6 @@
-<x-layouts.admin title="Cài đặt Hệ thống">
+<x-layouts.admin title="Cài đặt hệ thống">
     <div class="mb-6">
-        <h2 class="text-2xl font-bold text-gray-900">Cài đặt Hệ thống</h2>
+        <h2 class="text-2xl font-bold text-gray-900">Cài đặt hệ thống</h2>
         <p class="text-gray-500 mt-1">Cấu hình các thông số cốt lõi và quy định hoạt động của Phòng khám.</p>
     </div>
 
@@ -40,14 +40,9 @@
                 class="px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium transition-colors border-b-2 whitespace-nowrap"
                 :class="activeTab === 'general' ? 'border-blue-600 text-blue-600' :
                     'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'">
-                <i class="fa-solid fa-house-chimney-medical mr-1 sm:mr-2"></i> Thông tin Phòng khám
+                <i class="fa-solid fa-house-chimney-medical mr-1 sm:mr-2"></i> Thông tin phòng khám
             </button>
-            <button @click="activeTab = 'booking'"
-                class="px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium transition-colors border-b-2 whitespace-nowrap"
-                :class="activeTab === 'booking' ? 'border-blue-600 text-blue-600' :
-                    'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'">
-                <i class="fa-regular fa-calendar-check mr-1 sm:mr-2"></i> Quy định Đặt lịch
-            </button>
+
 
             <button @click="activeTab = 'system'"
                 class="px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium transition-colors border-b-2 whitespace-nowrap"
@@ -200,113 +195,6 @@
                 </div>
             </div>
 
-            <!-- Tab 2: Các quy định về đặt lịch khám (Giới hạn, thời gian hủy...) -->
-            <div x-show="activeTab === 'booking'" x-transition:enter="transition ease-out duration-300"
-                x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
-                style="display: none;">
-                <div class="space-y-4 sm:space-y-6">
-                    <div class="bg-blue-50/50 p-4 sm:p-5 rounded-xl border border-blue-100">
-                        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start">
-                            <div
-                                class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0 mt-1">
-                                <i class="fa-solid fa-users-viewfinder text-lg"></i>
-                            </div>
-                            <div class="flex-1 w-full">
-                                <label class="block text-base font-bold text-gray-900 mb-1">Giới hạn đặt lịch của 1
-                                    bệnh nhân</label>
-                                <p class="text-xs text-gray-500 mb-3">Giới hạn số lịch hẹn 1 bệnh nhân được đặt trong 1
-                                    ngày, tránh đặt trùng spam.</p>
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <input type="number" name="settings[max_appointments_per_day_per_patient]"
-                                        value="{{ $settings['max_appointments_per_day_per_patient'] ?? 1 }}"
-                                        min="1" max="10"
-                                        class="block w-24 sm:w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm font-medium text-center">
-                                    <input type="hidden" name="settings_types[max_appointments_per_day_per_patient]"
-                                        value="integer">
-                                    <span class="text-sm font-medium text-gray-600">lịch / ngày</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-gray-50 p-4 sm:p-5 rounded-xl border border-gray-200">
-                        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start">
-                            <div
-                                class="w-10 h-10 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center flex-shrink-0 mt-1">
-                                <i class="fa-solid fa-hourglass-start text-lg"></i>
-                            </div>
-                            <div class="flex-1 w-full">
-                                <label class="block text-base font-bold text-gray-900 mb-1">Khoảng thời gian cho phép
-                                    đặt lịch</label>
-                                <p class="text-xs text-gray-500 mb-3">Số ngày tối thiểu phải đặt trước (0 = được đặt
-                                    ngay trong ngày) và số ngày tối đa đặt xa nhất.</p>
-                                <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                                    <div class="flex items-center justify-between sm:justify-start gap-2">
-                                        <span class="text-sm text-gray-600 w-24 sm:w-auto">Tối thiểu:</span>
-                                        <input type="number" name="settings[min_booking_days_ahead]"
-                                            value="{{ $settings['min_booking_days_ahead'] ?? 0 }}" min="0"
-                                            class="block w-20 sm:w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm text-center">
-                                        <input type="hidden" name="settings_types[min_booking_days_ahead]"
-                                            value="integer">
-                                    </div>
-                                    <div class="flex items-center justify-between sm:justify-start gap-2">
-                                        <span class="text-sm text-gray-600 w-24 sm:w-auto">Tối đa:</span>
-                                        <div class="flex items-center gap-2">
-                                            <input type="number" name="settings[max_booking_days_ahead]"
-                                                value="{{ $settings['max_booking_days_ahead'] ?? 30 }}"
-                                                min="1"
-                                                class="block w-20 sm:w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm text-center">
-                                            <input type="hidden" name="settings_types[max_booking_days_ahead]"
-                                                value="integer">
-                                            <span class="text-sm font-medium text-gray-600">ngày</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-orange-50/50 p-4 sm:p-5 rounded-xl border border-orange-100">
-                        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start">
-                            <div
-                                class="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center flex-shrink-0 mt-1">
-                                <i class="fa-solid fa-ban text-lg"></i>
-                            </div>
-                            <div class="flex-1 w-full">
-                                <label class="block text-base font-bold text-gray-900 mb-1">Hủy lịch và Vắng
-                                    mặt</label>
-                                <p class="text-xs text-gray-500 mb-3">Quy định về thời hạn hủy lịch và thời gian tự
-                                    động đánh dấu vắng mặt.</p>
-                                <div class="flex flex-col gap-3">
-                                    <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-                                        <span class="text-sm text-gray-600 w-full sm:w-48">Hủy lịch trước giờ
-                                            khám:</span>
-                                        <div class="flex items-center gap-2">
-                                            <input type="number" name="settings[cancel_deadline_hours]"
-                                                value="{{ $settings['cancel_deadline_hours'] ?? 2 }}" min="0"
-                                                class="block w-20 sm:w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm text-center">
-                                            <input type="hidden" name="settings_types[cancel_deadline_hours]"
-                                                value="integer">
-                                            <span class="text-sm font-medium text-gray-600">tiếng</span>
-                                        </div>
-                                    </div>
-                                    <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-                                        <span class="text-sm text-gray-600 w-full sm:w-48">Tự động absent sau:</span>
-                                        <div class="flex items-center gap-2">
-                                            <input type="number" name="settings[auto_absent_minutes]"
-                                                value="{{ $settings['auto_absent_minutes'] ?? 30 }}" min="0"
-                                                class="block w-20 sm:w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm text-center">
-                                            <input type="hidden" name="settings_types[auto_absent_minutes]"
-                                                value="integer">
-                                            <span class="text-sm font-medium text-gray-600">phút quá giờ hẹn</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- Tab 3: Cài đặt hệ thống (Bật/Tắt chế độ bảo trì web) -->
             <div x-show="activeTab === 'system'" x-transition:enter="transition ease-out duration-300"
