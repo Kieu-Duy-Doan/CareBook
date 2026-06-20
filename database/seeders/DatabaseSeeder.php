@@ -19,6 +19,8 @@ class DatabaseSeeder extends Seeder
             DoctorSpecialtySeeder::class,
             WorkScheduleSeeder::class,
             AppointmentSeeder::class,
+            ChatbotSeeder::class,
+            FaqSeeder::class,
         ]);
     }
 }

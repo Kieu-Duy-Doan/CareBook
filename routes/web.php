@@ -137,7 +137,6 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         // Intents
         Route::prefix('intents')->name('intents.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'index'])->name('index');
-            Route::get('/', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'index'])->name('index');
             Route::post('/', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'store'])->name('store');
             Route::get('/{id}', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'show'])->name('show');
             Route::put('/{id}', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'update'])->name('update');
@@ -185,10 +184,6 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::prefix('settings')->name('settings.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('index');
         Route::put('/', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('update');
-        Route::get('/{id}/edit', [\App\Http\Controllers\Admin\FaqController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [\App\Http\Controllers\Admin\FaqController::class, 'update'])->name('update');
-        Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\FaqController::class, 'toggleActive'])->name('toggle-active');
-        Route::delete('/{id}', [\App\Http\Controllers\Admin\FaqController::class, 'destroy'])->name('destroy');
     });
 });
 

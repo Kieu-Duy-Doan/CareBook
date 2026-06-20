@@ -1,18 +1,47 @@
-<x-layouts.admin title="Chỉnh sửa FAQ">
-    <div class="mb-6">
-        <a href="{{ route('admin.faqs.index') }}" class="text-sm font-medium text-gray-500 hover:text-blue-600 transition-colors mb-2 inline-block">
-            <i class="fa-solid fa-arrow-left mr-1"></i> Quay lại Danh sách FAQ
+<x-layouts.admin title="Chỉnh sửa câu hỏi">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
+        <div>
+            <div class="flex items-center text-sm text-gray-500 mb-2">
+                <a href="{{ route('admin.faqs.index') }}" class="hover:text-blue-600 transition-colors">Câu hỏi thường gặp</a>
+                <span class="mx-2 text-gray-300">/</span>
+                <span class="font-bold text-gray-900">Chỉnh sửa</span>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900">Chỉnh sửa câu hỏi</h2>
+        </div>
+
+        <a href="{{ route('admin.faqs.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors shadow-sm">
+            <i class="fa-solid fa-arrow-left mr-2"></i> Quay lại
         </a>
-        <h2 class="text-2xl font-bold text-gray-900 mt-2">Chỉnh sửa Câu hỏi (FAQ)</h2>
     </div>
 
-    @if(session('success'))
-        <div class="mb-6 bg-green-50 text-green-800 rounded-lg p-4 flex items-center border border-green-200" x-data="{ show: true }" x-show="show">
+    @if (session('success'))
+        <div class="mb-6 bg-green-50 text-green-800 rounded-xl p-4 flex items-center border border-green-200 shadow-sm" x-data="{ show: true }" x-show="show">
             <i class="fa-solid fa-circle-check text-green-500 mr-3 text-lg"></i>
             <span class="flex-1 text-sm font-medium">{{ session('success') }}</span>
-            <button @click="show = false" class="text-green-600 hover:text-green-900">
+            <button @click="show = false" class="text-green-600 hover:text-green-900 transition-colors">
                 <i class="fa-solid fa-xmark"></i>
             </button>
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div class="mb-6 bg-red-50 text-red-800 rounded-xl p-4 flex items-center border border-red-200 shadow-sm" x-data="{ show: true }" x-show="show">
+            <i class="fa-solid fa-circle-xmark text-red-500 mr-3 text-lg"></i>
+            <span class="flex-1 text-sm font-medium">{{ session('error') }}</span>
+            <button @click="show = false" class="text-red-600 hover:text-red-900 transition-colors">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="mb-6 p-4 text-sm text-red-800 rounded-xl bg-red-50 border border-red-200 shadow-sm">
+            <div class="font-bold mb-2 flex items-center"><i class="fa-solid fa-triangle-exclamation mr-2 text-red-500"></i> Vui lòng kiểm tra lại dữ liệu:</div>
+            <ul class="list-disc list-inside space-y-1 ml-1">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
         </div>
     @endif
 
@@ -83,7 +112,7 @@
                     Hủy bỏ
                 </a>
                 <button type="submit" class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
-                    <i class="fa-solid fa-save"></i> Cập nhật FAQ
+                    <i class="fa-solid fa-save"></i> Cập nhật câu hỏi
                 </button>
             </div>
         </form>

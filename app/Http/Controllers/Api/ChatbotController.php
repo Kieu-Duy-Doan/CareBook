@@ -10,11 +10,21 @@ use App\Models\ChatSession;
 use App\Models\ChatMessage;
 use App\Models\Faq;
 use Illuminate\Support\Str;
+use App\Services\ChatbotAIService;
 
+// Api xử lý tin nhắn từ người dùng gửi tới Chatbot
 class ChatbotController extends Controller
 {
+    protected ChatbotAIService $aiService;
+
+    public function __construct(ChatbotAIService $aiService)
+    {
+        $this->aiService = $aiService;
+    }
+
     public function sendMessage(Request $request)
     {
+        // Kiểm tra tính hợp lệ của tin nhắn
         $request->validate([
             'message' => 'required|string',
             'session_token' => 'nullable|string'
@@ -24,10 +34,12 @@ class ChatbotController extends Controller
         $sessionToken = $request->input('session_token');
         $session = null;
 
+        // Khôi phục phiên chat cũ nếu có
         if ($sessionToken) {
             $session = ChatSession::where('session_token', $sessionToken)->where('status', 'active')->first();
         }
 
+        // Tạo phiên chat mới nếu chưa có
         if (!$session) {
             $sessionToken = (string) Str::uuid();
             $session = ChatSession::create([
@@ -37,7 +49,10 @@ class ChatbotController extends Controller
             ]);
         }
 
-        $matchResult = $this->findBestResponse($messageText);
+        // Đẩy tin nhắn qua AI Service để phân tích và tạo câu trả lời
+        $matchResult = $this->aiService->processMessage($messageText);
+        
+        // Lưu lại lịch sử tin nhắn của người dùng
         ChatMessage::create([
             'session_id' => $session->id,
             'role' => 'user',
@@ -56,76 +71,5 @@ class ChatbotController extends Controller
             'metadata' => $matchResult['metadata'],
             'session_token' => $sessionToken
         ]);
-    }
-
-    private function findBestResponse($messageText)
-    {
-        $messageLower = mb_strtolower($messageText, 'UTF-8');
-        $intents = ChatbotIntent::where('is_active', true)->with(['responses' => function ($q) {
-            $q->where('is_active', true)->orderBy('priority');
-        }])->get();
-
-        foreach ($intents as $intent) {
-            if (empty($intent->example_phrases)) continue;
-            $phrases = array_map('trim', explode('│', $intent->example_phrases));
-
-            foreach ($phrases as $phrase) {
-                if (empty($phrase)) continue;
-                $phraseLower = mb_strtolower($phrase, 'UTF-8');
-                if (Str::contains($messageLower, $phraseLower)) {
-                    if ($intent->action == 'faq_lookup') {
-                        $faq = $this->findFaq($messageLower);
-                        if ($faq) {
-                            return [
-                                'reply' => $faq->answer,
-                                'intent_name' => $intent->intent_name,
-                                'metadata' => $faq->specialty ? ['Chuyên khoa liên quan' => $faq->specialty->name] : null
-                            ];
-                        }
-                    }
-                    if ($intent->responses->isNotEmpty()) {
-                        $response = $intent->responses->first();
-                        $response->increment('use_count');
-
-                        return [
-                            'reply' => $response->content,
-                            'intent_name' => $intent->intent_name,
-                            'metadata' => ['action' => $intent->action]
-                        ];
-                    }
-                }
-            }
-        }
-        $faq = $this->findFaq($messageLower);
-        if ($faq) {
-            return [
-                'reply' => $faq->answer,
-                'intent_name' => 'faq_lookup',
-                'metadata' => $faq->specialty ? ['Chuyên khoa liên quan' => $faq->specialty->name] : null
-            ];
-        }
-        return [
-            'reply' => "Xin lỗi, tôi chưa hiểu rõ ý của bạn. Bạn có thể diễn đạt lại câu hỏi hoặc để lại số điện thoại, nhân viên CareBook sẽ liên hệ hỗ trợ nhé.",
-            'intent_name' => null,
-            'metadata' => null
-        ];
-    }
-
-    private function findFaq($messageLower)
-    {
-        $faqs = Faq::where('is_active', true)->with('specialty')->get();
-        foreach ($faqs as $f) {
-            if (empty($f->keywords)) continue;
-
-            $keywords = array_map('trim', explode(',', $f->keywords));
-            foreach ($keywords as $kw) {
-                if (empty($kw)) continue;
-                if (Str::contains($messageLower, mb_strtolower($kw, 'UTF-8'))) {
-                    $f->increment('view_count');
-                    return $f;
-                }
-            }
-        }
-        return null;
     }
 }

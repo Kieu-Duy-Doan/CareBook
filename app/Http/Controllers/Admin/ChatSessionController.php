@@ -7,8 +7,10 @@ use Illuminate\Http\Request;
 use App\Models\ChatSession;
 use App\Models\ChatMessage;
 
+// Quản lý và theo dõi các phiên trò chuyện của người dùng với Chatbot
 class ChatSessionController extends Controller
 {
+    // Hiển thị danh sách các phiên trò chuyện (có hỗ trợ lọc theo trạng thái, cắm cờ)
     public function index(Request $request)
     {
         $query = ChatSession::with('user')->withCount('messages')->latest();
@@ -27,6 +29,7 @@ class ChatSessionController extends Controller
 
         return view('admin.chatbot.sessions.index', compact('sessions'));
     }
+    // Xem chi tiết toàn bộ nội dung tin nhắn trong một phiên chat
     public function show($id)
     {
         $session = ChatSession::with('user')->findOrFail($id);
@@ -37,8 +40,12 @@ class ChatSessionController extends Controller
 
         return view('admin.chatbot.sessions.show', compact('session', 'messages'));
     }
-    public function toggleFlag($messageId)
+    // Đánh dấu (cắm cờ) tin nhắn có nội dung cần theo dõi đặc biệt
+    public function toggleFlag(Request $request, $messageId)
     {
+        // Chặn quyền truy cập nếu không phải Admin
+        abort_if(!$request->user()->isAdmin(), 403, 'Unauthorized access.');
+
         $message = ChatMessage::findOrFail($messageId);
         $message->is_flagged = !$message->is_flagged;
         $message->save();

@@ -8,26 +8,26 @@ use App\Models\ChatbotIntent;
 use App\Models\ChatbotResponse;
 use App\Models\SystemLog;
 use Illuminate\Support\Facades\Auth;
+use App\Enums\ChatbotActionEnum;
+use Illuminate\Validation\Rule;
+use App\Http\Requests\Admin\ChatbotIntent\StoreIntentRequest;
+use App\Http\Requests\Admin\ChatbotIntent\UpdateIntentRequest;
+use App\Http\Requests\Admin\ChatbotIntent\StoreResponseRequest;
+use App\Http\Requests\Admin\ChatbotIntent\UpdateResponseRequest;
 
+// Quản lý các Kịch bản (Intents) và Câu trả lời (Responses) của Chatbot
 class ChatbotIntentController extends Controller
 {
+    // Hiển thị danh sách tất cả các kịch bản
     public function index()
     {
         $intents = ChatbotIntent::orderBy('intent_name')->get();
         return view('admin.chatbot.intents.index', compact('intents'));
     }
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'intent_name' => 'required|string|max:100|unique:chatbot_intents,intent_name|regex:/^[a-z0-9_]+$/',
-            'description' => 'required|string|max:255',
-            'example_phrases' => 'nullable|string',
-            'action' => 'required|in:faq_lookup,guide_booking,introduce_specialty,transfer_staff',
-            'is_active' => 'boolean',
-        ]);
-
-        ChatbotIntent::create([
+    // Lưu một kịch bản mới vào hệ thống
+    public function store(StoreIntentRequest $request)
+    {        ChatbotIntent::create([
             'intent_name' => strtolower($request->intent_name),
             'description' => $request->description,
             'example_phrases' => $request->example_phrases,
@@ -38,17 +38,10 @@ class ChatbotIntentController extends Controller
         return back()->with('success', 'Đã thêm Kịch bản (Intent) thành công.');
     }
 
-    public function update(Request $request, $id)
+    // Cập nhật thông tin của một kịch bản có sẵn
+    public function update(UpdateIntentRequest $request, $id)
     {
         $intent = ChatbotIntent::findOrFail($id);
-
-        $request->validate([
-            'intent_name' => 'required|string|max:100|regex:/^[a-z0-9_]+$/|unique:chatbot_intents,intent_name,' . $id,
-            'description' => 'required|string|max:255',
-            'example_phrases' => 'nullable|string',
-            'action' => 'required|in:faq_lookup,guide_booking,introduce_specialty,transfer_staff',
-            'is_active' => 'boolean',
-        ]);
 
         $intent->update([
             'intent_name' => strtolower($request->intent_name),
@@ -61,6 +54,7 @@ class ChatbotIntentController extends Controller
         return back()->with('success', 'Đã cập nhật Kịch bản thành công.');
     }
 
+    // Bật hoặc tắt trạng thái hoạt động của kịch bản
     public function toggleActive($id)
     {
         $intent = ChatbotIntent::findOrFail($id);
@@ -70,6 +64,7 @@ class ChatbotIntentController extends Controller
         return back()->with('success', 'Đã thay đổi trạng thái Kịch bản.');
     }
 
+    // Xóa kịch bản (chỉ cho phép xóa khi chưa có câu trả lời nào liên kết)
     public function destroy($id)
     {
         $intent = ChatbotIntent::findOrFail($id);
@@ -82,8 +77,9 @@ class ChatbotIntentController extends Controller
         return back()->with('success', 'Đã xoá Kịch bản thành công.');
     }
 
-    // --- RESPONSES CRUD INSIDE INTENT DETAILS ---
+    // --- QUẢN LÝ CÂU TRẢ LỜI CỦA TỪNG KỊCH BẢN ---
 
+    // Hiển thị chi tiết kịch bản và danh sách các câu trả lời
     public function show($id)
     {
         $intent = ChatbotIntent::with(['responses' => function ($q) {
@@ -93,15 +89,8 @@ class ChatbotIntentController extends Controller
         return view('admin.chatbot.intents.show', compact('intent'));
     }
 
-    public function storeResponse(Request $request, $intentId)
-    {
-        $request->validate([
-            'content' => 'required|string',
-            'priority' => 'required|integer|min:1',
-            'is_active' => 'boolean',
-        ]);
-
-        ChatbotResponse::create([
+    public function storeResponse(StoreResponseRequest $request, $intentId)
+    {        ChatbotResponse::create([
             'intent_id' => $intentId,
             'content' => $request->content,
             'priority' => $request->priority,
@@ -111,15 +100,9 @@ class ChatbotIntentController extends Controller
         return back()->with('success', 'Đã thêm Câu trả lời thành công.');
     }
 
-    public function updateResponse(Request $request, $intentId, $id)
+    public function updateResponse(UpdateResponseRequest $request, $intentId, $id)
     {
         $response = ChatbotResponse::where('intent_id', $intentId)->findOrFail($id);
-
-        $request->validate([
-            'content' => 'required|string',
-            'priority' => 'required|integer|min:1',
-            'is_active' => 'boolean',
-        ]);
 
         $response->update([
             'content' => $request->content,
