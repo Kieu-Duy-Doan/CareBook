@@ -9,6 +9,7 @@ use App\Models\SystemLog;
 use App\Models\User;
 use App\Services\SystemSettingService;
 use App\Services\SystemLogService;
+use App\Http\Requests\Admin\UpdateSettingRequest;
 use Illuminate\Support\Facades\Auth;
 
 class SettingController extends Controller
@@ -16,14 +17,17 @@ class SettingController extends Controller
     protected $settingService;
     protected $logService;
 
+    // Gọi các file xử lý logic (Service) vào Controller
     public function __construct(SystemSettingService $settingService, SystemLogService $logService)
     {
         $this->settingService = $settingService;
         $this->logService = $logService;
     }
 
+    // Hiển thị giao diện cài đặt và danh sách nhật ký hệ thống
     public function index(Request $request)
     {
+        // 1. Lấy danh sách cài đặt hiện tại
         $settingsCollection = SystemSetting::all();
         $settings = [];
         $settingsMeta = [];
@@ -36,9 +40,10 @@ class SettingController extends Controller
             ];
         }
 
-        // Logs Logic
+        // 2. Lấy danh sách lịch sử hoạt động (kèm thông tin user để web load nhanh hơn)
         $query = SystemLog::with('user')->latest();
 
+        // Tìm kiếm theo các ô dữ liệu người dùng nhập
         if ($request->filled('module')) {
             $query->where('module', $request->module);
         }
@@ -55,92 +60,48 @@ class SettingController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        // export json
+        // 3. Nếu người dùng bấm nút Xuất JSON, thì chuyển qua xử lý xuất file
         if ($request->get('export') === 'json') {
-            $exportLogs = $query->get()->map(function ($log) {
-                return [
-                    'id' => $log->id,
-                    'created_at' => $log->created_at->format('Y-m-d H:i:s'),
-                    'user' => $log->user ? $log->user->full_name : 'Hệ thống',
-                    'action' => $log->action,
-                    'module' => $log->module,
-                    'ref_type' => $log->ref_type,
-                    'ref_id' => $log->ref_id,
-                    'old_data' => $log->old_data,
-                    'new_data' => $log->new_data,
-                    'ip_address' => $log->ip_address,
-                    'user_agent' => $log->user_agent
-                ];
-            });
-
-            return response()->streamDownload(function () use ($exportLogs) {
-                echo json_encode($exportLogs, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-            }, 'system_logs_' . date('Ymd_His') . '.json', [
-                'Content-Type' => 'application/json',
-            ]);
+            // Gọi hàm xuất file từ Service
+            return $this->logService->exportJsonStream($query);
         }
 
+        // 4. Phân trang danh sách lịch sử (30 dòng/trang) và lấy thông tin user
         $logs = $query->paginate(30)->withQueryString();
-        $users = User::where('is_active', true)->orderBy('full_name')->get();
-
-        $modules = [
-            'auth',
-            'users',
-            'doctors',
-            'specialties',
-            'rooms',
-            'work-schedules',
-            'appointments',
-            'cms',
-            'faq',
-            'chatbot',
-            'notifications',
-            'settings'
-        ];
+        
+        $users = [];
+        if ($request->filled('user_id')) {
+            $selectedUser = \App\Models\User::find($request->user_id);
+            if ($selectedUser) {
+                $users = [$selectedUser];
+            }
+        }
+        
+        // Lấy danh sách tên các module có sẵn
+        $modules = SystemLog::MODULES;
 
         return view('admin.settings.index', compact('settings', 'settingsMeta', 'logs', 'users', 'modules'));
     }
 
-    public function update(Request $request)
+    // Hàm lưu các cài đặt mới
+    public function update(UpdateSettingRequest $request)
     {
-        $userId = Auth::id();
-        $settingsData = $request->input('settings', []);
-        $settingsTypes = $request->input('settings_types', []);
-        if ($request->hasFile('logo')) {
-            $logoPath = $request->file('logo')->store('settings', 'public');
-            $settingsData['logo'] = $logoPath;
-            $settingsTypes['logo'] = 'string';
-        }
-
-        $oldSettings = SystemSetting::all()->keyBy('key')->toArray();
-        $changedData = [];
-
-        foreach ($settingsData as $key => $value) {
-            $dataType = $settingsTypes[$key] ?? 'string';
-
-            try {
-                $this->settingService->set($key, $value, $dataType, null, $userId);
-                if (!isset($oldSettings[$key]) || $oldSettings[$key]['value'] !== (string)$value) {
-                    $changedData[$key] = [
-                        'old' => $oldSettings[$key]['value'] ?? null,
-                        'new' => $value
-                    ];
-                }
-            } catch (\InvalidArgumentException $e) {
-                return back()->with('error', "Lỗi định dạng cho cài đặt: {$key}");
-            }
-        }
-
-        if (!empty($changedData)) {
-            $this->logService->log(
-                action: 'SETTINGS_UPDATED',
-                module: 'settings',
-                oldData: array_map(fn($item) => $item['old'], $changedData),
-                newData: array_map(fn($item) => $item['new'], $changedData),
-                userId: $userId
+        try {
+            // Đẩy hết dữ liệu xuống Service để xử lý lưu vào CSDL và lưu ảnh
+            $this->settingService->updateBulkSettings(
+                $request->input('settings', []),
+                $request->input('settings_types', []),
+                $request->file('logo'),
+                Auth::id(),
+                $request->boolean('remove_logo')
             );
-        }
 
-        return redirect()->route('admin.settings.index')->with('success', 'Đã lưu cài đặt thành công.');
+            return redirect()->route('admin.settings.index')
+                             ->with('success', 'Đã lưu cài đặt thành công.');
+                             
+        } catch (\InvalidArgumentException $e) {
+            // Nếu có lỗi do nhập sai định dạng thì báo lỗi trên màn hình
+            return back()->with('error', $e->getMessage());
+        }
     }
 }

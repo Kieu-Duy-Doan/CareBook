@@ -1,44 +1,68 @@
-<x-layouts.admin title="Lịch sử Phiên Chat">
+<x-layouts.admin title="Lịch sử phiên chat">
     <div class="mb-6 flex justify-between items-center">
         <div>
-            <h2 class="text-2xl font-bold text-gray-900">Lịch sử Phiên Chat</h2>
+            <h2 class="text-2xl font-bold text-gray-900">Lịch sử phiên chat</h2>
             <p class="text-gray-500 mt-1">Giám sát các cuộc hội thoại giữa Chatbot và người dùng.</p>
         </div>
     </div>
+
+    @if (session('success'))
+        <div class="mb-6 bg-green-50 text-green-800 rounded-xl p-4 flex items-center border border-green-200 shadow-sm" x-data="{ show: true }" x-show="show">
+            <i class="fa-solid fa-circle-check text-green-500 mr-3 text-lg"></i>
+            <span class="flex-1 text-sm font-medium">{{ session('success') }}</span>
+            <button @click="show = false" class="text-green-600 hover:text-green-900 transition-colors">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div class="mb-6 bg-red-50 text-red-800 rounded-xl p-4 flex items-center border border-red-200 shadow-sm" x-data="{ show: true }" x-show="show">
+            <i class="fa-solid fa-circle-xmark text-red-500 mr-3 text-lg"></i>
+            <span class="flex-1 text-sm font-medium">{{ session('error') }}</span>
+            <button @click="show = false" class="text-red-600 hover:text-red-900 transition-colors">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    @endif
     <!-- Bộ lọc -->
     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
-        <form action="{{ route('admin.chatbot.sessions.index') }}" method="GET" class="flex flex-wrap gap-4 items-end">
+        <form action="{{ route('admin.chatbot.sessions.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
                 <label class="block text-xs font-medium text-gray-700 mb-1">Trạng thái</label>
                 <select name="status"
-                    class="rounded-md border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500">
-                    <option value="">Tất cả</option>
+                    class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
+                    <option value="">Tất cả trạng thái</option>
                     <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Đang diễn ra</option>
                     <option value="closed" {{ request('status') == 'closed' ? 'selected' : '' }}>Đã kết thúc</option>
                 </select>
             </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-700 mb-1">Tin nhắn cần lưu ý</label>
-                <label class="flex items-center text-sm text-gray-700 mt-2">
+            
+            <div class="flex items-end h-full py-2 px-3">
+                <label class="flex items-center text-sm text-gray-700 cursor-pointer">
                     <input type="checkbox" name="is_flagged" value="1" {{ request('is_flagged') ? 'checked' : '' }}
-                        class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2">
-                    Chỉ hiện phiên có Flag
+                        class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 mr-2">
+                    <span class="font-medium select-none">Chỉ hiện phiên có Flag (Lưu ý)</span>
                 </label>
             </div>
-            <div>
+            
+            <div class="col-span-1 md:col-span-2 flex items-end gap-2 justify-start md:justify-end">
                 <button type="submit"
-                    class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                    Lọc
+                    class="w-full md:w-auto bg-gray-900 hover:bg-gray-800 text-white px-8 py-2 rounded-lg text-sm font-medium transition-colors">
+                    Lọc dữ liệu
                 </button>
                 @if (request()->anyFilled(['status', 'is_flagged']))
                     <a href="{{ route('admin.chatbot.sessions.index') }}"
-                        class="ml-2 text-sm text-blue-600 hover:underline">Xoá lọc</a>
+                        class="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm font-medium transition-colors" title="Xóa bộ lọc">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </a>
                 @endif
             </div>
         </form>
     </div>
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <table class="w-full text-left text-sm text-gray-600">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-gray-600">
             <thead class="bg-gray-50/80 text-gray-700 font-medium border-b border-gray-100 uppercase text-xs">
                 <tr>
                     <th class="px-6 py-4">Mã Phiên (Session ID)</th>

@@ -1,35 +1,57 @@
 <x-layouts.admin title="Chi tiết Phiên Chat #{{ $session->id }}">
-    <div class="mb-6 flex justify-between items-center">
-        <div class="flex items-center gap-3">
-            <a href="{{ route('admin.chatbot.sessions.index') }}"
-                class="w-10 h-10 bg-white border border-gray-200 rounded-lg flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors">
-                <i class="fa-solid fa-arrow-left"></i>
-            </a>
-            <div>
-                <h2 class="text-2xl font-bold text-gray-900">Chi tiết Phiên Chat #{{ $session->id }}</h2>
-                <p class="text-gray-500 mt-1">
-                    @if ($session->user)
-                        Khách hàng: <span class="font-medium text-blue-600">{{ $session->user->full_name }}</span>
-                    @else
-                        Khách hàng: <span class="font-medium text-gray-600">Khách vãng lai</span>
-                    @endif
-                    &bull; Tạo lúc: {{ $session->created_at->format('d/m/Y H:i') }}
-                </p>
-            </div>
-        </div>
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
         <div>
+            <div class="flex items-center text-sm text-gray-500 mb-2">
+                <a href="{{ route('admin.chatbot.sessions.index') }}" class="hover:text-blue-600 transition-colors">Lịch sử phiên chat</a>
+                <span class="mx-2 text-gray-300">/</span>
+                <span class="font-bold text-gray-900">Chi tiết</span>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900">Chi tiết Phiên Chat #{{ $session->id }}</h2>
+            <p class="text-gray-500 mt-1">
+                @if ($session->user)
+                    Khách hàng: <span class="font-medium text-blue-600">{{ $session->user->full_name }}</span>
+                @else
+                    Khách hàng: <span class="font-medium text-gray-600">Khách vãng lai</span>
+                @endif
+                &bull; Tạo lúc: {{ $session->created_at->format('d/m/Y H:i') }}
+            </p>
+        </div>
+        <div class="flex items-center gap-3">
             @if ($session->status == 'active')
                 <span
-                    class="bg-green-50 text-green-700 px-3 py-1.5 rounded-lg text-sm font-medium border border-green-100 flex items-center">
+                    class="bg-green-50 text-green-700 px-3 py-2 rounded-lg text-sm font-medium border border-green-100 flex items-center">
                     <span class="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span> Đang diễn ra
                 </span>
             @else
                 <span
-                    class="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200">
+                    class="bg-gray-100 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium border border-gray-200">
                     Đã kết thúc lúc {{ $session->ended_at ? $session->ended_at->format('H:i') : '' }}
                 </span>
             @endif
+            <a href="{{ route('admin.chatbot.sessions.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors shadow-sm">
+                <i class="fa-solid fa-arrow-left mr-2"></i> Quay lại
+            </a>
         </div>
+
+    @if (session('success'))
+        <div class="mb-6 bg-green-50 text-green-800 rounded-xl p-4 flex items-center border border-green-200 shadow-sm" x-data="{ show: true }" x-show="show">
+            <i class="fa-solid fa-circle-check text-green-500 mr-3 text-lg"></i>
+            <span class="flex-1 text-sm font-medium">{{ session('success') }}</span>
+            <button @click="show = false" class="text-green-600 hover:text-green-900 transition-colors">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div class="mb-6 bg-red-50 text-red-800 rounded-xl p-4 flex items-center border border-red-200 shadow-sm" x-data="{ show: true }" x-show="show">
+            <i class="fa-solid fa-circle-xmark text-red-500 mr-3 text-lg"></i>
+            <span class="flex-1 text-sm font-medium">{{ session('error') }}</span>
+            <button @click="show = false" class="text-red-600 hover:text-red-900 transition-colors">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    @endif
     </div>
 
     <!-- Chat Bubbles -->

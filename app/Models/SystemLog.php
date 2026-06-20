@@ -8,6 +8,21 @@ class SystemLog extends Model
 {
     public $timestamps = false;
 
+    public const MODULES = [
+        'auth',
+        'users',
+        'doctors',
+        'specialties',
+        'rooms',
+        'work-schedules',
+        'appointments',
+        'cms',
+        'faq',
+        'chatbot',
+        'notifications',
+        'settings'
+    ];
+
     protected $fillable = [
         'user_id',
         'action',

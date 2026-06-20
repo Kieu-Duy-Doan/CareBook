@@ -20,6 +20,7 @@
     <!-- Filters -->
     <div x-show="showFilters" x-collapse>
         <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+            <!-- Form chứa các bộ lọc để tìm kiếm chiến dịch thông báo cho nhanh -->
             <form action="{{ route('admin.notifications.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Loại thông báo</label>
@@ -62,6 +63,7 @@
 
     <!-- Table -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <!-- Bảng hiển thị thông tin chính của từng chiến dịch trên màn hình máy tính (PC) -->
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
@@ -102,6 +104,7 @@
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-center">
+                            <!-- Thống kê xem đã gửi thành công bao nhiêu email, bao nhiêu người đã đọc trên web -->
                             <div class="text-sm font-medium text-gray-900"><i class="fa-solid fa-users mr-1"></i> {{ number_format($campaign->total_recipients) }} người nhận</div>
                             <div class="mt-1 flex flex-col gap-1 items-center">
                                 @if($campaign->total_in_web > 0)
@@ -126,11 +129,12 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div class="flex items-center justify-end gap-2">
+                                <!-- Hiện nút gửi lại nếu có lỗi xảy ra hoặc email chưa được gửi hết -->
                                 @if($campaign->total_email > 0 && $campaign->sent_email_count < $campaign->total_email)
                                 <form action="{{ route('admin.notifications.resend') }}" method="POST" class="inline-block" onsubmit="return confirm('Bạn có chắc muốn đặt lại trạng thái để gửi lại thông báo chưa gửi thành công trong chiến dịch này?');">
                                     @csrf
                                     <input type="hidden" name="title" value="{{ $campaign->title }}">
-                                    <input type="hidden" name="created_at" value="{{ $campaign->created_at }}">
+                                    <input type="hidden" name="created_at_minute" value="{{ $campaign->created_at_minute }}">
                                     <button type="submit" class="text-blue-600 hover:text-blue-900" title="Thử gửi lại các email lỗi">
                                         <i class="fa-solid fa-rotate-right"></i>
                                     </button>
@@ -140,7 +144,7 @@
                                     @csrf
                                     @method('DELETE')
                                     <input type="hidden" name="title" value="{{ $campaign->title }}">
-                                    <input type="hidden" name="created_at" value="{{ $campaign->created_at }}">
+                                    <input type="hidden" name="created_at_minute" value="{{ $campaign->created_at_minute }}">
                                     <button type="submit" class="text-red-600 hover:text-red-900" title="Xóa">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
@@ -170,6 +174,7 @@
 
     <!-- Mobile/Tablet List View -->
     <div class="block lg:hidden space-y-4">
+        <!-- Giao diện dạng thẻ thu gọn dành cho màn hình điện thoại -->
         @forelse($campaigns as $campaign)
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 transition-all hover:shadow-md">
             <div class="flex justify-between items-start mb-3 border-b border-gray-50 pb-3">
@@ -182,7 +187,7 @@
                     <form action="{{ route('admin.notifications.resend') }}" method="POST" class="inline-block" onsubmit="return confirm('Gửi lại các email bị lỗi?');">
                         @csrf
                         <input type="hidden" name="title" value="{{ $campaign->title }}">
-                        <input type="hidden" name="created_at" value="{{ $campaign->created_at }}">
+                        <input type="hidden" name="created_at_minute" value="{{ $campaign->created_at_minute }}">
                         <button type="submit" class="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors" title="Gửi lại">
                             <i class="fa-solid fa-rotate-right"></i>
                         </button>
@@ -192,7 +197,7 @@
                         @csrf
                         @method('DELETE')
                         <input type="hidden" name="title" value="{{ $campaign->title }}">
-                        <input type="hidden" name="created_at" value="{{ $campaign->created_at }}">
+                        <input type="hidden" name="created_at_minute" value="{{ $campaign->created_at_minute }}">
                         <button type="submit" class="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-colors" title="Xóa">
                             <i class="fa-solid fa-trash"></i>
                         </button>

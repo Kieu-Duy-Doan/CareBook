@@ -49,8 +49,8 @@
                                 <!-- Ô chọn người nhận, đã chuyển sang dùng TomSelect gọi API để không load toàn bộ user -->
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">Người nhận <span
                                         class="text-red-500">*</span></label>
-                                <select name="user_ids[]" id="choices-users" multiple="multiple"
-                                    class="w-full focus:ring-blue-500" required>
+                                <select name="user_ids[]" id="choices-users" multiple="multiple" class="w-full"
+                                    required>
                                     @foreach ($users as $user)
                                         <option value="{{ $user->id }}" selected>
                                             {{ $user->full_name }} ({{ $user->email ?? 'Không có email' }}) -
@@ -69,7 +69,7 @@
                                         class="text-red-500">*</span></label>
                                 <input type="text" name="title" value="{{ old('title') }}" required
                                     placeholder="Ví dụ: Lịch hẹn của bạn đã được xác nhận..."
-                                    class="w-full px-4 py-3 border-gray-200 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors bg-gray-50 focus:bg-white text-base">
+                                    class="w-full border-gray-200 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors bg-gray-50 focus:bg-white text-base py-3">
                             </div>
 
                             <!-- Nội dung -->
@@ -84,32 +84,38 @@
                     </div>
                 </div>
 
-                <!-- Cột phải: Cấu hình gửi -->
-                <div class="w-full lg:w-1/3 space-y-6">
-                    <!-- Card Tùy chọn -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
-                            <i class="fa-solid fa-sliders text-blue-500"></i>
-                            <h3 class="text-base font-bold text-gray-900">Cấu hình gửi</h3>
-                        </div>
+                <a href="{{ route('admin.notifications.index') }}"
+                    class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors shadow-sm">
+                    <i class="fa-solid fa-arrow-left mr-2"></i> Quay lại
+                </a>
+            </div>
 
-                        <div class="p-6 space-y-6">
-                            <!-- Loại thông báo -->
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-3">Phân loại <span
-                                        class="text-red-500">*</span></label>
-                                <select name="type"
-                                    class="w-full px-4 py-3 border-gray-200 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    required>
-                                    <option value="system" {{ old('type') == 'system' ? 'selected' : '' }}>Hệ thống
-                                        (System)</option>
-                                    <option value="reminder" {{ old('type') == 'reminder' ? 'selected' : '' }}>Nhắc nhở
-                                        (Reminder)</option>
-                                    <option value="appointment" {{ old('type') == 'appointment' ? 'selected' : '' }}>
-                                        Lịch hẹn (Appointment)</option>
-                                    <option value="result" {{ old('type') == 'result' ? 'selected' : '' }}>Kết quả
-                                        (Result)</option>
-                                </select>
+            @if ($errors->any())
+                <div
+                    class="p-4 mb-6 text-sm text-red-800 rounded-xl bg-red-50 border border-red-200 shadow-sm animate-pulse-once">
+                    <div class="font-bold mb-2 flex items-center"><i
+                            class="fa-solid fa-triangle-exclamation mr-2 text-red-500"></i> Vui lòng kiểm tra lại dữ
+                        liệu:
+                    </div>
+                    <ul class="list-disc list-inside space-y-1 ml-1">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <form action="{{ route('admin.notifications.store') }}" method="POST">
+                @csrf
+
+                <div class="flex flex-col lg:flex-row gap-8">
+                    <!-- Cột trái: Nội dung chính -->
+                    <div class="flex-1 space-y-6">
+                        <!-- Card Soạn thảo -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
+                                <i class="fa-regular fa-pen-to-square text-blue-500"></i>
+                                <h3 class="text-base font-bold text-gray-900">Nội dung Thông báo</h3>
                             </div>
 
                             <!-- Kênh gửi -->
@@ -150,18 +156,24 @@
                                         </div>
                                     </label>
                                 </div>
-                            </div>
 
-                            <!-- Hẹn giờ -->
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-3">Lên lịch (Tùy
-                                    chọn)</label>
-                                <div class="relative">
-                                    <input type="datetime-local" name="scheduled_at" value="{{ old('scheduled_at') }}"
-                                        class="w-full border-gray-200 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500 px-4 py-3">
+                                <!-- Tiêu đề -->
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Tiêu đề <span
+                                            class="text-red-500">*</span></label>
+                                    <input type="text" name="title" value="{{ old('title') }}" required
+                                        placeholder="Ví dụ: Lịch hẹn của bạn đã được xác nhận..."
+                                        class="w-full px-4 py-3 border-gray-200 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors bg-gray-50 focus:bg-white text-base">
                                 </div>
-                                <p class="text-xs text-gray-500 mt-2 leading-relaxed">Nếu để trống, hệ thống sẽ thực
-                                    hiện gửi ngay lập tức. Nếu có chọn giờ, thông báo sẽ được lưu vào Queue.</p>
+
+                                <!-- Nội dung -->
+                                <div>
+                                    <!-- Ô nhập nội dung chi tiết của thông báo -->
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Thông điệp chi tiết
+                                        <span class="text-red-500">*</span></label>
+                                    <textarea name="content" rows="6" required placeholder="Nhập nội dung chi tiết bạn muốn gửi đến người nhận..."
+                                        class="w-full border-gray-200 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors bg-gray-50 focus:bg-white resize-y p-4">{{ old('content') }}</textarea>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -173,8 +185,7 @@
                             báo</span>
                     </button>
                 </div>
-            </div>
-        </form>
+            </form>
     </div>
 
     <!-- Thêm TomSelect CSS & JS -->
@@ -190,80 +201,53 @@
                 min-height: 48px;
             }
 
-            .ts-control.focus {
-                background-color: #ffffff !important;
-                border-color: #3b82f6 !important;
-                box-shadow: 0 0 0 1px #3b82f6 !important;
-            }
+            <x-slot name="scripts"><script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script><script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const selectEl = document.getElementById('choices-users');
+                    if (selectEl) {
+                        new TomSelect(selectEl, {
+                            plugins: ['remove_button'],
+                            placeholder: 'Nhập tên hoặc email...',
+                            valueField: 'id',
+                            labelField: 'text',
+                            searchField: 'text',
 
-            .ts-dropdown {
-                border-radius: 0.75rem !important;
-                border-color: #e5e7eb !important;
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
-                margin-top: 4px !important;
-            }
-
-            .ts-control .item {
-                background-color: #eff6ff !important;
-                border: 1px solid #bfdbfe !important;
-                color: #1e40af !important;
-                border-radius: 0.5rem !important;
-                padding: 2px 8px !important;
-            }
-        </style>
-    </x-slot>
-
-    <x-slot name="scripts">
-        <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const selectEl = document.getElementById('choices-users');
-                if (selectEl) {
-                    new TomSelect(selectEl, {
-                        plugins: ['remove_button'],
-                        placeholder: 'Nhập tên hoặc email...',
-                        valueField: 'id',
-                        labelField: 'text',
-                        searchField: 'text',
-
-                        // Tự động gọi lên API tìm người dùng mỗi khi gõ phím, thay vì load sẵn hàng chục ngàn người
-                        load: function(query, callback) {
-                            if (!query.length) return callback();
-                            fetch(`{{ route('admin.users.ajax-search') }}?q=${encodeURIComponent(query)}`)
-                                .then(response => response.json())
-                                .then(json => {
-                                    callback(json.items);
-                                }).catch(() => {
-                                    callback();
-                                });
-                        },
-                        render: {
-                            no_results: function(data, escape) {
-                                return '<div class="no-results p-2 text-gray-500">Không tìm thấy người dùng phù hợp</div>';
+                            // Tự động gọi lên API tìm người dùng mỗi khi gõ phím, thay vì load sẵn hàng chục ngàn người
+                            load: function(query, callback) {
+                                if (!query.length) return callback();
+                                fetch(`{{ route('admin.users.ajax-search') }}?q=${encodeURIComponent(query)}`)
+                                    .then(response => response.json())
+                                    .then(json => {
+                                        callback(json.items);
+                                    }).catch(() => {
+                                        callback();
+                                    });
                             },
-                            option: function(item, escape) {
-                                return `<div class="p-2"><span class="font-medium text-gray-900">${escape(item.text)}</span></div>`;
-                            },
-                            item: function(item, escape) {
-                                return `<div class="item">${escape(item.text)}</div>`;
+                            render: {
+                                no_results: function(data, escape) {
+                                    return '<div class="no-results p-2 text-gray-500">Không tìm thấy người dùng phù hợp</div>';
+                                },
+                                option: function(item, escape) {
+                                    return `<div class="p-2"><span class="font-medium text-gray-900">${escape(item.text)}</span></div>`;
+                                },
+                                item: function(item, escape) {
+                                    return `<div class="item">${escape(item.text)}</div>`;
+                                }
                             }
-                        }
-                    });
-                }
+                        });
+                    }
 
-                // Chống bấm đúp chuột (double-click) gây ra 2 thông báo trùng nhau
-                const formEl = document.querySelector('form');
-                const btnSubmit = document.getElementById('btn-submit');
-                if (formEl && btnSubmit) {
-                    formEl.addEventListener('submit', function() {
-                        // Đổi nút sang trạng thái đang xử lý
-                        btnSubmit.disabled = true;
-                        btnSubmit.classList.add('opacity-75', 'cursor-not-allowed');
-                        document.getElementById('btn-icon').className = 'fa-solid fa-spinner fa-spin';
-                        document.getElementById('btn-text').innerText = 'Đang xử lý...';
-                    });
-                }
-            });
-        </script>
-    </x-slot>
-</x-layouts.admin>
+                    // Chống bấm đúp chuột (double-click) gây ra 2 thông báo trùng nhau
+                    const formEl = document.querySelector('form');
+                    const btnSubmit = document.getElementById('btn-submit');
+                    if (formEl && btnSubmit) {
+                        formEl.addEventListener('submit', function() {
+                            // Đổi nút sang trạng thái đang xử lý
+                            btnSubmit.disabled = true;
+                            btnSubmit.classList.add('opacity-75', 'cursor-not-allowed');
+                            document.getElementById('btn-icon').className = 'fa-solid fa-spinner fa-spin';
+                            document.getElementById('btn-text').innerText = 'Đang xử lý...';
+                        });
+                    }
+                });
+            </script></x-slot></x-layouts.admin>

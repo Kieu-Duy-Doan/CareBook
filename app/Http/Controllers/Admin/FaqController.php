@@ -8,9 +8,11 @@ use App\Models\Faq;
 use App\Models\Specialty;
 use App\Models\SystemLog;
 use Illuminate\Support\Facades\Auth;
-
+use App\Http\Requests\Admin\Faq\StoreFaqRequest;
+use App\Http\Requests\Admin\Faq\UpdateFaqRequest;
 class FaqController extends Controller
 {
+    // Hiển thị danh sách câu hỏi thường gặp kèm theo bộ lọc tìm kiếm
     public function index(Request $request)
     {
         $query = Faq::with('specialty')->latest();
@@ -31,27 +33,23 @@ class FaqController extends Controller
         return view('admin.faqs.index', compact('faqs', 'specialties'));
     }
 
+    // Hiển thị giao diện thêm câu hỏi mới
     public function create()
     {
         $specialties = Specialty::where('is_active', true)->orderBy('name')->get();
         return view('admin.faqs.create', compact('specialties'));
     }
 
-    public function store(Request $request)
+    // Xử lý lưu dữ liệu câu hỏi mới vào cơ sở dữ liệu
+    public function store(StoreFaqRequest $request)
     {
-        $request->validate([
-            'question' => 'required|string',
-            'answer' => 'required|string',
-            'specialty_id' => 'nullable|exists:specialties,id',
-            'keywords' => 'nullable|string|max:500',
-            'is_active' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         $faq = Faq::create([
-            'question' => $request->question,
-            'answer' => $request->answer,
-            'specialty_id' => $request->specialty_id,
-            'keywords' => $request->keywords,
+            'question' => $validated['question'],
+            'answer' => $validated['answer'],
+            'specialty_id' => $validated['specialty_id'] ?? null,
+            'keywords' => $validated['keywords'] ?? null,
             'is_active' => $request->has('is_active'),
         ]);
 
@@ -68,6 +66,7 @@ class FaqController extends Controller
         return redirect()->route('admin.faqs.index')->with('success', 'Đã thêm FAQ thành công.');
     }
 
+    // Hiển thị giao diện chỉnh sửa câu hỏi đã chọn
     public function edit($id)
     {
         $faq = Faq::findOrFail($id);
@@ -75,23 +74,17 @@ class FaqController extends Controller
         return view('admin.faqs.edit', compact('faq', 'specialties'));
     }
 
-    public function update(Request $request, $id)
+    // Xử lý cập nhật thông tin câu hỏi vào cơ sở dữ liệu
+    public function update(UpdateFaqRequest $request, $id)
     {
         $faq = Faq::findOrFail($id);
-
-        $request->validate([
-            'question' => 'required|string',
-            'answer' => 'required|string',
-            'specialty_id' => 'nullable|exists:specialties,id',
-            'keywords' => 'nullable|string|max:500',
-            'is_active' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         $faq->update([
-            'question' => $request->question,
-            'answer' => $request->answer,
-            'specialty_id' => $request->specialty_id,
-            'keywords' => $request->keywords,
+            'question' => $validated['question'],
+            'answer' => $validated['answer'],
+            'specialty_id' => $validated['specialty_id'] ?? null,
+            'keywords' => $validated['keywords'] ?? null,
             'is_active' => $request->has('is_active'),
         ]);
 
@@ -108,6 +101,7 @@ class FaqController extends Controller
         return redirect()->route('admin.faqs.edit', $faq->id)->with('success', 'Đã cập nhật FAQ thành công.');
     }
 
+    // Bật hoặc tắt trạng thái hiển thị của câu hỏi
     public function toggleActive($id)
     {
         $faq = Faq::findOrFail($id);
@@ -117,6 +111,7 @@ class FaqController extends Controller
         return back()->with('success', 'Đã thay đổi trạng thái FAQ.');
     }
 
+    // Xóa câu hỏi khỏi hệ thống nếu thỏa điều kiện
     public function destroy($id)
     {
         $faq = Faq::findOrFail($id);

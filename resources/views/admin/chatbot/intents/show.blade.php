@@ -1,31 +1,53 @@
-<x-layouts.admin title="Chi tiết Kịch bản: {{ $intent->intent_name }}">
-    <div class="mb-6 flex justify-between items-center">
-        <div class="flex items-center gap-3">
-            <a href="{{ route('admin.chatbot.intents.index') }}"
-                class="w-10 h-10 bg-white border border-gray-200 rounded-lg flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors">
-                <i class="fa-solid fa-arrow-left"></i>
-            </a>
-            <div>
-                <h2 class="text-2xl font-bold text-gray-900">{{ $intent->intent_name }}</h2>
-                <p class="text-gray-500 mt-1">Cấu hình câu trả lời cho kịch bản này.</p>
+<x-layouts.admin title="Chi tiết kịch bản: {{ $intent->intent_name }}">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
+        <div>
+            <div class="flex items-center text-sm text-gray-500 mb-2">
+                <a href="{{ route('admin.chatbot.intents.index') }}" class="hover:text-blue-600 transition-colors">Kịch bản và phản hồi</a>
+                <span class="mx-2 text-gray-300">/</span>
+                <span class="font-bold text-gray-900">Chi tiết</span>
             </div>
+            <h2 class="text-2xl font-bold text-gray-900">{{ $intent->intent_name }}</h2>
+            <p class="text-gray-500 mt-1">Cấu hình câu trả lời cho kịch bản này.</p>
         </div>
-        <button x-data @click="$dispatch('open-modal', 'edit-intent')"
-            class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-            <i class="fa-solid fa-pen mr-2"></i> Sửa kịch bản
-        </button>
+        <div class="flex items-center gap-3">
+            <button x-data @click="$dispatch('open-modal', 'edit-intent')"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm">
+                <i class="fa-solid fa-pen mr-2"></i> Sửa kịch bản
+            </button>
+            <a href="{{ route('admin.chatbot.intents.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors shadow-sm">
+                <i class="fa-solid fa-arrow-left mr-2"></i> Quay lại
+            </a>
+        </div>
     </div>
 
     @if (session('success'))
-        <div class="mb-6 bg-green-50 text-green-800 rounded-lg p-4 flex items-center border border-green-200">
+        <div class="mb-6 bg-green-50 text-green-800 rounded-xl p-4 flex items-center border border-green-200 shadow-sm" x-data="{ show: true }" x-show="show">
             <i class="fa-solid fa-circle-check text-green-500 mr-3 text-lg"></i>
             <span class="flex-1 text-sm font-medium">{{ session('success') }}</span>
+            <button @click="show = false" class="text-green-600 hover:text-green-900 transition-colors">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
         </div>
     @endif
+
     @if (session('error'))
-        <div class="mb-6 bg-red-50 text-red-800 rounded-lg p-4 flex items-center border border-red-200">
-            <i class="fa-solid fa-circle-exclamation text-red-500 mr-3 text-lg"></i>
+        <div class="mb-6 bg-red-50 text-red-800 rounded-xl p-4 flex items-center border border-red-200 shadow-sm" x-data="{ show: true }" x-show="show">
+            <i class="fa-solid fa-circle-xmark text-red-500 mr-3 text-lg"></i>
             <span class="flex-1 text-sm font-medium">{{ session('error') }}</span>
+            <button @click="show = false" class="text-red-600 hover:text-red-900 transition-colors">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="mb-6 p-4 text-sm text-red-800 rounded-xl bg-red-50 border border-red-200 shadow-sm">
+            <div class="font-bold mb-2 flex items-center"><i class="fa-solid fa-triangle-exclamation mr-2 text-red-500"></i> Vui lòng kiểm tra lại dữ liệu:</div>
+            <ul class="list-disc list-inside space-y-1 ml-1">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
         </div>
     @endif
 
@@ -33,7 +55,7 @@
         <!-- Thông tin Kịch bản -->
         <div class="col-span-1">
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-4 border-b pb-2">Thông tin Kịch bản</h3>
+                <h3 class="text-lg font-bold text-gray-900 mb-4 border-b pb-2">Thông tin kịch bản</h3>
                 <div class="space-y-4 text-sm">
                     <div>
                         <span class="block text-gray-500 text-xs mb-1">Mô tả</span>
@@ -63,7 +85,7 @@
         <div class="col-span-1 md:col-span-2">
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <div class="flex justify-between items-center p-6 border-b border-gray-100">
-                    <h3 class="text-lg font-bold text-gray-900">Danh sách Phản hồi (Responses)</h3>
+                    <h3 class="text-lg font-bold text-gray-900">Danh sách phản hồi (Responses)</h3>
                     <button x-data @click="$dispatch('open-modal', 'add-response')"
                         class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors">
                         <i class="fa-solid fa-plus mr-1"></i> Thêm mới
@@ -131,7 +153,7 @@
                     <form action="{{ route('admin.chatbot.intents.responses.store', $intent->id) }}" method="POST">
                         @csrf
                         <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
-                            <h3 class="text-lg font-bold text-gray-900 mb-4">Thêm Câu trả lời</h3>
+                            <h3 class="text-lg font-bold text-gray-900 mb-4">Thêm câu trả lời</h3>
                             <div class="space-y-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Nội dung trả lời
@@ -174,10 +196,10 @@
                     <form action="{{ route('admin.chatbot.intents.update', $intent->id) }}" method="POST">
                         @csrf @method('PUT')
                         <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
-                            <h3 class="text-lg font-bold text-gray-900 mb-4">Sửa Kịch bản</h3>
+                            <h3 class="text-lg font-bold text-gray-900 mb-4">Sửa kịch bản</h3>
                             <div class="space-y-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Tên Kịch bản (Mã
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Tên kịch bản (Mã
                                         Intent) *</label>
                                     <input type="text" name="intent_name" value="{{ $intent->intent_name }}"
                                         required pattern="[a-z0-9_]+"
