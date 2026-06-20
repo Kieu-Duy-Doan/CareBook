@@ -18,7 +18,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(true)->index();
             $table->timestamps();
 
-            $table->foreign('specialty_id')->references('id')->on('specialties')->restrictOnDelete();
+            $table->foreign('specialty_id')->references('id')->on('specialties')->onDelete('set null');
         });
     }
 
