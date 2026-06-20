@@ -65,7 +65,7 @@ class WorkScheduleController extends Controller
         ]);
 
         $isValidTime = ($request->start_time === '07:00' && $request->end_time === '11:00') ||
-                       ($request->start_time === '13:00' && $request->end_time === '17:00');
+            ($request->start_time === '13:00' && $request->end_time === '17:00');
 
         if (!$isValidTime) {
             return back()->with('error', 'Thời gian ca trực chỉ được phép là Sáng (07:00 - 11:00) hoặc Chiều (13:00 - 17:00).')->withInput();
@@ -141,7 +141,7 @@ class WorkScheduleController extends Controller
         // dd($schedule->toArray());
 
         $today = Carbon::today();
-        // $today = Carbon::parse('2026-06-28');
+        // $today = Carbon::parse('2026-06-22');
 
         $weekStart = $today->copy()->startOfWeek(Carbon::MONDAY);
         $weekEnd = $today->copy()->endOfWeek(Carbon::SUNDAY);
@@ -390,7 +390,7 @@ class WorkScheduleController extends Controller
         ]);
 
         $isValidTime = ($request->start_time === '07:00' && $request->end_time === '11:00') ||
-                       ($request->start_time === '13:00' && $request->end_time === '17:00');
+            ($request->start_time === '13:00' && $request->end_time === '17:00');
 
         if (!$isValidTime) {
             return back()->with('error', 'Thời gian ca trực chỉ được phép là Sáng (07:00 - 11:00) hoặc Chiều (13:00 - 17:00).')->withInput();
@@ -485,7 +485,7 @@ class WorkScheduleController extends Controller
             ]);
 
             $isValidTime = ($request->start_time === '07:00' && $request->end_time === '11:00') ||
-                           ($request->start_time === '13:00' && $request->end_time === '17:00');
+                ($request->start_time === '13:00' && $request->end_time === '17:00');
 
             if (!$isValidTime) {
                 return back()->with('error', 'Thời gian ca trực chỉ được phép là Sáng (07:00 - 11:00) hoặc Chiều (13:00 - 17:00).')->withInput();

@@ -157,11 +157,15 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
             Route::patch('/messages/{id}/flag', [\App\Http\Controllers\Admin\ChatSessionController::class, 'toggleFlag'])->name('messages.flag');
         });
     });
-
+    // FAQ
     Route::prefix('faqs')->name('faqs.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\FaqController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\Admin\FaqController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\Admin\FaqController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [\App\Http\Controllers\Admin\FaqController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [\App\Http\Controllers\Admin\FaqController::class, 'update'])->name('update');
+        Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\FaqController::class, 'toggleActive'])->name('toggle-active');
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\FaqController::class, 'destroy'])->name('destroy');
     });
 
 
