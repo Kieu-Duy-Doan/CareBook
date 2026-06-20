@@ -9,7 +9,8 @@ use App\Models\Specialty;
 use App\Models\SystemLog;
 use Illuminate\Support\Facades\Auth;
 
-class FaqController extends Controller {
+class FaqController extends Controller
+{
     public function index(Request $request)
     {
         $query = Faq::with('specialty')->latest();
@@ -65,5 +66,45 @@ class FaqController extends Controller {
         ]);
 
         return redirect()->route('admin.faqs.index')->with('success', 'Đã thêm FAQ thành công.');
+    }
+
+    public function edit($id)
+    {
+        $faq = Faq::findOrFail($id);
+        $specialties = Specialty::where('is_active', true)->orderBy('name')->get();
+        return view('admin.faqs.edit', compact('faq', 'specialties'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $faq = Faq::findOrFail($id);
+
+        $request->validate([
+            'question' => 'required|string',
+            'answer' => 'required|string',
+            'specialty_id' => 'nullable|exists:specialties,id',
+            'keywords' => 'nullable|string|max:500',
+            'is_active' => 'boolean',
+        ]);
+
+        $faq->update([
+            'question' => $request->question,
+            'answer' => $request->answer,
+            'specialty_id' => $request->specialty_id,
+            'keywords' => $request->keywords,
+            'is_active' => $request->has('is_active'),
+        ]);
+
+        SystemLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'FAQ_UPDATED',
+            'module' => 'faq',
+            'ref_type' => 'faq',
+            'ref_id' => $faq->id,
+            'description' => 'Cập nhật FAQ',
+            'ip_address' => request()->ip()
+        ]);
+
+        return redirect()->route('admin.faqs.edit', $faq->id)->with('success', 'Đã cập nhật FAQ thành công.');
     }
 }
