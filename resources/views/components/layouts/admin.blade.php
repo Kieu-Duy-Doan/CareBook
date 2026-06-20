@@ -140,6 +140,13 @@
 
 
             <!-- Single System Menus -->
+            <a href="{{ route('admin.posts.index') }}"
+                class="{{ request()->routeIs('admin.posts.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
+                <i
+                    class="fa-regular fa-clipboard w-5 text-center mr-3 {{ request()->routeIs('admin.posts.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
+                Bài viết
+            </a>
+
             <a href="{{ route('admin.notifications.index') }}"
                 class="{{ request()->routeIs('admin.notifications.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
                 <i

@@ -120,6 +120,17 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\AppointmentLogController::class, 'index'])->name('index');
     });
 
+    // Bài viết
+    Route::prefix('posts')->name('posts.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\PostController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Admin\PostController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Admin\PostController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [\App\Http\Controllers\Admin\PostController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [\App\Http\Controllers\Admin\PostController::class, 'update'])->name('update');
+        Route::patch('/{id}/toggle-publish', [\App\Http\Controllers\Admin\PostController::class, 'togglePublish'])->name('toggle-publish');
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\PostController::class, 'destroy'])->name('destroy');
+    });
+
     // Chatbot
     Route::prefix('chatbot')->name('chatbot.')->group(function () {
         // Intents
