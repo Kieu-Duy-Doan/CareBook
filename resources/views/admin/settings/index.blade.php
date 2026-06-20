@@ -11,9 +11,30 @@
         </div>
     @endif
 
-    <div x-data="{ activeTab: '{{ request()->hasAny(['module', 'action_search', 'user_id', 'date_from', 'date_to', 'page']) ? 'logs' : 'general' }}' }" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    @if (session('error'))
+        <div class="mb-6 bg-red-50 text-red-800 rounded-lg p-4 flex items-center border border-red-200">
+            <i class="fa-solid fa-circle-xmark text-red-500 mr-3 text-lg"></i>
+            <span class="flex-1 text-sm font-medium">{{ session('error') }}</span>
+        </div>
+    @endif
 
-        <!-- Tabs Navigation -->
+    @if ($errors->any())
+        <div class="mb-6 bg-red-50 text-red-800 rounded-lg p-4 border border-red-200">
+            <div class="flex items-center mb-2">
+                <i class="fa-solid fa-triangle-exclamation text-red-500 mr-3 text-lg"></i>
+                <span class="text-sm font-bold">Vui lòng kiểm tra lại thông tin:</span>
+            </div>
+            <ul class="list-disc list-inside text-sm ml-7">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <div x-data="{ activeTab: '{{ request()->hasAny(['module', 'action_search', 'user_id', 'date_from', 'date_to', 'page', 'active_tab']) ? 'logs' : 'general' }}' }" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+
+        <!-- Thanh menu chọn qua lại giữa các tab cài đặt -->
         <div class="flex border-b border-gray-100 overflow-x-auto hide-scrollbar">
             <button @click="activeTab = 'general'"
                 class="px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium transition-colors border-b-2 whitespace-nowrap"
@@ -48,7 +69,7 @@
             @method('PUT')
 
 
-            <!-- tab 1: general -->
+            <!-- Tab 1: Cài đặt thông tin chung của phòng khám (Tên, địa chỉ, logo...) -->
             <div x-show="activeTab === 'general'" x-transition:enter="transition ease-out duration-300"
                 x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
                 style="display: none;">
@@ -56,12 +77,20 @@
                 <!-- Logo -->
                 <div class="mb-6 sm:mb-8 pb-6 border-b border-gray-100">
                     <label class="block text-sm font-medium text-gray-700 mb-3">Logo Phòng khám</label>
-                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6" x-data="{ logoRemoved: false }">
                         @if (isset($settings['logo']) && $settings['logo'] !== '')
-                            <div
-                                class="w-20 h-20 sm:w-24 sm:h-24 rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex-shrink-0 flex items-center justify-center p-2 shadow-sm">
+                            <div x-show="!logoRemoved"
+                                class="relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex-shrink-0 flex items-center justify-center p-2 shadow-sm group">
                                 <img src="{{ asset('storage/' . $settings['logo']) }}" alt="Logo"
                                     class="max-w-full max-h-full object-contain">
+                                <!-- Nút xóa ảnh hiện ra khi hover -->
+                                <button type="button" @click="logoRemoved = true" class="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" title="Xóa ảnh này">
+                                    <i class="fa-solid fa-xmark text-xs"></i>
+                                </button>
+                            </div>
+                            <div x-show="logoRemoved" style="display: none;"
+                                class="w-20 h-20 sm:w-24 sm:h-24 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 flex-shrink-0 flex items-center justify-center text-gray-400">
+                                <i class="fa-solid fa-image text-2xl sm:text-3xl"></i>
                             </div>
                         @else
                             <div
@@ -70,8 +99,12 @@
                             </div>
                         @endif
                         <div class="flex-1 w-full">
-                            <input type="file" name="logo" accept="image/*"
-                                class="block w-full text-xs sm:text-sm text-gray-500 file:mr-4 file:py-2 file:sm:py-2.5 file:px-4 file:sm:px-5 file:rounded-lg file:border-0 file:text-xs file:sm:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer transition-colors">
+                            <input type="hidden" name="remove_logo" :value="logoRemoved ? '1' : '0'">
+                            <input type="file" name="logo" accept="image/*" @change="logoRemoved = false"
+                                class="block w-full text-xs sm:text-sm text-gray-500 file:mr-4 file:py-2 file:sm:py-2.5 file:px-4 file:sm:px-5 file:rounded-lg file:border-0 file:text-xs file:sm:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer transition-colors @error('logo') ring-2 ring-red-500 @enderror">
+                            @error('logo')
+                                <p class="text-xs text-red-600 mt-2 font-medium"><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ $message }}</p>
+                            @enderror
                             <p class="text-xs text-gray-500 mt-2.5 leading-relaxed">Định dạng khuyên dùng: <strong
                                     class="text-gray-700">PNG nền trong suốt</strong>.<br>Kích thước tỷ lệ 1:1 hoặc 3:1.
                                 Dung lượng tối đa 2MB.</p>
@@ -167,7 +200,7 @@
                 </div>
             </div>
 
-            <!-- tab 2: booking rules -->
+            <!-- Tab 2: Các quy định về đặt lịch khám (Giới hạn, thời gian hủy...) -->
             <div x-show="activeTab === 'booking'" x-transition:enter="transition ease-out duration-300"
                 x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
                 style="display: none;">
@@ -275,7 +308,7 @@
                 </div>
             </div>
 
-            <!-- tab 3: system rules -->
+            <!-- Tab 3: Cài đặt hệ thống (Bật/Tắt chế độ bảo trì web) -->
             <div x-show="activeTab === 'system'" x-transition:enter="transition ease-out duration-300"
                 x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
                 style="display: none;">
@@ -319,7 +352,7 @@
             </div>
             <!-- end tabs -->
 
-            <!-- submit button -->
+            <!-- Nút bấm để lưu tất cả thông tin cài đặt ở trên vào Database -->
             <div x-show="activeTab !== 'logs'" class="mt-8 pt-5 border-t border-gray-100">
                 <button type="submit"
                     class="w-full sm:w-auto justify-center bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 sm:py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm">
@@ -328,7 +361,7 @@
             </div>
         </form>
 
-        <!-- tab 4: logs -->
+        <!-- Tab 4: Xem lịch sử hoạt động (Nhật ký hệ thống) -->
         <div x-show="activeTab === 'logs'" x-transition:enter="transition ease-out duration-300"
             x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
             class="p-4 sm:p-6" style="display: none;">
@@ -342,7 +375,7 @@
                 </button>
             </div>
 
-            <!-- Filter Form -->
+            <!-- Form tìm kiếm và lọc lịch sử hoạt động theo nhiều điều kiện -->
             <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6">
                 <form id="logFilterForm" action="{{ route('admin.settings.index') }}" method="GET"
                     class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
@@ -396,7 +429,7 @@
                 </form>
             </div>
 
-            <!-- Data Table -->
+            <!-- Bảng hiển thị danh sách lịch sử hoạt động -->
             <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -507,6 +540,7 @@
         </div>
     </div>
 
+    <!-- Hộp thoại popup hiện ra khi bấm nút "Xem chi tiết" để so sánh dữ liệu trước và sau khi đổi -->
     <div x-data="{ open: false, oldData: {}, newData: {} }"
         @open-log-modal.window="open = true; oldData = $event.detail.old; newData = $event.detail.new;" x-show="open"
         x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto p-4 sm:p-6"
