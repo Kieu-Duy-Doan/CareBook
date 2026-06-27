@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use Carbon\Carbon;
+use App\Models\DoctorProfile;
+use App\Models\PatientProfile;
 use App\Models\ScheduleOverride;
 use App\Models\WorkSchedule;
 use App\Models\Appointment;
@@ -13,6 +15,89 @@ use Exception;
 
 class BookingService
 {
+    private const DAYS_AHEAD = 14;
+    private const DAY_NAMES  = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+
+    // ── API cho SPA Booking ───────────────────────────────────────────────
+
+    /**
+     * 14 ngày tới có lịch của bác sĩ hoặc chuyên khoa.
+     */
+    public function getAvailableDates(?int $doctorId, ?int $specialtyId): array
+    {
+        $dates = [];
+        $today = Carbon::today();
+
+        for ($i = 0; $i < self::DAYS_AHEAD; $i++) {
+            $date = $today->copy()->addDays($i);
+            $dow  = $this->toDow($date);
+
+            if ($this->hasActiveSchedule($date, $dow, $doctorId, $specialtyId)) {
+                $dates[] = [
+                    'date'     => $date->format('Y-m-d'),
+                    'display'  => $date->format('d/m'),
+                    'day_name' => self::DAY_NAMES[$date->dayOfWeek],
+                    'is_today' => $i === 0,
+                ];
+            }
+        }
+
+        return $dates;
+    }
+
+    /**
+     * Danh sách slot giờ khám: [{time, available, room_name, doctor_id}].
+     */
+    public function getSlots(?int $doctorId, ?int $specialtyId, string $dateStr): array
+    {
+        $date      = Carbon::parse($dateStr);
+        $dow       = $this->toDow($date);
+        $schedules = $this->querySchedules($dow, $doctorId, $specialtyId);
+
+        if ($schedules->isEmpty()) {
+            return [];
+        }
+
+        $slots = [];
+
+        foreach ($schedules as $schedule) {
+            $start    = Carbon::parse("{$dateStr} {$schedule->start_time}");
+            $end      = Carbon::parse("{$dateStr} {$schedule->end_time}");
+            $duration = $schedule->slot_duration_minutes ?: 30;
+            $maxSlots = $schedule->max_slots ?: 50;
+            $count    = 0;
+
+            $bookedTimes = Appointment::where('appointment_date', $dateStr)
+                ->where('doctor_profile_id', $schedule->doctor_profile_id)
+                ->whereNotIn('status', ['cancelled', 'absent'])
+                ->pluck('appointment_time')
+                ->map(fn($t) => substr($t, 0, 5))
+                ->toArray();
+
+            $current = $start->copy();
+            while ($current->lt($end) && $count < $maxSlots) {
+                $timeStr = $current->format('H:i');
+                $isPast  = $date->isToday() && $current->lte(Carbon::now());
+
+                $slots[] = [
+                    'time'      => $timeStr,
+                    'available' => !$isPast && !in_array($timeStr, $bookedTimes),
+                    'room_name' => $schedule->room?->name ?? null,
+                    'doctor_id' => $schedule->doctor_profile_id,
+                ];
+
+                $current->addMinutes($duration);
+                $count++;
+            }
+        }
+
+        usort($slots, fn($a, $b) => strcmp($a['time'], $b['time']));
+
+        return $slots;
+    }
+
+    // ── Legacy (giữ tương thích) ──────────────────────────────────────────
+
     /**
      * Lấy danh sách slot available cho bác sĩ theo ngày
      */
@@ -151,5 +236,46 @@ class BookingService
 
             return $appointment;
         });
+    }
+
+    // ── Private helpers ───────────────────────────────────────────────────
+
+    /** Carbon dayOfWeek (0=Sun) → DB day_of_week (1=CN,2=T2,...,7=T7) */
+    private function toDow(Carbon $date): int
+    {
+        return $date->dayOfWeek === 0 ? 1 : $date->dayOfWeek + 1;
+    }
+
+    private function hasActiveSchedule(Carbon $date, int $dow, ?int $doctorId, ?int $specialtyId): bool
+    {
+        // Nếu bác sĩ bị override close thì bỏ qua
+        if ($doctorId) {
+            $closed = ScheduleOverride::where('doctor_profile_id', $doctorId)
+                ->where('override_date', $date->format('Y-m-d'))
+                ->where('type', 'close')
+                ->exists();
+            if ($closed) return false;
+        }
+
+        return $this->querySchedules($dow, $doctorId, $specialtyId)->isNotEmpty();
+    }
+
+    private function querySchedules(int $dow, ?int $doctorId, ?int $specialtyId)
+    {
+        $query = WorkSchedule::with('room')
+            ->where('day_of_week', $dow)
+            ->where('is_active', true);
+
+        if ($doctorId) {
+            $query->where('doctor_profile_id', $doctorId);
+        } elseif ($specialtyId) {
+            $ids = DoctorProfile::whereHas(
+                'specialties',
+                fn($q) => $q->where('specialties.id', $specialtyId)
+            )->pluck('id');
+            $query->whereIn('doctor_profile_id', $ids);
+        }
+
+        return $query->get();
     }
 }

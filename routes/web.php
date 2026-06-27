@@ -4,10 +4,14 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 
+use App\Http\Controllers\HomeController;
+
 // Home
-Route::get('/', function () {
-    return view('welcome');
-})->name('home');
+Route::get('/', [HomeController::class, 'index'])->name('home');
+
+// Danh sách Bác sĩ
+use App\Http\Controllers\DoctorDirectoryController;
+Route::get('/doi-ngu-bac-si', [DoctorDirectoryController::class, 'index'])->name('doctors.directory');
 
 
 Route::middleware('auth')->group(function () {
@@ -15,6 +19,7 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::get('/dang-nhap', [AuthController::class, 'showPatientLogin'])->name('patient.login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
@@ -199,3 +204,72 @@ Route::prefix('api')->name('api.')->group(function () {
     Route::get('/work-schedule/by-doctor-date/{doctorId}/{appointmentDate}', [\App\Http\Controllers\Api\WorkScheduleController::class, 'getWorkSchedule'])->name('work-schedule');
     Route::post('/chatbot/message', [\App\Http\Controllers\Api\ChatbotController::class, 'sendMessage'])->name('chatbot.message');
 });
+
+// ──────────────────────────────────────────────────────────
+// PATIENT — Hồ sơ thành viên
+// ──────────────────────────────────────────────────────────
+Route::middleware('auth')->prefix('ho-so')->name('patient.profiles.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Patient\ProfileController::class, 'index'])->name('index');
+    Route::get('/them-moi', [\App\Http\Controllers\Patient\ProfileController::class, 'create'])->name('create');
+    Route::post('/', [\App\Http\Controllers\Patient\ProfileController::class, 'store'])->name('store');
+    Route::get('/{profile}/sua', [\App\Http\Controllers\Patient\ProfileController::class, 'edit'])->name('edit');
+    Route::put('/{profile}', [\App\Http\Controllers\Patient\ProfileController::class, 'update'])->name('update');
+    Route::delete('/{profile}', [\App\Http\Controllers\Patient\ProfileController::class, 'destroy'])->name('destroy');
+});
+
+// ──────────────────────────────────────────────────────────
+// PATIENT — Lịch sử đặt khám
+// ──────────────────────────────────────────────────────────
+Route::middleware('auth')->prefix('lich-hen')->name('patient.appointments.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Patient\AppointmentController::class, 'index'])->name('index');
+    Route::get('/{id}', [\App\Http\Controllers\Patient\AppointmentController::class, 'show'])->name('show');
+    Route::post('/{id}/cancel', [\App\Http\Controllers\Patient\AppointmentController::class, 'cancel'])->name('cancel');
+});
+
+// ──────────────────────────────────────────────────────────
+// PATIENT — Dashboard (Trang cá nhân)
+// ──────────────────────────────────────────────────────────
+Route::middleware('auth')->prefix('trang-ca-nhan')->name('patient.')->group(function () {
+    Route::get('/', function() {
+        return redirect()->route('patient.profiles.index');
+    })->name('dashboard');
+    
+    // Dashboard features
+    Route::get('/gia-dinh', [\App\Http\Controllers\Patient\FamilyController::class, 'index'])->name('family.index');
+    Route::get('/ket-qua-kham', [\App\Http\Controllers\Patient\MedicalRecordController::class, 'index'])->name('records.index');
+    Route::get('/ket-qua-kham/{record}', [\App\Http\Controllers\Patient\MedicalRecordController::class, 'show'])->name('records.show');
+    Route::get('/don-thuoc', [\App\Http\Controllers\Patient\PrescriptionController::class, 'index'])->name('prescriptions.index');
+    Route::get('/don-thuoc/{prescription}', [\App\Http\Controllers\Patient\PrescriptionController::class, 'show'])->name('prescriptions.show');
+});
+
+
+// ──────────────────────────────────────────────────────────
+// PATIENT — Đặt lịch khám
+// ──────────────────────────────────────────────────────────
+Route::middleware('auth')->prefix('dat-lich')->name('patient.booking.')->group(function () {
+    // Trang SPA booking
+    Route::get('/', [\App\Http\Controllers\Patient\BookingController::class, 'index'])
+        ->name('index');
+
+    // API: 14 ngày có lịch
+    Route::get('/ngay-kha-dung', [\App\Http\Controllers\Patient\BookingController::class, 'availableDates'])
+        ->name('available-dates');
+
+    // API: Slot giờ theo ngày
+    Route::get('/slots', [\App\Http\Controllers\Patient\BookingController::class, 'slots'])
+        ->name('slots');
+
+    // Lưu lịch hẹn
+    Route::post('/', [\App\Http\Controllers\Patient\BookingController::class, 'store'])
+        ->name('store');
+
+    // Trang thành công
+    Route::get('/thanh-cong/{id}', [\App\Http\Controllers\Patient\BookingController::class, 'success'])
+        ->name('success');
+});
+
+// Alias route cho blade template (booking.store)
+Route::post('/dat-lich', [\App\Http\Controllers\Patient\BookingController::class, 'store'])
+    ->middleware('auth')
+    ->name('booking.store');
+

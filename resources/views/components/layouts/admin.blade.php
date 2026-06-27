@@ -8,6 +8,9 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
     {!! $styles ?? '' !!}
     @stack('styles')
 </head>
@@ -18,7 +21,7 @@
         @click="sidebarOpen = false" style="display: none;"></div>
     <!-- Sidebar -->
     <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-        class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transition-transform duration-300 lg:translate-x-0 flex flex-col">
+        class="-translate-x-full lg:translate-x-0 fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transition-transform duration-300 flex flex-col">
         <!-- Logo -->
         <div class="flex items-center gap-2 px-6 py-5 border-b border-gray-200 text-blue-600">
             <i class="fa-solid fa-hospital-user text-2xl"></i>
@@ -45,7 +48,7 @@
                     <i class="fa-solid fa-chevron-down text-xs transition-transform"
                         :class="openUsers ? 'rotate-180' : ''"></i>
                 </button>
-                <div x-show="openUsers" x-transition class="pl-8 mt-1 space-y-1">
+                <div x-show="openUsers" x-cloak x-transition class="pl-8 mt-1 space-y-1">
                     <a href="{{ route('admin.users.index') }}"
                         class="flex items-center px-3 py-2 rounded-md text-sm {{ request()->routeIs('admin.users.*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}"><i
                             class="fa-solid fa-list-ul w-4 mr-2 text-gray-400"></i> Tất cả tài khoản</a>
@@ -125,7 +128,7 @@
                         :class="openChatbot ? 'rotate-180' : ''"></i>
                 </button>
 
-                <div x-show="openChatbot" x-transition class="pl-8 mt-1 space-y-1">
+                <div x-show="openChatbot" x-cloak x-transition class="pl-8 mt-1 space-y-1">
                     <a href="{{ route('admin.chatbot.intents.index') }}"
                         class="flex items-center px-3 py-2 rounded-md text-sm
                               {{ request()->routeIs('admin.chatbot.intents.*') ? 'bg-blue-50/50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
