@@ -191,4 +191,37 @@ class RoomController extends Controller
 
         return view('admin.rooms.show', compact('room', 'todayAppointments'));
     }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|max:10240',
+        ], [
+            'file.required' => 'Vui lòng chọn file để import.',
+            'file.file'     => 'File không hợp lệ.',
+            'file.max'      => 'Kích thước file quá lớn (tối đa 10MB).',
+        ]);
+
+        $extension = $request->file('file')->getClientOriginalExtension();
+        if (!in_array(strtolower($extension), ['xlsx', 'xls', 'csv'])) {
+            return redirect()->back()->with('error', 'File import phải có định dạng: xlsx, xls, hoặc csv.');
+        }
+
+        try {
+            \Maatwebsite\Excel\Facades\Excel::import(new \App\Imports\RoomsImport, $request->file('file'));
+            return redirect()->back()->with('success', 'Import danh sách phòng khám thành công!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Lỗi import: ' . $e->getMessage());
+        }
+    }
+
+    public function export(Request $request)
+    {
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\RoomsExport($request), 'rooms_list.xlsx');
+    }
+
+    public function downloadTemplate()
+    {
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\RoomsTemplateExport, 'rooms_import_template.xlsx');
+    }
 }

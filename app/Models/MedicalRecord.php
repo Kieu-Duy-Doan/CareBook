@@ -35,4 +35,9 @@ class MedicalRecord extends Model
     {
         return $this->belongsTo(DoctorProfile::class);
     }
+
+    public function prescription()
+    {
+        return $this->hasOne(Prescription::class);
+    }
 }

@@ -32,7 +32,8 @@
         },
     
         openOverride: false,
-        overrideType: 'close'
+        overrideType: 'close',
+        openImport: false
     }">
 
         <!-- Session Alerts -->
@@ -79,7 +80,15 @@
                 <h2 class="text-2xl font-bold text-gray-900">Quản lý Lịch làm việc</h2>
                 <p class="text-gray-500 mt-1">Sắp xếp ca trực định kỳ và thiết lập ngoại lệ</p>
             </div>
-            <div class="flex gap-3">
+            <div class="flex flex-wrap gap-3">
+                <button @click="openImport = true"
+                    class="bg-green-100 hover:bg-green-200 text-green-800 border border-green-300 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-file-import"></i> Nhập file Excel
+                </button>
+                <a href="{{ route('admin.work-schedules.export', request()->all()) }}"
+                    class="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-file-export"></i> Xuất file Excel
+                </a>
                 <button @click="openOverride = true; overrideType = 'close'"
                     class="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 border border-yellow-300 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
                     <i class="fa-solid fa-triangle-exclamation"></i> Thêm ngoại lệ
@@ -680,5 +689,63 @@
                 </div>
             </div>
         </div>
+        <!-- MODAL IMPORT -->
+        <div x-show="openImport" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto"
+            aria-labelledby="modal-import-title" role="dialog" aria-modal="true">
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div x-show="openImport" x-transition.opacity
+                    class="fixed inset-0 bg-gray-900/50 transition-opacity" aria-hidden="true"
+                    @click="openImport = false"></div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                <div x-show="openImport" x-transition:enter="ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave="ease-in duration-200"
+                    x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    class="relative z-10 inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+
+                    <form action="{{ route('admin.work-schedules.import') }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <div class="bg-white px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                            <h3 class="text-xl font-bold text-gray-900" id="modal-import-title">Nhập lịch làm việc từ Excel</h3>
+                            <button type="button" @click="openImport = false"
+                                class="text-gray-400 hover:text-gray-600 focus:outline-none">
+                                <i class="fa-solid fa-xmark text-xl"></i>
+                            </button>
+                        </div>
+
+                        <div class="px-6 py-5 space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">File Excel (.xlsx, .xls, .csv) <span class="text-red-500">*</span></label>
+                                <input type="file" name="file" accept=".xlsx,.xls,.csv" required
+                                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            </div>
+                            <div class="bg-blue-50 text-blue-800 text-sm p-4 rounded-lg">
+                                <p class="font-semibold mb-1">Lưu ý quan trọng:</p>
+                                <ul class="list-disc pl-5 space-y-1">
+                                    <li>Tải <a href="{{ route('admin.work-schedules.download-template') }}" class="text-blue-600 font-bold hover:underline">file mẫu tại đây</a> để xem định dạng chuẩn.</li>
+                                    <li>Không thay đổi cấu trúc cột của file mẫu.</li>
+                                    <li>Hệ thống <b>chỉ thêm mới</b> (không ghi đè).</li>
+                                    <li>Nếu phát hiện ca trùng lặp (Bác sĩ, Phòng cùng một buổi), hệ thống sẽ báo lỗi đích danh ca đó và <b>hủy bỏ toàn bộ quá trình nhập</b>.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+                            <button type="button" @click="openImport = false"
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                                Hủy
+                            </button>
+                            <button type="submit"
+                                class="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors flex items-center gap-2">
+                                <i class="fa-solid fa-file-import mr-1"></i> Bắt đầu Nhập
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
     </div>
 </x-layouts.admin>

@@ -16,6 +16,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
+use App\Imports\DoctorsImport;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DoctorController extends Controller
 {
@@ -363,5 +366,59 @@ class DoctorController extends Controller
         return redirect()->back()->with('success',
             $doctor->user->refresh()->is_active ? 'Đã mở khoá tài khoản bác sĩ.' : 'Đã khoá tài khoản bác sĩ.'
         );
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|max:10240', // Max 10MB
+        ], [
+            'file.required' => 'Vui lòng chọn file để import.',
+            'file.file'     => 'File không hợp lệ.',
+            'file.max'      => 'Dung lượng file tối đa là 10MB.',
+        ]);
+
+        $extension = strtolower($request->file('file')->getClientOriginalExtension());
+        if (!in_array($extension, ['xlsx', 'xls', 'csv'])) {
+            return redirect()->back()->with('error', 'Chỉ chấp nhận định dạng file: .xlsx, .xls, .csv.');
+        }
+
+        try {
+            Excel::import(new DoctorsImport, $request->file('file'));
+
+            SystemLog::create([
+                'user_id'     => auth()->id(),
+                'action'      => 'DOCTOR_IMPORTED',
+                'module'      => 'doctors',
+                'ref_type'    => null,
+                'ref_id'      => null,
+                'description' => 'Import danh sách bác sĩ từ file Excel',
+                'ip_address'  => request()->ip(),
+            ]);
+
+            return redirect()->route('admin.doctors.index')->with('success', 'Import danh sách bác sĩ thành công!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Lỗi import: ' . $e->getMessage());
+        }
+    }
+
+    public function downloadTemplate()
+    {
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\DoctorsTemplateExport, 'doctor_import_template.xlsx');
+    }
+
+    public function export(Request $request)
+    {
+        SystemLog::create([
+            'user_id'     => auth()->id(),
+            'action'      => 'DOCTOR_EXPORTED',
+            'module'      => 'doctors',
+            'ref_type'    => null,
+            'ref_id'      => null,
+            'description' => 'Export danh sách bác sĩ ra file Excel',
+            'ip_address'  => request()->ip(),
+        ]);
+
+        return Excel::download(new \App\Exports\DoctorsExport($request), 'danh_sach_bac_si.xlsx');
     }
 }

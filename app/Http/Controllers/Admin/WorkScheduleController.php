@@ -12,9 +12,50 @@ use App\Models\SystemLog;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Exception;
+use App\Exports\WorkSchedulesExport;
+use App\Exports\WorkSchedulesTemplateExport;
+use App\Imports\WorkSchedulesImport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class WorkScheduleController extends Controller
 {
+    public function export(Request $request)
+    {
+        return Excel::download(new WorkSchedulesExport($request), 'danh-sach-lich-lam-viec.xlsx');
+    }
+
+    public function downloadTemplate()
+    {
+        return Excel::download(new WorkSchedulesTemplateExport(), 'mau-import-lich-lam-viec.xlsx');
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls,csv|max:2048',
+        ], [
+            'file.required' => 'Vui lòng chọn file.',
+            'file.mimes' => 'File phải có định dạng xlsx, xls hoặc csv.',
+            'file.max' => 'File không được vượt quá 2MB.',
+        ]);
+
+        try {
+            Excel::import(new WorkSchedulesImport, $request->file('file'));
+
+            SystemLog::create([
+                'user_id' => Auth::id(),
+                'action' => 'WORK_SCHEDULE_IMPORTED',
+                'module' => 'work_schedule',
+                'description' => 'Import danh sách lịch làm việc từ file',
+                'ip_address' => request()->ip()
+            ]);
+
+            return back()->with('success', 'Import danh sách lịch làm việc thành công.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Lỗi Import: ' . $e->getMessage());
+        }
+    }
+
     public function index(Request $request)
     {
         $doctors = DoctorProfile::with('user')
