@@ -21,7 +21,7 @@ Route::middleware('auth')->group(function () {
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::get('/dang-nhap', [AuthController::class, 'showPatientLogin'])->name('patient.login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
