@@ -168,5 +168,72 @@
     </section>
 
     {{-- News & Services Content --}}
+    <section class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-slate-800">Tin tức & Sự kiện nổi bật</h2>
+                <div class="w-24 h-1 bg-secondary mx-auto mt-4 rounded-full"></div>
+            </div>
 
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Card 1 -->
+                <div class="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-slate-100 flex flex-col">
+                    <div class="h-48 bg-slate-200 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent z-10"></div>
+                        <div class="absolute bottom-4 left-4 z-20">
+                            <span class="px-3 py-1 bg-secondary text-white text-xs font-bold rounded-lg">Sự kiện</span>
+                        </div>
+                    </div>
+                    <div class="p-6 flex-1 flex flex-col">
+                        <p class="text-sm text-slate-500 mb-2"><i class="fa-regular fa-clock mr-1"></i> 25 Tháng 6, 2026</p>
+                        <h3 class="text-xl font-bold text-slate-800 mb-3 group-hover:text-secondary transition-colors line-clamp-2">Bệnh viện CareBook chính thức ra mắt hệ thống đặt lịch khám trực tuyến</h3>
+                        <p class="text-slate-600 line-clamp-3 mb-4 flex-1">Với mong muốn nâng cao chất lượng phục vụ, hệ thống đặt lịch khám trực tuyến sẽ giúp bệnh nhân tiết kiệm thời gian chờ đợi...</p>
+                        <a href="#" class="text-secondary font-bold text-sm inline-flex items-center gap-1 group/link">
+                            Xem chi tiết <i class="fa-solid fa-arrow-right group-hover/link:translate-x-1 transition-transform"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-slate-100 flex flex-col">
+                    <div class="h-48 bg-slate-200 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent z-10"></div>
+                        <div class="absolute bottom-4 left-4 z-20">
+                            <span class="px-3 py-1 bg-amber-500 text-white text-xs font-bold rounded-lg">Y tế</span>
+                        </div>
+                    </div>
+                    <div class="p-6 flex-1 flex flex-col">
+                        <p class="text-sm text-slate-500 mb-2"><i class="fa-regular fa-clock mr-1"></i> 24 Tháng 6, 2026</p>
+                        <h3 class="text-xl font-bold text-slate-800 mb-3 group-hover:text-secondary transition-colors line-clamp-2">Hội thảo Quốc tế về Cập nhật chẩn đoán và Điều trị Tim mạch</h3>
+                        <p class="text-slate-600 line-clamp-3 mb-4 flex-1">Hội thảo có sự tham gia của các chuyên gia hàng đầu từ Mỹ và Châu Âu chia sẻ các phương pháp điều trị tiên tiến nhất...</p>
+                        <a href="#" class="text-secondary font-bold text-sm inline-flex items-center gap-1 group/link">
+                            Xem chi tiết <i class="fa-solid fa-arrow-right group-hover/link:translate-x-1 transition-transform"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-slate-100 flex flex-col">
+                    <div class="h-48 bg-slate-200 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent z-10"></div>
+                        <div class="absolute bottom-4 left-4 z-20">
+                            <span class="px-3 py-1 bg-blue-500 text-white text-xs font-bold rounded-lg">Thông báo</span>
+                        </div>
+                    </div>
+                    <div class="p-6 flex-1 flex flex-col">
+                        <p class="text-sm text-slate-500 mb-2"><i class="fa-regular fa-clock mr-1"></i> 20 Tháng 6, 2026</p>
+                        <h3 class="text-xl font-bold text-slate-800 mb-3 group-hover:text-secondary transition-colors line-clamp-2">Triển khai Đặt lịch qua ứng dụng và Trả kết quả online</h3>
+                        <p class="text-slate-600 line-clamp-3 mb-4 flex-1">Bệnh nhân giờ đây có thể xem trực tiếp kết quả xét nghiệm và đơn thuốc ngay trên hệ thống Portal của bệnh viện...</p>
+                        <a href="#" class="text-secondary font-bold text-sm inline-flex items-center gap-1 group/link">
+                            Xem chi tiết <i class="fa-solid fa-arrow-right group-hover/link:translate-x-1 transition-transform"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-10">
+                <a href="#" class="inline-flex px-8 py-3 rounded-xl border-2 border-secondary text-secondary font-bold hover:bg-secondary hover:text-white transition-colors">Xem tất cả tin tức</a>
+            </div>
+        </div>
+    </section>
 </x-layouts.app>
