@@ -33,13 +33,13 @@
                 Dashboard
             </a>
             <!-- Quản lý tài khoản -->
-            <div x-data="{ openUsers: {{ request()->routeIs('admin.users.*', 'admin.doctors.*', 'admin.receptionists.*', 'admin.patients.*') ? 'true' : 'false' }} }">
+            <div x-data="{ openUsers: {{ request()->routeIs('admin.users.*', 'admin.doctors.*', 'admin.receptionists.*', 'admin.patients.*', 'admin.customers.*') ? 'true' : 'false' }} }">
                 <button @click="openUsers = !openUsers"
                     class="w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium
-                               {{ request()->routeIs('admin.users.*', 'admin.doctors.*', 'admin.receptionists.*', 'admin.patients.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                               {{ request()->routeIs('admin.users.*', 'admin.doctors.*', 'admin.receptionists.*', 'admin.patients.*', 'admin.customers.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }}">
                     <span class="flex items-center">
                         <i
-                            class="fa-solid fa-users-gear w-5 text-center mr-3 {{ request()->routeIs('admin.users.*', 'admin.doctors.*', 'admin.receptionists.*', 'admin.patients.*') ? 'text-blue-600' : 'text-gray-400' }}"></i>
+                            class="fa-solid fa-users-gear w-5 text-center mr-3 {{ request()->routeIs('admin.users.*', 'admin.doctors.*', 'admin.receptionists.*', 'admin.patients.*', 'admin.customers.*') ? 'text-blue-600' : 'text-gray-400' }}"></i>
                         Quản lý tài khoản
                     </span>
                     <i class="fa-solid fa-chevron-down text-xs transition-transform"
@@ -58,6 +58,9 @@
                     <a href="{{ Route::has('admin.patients.index') ? route('admin.patients.index') : '#' }}"
                         class="flex items-center px-3 py-2 rounded-md text-sm {{ request()->routeIs('admin.patients.*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}"><i
                             class="fa-solid fa-bed-pulse w-4 mr-2 text-gray-400"></i> Bệnh nhân</a>
+                    <a href="{{ Route::has('admin.customers.index') ? route('admin.customers.index') : '#' }}"
+                        class="flex items-center px-3 py-2 rounded-md text-sm {{ request()->routeIs('admin.customers.*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}"><i
+                            class="fa-solid fa-users w-4 mr-2 text-gray-400"></i> Khách hàng</a>
                 </div>
             </div>
 

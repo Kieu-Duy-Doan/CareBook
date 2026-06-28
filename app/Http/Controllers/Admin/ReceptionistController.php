@@ -272,4 +272,58 @@ class ReceptionistController extends Controller
             $receptionist->refresh()->is_active ? 'Đã mở khoá tài khoản lễ tân.' : 'Đã khoá tài khoản lễ tân.'
         );
     }
+
+    public function downloadTemplate()
+    {
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\ReceptionistsTemplateExport, 'receptionist_import_template.xlsx');
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|max:10240',
+        ], [
+            'file.required' => 'Vui lòng chọn file để import.',
+            'file.file'     => 'File không hợp lệ.',
+            'file.max'      => 'Dung lượng file tối đa là 10MB.',
+        ]);
+
+        $extension = strtolower($request->file('file')->getClientOriginalExtension());
+        if (!in_array($extension, ['xlsx', 'xls', 'csv'])) {
+            return redirect()->back()->with('error', 'Chỉ chấp nhận định dạng file: .xlsx, .xls, .csv.');
+        }
+
+        try {
+            \Maatwebsite\Excel\Facades\Excel::import(new \App\Imports\ReceptionistsImport, $request->file('file'));
+
+            SystemLog::create([
+                'user_id'     => auth()->id(),
+                'action'      => 'RECEPTIONIST_IMPORTED',
+                'module'      => 'receptionists',
+                'ref_type'    => null,
+                'ref_id'      => null,
+                'description' => 'Import danh sách lễ tân từ file Excel',
+                'ip_address'  => request()->ip(),
+            ]);
+
+            return redirect()->route('admin.receptionists.index')->with('success', 'Import danh sách lễ tân thành công!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Lỗi import: ' . $e->getMessage());
+        }
+    }
+
+    public function export(Request $request)
+    {
+        SystemLog::create([
+            'user_id'     => auth()->id(),
+            'action'      => 'RECEPTIONIST_EXPORTED',
+            'module'      => 'receptionists',
+            'ref_type'    => null,
+            'ref_id'      => null,
+            'description' => 'Export danh sách lễ tân ra file Excel',
+            'ip_address'  => request()->ip(),
+        ]);
+
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\ReceptionistsExport($request), 'danh_sach_le_tan.xlsx');
+    }
 }

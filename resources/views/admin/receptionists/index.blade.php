@@ -3,9 +3,17 @@
         <!-- Header -->
         <div class="flex items-center justify-between">
             <h2 class="text-2xl font-bold text-gray-800">Quản lý Lễ tân</h2>
-            <a href="{{ route('admin.receptionists.create') }}" class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition flex items-center gap-2">
-                <i class="fa-solid fa-plus"></i> Thêm lễ tân mới
-            </a>
+            <div class="flex items-center gap-3">
+                <a href="{{ route('admin.receptionists.export', request()->query()) }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
+                    <i class="fa-solid fa-file-export"></i> Export Excel
+                </a>
+                <button type="button" onclick="document.getElementById('importModal').showModal()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center gap-2">
+                    <i class="fa-solid fa-file-excel"></i> Import Excel
+                </button>
+                <a href="{{ route('admin.receptionists.create') }}" class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Thêm lễ tân mới
+                </a>
+            </div>
         </div>
 
         <!-- Session Alerts -->
@@ -215,4 +223,48 @@
             @endif
         </div>
     </div>
+
+    <!-- Import Modal (Native Dialog) -->
+    <dialog id="importModal" class="p-0 rounded-lg shadow-xl bg-white backdrop:bg-gray-500 backdrop:bg-opacity-75 w-full max-w-lg mx-auto my-auto">
+        <form action="{{ route('admin.receptionists.import') }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <i class="fa-solid fa-file-excel text-green-600"></i>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                            Import Lễ tân từ Excel
+                        </h3>
+                        <div class="mt-2 space-y-4">
+                            <p class="text-sm text-gray-500">
+                                Tải lên file Excel (.xlsx, .xls) hoặc CSV để đồng bộ hàng loạt lễ tân vào hệ thống. (Tối đa 10MB)
+                            </p>
+                            
+                            <div class="flex items-center gap-2">
+                                <a href="{{ route('admin.receptionists.import.template') }}" class="text-sm text-orange-600 hover:text-orange-700 font-medium">
+                                    <i class="fa-solid fa-download mr-1"></i> Tải xuống file mẫu
+                                </a>
+                            </div>
+
+                            <div class="text-left">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Chọn file</label>
+                                <input type="file" name="file" accept=".xlsx,.xls,.csv" required
+                                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 border border-gray-300 rounded-md">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200">
+                <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm transition">
+                    Thực hiện Import
+                </button>
+                <button type="button" onclick="document.getElementById('importModal').close()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition">
+                    Huỷ
+                </button>
+            </div>
+        </form>
+    </dialog>
 </x-layouts.admin>

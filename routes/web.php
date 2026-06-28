@@ -31,6 +31,9 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\UserController::class, 'toggleActive'])->name('toggle-active');
     });
     Route::prefix('doctors')->name('doctors.')->group(function () {
+        Route::get('/export', [\App\Http\Controllers\Admin\DoctorController::class, 'export'])->name('export');
+        Route::get('/import/template', [\App\Http\Controllers\Admin\DoctorController::class, 'downloadTemplate'])->name('import.template');
+        Route::post('/import', [\App\Http\Controllers\Admin\DoctorController::class, 'import'])->name('import');
         Route::get('/', [\App\Http\Controllers\Admin\DoctorController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\Admin\DoctorController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\Admin\DoctorController::class, 'store'])->name('store');
@@ -40,6 +43,9 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\DoctorController::class, 'toggleActive'])->name('toggle-active');
     });
     Route::prefix('receptionists')->name('receptionists.')->group(function () {
+        Route::get('/export', [\App\Http\Controllers\Admin\ReceptionistController::class, 'export'])->name('export');
+        Route::get('/import/template', [\App\Http\Controllers\Admin\ReceptionistController::class, 'downloadTemplate'])->name('import.template');
+        Route::post('/import', [\App\Http\Controllers\Admin\ReceptionistController::class, 'import'])->name('import');
         Route::get('/', [\App\Http\Controllers\Admin\ReceptionistController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\Admin\ReceptionistController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\Admin\ReceptionistController::class, 'store'])->name('store');
@@ -49,6 +55,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\ReceptionistController::class, 'toggleActive'])->name('toggle-active');
     });
     Route::prefix('patients')->name('patients.')->group(function () {
+        Route::get('/export', [\App\Http\Controllers\Admin\PatientController::class, 'export'])->name('export');
         Route::get('/', [\App\Http\Controllers\Admin\PatientController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\Admin\PatientController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\Admin\PatientController::class, 'store'])->name('store');
@@ -56,8 +63,23 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::get('/{id}/edit', [\App\Http\Controllers\Admin\PatientController::class, 'edit'])->name('edit');
         Route::put('/{id}', [\App\Http\Controllers\Admin\PatientController::class, 'update'])->name('update');
         Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\PatientController::class, 'toggleActive'])->name('toggle-active');
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\PatientController::class, 'destroy'])->name('destroy');
+    });
+    Route::prefix('customers')->name('customers.')->group(function () {
+        Route::get('/export', [\App\Http\Controllers\Admin\CustomerController::class, 'export'])->name('export');
+        Route::get('/', [\App\Http\Controllers\Admin\CustomerController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Admin\CustomerController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Admin\CustomerController::class, 'store'])->name('store');
+        Route::get('/{id}', [\App\Http\Controllers\Admin\CustomerController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [\App\Http\Controllers\Admin\CustomerController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [\App\Http\Controllers\Admin\CustomerController::class, 'update'])->name('update');
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\CustomerController::class, 'destroy'])->name('destroy');
     });
     Route::prefix('specialties')->name('specialties.')->group(function () {
+        Route::post('/import', [\App\Http\Controllers\Admin\SpecialtyController::class, 'import'])->name('import');
+        Route::get('/export', [\App\Http\Controllers\Admin\SpecialtyController::class, 'export'])->name('export');
+        Route::get('/download-template', [\App\Http\Controllers\Admin\SpecialtyController::class, 'downloadTemplate'])->name('download-template');
+        
         Route::get('/', [\App\Http\Controllers\Admin\SpecialtyController::class, 'index'])->name('index');
         Route::post('/', [\App\Http\Controllers\Admin\SpecialtyController::class, 'store'])->name('store');
         Route::get('/{id}', [\App\Http\Controllers\Admin\SpecialtyController::class, 'show'])->name('show');
@@ -73,6 +95,10 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
 
     // Phòng khám
     Route::prefix('rooms')->name('rooms.')->group(function () {
+        Route::post('/import', [\App\Http\Controllers\Admin\RoomController::class, 'import'])->name('import');
+        Route::get('/export', [\App\Http\Controllers\Admin\RoomController::class, 'export'])->name('export');
+        Route::get('/download-template', [\App\Http\Controllers\Admin\RoomController::class, 'downloadTemplate'])->name('download-template');
+
         Route::get('/', [\App\Http\Controllers\Admin\RoomController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\Admin\RoomController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\Admin\RoomController::class, 'store'])->name('store');
@@ -85,6 +111,10 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
 
     // Lịch làm việc
     Route::prefix('work-schedules')->name('work-schedules.')->group(function () {
+        Route::post('/import', [\App\Http\Controllers\Admin\WorkScheduleController::class, 'import'])->name('import');
+        Route::get('/export', [\App\Http\Controllers\Admin\WorkScheduleController::class, 'export'])->name('export');
+        Route::get('/download-template', [\App\Http\Controllers\Admin\WorkScheduleController::class, 'downloadTemplate'])->name('download-template');
+
         Route::get('/', [\App\Http\Controllers\Admin\WorkScheduleController::class, 'index'])->name('index');
         Route::post('/', [\App\Http\Controllers\Admin\WorkScheduleController::class, 'store'])->name('store');
         Route::get('/{id}', [\App\Http\Controllers\Admin\WorkScheduleController::class, 'show'])->name('show');
