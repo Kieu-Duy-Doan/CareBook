@@ -4,10 +4,19 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 
+use App\Http\Controllers\HomeController;
+
 // Home
-Route::get('/', function () {
-    return view('welcome');
-})->name('home');
+Route::get('/', [HomeController::class, 'index'])->name('home');
+
+// Danh sách Bác sĩ
+use App\Http\Controllers\DoctorDirectoryController;
+Route::get('/doi-ngu-bac-si', [DoctorDirectoryController::class, 'index'])->name('doctors.directory');
+
+// Tin tức
+use App\Http\Controllers\PostController;
+Route::get('/tin-tuc', [PostController::class, 'index'])->name('posts.index');
+Route::get('/tin-tuc/{slug}', [PostController::class, 'show'])->name('posts.show');
 
 
 Route::middleware('auth')->group(function () {
@@ -15,8 +24,9 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::get('/dang-nhap', [AuthController::class, 'showPatientLogin'])->name('patient.login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
@@ -31,9 +41,6 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\UserController::class, 'toggleActive'])->name('toggle-active');
     });
     Route::prefix('doctors')->name('doctors.')->group(function () {
-        Route::get('/export', [\App\Http\Controllers\Admin\DoctorController::class, 'export'])->name('export');
-        Route::get('/import/template', [\App\Http\Controllers\Admin\DoctorController::class, 'downloadTemplate'])->name('import.template');
-        Route::post('/import', [\App\Http\Controllers\Admin\DoctorController::class, 'import'])->name('import');
         Route::get('/', [\App\Http\Controllers\Admin\DoctorController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\Admin\DoctorController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\Admin\DoctorController::class, 'store'])->name('store');
@@ -43,9 +50,6 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\DoctorController::class, 'toggleActive'])->name('toggle-active');
     });
     Route::prefix('receptionists')->name('receptionists.')->group(function () {
-        Route::get('/export', [\App\Http\Controllers\Admin\ReceptionistController::class, 'export'])->name('export');
-        Route::get('/import/template', [\App\Http\Controllers\Admin\ReceptionistController::class, 'downloadTemplate'])->name('import.template');
-        Route::post('/import', [\App\Http\Controllers\Admin\ReceptionistController::class, 'import'])->name('import');
         Route::get('/', [\App\Http\Controllers\Admin\ReceptionistController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\Admin\ReceptionistController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\Admin\ReceptionistController::class, 'store'])->name('store');
@@ -55,7 +59,6 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\ReceptionistController::class, 'toggleActive'])->name('toggle-active');
     });
     Route::prefix('patients')->name('patients.')->group(function () {
-        Route::get('/export', [\App\Http\Controllers\Admin\PatientController::class, 'export'])->name('export');
         Route::get('/', [\App\Http\Controllers\Admin\PatientController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\Admin\PatientController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\Admin\PatientController::class, 'store'])->name('store');
@@ -63,23 +66,8 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::get('/{id}/edit', [\App\Http\Controllers\Admin\PatientController::class, 'edit'])->name('edit');
         Route::put('/{id}', [\App\Http\Controllers\Admin\PatientController::class, 'update'])->name('update');
         Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\PatientController::class, 'toggleActive'])->name('toggle-active');
-        Route::delete('/{id}', [\App\Http\Controllers\Admin\PatientController::class, 'destroy'])->name('destroy');
-    });
-    Route::prefix('customers')->name('customers.')->group(function () {
-        Route::get('/export', [\App\Http\Controllers\Admin\CustomerController::class, 'export'])->name('export');
-        Route::get('/', [\App\Http\Controllers\Admin\CustomerController::class, 'index'])->name('index');
-        Route::get('/create', [\App\Http\Controllers\Admin\CustomerController::class, 'create'])->name('create');
-        Route::post('/', [\App\Http\Controllers\Admin\CustomerController::class, 'store'])->name('store');
-        Route::get('/{id}', [\App\Http\Controllers\Admin\CustomerController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [\App\Http\Controllers\Admin\CustomerController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [\App\Http\Controllers\Admin\CustomerController::class, 'update'])->name('update');
-        Route::delete('/{id}', [\App\Http\Controllers\Admin\CustomerController::class, 'destroy'])->name('destroy');
     });
     Route::prefix('specialties')->name('specialties.')->group(function () {
-        Route::post('/import', [\App\Http\Controllers\Admin\SpecialtyController::class, 'import'])->name('import');
-        Route::get('/export', [\App\Http\Controllers\Admin\SpecialtyController::class, 'export'])->name('export');
-        Route::get('/download-template', [\App\Http\Controllers\Admin\SpecialtyController::class, 'downloadTemplate'])->name('download-template');
-        
         Route::get('/', [\App\Http\Controllers\Admin\SpecialtyController::class, 'index'])->name('index');
         Route::post('/', [\App\Http\Controllers\Admin\SpecialtyController::class, 'store'])->name('store');
         Route::get('/{id}', [\App\Http\Controllers\Admin\SpecialtyController::class, 'show'])->name('show');
@@ -95,10 +83,6 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
 
     // Phòng khám
     Route::prefix('rooms')->name('rooms.')->group(function () {
-        Route::post('/import', [\App\Http\Controllers\Admin\RoomController::class, 'import'])->name('import');
-        Route::get('/export', [\App\Http\Controllers\Admin\RoomController::class, 'export'])->name('export');
-        Route::get('/download-template', [\App\Http\Controllers\Admin\RoomController::class, 'downloadTemplate'])->name('download-template');
-
         Route::get('/', [\App\Http\Controllers\Admin\RoomController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\Admin\RoomController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\Admin\RoomController::class, 'store'])->name('store');
@@ -111,10 +95,6 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
 
     // Lịch làm việc
     Route::prefix('work-schedules')->name('work-schedules.')->group(function () {
-        Route::post('/import', [\App\Http\Controllers\Admin\WorkScheduleController::class, 'import'])->name('import');
-        Route::get('/export', [\App\Http\Controllers\Admin\WorkScheduleController::class, 'export'])->name('export');
-        Route::get('/download-template', [\App\Http\Controllers\Admin\WorkScheduleController::class, 'downloadTemplate'])->name('download-template');
-
         Route::get('/', [\App\Http\Controllers\Admin\WorkScheduleController::class, 'index'])->name('index');
         Route::post('/', [\App\Http\Controllers\Admin\WorkScheduleController::class, 'store'])->name('store');
         Route::get('/{id}', [\App\Http\Controllers\Admin\WorkScheduleController::class, 'show'])->name('show');
@@ -229,3 +209,71 @@ Route::prefix('api')->name('api.')->group(function () {
     Route::get('/work-schedule/by-doctor-date/{doctorId}/{appointmentDate}', [\App\Http\Controllers\Api\WorkScheduleController::class, 'getWorkSchedule'])->name('work-schedule');
     Route::post('/chatbot/message', [\App\Http\Controllers\Api\ChatbotController::class, 'sendMessage'])->name('chatbot.message');
 });
+
+// ──────────────────────────────────────────────────────────
+// PATIENT — Hồ sơ thành viên
+// ──────────────────────────────────────────────────────────
+Route::middleware('auth')->prefix('ho-so')->name('patient.profiles.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Patient\ProfileController::class, 'index'])->name('index');
+    Route::get('/them-moi', [\App\Http\Controllers\Patient\ProfileController::class, 'create'])->name('create');
+    Route::post('/', [\App\Http\Controllers\Patient\ProfileController::class, 'store'])->name('store');
+    Route::get('/{profile}/sua', [\App\Http\Controllers\Patient\ProfileController::class, 'edit'])->name('edit');
+    Route::put('/{profile}', [\App\Http\Controllers\Patient\ProfileController::class, 'update'])->name('update');
+    Route::delete('/{profile}', [\App\Http\Controllers\Patient\ProfileController::class, 'destroy'])->name('destroy');
+});
+
+// ──────────────────────────────────────────────────────────
+// PATIENT — Lịch sử đặt khám
+// ──────────────────────────────────────────────────────────
+Route::middleware('auth')->prefix('lich-hen')->name('patient.appointments.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Patient\AppointmentController::class, 'index'])->name('index');
+    Route::get('/{id}', [\App\Http\Controllers\Patient\AppointmentController::class, 'show'])->name('show');
+    Route::post('/{id}/cancel', [\App\Http\Controllers\Patient\AppointmentController::class, 'cancel'])->name('cancel');
+});
+
+// ──────────────────────────────────────────────────────────
+// PATIENT — Dashboard (Trang cá nhân)
+// ──────────────────────────────────────────────────────────
+Route::middleware('auth')->prefix('trang-ca-nhan')->name('patient.')->group(function () {
+    Route::get('/', function() {
+        return redirect()->route('patient.profiles.index');
+    })->name('dashboard');
+
+    // Dashboard features
+    Route::get('/gia-dinh', [\App\Http\Controllers\Patient\FamilyController::class, 'index'])->name('family.index');
+    Route::get('/ket-qua-kham', [\App\Http\Controllers\Patient\MedicalRecordController::class, 'index'])->name('records.index');
+    Route::get('/ket-qua-kham/{record}', [\App\Http\Controllers\Patient\MedicalRecordController::class, 'show'])->name('records.show');
+    Route::get('/don-thuoc', [\App\Http\Controllers\Patient\PrescriptionController::class, 'index'])->name('prescriptions.index');
+    Route::get('/don-thuoc/{prescription}', [\App\Http\Controllers\Patient\PrescriptionController::class, 'show'])->name('prescriptions.show');
+});
+
+
+// ──────────────────────────────────────────────────────────
+// PATIENT — Đặt lịch khám
+// ──────────────────────────────────────────────────────────
+Route::middleware('auth')->prefix('dat-lich')->name('patient.booking.')->group(function () {
+    // Trang SPA booking
+    Route::get('/', [\App\Http\Controllers\Patient\BookingController::class, 'index'])
+        ->name('index');
+
+    // API: 14 ngày có lịch
+    Route::get('/ngay-kha-dung', [\App\Http\Controllers\Patient\BookingController::class, 'availableDates'])
+        ->name('available-dates');
+
+    // API: Slot giờ theo ngày
+    Route::get('/slots', [\App\Http\Controllers\Patient\BookingController::class, 'slots'])
+        ->name('slots');
+
+    // Lưu lịch hẹn
+    Route::post('/', [\App\Http\Controllers\Patient\BookingController::class, 'store'])
+        ->name('store');
+
+    // Trang thành công
+    Route::get('/thanh-cong/{id}', [\App\Http\Controllers\Patient\BookingController::class, 'success'])
+        ->name('success');
+});
+
+// Alias route cho blade template (booking.store)
+Route::post('/dat-lich', [\App\Http\Controllers\Patient\BookingController::class, 'store'])
+    ->middleware('auth')
+    ->name('booking.store');

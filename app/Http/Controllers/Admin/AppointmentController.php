@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Appointment;
 use App\Models\AppointmentLog;
+use App\Models\ClinicalVisit;
 use App\Models\DoctorProfile;
 use App\Models\Specialty;
 use App\Models\PatientProfile;
@@ -276,14 +277,14 @@ class AppointmentController extends Controller
         $appointment = Appointment::findOrFail($id);
         $patients = PatientProfile::orderBy('full_name')->get();
         $specialties = Specialty::where('is_active', true)->orderBy('name')->get();
-        
+
         $currentSpecialtyId = old('specialty_id', $appointment->specialty_id);
-        
+
         $doctors = DoctorProfile::with('user')
             ->whereHas('user', fn($q) => $q->where('is_active', true))
             ->whereHas('specialties', fn($q) => $q->where('specialties.id', $currentSpecialtyId))
             ->get();
-            
+
         $rooms = Room::where('is_active', true)->orderBy('name')->get();
         $users = User::where('is_active', true)->orderBy('full_name')->get();
 
@@ -372,6 +373,10 @@ class AppointmentController extends Controller
 
         $appointment->save();
 
+        if ($newStatus === 'checked_in') {
+            $this->createClinicalVisitIfNotExists($appointment);
+        }
+
         if ($oldStatus !== $newStatus) {
             AppointmentLog::create([
                 'appointment_id' => $appointment->id,
@@ -417,7 +422,19 @@ class AppointmentController extends Controller
 
         if ($oldStatus !== $newStatus) {
             $appointment->status = $newStatus;
+
+            if ($newStatus === 'checked_in' && is_null($appointment->checked_in_at)) {
+                $appointment->checked_in_at = now();
+            }
+            if ($newStatus === 'completed' && is_null($appointment->completed_at)) {
+                $appointment->completed_at = now();
+            }
+
             $appointment->save();
+
+            if ($newStatus === 'checked_in') {
+                $this->createClinicalVisitIfNotExists($appointment);
+            }
 
             AppointmentLog::create([
                 'appointment_id' => $appointment->id,
@@ -498,5 +515,29 @@ class AppointmentController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    private function createClinicalVisitIfNotExists(Appointment $appointment)
+    {
+        // Check if visit already exists
+        if (ClinicalVisit::where('appointment_id', $appointment->id)->exists()) {
+            return;
+        }
+
+        // Calculate visit order
+        $maxOrder = ClinicalVisit::where('doctor_profile_id', $appointment->doctor_profile_id)
+            ->whereDate('created_at', now()->toDateString())
+            ->max('visit_order');
+
+        $nextOrder = $maxOrder ? $maxOrder + 1 : 1;
+
+        ClinicalVisit::create([
+            'appointment_id' => $appointment->id,
+            'doctor_profile_id' => $appointment->doctor_profile_id,
+            'room_id' => $appointment->room_id,
+            'visit_order' => $nextOrder,
+            'is_origin' => true,
+            'status' => 'waiting',
+        ]);
     }
 }
