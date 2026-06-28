@@ -16,7 +16,7 @@ class StoreBookingRequest extends FormRequest
         return [
             'patient_profile_id' => ['required', 'integer', 'exists:patient_profiles,id'],
             'specialty_id'       => ['required', 'integer', 'exists:specialties,id'],
-            'doctor_profile_id'  => ['nullable', 'integer', 'exists:doctor_profiles,id'],
+            'doctor_profile_id'  => ['required', 'integer', 'exists:doctor_profiles,id'],
             'appointment_date'   => ['required', 'date', 'after_or_equal:today'],
             'appointment_time'   => ['required', 'date_format:H:i'],
             'reason'             => ['nullable', 'string', 'max:500'],

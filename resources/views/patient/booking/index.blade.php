@@ -25,6 +25,7 @@
 
     /* BƯỚC 3 — Ngày giờ */
     availableDates: [],
+    loadingDates: false,
     selectedDate: null,
     slots: [],
     selectedSlot: null,
@@ -89,35 +90,61 @@
     },
 
     async loadAvailableDates() {
+        this.loadingDates = true;
+        this.availableDates = [];
         const params = this.bookingMethod === 'doctor'
             ? '?doctor_id=' + this.selectedDoctor.id
             : '?specialty_id=' + this.selectedSpecialty.id;
-        const res = await fetch('/dat-lich/ngay-kha-dung' + params);
-        const data = await res.json();
-        this.availableDates = data.dates;
+        try {
+            const res = await fetch('/dat-lich/ngay-kha-dung' + params, {
+                headers: { 'Accept': 'application/json' }
+            });
+            const data = await res.json();
+            if (data.dates) {
+                this.availableDates = data.dates;
+            } else {
+                console.error('API Error:', data);
+                this.availableDates = [];
+            }
+        } catch(e) {
+            console.error('Fetch Error:', e);
+        }
+        this.loadingDates = false;
         this.selectedDate = null;
         this.slots = [];
         this.selectedSlot = null;
     },
-
-    goStep3() { if (!this.canGoStep3) return; this.step = 3; },
 
     selectDate(date) {
         this.selectedDate = date;
         this.slots = [];
         this.selectedSlot = null;
         this.showSlotModal = true;
-        this.loadSlots(date.date);
+        this.loadSlots();
     },
 
-    async loadSlots(dateStr) {
+    goStep3() { if (!this.canGoStep3) return; this.step = 3; },
+
+    async loadSlots() {
+        if (!this.selectedDate) return;
         this.loadingSlots = true;
         const params = this.bookingMethod === 'doctor'
-            ? '?doctor_id=' + this.selectedDoctor.id + '&date=' + dateStr
-            : '?specialty_id=' + this.selectedSpecialty.id + '&date=' + dateStr;
-        const res = await fetch('/dat-lich/slots' + params);
-        const data = await res.json();
-        this.slots = data.slots;
+            ? '?doctor_id=' + this.selectedDoctor.id + '&date=' + this.selectedDate.date
+            : '?specialty_id=' + this.selectedSpecialty.id + '&date=' + this.selectedDate.date;
+        try {
+            const res = await fetch('/dat-lich/slots' + params, {
+                headers: { 'Accept': 'application/json' }
+            });
+            const data = await res.json();
+            if (data.slots) {
+                this.slots = data.slots;
+            } else {
+                console.error('API Error:', data);
+                this.slots = [];
+            }
+        } catch(e) {
+            console.error('Fetch Error:', e);
+        }
         this.loadingSlots = false;
     },
 
@@ -595,17 +622,18 @@
             <div class="flex gap-3 overflow-x-auto pb-2" style="-ms-overflow-style:none;scrollbar-width:none;">
                 <template x-for="dateObj in availableDates" :key="dateObj.date">
                     <button @click="selectDate(dateObj)"
-                            class="flex-shrink-0 flex flex-col items-center justify-center w-16 h-20 rounded-2xl border-2 transition-all font-semibold"
-                            :style="selectedDate?.date === dateObj.date
-                                    ? 'background-color:var(--primary);border-color:var(--primary);color:#ffffff;'
-                                    : 'background-color:#ffffff;border-color:#e2e8f0;color:#374151;'">
+                            type="button"
+                            class="flex-shrink-0 flex flex-col items-center justify-center w-16 h-20 rounded-2xl border-2 transition-all"
+                            :class="selectedDate?.date === dateObj.date
+                                ? 'border-primary bg-primary text-white shadow-md'
+                                : 'border-gray-200 text-gray-600 hover:border-primary/50 hover:bg-primary/5'">
                         <span class="text-xs" x-text="dateObj.day_name"></span>
                         <span class="text-lg font-bold" x-text="dateObj.display"></span>
                     </button>
                 </template>
 
                 {{-- Loading skeleton --}}
-                <template x-if="availableDates.length === 0">
+                <template x-if="loadingDates">
                     <div class="flex gap-3">
                         <template x-for="i in [1,2,3,4,5]" :key="i">
                             <div class="flex-shrink-0 w-16 h-20 rounded-2xl bg-gray-100 animate-pulse"></div>
@@ -925,7 +953,7 @@
             @csrf
             <input type="hidden" name="specialty_id"
                    :value="bookingMethod === 'specialty' ? selectedSpecialty?.id : selectedDoctor?.primary_specialty_id">
-            <input type="hidden" name="doctor_profile_id" :value="selectedDoctor?.id">
+            <input type="hidden" name="doctor_profile_id" :value="selectedSlot?.doctor_id || selectedDoctor?.id">
             <input type="hidden" name="patient_profile_id" :value="selectedProfile?.id">
             <input type="hidden" name="appointment_date" :value="selectedDate?.date">
             <input type="hidden" name="appointment_time" :value="selectedSlot?.time">
