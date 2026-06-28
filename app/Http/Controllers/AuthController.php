@@ -17,6 +17,14 @@ class AuthController extends Controller
         return view('auth.login');
     }
 
+    public function showPatientLogin()
+    {
+        if (Auth::check()) {
+            return $this->redirectToDashboard();
+        }
+        return view('auth.patient-login');
+    }
+
     public function login(Request $request)
     {
         $request->validate([
@@ -63,7 +71,7 @@ class AuthController extends Controller
         $role = Auth::user()->role;
         return match ($role) {
             'admin' => redirect()->route('admin.dashboard'),
-            // TODO: implement other dashboards
+            'patient' => redirect()->route('patient.dashboard'),
             default => redirect('/'),
         };
     }
