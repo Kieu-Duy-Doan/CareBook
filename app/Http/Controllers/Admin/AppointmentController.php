@@ -386,6 +386,10 @@ class AppointmentController extends Controller
                 'changed_by'     => Auth::id(),
                 'reason'         => 'Cập nhật lịch hẹn và trạng thái bởi Quản trị viên',
             ]);
+
+            if ($newStatus === 'cancelled') {
+                \App\Jobs\SendCancellationNotificationJob::dispatch($appointment);
+            }
         }
 
         return redirect()->route('admin.appointments.index')->with('success', 'Cập nhật lịch hẹn thành công.');
@@ -444,6 +448,10 @@ class AppointmentController extends Controller
                 'changed_by' => Auth::id(),
                 'reason' => $request->reason,
             ]);
+
+            if ($newStatus === 'cancelled') {
+                \App\Jobs\SendCancellationNotificationJob::dispatch($appointment);
+            }
         }
 
         return back()->with('success', 'Đã cập nhật trạng thái lịch hẹn thành công.');

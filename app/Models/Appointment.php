@@ -33,6 +33,8 @@ class Appointment extends Model
         'measured_by',
         'checked_in_at',
         'completed_at',
+        'reminded_2h',
+        'reminded_30m',
     ];
 
     protected function casts(): array
@@ -46,6 +48,8 @@ class Appointment extends Model
             'vital_bmi' => 'decimal:2',
             'checked_in_at' => 'datetime',
             'completed_at' => 'datetime',
+            'reminded_2h' => 'boolean',
+            'reminded_30m' => 'boolean',
         ];
     }
 

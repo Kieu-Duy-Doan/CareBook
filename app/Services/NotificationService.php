@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Notification;
+use App\Models\Appointment;
 use Illuminate\Support\Carbon;
 
 class NotificationService
@@ -110,5 +111,63 @@ class NotificationService
             ->whereRaw('DATE_FORMAT(created_at, "%Y-%m-%d %H:%i") = ?', [$createdAtMinute])
             ->where('channel', 'email')
             ->update(['is_sent' => false]);
+    }
+
+    /**
+     * Ghi thông báo In-Web cho người dùng liên quan đến lịch khám
+     */
+    public function logWebNotification(Appointment $appointment, string $title, string $content, string $type = 'appointment'): Notification
+    {
+        return Notification::create([
+            'user_id' => $appointment->booked_by_user_id,
+            'title' => $title,
+            'content' => $content,
+            'type' => $type,
+            'channel' => 'in_web',
+            'is_sent' => true,
+            'is_read' => false,
+            'ref_type' => 'appointment',
+            'ref_id' => $appointment->id,
+            'created_at' => now(),
+        ]);
+    }
+
+    public function notifyBookingSuccess(Appointment $appointment): Notification
+    {
+        $time = \Carbon\Carbon::parse($appointment->appointment_time)->format('H:i');
+        $date = $appointment->appointment_date->format('d/m/Y');
+        $doctorName = $appointment->doctorProfile->full_title ?? 'Chưa xác định';
+
+        return $this->logWebNotification(
+            $appointment,
+            'Đặt lịch khám thành công',
+            "Lịch hẹn khám lúc {$time} ngày {$date} với {$doctorName} đã được xác nhận. Mã lịch hẹn: {$appointment->appointment_code}."
+        );
+    }
+
+    public function notifyReminder(Appointment $appointment, string $timeframeLabel): Notification
+    {
+        $time = \Carbon\Carbon::parse($appointment->appointment_time)->format('H:i');
+        $date = $appointment->appointment_date->format('d/m/Y');
+        $doctorName = $appointment->doctorProfile->full_title ?? 'Chưa xác định';
+
+        return $this->logWebNotification(
+            $appointment,
+            'Nhắc nhở lịch khám sắp tới',
+            "Bạn có lịch hẹn lúc {$time} ngày {$date} với {$doctorName} sẽ diễn ra trong {$timeframeLabel} tới. Mã lịch hẹn: {$appointment->appointment_code}."
+        );
+    }
+
+    public function notifyCancellation(Appointment $appointment): Notification
+    {
+        $time = \Carbon\Carbon::parse($appointment->appointment_time)->format('H:i');
+        $date = $appointment->appointment_date->format('d/m/Y');
+        $doctorName = $appointment->doctorProfile->full_title ?? 'Chưa xác định';
+
+        return $this->logWebNotification(
+            $appointment,
+            'Lịch khám đã bị huỷ',
+            "Rất tiếc, lịch hẹn lúc {$time} ngày {$date} với {$doctorName} của bạn đã bị huỷ. Mã lịch hẹn: {$appointment->appointment_code}."
+        );
     }
 }

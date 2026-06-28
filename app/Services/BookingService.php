@@ -210,6 +210,9 @@ class BookingService
                 ->where('is_active', true)
                 ->first();
 
+            $appointmentDateTime = Carbon::parse($data['appointment_date'] . ' ' . $data['appointment_time']);
+            $isWithin2Hours = $appointmentDateTime->diffInMinutes(now()) <= 120 && $appointmentDateTime->isFuture();
+
             $appointment = Appointment::create([
                 'appointment_code'   => $this->generateAppointmentCode($data['appointment_date']),
                 'patient_profile_id' => $data['patient_profile_id'],
@@ -222,6 +225,7 @@ class BookingService
                 'reason'             => $data['reason'],
                 'status'             => 'pending',
                 'source'             => 'web',
+                'reminded_2h'        => $isWithin2Hours,
             ]);
 
             // Ghi log
