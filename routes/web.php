@@ -13,6 +13,11 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 use App\Http\Controllers\DoctorDirectoryController;
 Route::get('/doi-ngu-bac-si', [DoctorDirectoryController::class, 'index'])->name('doctors.directory');
 
+// Tin tức
+use App\Http\Controllers\PostController;
+Route::get('/tin-tuc', [PostController::class, 'index'])->name('posts.index');
+Route::get('/tin-tuc/{slug}', [PostController::class, 'show'])->name('posts.show');
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [AuthController::class, 'redirectToDashboard'])->name('dashboard');

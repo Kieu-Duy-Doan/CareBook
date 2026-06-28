@@ -232,7 +232,7 @@
             </div>
 
             <div class="text-center mt-10">
-                <a href="#" class="inline-flex px-8 py-3 rounded-xl border-2 border-secondary text-secondary font-bold hover:bg-secondary hover:text-white transition-colors">Xem tất cả tin tức</a>
+                <a href="{{ route('posts.index') }}" class="inline-flex px-8 py-3 rounded-xl border-2 border-secondary text-secondary font-bold hover:bg-secondary hover:text-white transition-colors">Xem tất cả tin tức</a>
             </div>
         </div>
     </section>
