@@ -1,23 +1,15 @@
-<x-layouts.patient-dashboard title="Hồ sơ cá nhân" activeMenu="profiles">
+<x-layouts.patient-dashboard title="Thông tin cá nhân" activeMenu="profiles">
     <div>
         <div class="flex items-center justify-between mb-8">
             <div>
                 <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">Thông tin cá nhân</h1>
-                <p class="text-slate-500 mt-2 text-sm md:text-base">Quản lý thông tin tài khoản và hồ sơ y tế cá nhân của bạn</p>
+                <p class="text-slate-500 mt-2 text-sm md:text-base">Quản lý thông tin tài khoản và thông tin y tế cá nhân của bạn</p>
             </div>
-            @if($profile)
-                <a href="{{ route('patient.profiles.edit', $profile->id) }}" 
-                   class="group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary text-white font-semibold rounded-2xl overflow-hidden transition-all hover:bg-primary-dark hover:shadow-lg hover:shadow-primary/30 active:scale-95">
-                    <i class="fa-regular fa-pen-to-square relative z-10"></i>
-                    <span class="hidden sm:inline relative z-10">Cập nhật hồ sơ</span>
-                </a>
-            @else
-                <a href="{{ route('patient.profiles.create', ['is_self' => 1]) }}" 
-                   class="group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary text-white font-semibold rounded-2xl overflow-hidden transition-all hover:bg-primary-dark hover:shadow-lg hover:shadow-primary/30 active:scale-95">
-                    <i class="fa-solid fa-plus relative z-10"></i>
-                    <span class="hidden sm:inline relative z-10">Tạo hồ sơ y tế</span>
-                </a>
-            @endif
+            <a href="{{ $profile ? route('patient.profiles.edit', $profile->id) : route('patient.profiles.create', ['is_self' => 1]) }}" 
+               class="group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary text-white font-semibold rounded-2xl overflow-hidden transition-all hover:bg-primary-dark hover:shadow-lg hover:shadow-primary/30 active:scale-95">
+                <i class="fa-regular fa-pen-to-square relative z-10"></i>
+                <span class="hidden sm:inline relative z-10">Cập nhật thông tin</span>
+            </a>
         </div>
 
         <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 relative overflow-hidden mb-6">
@@ -73,53 +65,78 @@
                     <!-- Medical Profile Info -->
                     <div class="space-y-6">
                         <h3 class="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2 mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-notes-medical text-primary"></i> Hồ sơ y tế cá nhân
+                            <i class="fa-solid fa-notes-medical text-primary"></i> Thông tin y tế cá nhân
                         </h3>
                         
-                        @if($profile)
-                            <div class="space-y-4">
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <p class="text-sm text-slate-500 font-medium mb-1">Ngày sinh</p>
-                                        <p class="font-semibold text-slate-800">{{ $profile->date_of_birth ? \Carbon\Carbon::parse($profile->date_of_birth)->format('d/m/Y') : 'Chưa cập nhật' }}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm text-slate-500 font-medium mb-1">Giới tính</p>
-                                        <p class="font-semibold text-slate-800">
-                                            @if($profile->gender == 'M') Nam 
-                                            @elseif($profile->gender == 'F') Nữ 
-                                            @elseif($profile->gender == 'O') Khác
-                                            @else Chưa cập nhật @endif
-                                        </p>
-                                    </div>
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-slate-500 font-medium mb-1">Ngày sinh</p>
+                                    <p class="font-semibold text-slate-800">{{ $profile && $profile->date_of_birth ? \Carbon\Carbon::parse($profile->date_of_birth)->format('d/m/Y') : 'Chưa cập nhật' }}</p>
                                 </div>
+                                <div>
+                                    <p class="text-sm text-slate-500 font-medium mb-1">Giới tính</p>
+                                    <p class="font-semibold text-slate-800">
+                                        @if($profile && $profile->gender == 'male') Nam 
+                                        @elseif($profile && $profile->gender == 'female') Nữ 
+                                        @elseif($profile && $profile->gender == 'other') Khác
+                                        @else Chưa cập nhật @endif
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <p class="text-sm text-slate-500 font-medium mb-1">Địa chỉ</p>
+                                <p class="font-semibold text-slate-800">{{ $profile->address ?? 'Chưa cập nhật' }}</p>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-slate-500 font-medium mb-1">Dân tộc</p>
+                                    <p class="font-semibold text-slate-800">{{ $profile->ethnicity ?? 'Chưa cập nhật' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-slate-500 font-medium mb-1">Nghề nghiệp</p>
+                                    <p class="font-semibold text-slate-800">{{ $profile->occupation ?? 'Chưa cập nhật' }}</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-slate-500 font-medium mb-1">Mã BHYT</p>
+                                    <p class="font-semibold text-slate-800">{{ $profile->insurance_code ?? 'Chưa cập nhật' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-slate-500 font-medium mb-1">Hạn thẻ BHYT</p>
+                                    <p class="font-semibold text-slate-800">{{ $profile && $profile->insurance_expiry ? \Carbon\Carbon::parse($profile->insurance_expiry)->format('d/m/Y') : 'Chưa cập nhật' }}</p>
+                                </div>
+                            </div>
+
+                            <div class="mt-6 pt-6 border-t border-slate-100">
+                                <h4 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                    <i class="fa-solid fa-file-waveform text-rose-500"></i> Tiền sử y tế
+                                </h4>
                                 
                                 <div>
-                                    <p class="text-sm text-slate-500 font-medium mb-1">Địa chỉ</p>
-                                    <p class="font-semibold text-slate-800">{{ $profile->address ?? 'Chưa cập nhật' }}</p>
-                                </div>
-
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <p class="text-sm text-slate-500 font-medium mb-1">Nghề nghiệp</p>
-                                        <p class="font-semibold text-slate-800">{{ $profile->occupation ?? 'Chưa cập nhật' }}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm text-slate-500 font-medium mb-1">Mã BHYT</p>
-                                        <p class="font-semibold text-slate-800">{{ $profile->insurance_code ?? 'Không có' }}</p>
-                                    </div>
+                                    @if($profile && $profile->medical_history)
+                                        <div class="flex flex-wrap gap-2 mt-2">
+                                            @php
+                                                $historyArray = is_string($profile->medical_history) ? json_decode($profile->medical_history, true) : $profile->medical_history;
+                                            @endphp
+                                            @if(is_array($historyArray) && count($historyArray) > 0)
+                                                @foreach($historyArray as $history)
+                                                    <span class="px-3 py-1 bg-rose-50 text-rose-600 rounded-lg text-sm font-medium border border-rose-100">{{ $history }}</span>
+                                                @endforeach
+                                            @else
+                                                <p class="font-semibold text-slate-800">Không có</p>
+                                            @endif
+                                        </div>
+                                    @else
+                                        <p class="font-semibold text-slate-800">Chưa cập nhật</p>
+                                    @endif
                                 </div>
                             </div>
-                        @else
-                            <div class="flex flex-col items-center justify-center py-6 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                                <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm text-primary mb-3">
-                                    <i class="fa-solid fa-file-medical text-xl"></i>
-                                </div>
-                                <p class="text-slate-600 font-medium mb-1">Bạn chưa có hồ sơ y tế</p>
-                                <p class="text-sm text-slate-500 mb-4">Vui lòng tạo hồ sơ để có thể đặt lịch khám bệnh.</p>
-                                <a href="{{ route('patient.profiles.create', ['is_self' => 1]) }}" class="text-primary font-bold text-sm hover:underline">Tạo hồ sơ ngay</a>
-                            </div>
-                        @endif
+                        </div>
                     </div>
                 </div>
             </div>
