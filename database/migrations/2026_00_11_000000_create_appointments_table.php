@@ -22,6 +22,7 @@ return new class extends Migration
             $table->text('reason');
             $table->enum('status', ['pending', 'checked_in', 'examining', 'completed', 'cancelled', 'absent'])->default('pending')->index();
             $table->enum('source', ['web', 'counter', 'chatbot'])->default('web');
+            $table->enum('booking_method', ['doctor', 'specialty'])->default('doctor');
             $table->text('receptionist_note')->nullable();
             $table->smallInteger('vital_pulse')->nullable();
             $table->smallInteger('vital_systolic_bp')->nullable();

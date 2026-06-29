@@ -43,6 +43,21 @@ class AuthController extends Controller
 
         if (Auth::attempt(['phone' => $request->phone, 'password' => $request->password], $request->boolean('remember'))) {
             $user = Auth::user();
+            
+            $loginType = $request->input('login_type');
+            
+            // Nếu đăng nhập từ trang bệnh nhân nhưng tài khoản không phải bệnh nhân
+            if ($loginType === 'patient' && $user->role !== 'patient') {
+                Auth::logout();
+                return back()->withInput()->with('error', 'Tài khoản này không phải là bệnh nhân.');
+            }
+            
+            // Nếu đăng nhập từ trang admin/nhân viên nhưng tài khoản lại là bệnh nhân
+            if ($loginType === 'admin' && $user->role === 'patient') {
+                Auth::logout();
+                return back()->withInput()->with('error', 'Bạn không có quyền đăng nhập vào cổng quản trị.');
+            }
+
             $user->last_login_at = now();
             $user->save();
 

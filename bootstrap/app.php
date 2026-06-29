@@ -15,6 +15,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\CheckRole::class,
         ]);
         
+        $middleware->redirectGuestsTo(function (\Illuminate\Http\Request $request) {
+            if ($request->is('admin/*') || $request->is('admin')) {
+                return route('login');
+            }
+            return route('patient.login');
+        });
+        
         $middleware->validateCsrfTokens(except: [
             'api/*',
         ]);

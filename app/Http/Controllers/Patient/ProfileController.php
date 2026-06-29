@@ -42,7 +42,7 @@ class ProfileController extends Controller
         $rules = [
             'full_name' => 'required|string|max:255',
             'date_of_birth' => 'required|date|before:today',
-            'gender' => 'required|in:male,female,other',
+            'gender' => 'required|in:male,female,other,M,F,O',
             'id_card' => 'nullable|string|max:20',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
@@ -88,6 +88,9 @@ class ProfileController extends Controller
             $validated['id_card'] = auth()->user()->id_card;
         }
 
+        $genderMap = ['M' => 'male', 'F' => 'female', 'O' => 'other'];
+        $validated['gender'] = $genderMap[$validated['gender']] ?? $validated['gender'];
+
         $validated['owner_id'] = auth()->id();
         $validated['is_self'] = $isSelf;
 
@@ -110,7 +113,7 @@ class ProfileController extends Controller
         if ($request->query('redirect') === 'booking') {
             return redirect()->route('patient.booking.index')->with('success', 'Thêm hồ sơ thành công.');
         }
-        
+
         if ($isSelf) {
             return redirect()->route('patient.profiles.index')->with('success', 'Cập nhật thông tin cá nhân thành công.');
         }
@@ -142,7 +145,7 @@ class ProfileController extends Controller
         $rules = [
             'full_name' => 'required|string|max:255',
             'date_of_birth' => 'required|date|before:today',
-            'gender' => 'required|in:male,female,other',
+            'gender' => 'required|in:male,female,other,M,F,O',
             'id_card' => 'nullable|string|max:20',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
@@ -201,6 +204,9 @@ class ProfileController extends Controller
             }
             $user->update($userData);
         }
+
+        $genderMap = ['M' => 'male', 'F' => 'female', 'O' => 'other'];
+        $validated['gender'] = $genderMap[$validated['gender']] ?? $validated['gender'];
 
         $profile->update($validated);
 

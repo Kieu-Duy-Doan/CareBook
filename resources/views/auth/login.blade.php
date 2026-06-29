@@ -84,6 +84,7 @@
                     @if(request()->has('redirect'))
                         <input type="hidden" name="redirect" value="{{ request('redirect') }}">
                     @endif
+                    <input type="hidden" name="login_type" value="admin">
                     
                     <div>
                         <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
