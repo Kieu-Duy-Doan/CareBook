@@ -11,8 +11,7 @@ use App\Models\PatientProfile;
 use App\Models\Appointment;
 use App\Models\SystemLog;
 use Illuminate\Support\Facades\DB;
-use App\Exports\PatientsExport;
-use Maatwebsite\Excel\Facades\Excel;
+
 
 class PatientController extends Controller
 {
