@@ -98,20 +98,24 @@
 
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Cấp độ chuyên môn <span class="text-red-500">*</span></label>
-                                        <select name="level" required class="w-full border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 px-4 py-2 @error('level') border-red-500 @enderror">
-                                            @php $levels = ['BS'=>'Bác sĩ', 'BSCK1'=>'Bác sĩ CK1', 'BSCK2'=>'Bác sĩ CK2', 'ThS'=>'Thạc sĩ', 'TS'=>'Tiến sĩ', 'PGS'=>'Phó Giáo sư', 'GS'=>'Giáo sư']; @endphp
-                                            <option value="">-- Chọn cấp độ --</option>
-                                            @foreach($levels as $key => $label)
-                                                <option value="{{ $key }}" {{ old('level', $doctor->level) == $key ? 'selected' : '' }}>{{ $label }}</option>
-                                            @endforeach
-                                        </select>
+                                        <input type="text" name="level" value="{{ old('level', $doctor->level) }}" required
+                                               class="w-full border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 px-4 py-2 @error('level') border-red-500 @enderror"
+                                               placeholder="VD: Bác sĩ, Bác sĩ chính">
                                         @error('level') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                     </div>
 
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Học hàm học vị</label>
-                                        <input type="text" name="academic_title" value="{{ old('academic_title', $doctor->academic_title) }}"
-                                               class="w-full border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 px-4 py-2 @error('academic_title') border-red-500 @enderror">
+                                        <select name="academic_title" class="w-full border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 px-4 py-2 @error('academic_title') border-red-500 @enderror">
+                                            <option value="">-- Chọn học hàm học vị --</option>
+                                            <option value="BS." {{ old('academic_title', $doctor->academic_title) == 'BS.' ? 'selected' : '' }}>Bác sĩ (BS.)</option>
+                                            <option value="BSCK1." {{ old('academic_title', $doctor->academic_title) == 'BSCK1.' ? 'selected' : '' }}>Bác sĩ Chuyên khoa 1 (BSCK1.)</option>
+                                            <option value="BSCK2." {{ old('academic_title', $doctor->academic_title) == 'BSCK2.' ? 'selected' : '' }}>Bác sĩ Chuyên khoa 2 (BSCK2.)</option>
+                                            <option value="ThS." {{ old('academic_title', $doctor->academic_title) == 'ThS.' ? 'selected' : '' }}>Thạc sĩ (ThS.)</option>
+                                            <option value="TS." {{ old('academic_title', $doctor->academic_title) == 'TS.' ? 'selected' : '' }}>Tiến sĩ (TS.)</option>
+                                            <option value="PGS.TS." {{ old('academic_title', $doctor->academic_title) == 'PGS.TS.' ? 'selected' : '' }}>Phó Giáo sư Tiến sĩ (PGS.TS.)</option>
+                                            <option value="GS.TS." {{ old('academic_title', $doctor->academic_title) == 'GS.TS.' ? 'selected' : '' }}>Giáo sư Tiến sĩ (GS.TS.)</option>
+                                        </select>
                                         @error('academic_title') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                     </div>
 
