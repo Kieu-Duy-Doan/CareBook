@@ -77,27 +77,15 @@ class DoctorController extends Controller
         $specialties = Specialty::where('is_active', true)->orderBy('display_order')->get();
         $rooms = Room::where('is_active', true)->orderBy('name')->get();
 
-        // Tự động sinh mã bác sĩ kế tiếp (BS001, BS002, ...)
-        $latestDoctor = DoctorProfile::where('doctor_code', 'regexp', '^BS[0-9]+$')
-            ->orderByRaw('CAST(SUBSTRING(doctor_code, 3) AS UNSIGNED) DESC')
-            ->first();
-
-        $nextNumber = 1;
-        if ($latestDoctor) {
-            $numberStr = substr($latestDoctor->doctor_code, 2);
-            if (is_numeric($numberStr)) {
-                $nextNumber = (int)$numberStr + 1;
-            }
-        }
-        $nextDoctorCode = 'BS' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
-
-        return view('admin.doctors.create', compact('specialties', 'rooms', 'nextDoctorCode'));
+        return view('admin.doctors.create', compact('specialties', 'rooms'));
     }
     public function store(StoreDoctorRequest $request)
     {
         $validated = $request->validated();
+        
+        $doctorCode = $this->generateDoctorCode($validated['full_name']);
 
-        DB::transaction(function () use ($validated) {
+        DB::transaction(function () use ($validated, $doctorCode) {
             // Tạo User
             $user = User::create([
                 'full_name' => $validated['full_name'],
@@ -112,7 +100,7 @@ class DoctorController extends Controller
             // Tạo DoctorProfile
             $doctor = DoctorProfile::create([
                 'user_id' => $user->id,
-                'doctor_code' => $validated['doctor_code'],
+                'doctor_code' => $doctorCode,
                 'academic_title' => $validated['academic_title'] ?? null,
                 'level' => $validated['level'],
                 'expertise' => $validated['expertise'] ?? null,
@@ -337,5 +325,38 @@ class DoctorController extends Controller
         ]);
 
         return Excel::download(new \App\Exports\DoctorsExport($request), 'danh_sach_bac_si.xlsx');
+    }
+
+    private function generateDoctorCode($fullName)
+    {
+        $slug = \Illuminate\Support\Str::slug($fullName); // "bui-xuan-huan"
+        $parts = array_filter(explode('-', $slug));
+        
+        if (count($parts) == 1) {
+            $prefix = reset($parts);
+        } else {
+            $firstName = array_pop($parts); // huan
+            $initials = '';
+            foreach ($parts as $part) {
+                if (!empty($part)) {
+                    $initials .= substr($part, 0, 1); // b, x
+                }
+            }
+            $prefix = $firstName . $initials; // huanbx
+        }
+
+        $latestDoctor = DoctorProfile::where('doctor_code', 'regexp', '^' . $prefix . '[0-9]{2,}$')
+            ->orderByRaw('CAST(SUBSTRING(doctor_code, '.(strlen($prefix)+1).') AS UNSIGNED) DESC')
+            ->first();
+            
+        $nextNumber = 1;
+        if ($latestDoctor) {
+            $numberStr = substr($latestDoctor->doctor_code, strlen($prefix));
+            if (is_numeric($numberStr)) {
+                $nextNumber = (int)$numberStr + 1;
+            }
+        }
+        
+        return $prefix . str_pad($nextNumber, 2, '0', STR_PAD_LEFT);
     }
 }

@@ -112,11 +112,10 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <!-- Mã bác sĩ -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Mã bác sĩ <span class="text-red-500">*</span></label>
-                                <input type="text" name="doctor_code" value="{{ old('doctor_code', $nextDoctorCode) }}" required
-                                       class="w-full border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 px-4 py-2 font-mono @error('doctor_code') border-red-500 @enderror"
-                                       placeholder="VD: BS001">
-                                @error('doctor_code') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Mã bác sĩ</label>
+                                <input type="text" disabled readonly
+                                       class="w-full border border-gray-200 bg-gray-50 text-gray-500 rounded-lg px-4 py-2 font-mono"
+                                       placeholder="Hệ thống tự động sinh (VD: huanbx01)">
                             </div>
 
                             <!-- Cấp độ -->

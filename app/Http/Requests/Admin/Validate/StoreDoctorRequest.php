@@ -22,7 +22,6 @@ class StoreDoctorRequest extends FormRequest
             'email' => 'nullable|email|max:150|unique:users,email',
             'password' => ['required', 'string', Password::min(8)->letters()->mixedCase()->numbers()->symbols(), 'confirmed'],
             // Hồ sơ chuyên môn
-            'doctor_code' => ['required', 'string', 'max:20', 'regex:/^BS\d{3,}$/', 'unique:doctor_profiles,doctor_code'],
             'academic_title' => 'nullable|string|max:100',
             'level' => 'required|in:BS,BSCK1,BSCK2,ThS,TS,PGS,GS',
             'expertise' => 'nullable|string|max:2000',
@@ -58,9 +57,6 @@ class StoreDoctorRequest extends FormRequest
             'password.required' => 'Vui lòng nhập mật khẩu.',
             'password.min' => 'Mật khẩu tối thiểu 8 ký tự và phải bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.',
             'password.confirmed' => 'Xác nhận mật khẩu không khớp.',
-            'doctor_code.required' => 'Vui lòng nhập mã bác sĩ.',
-            'doctor_code.regex' => 'Mã bác sĩ phải bắt đầu bằng BS và theo sau bởi ít nhất 3 chữ số (VD: BS001).',
-            'doctor_code.unique' => 'Mã bác sĩ đã tồn tại.',
             'level.required' => 'Vui lòng chọn cấp độ chuyên môn.',
             'specialty_ids.required' => 'Vui lòng chọn ít nhất một chuyên khoa.',
             'specialty_ids.*.exists' => 'Chuyên khoa đã chọn không tồn tại hoặc đã bị vô hiệu hoá.',
