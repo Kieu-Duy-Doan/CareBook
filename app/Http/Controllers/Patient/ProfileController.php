@@ -13,20 +13,21 @@ class ProfileController extends Controller
      */
     public function index()
     {
-        $profiles = PatientProfile::where('owner_id', auth()->id())
-            ->orderByDesc('is_self')
-            ->orderBy('full_name')
-            ->get();
+        $user = auth()->user();
+        $profile = PatientProfile::where('owner_id', $user->id)
+            ->where('is_self', true)
+            ->first();
 
-        return view('patient.profiles.index', compact('profiles'));
+        return view('patient.dashboard.profile', compact('user', 'profile'));
     }
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
-        return view('patient.profiles.create');
+        $isSelf = $request->query('is_self') === '1';
+        return view('patient.profiles.create', compact('isSelf'));
     }
 
     /**
@@ -47,15 +48,24 @@ class ProfileController extends Controller
         ]);
 
         $validated['owner_id'] = auth()->id();
-        $validated['is_self'] = false; // Add new profiles are not self by default
+        
+        // Check if there is already an is_self profile. If so, force is_self to false unless this is the very first one.
+        $hasSelf = PatientProfile::where('owner_id', auth()->id())->where('is_self', true)->exists();
+        $isSelfRequested = $request->input('is_self') == '1';
+        
+        $validated['is_self'] = $isSelfRequested && !$hasSelf;
 
         PatientProfile::create($validated);
 
         if ($request->query('redirect') === 'booking') {
             return redirect()->route('patient.booking.index')->with('success', 'Thêm hồ sơ thành công.');
         }
+        
+        if ($validated['is_self']) {
+            return redirect()->route('patient.profiles.index')->with('success', 'Tạo hồ sơ y tế cá nhân thành công.');
+        }
 
-        return redirect()->route('patient.profiles.index')->with('success', 'Thêm hồ sơ thành công.');
+        return redirect()->route('patient.family.index')->with('success', 'Thêm hồ sơ người thân thành công.');
     }
 
     /**
@@ -93,7 +103,11 @@ class ProfileController extends Controller
 
         $profile->update($validated);
 
-        return redirect()->route('patient.profiles.index')->with('success', 'Cập nhật hồ sơ thành công.');
+        if ($profile->is_self) {
+            return redirect()->route('patient.profiles.index')->with('success', 'Cập nhật hồ sơ thành công.');
+        }
+
+        return redirect()->route('patient.family.index')->with('success', 'Cập nhật hồ sơ thành công.');
     }
 
     /**
@@ -115,6 +129,6 @@ class ProfileController extends Controller
 
         $profile->delete();
 
-        return redirect()->route('patient.profiles.index')->with('success', 'Xóa hồ sơ thành công.');
+        return redirect()->route('patient.family.index')->with('success', 'Xóa hồ sơ thành công.');
     }
 }
