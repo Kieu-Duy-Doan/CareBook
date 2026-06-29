@@ -48,9 +48,9 @@
                             <label class="block text-sm font-bold text-slate-700 mb-1.5 ml-1">Giới tính <span class="text-rose-500">*</span></label>
                             <select name="gender" required class="w-full rounded-2xl border-slate-200 bg-slate-50 shadow-sm focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-300 @error('gender') border-rose-500 bg-rose-50 @enderror py-3 px-4 appearance-none">
                                 <option value="" disabled selected>Chọn giới tính</option>
-                                <option value="M" {{ old('gender') == 'M' ? 'selected' : '' }}>Nam</option>
-                                <option value="F" {{ old('gender') == 'F' ? 'selected' : '' }}>Nữ</option>
-                                <option value="O" {{ old('gender') == 'O' ? 'selected' : '' }}>Khác</option>
+                                <option value="male" {{ old('gender') == 'male' ? 'selected' : '' }}>Nam</option>
+                                <option value="female" {{ old('gender') == 'female' ? 'selected' : '' }}>Nữ</option>
+                                <option value="other" {{ old('gender') == 'other' ? 'selected' : '' }}>Khác</option>
                             </select>
                             @error('gender') <p class="mt-1.5 ml-1 text-xs font-medium text-rose-500"><i class="fa-solid fa-circle-exclamation mr-1"></i> {{ $message }}</p> @enderror
                         </div>
