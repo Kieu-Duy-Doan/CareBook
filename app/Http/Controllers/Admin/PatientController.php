@@ -4,14 +4,15 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Http\Requests\Admin\Validate\StorePatientRequest;
-use App\Http\Requests\Admin\Validate\UpdatePatientRequest;
+use App\Http\Requests\Admin\StorePatientRequest;
+use App\Http\Requests\Admin\UpdatePatientRequest;
 use App\Models\User;
 use App\Models\PatientProfile;
 use App\Models\Appointment;
 use App\Models\SystemLog;
 use Illuminate\Support\Facades\DB;
-
+use App\Exports\PatientsExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PatientController extends Controller
 {
