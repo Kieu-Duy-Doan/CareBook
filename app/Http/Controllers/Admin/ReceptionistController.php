@@ -150,8 +150,12 @@ class ReceptionistController extends Controller
                 'email'     => $validated['email'] ?? null,
             ];
 
-            if (empty($receptionist->id_card)) {
-                $userData['id_card'] = $validated['id_card'] ?? null;
+            if (!$receptionist->is_id_card_updated) {
+                $newIdCard = $validated['id_card'] ?? null;
+                if (!empty($newIdCard) && $newIdCard !== $receptionist->id_card) {
+                    $userData['id_card'] = $newIdCard;
+                    $userData['is_id_card_updated'] = true;
+                }
             }
 
             $receptionist->update($userData);

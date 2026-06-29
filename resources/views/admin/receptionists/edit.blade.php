@@ -71,18 +71,18 @@
 
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Số CCCD</label>
-                                        @if(!empty($receptionist->id_card))
+                                        @if($receptionist->is_id_card_updated)
                                             <input type="text" disabled readonly value="{{ $receptionist->id_card }}"
                                                    class="w-full border border-gray-200 bg-gray-50 text-gray-500 rounded-lg px-4 py-2 cursor-not-allowed">
                                             <p class="mt-1 text-xs text-red-500 flex items-center gap-1">
-                                                <i class="fa-solid fa-circle-info"></i> Số CCCD đã được lưu và không thể thay đổi thêm.
+                                                <i class="fa-solid fa-circle-info"></i> Số CCCD đã được cập nhật và không thể thay đổi thêm.
                                             </p>
                                         @else
                                             <input type="text" name="id_card" value="{{ old('id_card', $receptionist->id_card) }}"
                                                    class="w-full border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 px-4 py-2 @error('id_card') border-red-500 @enderror"
                                                    placeholder="VD: 079123456789">
                                             <p class="mt-1 text-xs text-orange-600 flex items-center gap-1">
-                                                <i class="fa-solid fa-circle-info"></i> Lưu ý: Số CCCD chỉ được cập nhật 1 lần duy nhất, sau khi lưu sẽ không thể sửa đổi.
+                                                <i class="fa-solid fa-circle-info"></i> Lưu ý: Số CCCD chỉ cho phép sửa đổi 1 lần duy nhất, sau khi sửa đổi sẽ không thể thay đổi thêm.
                                             </p>
                                             @error('id_card') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                         @endif

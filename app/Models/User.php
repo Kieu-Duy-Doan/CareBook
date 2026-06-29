@@ -21,6 +21,7 @@ class User extends Authenticatable
         'role',
         'avatar_url',
         'is_active',
+        'is_id_card_updated',
     ];
 
     protected $hidden = [
@@ -32,6 +33,7 @@ class User extends Authenticatable
     {
         return [
             'is_active' => 'boolean',
+            'is_id_card_updated' => 'boolean',
             'last_login_at' => 'datetime',
             'password' => 'hashed',
         ];

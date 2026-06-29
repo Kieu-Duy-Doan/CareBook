@@ -29,7 +29,7 @@ class UpdateReceptionistRequest extends FormRequest
             'start_date'     => 'nullable|date|before_or_equal:today',
         ];
 
-        if (empty($receptionist->id_card)) {
+        if (!$receptionist->is_id_card_updated) {
             $rules['id_card'] = "nullable|string|max:20|unique:users,id_card,$id";
         }
 
