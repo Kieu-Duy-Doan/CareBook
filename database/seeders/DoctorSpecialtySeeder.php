@@ -15,6 +15,19 @@ class DoctorSpecialtySeeder extends Seeder
             'BS001' => 'Tim mạch',
             'BS002' => 'Răng Hàm Mặt',
             'BS003' => 'Nội tiêu hoá',
+            'BS004' => 'Nhi khoa',
+            'BS005' => 'Thần kinh',
+            'BS006' => 'Cơ xương khớp',
+            'BS007' => 'Da liễu',
+            'BS008' => 'Mắt',
+            'BS009' => 'Tai Mũi Họng',
+            'BS010' => 'Nội tiết',
+            // Duplicates
+            'BS011' => 'Tim mạch',
+            'BS012' => 'Mắt',
+            'BS013' => 'Nhi khoa',
+            'BS014' => 'Răng Hàm Mặt',
+            'BS015' => 'Nội tiêu hoá',
         ];
 
         foreach ($mapping as $doctorCode => $specialtyName) {

@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="description" content="{{ $metaDescription ?? 'CareBook - Đặt lịch khám bệnh trực tuyến nhanh chóng, tiện lợi.' }}">
     <title>{{ $title ?? 'CareBook' }} - CareBook</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -96,6 +97,40 @@
                 </div>
                 
                 @auth
+                <!-- Tích hợp Thông báo Bệnh nhân (Bell & Popup) -->
+                <div x-data="patientNotifications()" x-init="init()" class="relative flex items-center">
+                    <!-- Nút Chuông -->
+                    <button @click="openDropdown = !openDropdown" class="relative p-2 text-slate-600 hover:text-secondary transition-colors" title="Thông báo">
+                        <i class="fa-solid fa-bell text-lg"></i>
+                        <span x-show="unreadCount > 0" x-text="unreadCount" x-cloak class="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-[9px] font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-red-500 rounded-full"></span>
+                    </button>
+
+                    <!-- Dropdown danh sách -->
+                    <div x-show="openDropdown" @click.away="openDropdown = false" x-cloak class="absolute right-0 top-full mt-2 w-80 bg-white border border-slate-200 shadow-2xl rounded-lg py-2 z-50 overflow-hidden flex flex-col max-h-[80vh]">
+                        <div class="px-4 py-2 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                            <h3 class="font-bold text-slate-800 text-sm">Thông báo của bạn</h3>
+                            <button @click="markAllAsRead" x-show="unreadCount > 0" class="text-xs text-blue-600 hover:text-blue-800 font-semibold">Đánh dấu đã đọc</button>
+                        </div>
+                        <div class="overflow-y-auto flex-1 p-2 space-y-1">
+                            <template x-if="notifications.length === 0">
+                                <p class="text-center text-slate-500 py-4 text-xs italic">Chưa có thông báo nào</p>
+                            </template>
+                            <template x-for="notif in notifications" :key="notif.id">
+                                <div @click="handleNotificationClick(notif)" class="p-3 rounded-md hover:bg-slate-50 transition-colors cursor-pointer border border-transparent hover:border-slate-100 flex flex-col gap-1" :class="notif.is_read ? 'opacity-70' : 'bg-blue-50/50'">
+                                    <div class="flex justify-between items-start">
+                                        <h4 class="font-bold text-sm" :class="notif.type === 'cancellation' ? 'text-red-600' : 'text-slate-800'" x-text="notif.title"></h4>
+                                        <span x-show="!notif.is_read" class="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1"></span>
+                                    </div>
+                                    <p class="text-xs text-slate-600 leading-relaxed" x-text="notif.content"></p>
+                                </div>
+                            </template>
+                        </div>
+                        <div class="px-4 py-2 border-t border-slate-100 bg-slate-50 text-center">
+                            <a href="{{ route('patient.notifications.page') }}" class="text-xs font-bold text-secondary hover:underline">Xem tất cả thông báo</a>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="hidden md:block w-px h-4 bg-slate-300"></div>
                 <div class="hidden md:flex items-center gap-1.5 text-slate-600">
                     <span>Xin chào, <strong class="text-slate-900">{{ auth()->user()->full_name ?? 'Bệnh nhân' }}</strong></span>
@@ -109,7 +144,7 @@
                 <div class="px-1.5 py-0.5 border border-slate-300 rounded text-slate-600 font-bold bg-white text-[10px]">VN</div>
                 @else
                 <div class="hidden md:block w-px h-4 bg-slate-300"></div>
-                <a href="{{ route('login') }}" class="transition-colors font-bold text-secondary hover:opacity-80"><i class="fa-solid fa-user"></i> Đăng nhập</a>
+                <a href="{{ route('patient.login') }}" class="transition-colors font-bold text-secondary hover:opacity-80"><i class="fa-solid fa-user"></i> Đăng nhập</a>
                 @endauth
             </div>
         </div>
@@ -167,6 +202,89 @@
     </main>
 
     @stack('scripts')
-</body>
+    <script>
+        function patientNotifications() {
+            return {
+                notifications: [],
+                unreadCount: 0,
+                openDropdown: false,
+                pollingInterval: null,
 
+                init() {
+                    this.fetchNotifications();
+                    // Polling every 30 seconds
+                    this.pollingInterval = setInterval(() => {
+                        this.fetchNotifications();
+                    }, 30000);
+                },
+
+                async fetchNotifications() {
+                    try {
+                        const res = await fetch('/trang-ca-nhan/api/thong-bao');
+                        const data = await res.json();
+                        this.notifications = data.notifications || [];
+                        this.unreadCount = data.unread_count || 0;
+                    } catch (err) {
+                        console.error('Lỗi khi tải thông báo:', err);
+                    }
+                },
+
+                async markAsRead(id) {
+                    try {
+                        await fetch('/trang-ca-nhan/api/thong-bao/doc', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify({ id: id })
+                        });
+                        this.fetchNotifications();
+                    } catch (err) {
+                        console.error(err);
+                    }
+                },
+
+                async handleNotificationClick(notif) {
+                    if (!notif.is_read) {
+                        await this.markAsRead(notif.id);
+                    }
+                    
+                    // Nếu là thông báo huỷ lịch, chuyển ngay đến form đặt lại lịch với thông tin cũ
+                    if (notif.type === 'cancellation' && notif.appointment_info) {
+                        const info = notif.appointment_info;
+                        const pId = info.patient_profile_id;
+                        const sId = info.specialty_id;
+                        const dId = info.doctor_profile_id || '';
+                        const bMethod = info.booking_method || 'doctor';
+                        const reason = encodeURIComponent(info.reason || '');
+                        window.location.href = `/dat-lich?fast_track=1&patient_profile_id=${pId}&specialty_id=${sId}&doctor_id=${dId}&booking_method=${bMethod}&reason=${reason}`;
+                        return;
+                    }
+
+                    if (notif.ref_type === 'appointment' && notif.ref_id) {
+                        window.location.href = `/lich-hen/${notif.ref_id}`;
+                    }
+                },
+
+                async markAllAsRead() {
+                    try {
+                        await fetch('/trang-ca-nhan/api/thong-bao/doc', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify({})
+                        });
+                        this.fetchNotifications();
+                        this.openDropdown = false;
+                    } catch (err) {
+                        console.error(err);
+                    }
+                }
+            }
+        }
+    </script>
+</body>
 </html>

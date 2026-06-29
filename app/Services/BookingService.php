@@ -191,16 +191,8 @@ class BookingService
      */
     public function createAppointment(array $data, User $bookedBy): Appointment
     {
-        // Double-check slot còn trống
-        $slots = $this->getAvailableSlots($data['doctor_profile_id'], $data['appointment_date']);
-        $availableSlot = collect($slots)->firstWhere('time', substr($data['appointment_time'], 0, 5));
-
-        if (!$availableSlot || !$availableSlot['available']) {
-            throw new Exception('Slot giờ này đã hết. Vui lòng chọn giờ khác.');
-        }
-
         return DB::transaction(function() use ($data, $bookedBy) {
-            // Lấy room_id từ work_schedule
+            // Lấy room_id từ work_schedule và lock row để tránh race condition
             $dbDayOfWeek = Carbon::parse($data['appointment_date'])->dayOfWeek === 0
                 ? 1
                 : Carbon::parse($data['appointment_date'])->dayOfWeek + 1;
@@ -208,7 +200,20 @@ class BookingService
             $schedule = WorkSchedule::where('doctor_profile_id', $data['doctor_profile_id'])
                 ->where('day_of_week', $dbDayOfWeek)
                 ->where('is_active', true)
+                ->lockForUpdate()
                 ->first();
+
+            // Double-check slot còn trống (bên trong transaction sau khi có lock)
+            $slots = $this->getAvailableSlots($data['doctor_profile_id'], $data['appointment_date']);
+            $availableSlot = collect($slots)->firstWhere('time', substr($data['appointment_time'], 0, 5));
+
+            if (!$availableSlot || !$availableSlot['available']) {
+                throw new \Exception('Slot giờ này đã hết. Vui lòng chọn giờ khác.');
+            }
+
+            $appointmentDateTime = Carbon::parse($data['appointment_date'] . ' ' . $data['appointment_time']);
+            $isWithin2Hours = $appointmentDateTime->diffInMinutes(now()) <= 120 && $appointmentDateTime->isFuture();
+            $isWithin30Mins = $appointmentDateTime->diffInMinutes(now()) <= 30 && $appointmentDateTime->isFuture();
 
             $appointment = Appointment::create([
                 'appointment_code'   => $this->generateAppointmentCode($data['appointment_date']),
@@ -222,6 +227,9 @@ class BookingService
                 'reason'             => $data['reason'],
                 'status'             => 'pending',
                 'source'             => 'web',
+                'booking_method'     => $data['booking_method'] ?? 'doctor',
+                'reminded_2h'        => $isWithin2Hours,
+                'reminded_30m'       => $isWithin30Mins,
             ]);
 
             // Ghi log

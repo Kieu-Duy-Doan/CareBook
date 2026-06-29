@@ -214,10 +214,11 @@ class AppointmentController extends Controller
             ->where('doctor_profile_id', $request->doctor_profile_id)
             ->whereDate('appointment_date', $request->appointment_date)
             ->whereTime('appointment_time', $request->appointment_time)
+            ->where('status', '!=', 'cancelled')
             ->exists();
 
-        if ($exists) {
-            return back()->withErrors(['appointment_time' => 'Bệnh nhân này đã có lịch hẹn với bác sĩ vào ngày và khung giờ này. Vui lòng chọn khung giờ khác.'])->withInput();
+        if ($exists && $request->status !== 'cancelled') {
+            return back()->withErrors(['appointment_time' => 'Bệnh nhân này đã có lịch hẹn (chưa huỷ) với bác sĩ vào ngày và khung giờ này. Vui lòng chọn khung giờ khác.'])->withInput();
         }
 
         $patient = PatientProfile::findOrFail($request->patient_profile_id);
@@ -321,16 +322,17 @@ class AppointmentController extends Controller
             'measured_by'        => 'nullable|exists:users,id',
         ]);
 
-        // Kiểm tra xem bệnh nhân này đã có lịch hẹn với cùng bác sĩ, cùng ngày và cùng giờ chưa (trừ lịch hiện tại)
+        // Kiểm tra xem bệnh nhân này đã có lịch hẹn với cùng bác sĩ, cùng ngày và cùng giờ chưa (trừ lịch hiện tại và lịch đã huỷ)
         $exists = Appointment::where('patient_profile_id', $request->patient_profile_id)
             ->where('doctor_profile_id', $request->doctor_profile_id)
             ->whereDate('appointment_date', $request->appointment_date)
             ->whereTime('appointment_time', $request->appointment_time)
+            ->where('status', '!=', 'cancelled')
             ->where('id', '!=', $id)
             ->exists();
 
-        if ($exists) {
-            return back()->withErrors(['appointment_time' => 'Bệnh nhân này đã có lịch hẹn với bác sĩ vào ngày và khung giờ này. Vui lòng chọn khung giờ khác.'])->withInput();
+        if ($exists && $request->status !== 'cancelled') {
+            return back()->withErrors(['appointment_time' => 'Bệnh nhân này đã có lịch hẹn (chưa huỷ) với bác sĩ vào ngày và khung giờ này. Vui lòng chọn khung giờ khác.'])->withInput();
         }
 
         $patient = PatientProfile::findOrFail($request->patient_profile_id);
@@ -386,6 +388,10 @@ class AppointmentController extends Controller
                 'changed_by'     => Auth::id(),
                 'reason'         => 'Cập nhật lịch hẹn và trạng thái bởi Quản trị viên',
             ]);
+
+            if ($newStatus === 'cancelled') {
+                \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'cancellation');
+            }
         }
 
         return redirect()->route('admin.appointments.index')->with('success', 'Cập nhật lịch hẹn thành công.');
@@ -444,6 +450,10 @@ class AppointmentController extends Controller
                 'changed_by' => Auth::id(),
                 'reason' => $request->reason,
             ]);
+
+            if ($newStatus === 'cancelled') {
+                \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'cancellation');
+            }
         }
 
         return back()->with('success', 'Đã cập nhật trạng thái lịch hẹn thành công.');

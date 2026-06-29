@@ -118,6 +118,8 @@ class BookingController extends Controller
                 auth()->user()
             );
 
+            \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'confirmation');
+
             return redirect()
                 ->route('patient.booking.success', $appointment->id)
                 ->with('success', 'Đặt lịch thành công! Mã lịch hẹn: ' . $appointment->appointment_code);
