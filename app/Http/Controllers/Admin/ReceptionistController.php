@@ -25,16 +25,7 @@ class ReceptionistController extends Controller
             ->where('role', 'receptionist')
             ->latest('created_at');
 
-        if ($request->filled('search')) {
-            $query->where(function($q) use ($request) {
-                $q->where('full_name', 'like', '%'.$request->search.'%')
-                  ->orWhere('phone', 'like', '%'.$request->search.'%')
-                  ->orWhereHas('staffProfile', fn($sq) =>
-                      $sq->where('employee_code', 'like', '%'.$request->search.'%')
-                         ->orWhere('position', 'like', '%'.$request->search.'%')
-                  );
-            });
-        }
+       
 
         if ($request->filled('status')) {
             $query->where('is_active', $request->status);
