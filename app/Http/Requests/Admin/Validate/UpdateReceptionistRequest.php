@@ -14,7 +14,7 @@ class UpdateReceptionistRequest extends FormRequest
 
     public function rules()
     {
-        $receptionistId = $this->route('receptionist');
+        $receptionistId = $this->route('id');
         $receptionist = $receptionistId instanceof User ? $receptionistId : User::with('staffProfile')->findOrFail($receptionistId);
         $id = $receptionist->id;
         $staffProfileId = $receptionist->staffProfile?->id;

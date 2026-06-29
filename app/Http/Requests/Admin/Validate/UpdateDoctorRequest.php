@@ -14,7 +14,7 @@ class UpdateDoctorRequest extends FormRequest
 
     public function rules()
     {
-        $doctorId = $this->route('doctor');
+        $doctorId = $this->route('id');
         $doctor = $doctorId instanceof DoctorProfile ? $doctorId : DoctorProfile::findOrFail($doctorId);
         $userId = $doctor->user_id;
 
