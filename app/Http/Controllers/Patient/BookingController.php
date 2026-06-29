@@ -118,7 +118,7 @@ class BookingController extends Controller
                 auth()->user()
             );
 
-            \App\Jobs\SendBookingConfirmationJob::dispatch($appointment);
+            \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'confirmation');
 
             return redirect()
                 ->route('patient.booking.success', $appointment->id)

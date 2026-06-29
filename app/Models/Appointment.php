@@ -19,6 +19,7 @@ class Appointment extends Model
         'reason',
         'status',
         'source',
+        'booking_method',
         'receptionist_note',
         'vital_pulse',
         'vital_systolic_bp',
