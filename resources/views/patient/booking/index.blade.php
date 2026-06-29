@@ -436,7 +436,7 @@
                     <p class="text-sm text-gray-400" x-show="!selectedSpecialty">Chưa chọn chuyên khoa — Nhấn để chọn</p>
                     <p class="font-semibold text-gray-800" x-show="selectedSpecialty" x-text="selectedSpecialty?.name"></p>
                     <p class="text-xs text-gray-400 truncate" x-show="selectedSpecialty"
-                       x-text="selectedSpecialty?.description?.substring(0,60) + '...'"></p>
+                       x-text="selectedSpecialty.description ? (selectedSpecialty.description.length > 60 ? selectedSpecialty.description.substring(0,60) + '...' : selectedSpecialty.description) : 'Hệ thống sẽ tự động xếp bác sĩ phù hợp'"></p>
                 </div>
                 <i class="fa-solid fa-chevron-right text-gray-400 flex-shrink-0"></i>
             </button>
