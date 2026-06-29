@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Http\Requests\Admin\StoreDoctorRequest;
+use App\Http\Requests\Admin\UpdateDoctorRequest;
 use App\Models\DoctorProfile;
 use App\Models\Specialty;
 use App\Models\Room;
@@ -91,59 +93,9 @@ class DoctorController extends Controller
 
         return view('admin.doctors.create', compact('specialties', 'rooms', 'nextDoctorCode'));
     }
-    public function store(Request $request)
+    public function store(StoreDoctorRequest $request)
     {
-        $validated = $request->validate([
-            // Tài khoản
-            'full_name' => 'required|string|max:100',
-            'phone' => ['required', 'string', 'max:15', 'regex:/^(0|\+84)[3|5|7|8|9][0-9]{8}$/', 'unique:users,phone'],
-            'username' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z0-9_\.]+$/', 'unique:users,username'],
-            'email' => 'nullable|email|max:150|unique:users,email',
-            'password' => ['required', 'string', Password::min(8)->letters()->mixedCase()->numbers()->symbols(), 'confirmed'],
-            // Hồ sơ chuyên môn
-            'doctor_code' => ['required', 'string', 'max:20', 'regex:/^BS\d{3,}$/', 'unique:doctor_profiles,doctor_code'],
-            'academic_title' => 'nullable|string|max:100',
-            'level' => 'required|in:BS,BSCK1,BSCK2,ThS,TS,PGS,GS',
-            'expertise' => 'nullable|string|max:2000',
-            'experience_years' => 'nullable|integer|min:0|max:60',
-            'license_number' => 'required|string|max:50|unique:doctor_profiles,license_number',
-            'bio' => 'nullable|string|max:2000',
-            // Chuyên khoa
-            'specialty_ids' => 'required|array|min:1',
-            'specialty_ids.*' => 'exists:specialties,id,is_active,1',
-            'primary_specialty_id' => [
-                'required',
-                'exists:specialties,id,is_active,1',
-                function ($attribute, $value, $fail) use ($request) {
-                    $specialtyIds = $request->input('specialty_ids', []);
-                    if (! in_array($value, $specialtyIds)) {
-                        $fail('Chuyên khoa chính phải nằm trong danh sách chuyên khoa đã chọn.');
-                    }
-                },
-            ],
-        ], [
-            'full_name.required' => 'Vui lòng nhập họ tên.',
-            'phone.required' => 'Vui lòng nhập số điện thoại.',
-            'phone.regex' => 'Số điện thoại không đúng định dạng (VD: 0901234567 hoặc +84901234567).',
-            'phone.unique' => 'Số điện thoại đã được sử dụng.',
-            'username.required' => 'Vui lòng nhập tên đăng nhập.',
-            'username.regex' => 'Tên đăng nhập chỉ được chứa chữ cái, số, dấu gạch dưới và dấu chấm.',
-            'username.unique' => 'Tên đăng nhập đã tồn tại.',
-            'password.required' => 'Vui lòng nhập mật khẩu.',
-            'password.min' => 'Mật khẩu tối thiểu 8 ký tự và phải bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.',
-            'password.confirmed' => 'Xác nhận mật khẩu không khớp.',
-            'doctor_code.required' => 'Vui lòng nhập mã bác sĩ.',
-            'doctor_code.regex' => 'Mã bác sĩ phải bắt đầu bằng BS và theo sau bởi ít nhất 3 chữ số (VD: BS001).',
-            'doctor_code.unique' => 'Mã bác sĩ đã tồn tại.',
-            'level.required' => 'Vui lòng chọn cấp độ chuyên môn.',
-            'specialty_ids.required' => 'Vui lòng chọn ít nhất một chuyên khoa.',
-            'specialty_ids.*.exists' => 'Chuyên khoa đã chọn không tồn tại hoặc đã bị vô hiệu hoá.',
-            'primary_specialty_id.required' => 'Vui lòng chọn chuyên khoa chính.',
-            'primary_specialty_id.exists' => 'Chuyên khoa chính không hợp lệ.',
-            'expertise.max' => 'Lĩnh vực chuyên trị tối đa 2000 ký tự.',
-            'bio.max' => 'Giới thiệu bản thân tối đa 2000 ký tự.',
-            'license_number.required' => 'Vui lòng nhập số chứng chỉ hành nghề.',
-        ]);
+        $validated = $request->validated();
 
         DB::transaction(function () use ($validated) {
             // Tạo User
@@ -239,46 +191,11 @@ class DoctorController extends Controller
             'doctor', 'specialties', 'rooms', 'selectedSpecialtyIds', 'primarySpecialtyId'
         ));
     }
-    public function update(Request $request, $id)
+    public function update(UpdateDoctorRequest $request, $id)
     {
         $doctor = DoctorProfile::with('user')->findOrFail($id);
 
-        $validated = $request->validate([
-            'full_name'       => 'required|string|max:100',
-            'phone'           => "required|string|max:15|unique:users,phone,{$doctor->user_id}",
-            'username'        => "required|string|max:50|unique:users,username,{$doctor->user_id}",
-            'email'           => "nullable|email|unique:users,email,{$doctor->user_id}",
-            'doctor_code'     => "required|string|max:20|unique:doctor_profiles,doctor_code,$id",
-            'academic_title'  => 'nullable|string|max:100',
-            'level'           => 'required|in:BS,BSCK1,BSCK2,ThS,TS,PGS,GS',
-            'expertise'       => 'nullable|string',
-            'experience_years'=> 'nullable|integer|min:0|max:60',
-            'license_number'  => "nullable|string|max:50|unique:doctor_profiles,license_number,$id",
-            'bio'             => 'nullable|string',
-            'specialty_ids'        => 'required|array|min:1',
-            'specialty_ids.*'      => 'exists:specialties,id',
-            'primary_specialty_id' => [
-                'required',
-                'exists:specialties,id',
-                function ($attribute, $value, $fail) use ($request) {
-                    $specialtyIds = $request->input('specialty_ids', []);
-                    if (! in_array($value, $specialtyIds)) {
-                        $fail('Chuyên khoa chính phải nằm trong danh sách chuyên khoa đã chọn.');
-                    }
-                },
-            ],
-        ], [
-            'full_name.required'      => 'Vui lòng nhập họ tên.',
-            'phone.required'          => 'Vui lòng nhập số điện thoại.',
-            'phone.unique'            => 'Số điện thoại đã được sử dụng.',
-            'username.required'       => 'Vui lòng nhập tên đăng nhập.',
-            'username.unique'         => 'Tên đăng nhập đã tồn tại.',
-            'doctor_code.required'    => 'Vui lòng nhập mã bác sĩ.',
-            'doctor_code.unique'      => 'Mã bác sĩ đã tồn tại.',
-            'level.required'          => 'Vui lòng chọn cấp độ chuyên môn.',
-            'specialty_ids.required'  => 'Vui lòng chọn ít nhất một chuyên khoa.',
-            'primary_specialty_id.required' => 'Vui lòng chọn chuyên khoa chính.',
-        ]);
+        $validated = $request->validated();
 
         DB::transaction(function() use ($doctor, $validated) {
             // Update User

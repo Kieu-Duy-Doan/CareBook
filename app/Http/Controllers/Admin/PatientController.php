@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Http\Requests\Admin\StorePatientRequest;
+use App\Http\Requests\Admin\UpdatePatientRequest;
 use App\Models\User;
 use App\Models\PatientProfile;
 use App\Models\Appointment;
@@ -71,32 +73,9 @@ class PatientController extends Controller
         return view('admin.patients.create', compact('customers'));
     }
 
-    public function store(Request $request)
+    public function store(StorePatientRequest $request)
     {
-        $validated = $request->validate([
-            'owner_id'               => 'required|exists:users,id',
-            'is_self'                => 'required|boolean',
-            'full_name'              => 'required|string|max:100',
-            'date_of_birth'          => 'required|date|before:today',
-            'gender'                 => 'required|in:male,female,other',
-            'id_card'                => ['nullable', 'string', 'regex:/^([0-9]{9}|[0-9]{12})$/'],
-            'phone'                  => ['nullable', 'string', 'max:15'],
-            'address'                => 'nullable|string',
-            'occupation'             => 'nullable|string|max:100',
-            'ethnicity'              => 'nullable|string|max:50',
-            'insurance_code'         => 'nullable|string|max:20',
-            'insurance_place'        => 'nullable|string|max:255',
-            'insurance_expiry'       => 'nullable|date',
-            'symptom_notes'          => 'nullable|string',
-        ], [
-            'owner_id.required'      => 'Vui lòng chọn tài khoản khách hàng quản lý hồ sơ này.',
-            'owner_id.exists'        => 'Khách hàng không tồn tại.',
-            'full_name.required'     => 'Vui lòng nhập họ tên hồ sơ.',
-            'date_of_birth.required' => 'Vui lòng nhập ngày sinh.',
-            'date_of_birth.before'   => 'Ngày sinh không hợp lệ.',
-            'gender.required'        => 'Vui lòng chọn giới tính.',
-            'id_card.regex'          => 'Số CCCD/CMND hồ sơ không đúng định dạng.',
-        ]);
+        $validated = $request->validated();
 
         // Validate is_self: A user can only have 1 self profile
         if ($validated['is_self']) {
@@ -176,36 +155,11 @@ class PatientController extends Controller
         return view('admin.patients.edit', compact('profile', 'customers'));
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdatePatientRequest $request, $id)
     {
         $profile = PatientProfile::findOrFail($id);
 
-        $rules = [
-            'owner_id'               => 'required|exists:users,id',
-            'is_self'                => 'required|boolean',
-            'full_name'              => 'required|string|max:100',
-            'date_of_birth'          => 'required|date|before:today',
-            'gender'                 => 'required|in:male,female,other',
-            'id_card'                => ['nullable', 'string', 'regex:/^([0-9]{9}|[0-9]{12})$/'],
-            'phone'                  => ['nullable', 'string', 'max:15'],
-            'address'                => 'nullable|string',
-            'occupation'             => 'nullable|string|max:100',
-            'ethnicity'              => 'nullable|string|max:50',
-            'insurance_code'         => 'nullable|string|max:20',
-            'insurance_place'        => 'nullable|string|max:255',
-            'insurance_expiry'       => 'nullable|date',
-            'symptom_notes'          => 'nullable|string',
-        ];
-
-        $validated = $request->validate($rules, [
-            'owner_id.required'      => 'Vui lòng chọn tài khoản khách hàng quản lý hồ sơ này.',
-            'owner_id.exists'        => 'Khách hàng không tồn tại.',
-            'full_name.required'     => 'Vui lòng nhập họ tên hồ sơ.',
-            'date_of_birth.required' => 'Vui lòng nhập ngày sinh.',
-            'date_of_birth.before'   => 'Ngày sinh không hợp lệ.',
-            'gender.required'        => 'Vui lòng chọn giới tính.',
-            'id_card.regex'          => 'Số CCCD/CMND hồ sơ không đúng định dạng.',
-        ]);
+        $validated = $request->validated();
 
         if ($validated['is_self'] && (!$profile->is_self || $profile->owner_id != $validated['owner_id'])) {
             $hasSelf = PatientProfile::where('owner_id', $validated['owner_id'])
