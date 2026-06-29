@@ -37,7 +37,7 @@ class ProfileController extends Controller
         $validated = $request->validate([
             'full_name' => 'required|string|max:255',
             'date_of_birth' => 'required|date|before:today',
-            'gender' => 'required|in:M,F,O',
+            'gender' => 'required|in:male,female,other,M,F,O',
             'id_card' => 'nullable|string|max:20',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
@@ -45,6 +45,9 @@ class ProfileController extends Controller
             'ethnicity' => 'nullable|string|max:50',
             'insurance_code' => 'nullable|string|max:50',
         ]);
+
+        $genderMap = ['M' => 'male', 'F' => 'female', 'O' => 'other'];
+        $validated['gender'] = $genderMap[$validated['gender']] ?? $validated['gender'];
 
         $validated['owner_id'] = auth()->id();
         $validated['is_self'] = false; // Add new profiles are not self by default
@@ -82,7 +85,7 @@ class ProfileController extends Controller
         $validated = $request->validate([
             'full_name' => 'required|string|max:255',
             'date_of_birth' => 'required|date|before:today',
-            'gender' => 'required|in:M,F,O',
+            'gender' => 'required|in:male,female,other,M,F,O',
             'id_card' => 'nullable|string|max:20',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
@@ -90,6 +93,9 @@ class ProfileController extends Controller
             'ethnicity' => 'nullable|string|max:50',
             'insurance_code' => 'nullable|string|max:50',
         ]);
+
+        $genderMap = ['M' => 'male', 'F' => 'female', 'O' => 'other'];
+        $validated['gender'] = $genderMap[$validated['gender']] ?? $validated['gender'];
 
         $profile->update($validated);
 
