@@ -59,7 +59,24 @@ class ReceptionistController extends Controller
     {
         return view('admin.receptionists.create');
     }
-   
+    public function store(StoreReceptionistRequest $request)
+    {
+        $validated = $request->validated();
+
+        DB::transaction(function() use ($validated) {
+            // Tự động sinh mã nhân viên dựa theo tên và 2 số tăng dần
+            $employeeCode = $this->generateEmployeeCode($validated['full_name']);
+
+            $user = User::create([
+                'full_name'  => $validated['full_name'],
+                'phone'      => $validated['phone'],
+                'username'   => $validated['username'],
+                'id_card'    => $validated['id_card'] ?? null,
+                'email'      => $validated['email'] ?? null,
+                'password'   => bcrypt($validated['password']),
+                'role'       => 'receptionist',
+                'is_active'  => true,
+            ]);
 
             StaffProfile::create([
                 'user_id'        => $user->id,
