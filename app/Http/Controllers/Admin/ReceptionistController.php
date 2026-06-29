@@ -49,7 +49,12 @@ class ReceptionistController extends Controller
         $receptionists = $query->paginate(15)->withQueryString();
 
         // Lấy danh sách phòng ban distinct để filter
-       
+        $departments = \App\Models\StaffProfile::whereNotNull('department')
+            ->distinct()
+            ->pluck('department');
+
+        return view('admin.receptionists.index', compact('receptionists', 'stats', 'departments'));
+    }
     public function create()
     {
         return view('admin.receptionists.create');
