@@ -24,7 +24,7 @@ class UpdateDoctorRequest extends FormRequest
             'username'        => "required|string|max:50|unique:users,username,{$userId}",
             'email'           => "nullable|email|unique:users,email,{$userId}",
             'academic_title'  => 'nullable|in:BS.,ThS.,TS.,PGS.TS.,GS.TS.,BSCK1.,BSCK2.',
-            'level'           => 'required|string|max:100',
+            'level'           => 'required|in:Bác sĩ Nội khoa,Bác sĩ Ngoại khoa,CKI Tim mạch,CKII Tim mạch,Chuyên gia phẫu thuật',
             'expertise'       => 'nullable|string',
             'experience_years'=> 'nullable|integer|min:0|max:60',
             'license_number'  => "nullable|string|max:50|unique:doctor_profiles,license_number,{$doctor->id}",
@@ -52,7 +52,8 @@ class UpdateDoctorRequest extends FormRequest
             'phone.unique'            => 'Số điện thoại đã được sử dụng.',
             'username.required'       => 'Vui lòng nhập tên đăng nhập.',
             'username.unique'         => 'Tên đăng nhập đã tồn tại.',
-            'level.required'          => 'Vui lòng nhập cấp độ chuyên môn.',
+            'level.required'          => 'Vui lòng chọn cấp độ chuyên môn.',
+            'level.in'                => 'Cấp độ chuyên môn không hợp lệ.',
             'specialty_ids.required'  => 'Vui lòng chọn ít nhất một chuyên khoa.',
             'primary_specialty_id.required' => 'Vui lòng chọn chuyên khoa chính.',
         ];
