@@ -197,7 +197,6 @@ class DoctorController extends Controller
 
             // Update DoctorProfile
             $doctor->update([
-                'doctor_code'      => $validated['doctor_code'],
                 'academic_title'   => $validated['academic_title'] ?? null,
                 'level'            => $validated['level'],
                 'expertise'        => $validated['expertise'] ?? null,
