@@ -38,16 +38,7 @@ class DoctorController extends Controller
             ->latest('created_at');
 
         // Filter search: tên hoặc mã bác sĩ
-        if ($request->filled('search')) {
-            $query->where(function($q) use ($request) {
-                $q->where('doctor_code', 'like', '%'.$request->search.'%')
-                  ->orWhereHas('user', fn($uq) =>
-                      $uq->where('full_name', 'like', '%'.$request->search.'%')
-                         ->orWhere('phone', 'like', '%'.$request->search.'%')
-                  );
-            });
-        }
-
+        
         // Filter chuyên khoa
         if ($request->filled('specialty_id')) {
             $query->whereHas('specialties', fn($q) =>
