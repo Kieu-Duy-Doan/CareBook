@@ -167,7 +167,63 @@ class NotificationService
         return $this->logWebNotification(
             $appointment,
             'Lịch khám đã bị huỷ',
-            "Rất tiếc, lịch hẹn lúc {$time} ngày {$date} với {$doctorName} của bạn đã bị huỷ. Mã lịch hẹn: {$appointment->appointment_code}."
+            "Rất tiếc, lịch hẹn lúc {$time} ngày {$date} với {$doctorName} của bạn đã bị huỷ. Mã lịch hẹn: {$appointment->appointment_code}.",
+            'cancellation' // <--- Set type to cancellation
         );
+    }
+
+    /**
+     * Get paginated notifications for a patient
+     */
+    public function getPatientNotificationsPaginated(int $userId, int $perPage = 15)
+    {
+        return Notification::where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage);
+    }
+
+    /**
+     * Get recent notifications for the dropdown
+     */
+    public function getRecentPatientNotifications(int $userId, int $limit = 20)
+    {
+        return Notification::where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->take($limit)
+            ->get();
+    }
+
+    /**
+     * Get unread notification count
+     */
+    public function getUnreadCount(int $userId): int
+    {
+        return Notification::where('user_id', $userId)
+            ->where('is_read', false)
+            ->count();
+    }
+
+    /**
+     * Mark notifications as read
+     */
+    public function markAsRead(int $userId, ?int $notificationId = null): void
+    {
+        $query = Notification::where('user_id', $userId);
+        
+        if ($notificationId) {
+            $query->where('id', $notificationId);
+        }
+
+        $query->update(['is_read' => true]);
+    }
+
+    /**
+     * Delete a notification
+     */
+    public function deletePatientNotification(int $userId, int $notificationId): void
+    {
+        Notification::where('user_id', $userId)
+            ->where('id', $notificationId)
+            ->delete();
     }
 }
