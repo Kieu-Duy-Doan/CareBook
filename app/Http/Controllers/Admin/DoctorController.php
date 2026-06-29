@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Http\Requests\Admin\StoreDoctorRequest;
-use App\Http\Requests\Admin\UpdateDoctorRequest;
+use App\Http\Requests\Admin\Validate\StoreDoctorRequest;
+use App\Http\Requests\Admin\Validate\UpdateDoctorRequest;
 use App\Models\DoctorProfile;
 use App\Models\Specialty;
 use App\Models\Room;

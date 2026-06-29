@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Http\Requests\Admin\StoreReceptionistRequest;
-use App\Http\Requests\Admin\UpdateReceptionistRequest;
+use App\Http\Requests\Admin\Validate\StoreReceptionistRequest;
+use App\Http\Requests\Admin\Validate\UpdateReceptionistRequest;
 use App\Models\User;
 use App\Models\StaffProfile;
 use App\Models\SystemLog;

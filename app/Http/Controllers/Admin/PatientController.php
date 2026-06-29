@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Http\Requests\Admin\StorePatientRequest;
-use App\Http\Requests\Admin\UpdatePatientRequest;
+use App\Http\Requests\Admin\Validate\StorePatientRequest;
+use App\Http\Requests\Admin\Validate\UpdatePatientRequest;
 use App\Models\User;
 use App\Models\PatientProfile;
 use App\Models\Appointment;
