@@ -20,7 +20,7 @@
                     <a href="{{ route('patient.profiles.index') }}" 
                        class="flex flex-col lg:flex-row items-center gap-1.5 md:gap-3 px-2 py-3 rounded-xl font-semibold transition-colors text-center lg:text-left text-xs sm:text-sm md:text-base border border-slate-100 lg:border-none {{ $activeMenu === 'profiles' ? 'bg-primary text-white shadow-md shadow-primary/20' : 'text-slate-600 hover:bg-slate-100 hover:text-primary bg-white lg:bg-transparent shadow-sm lg:shadow-none' }}">
                         <i class="fa-solid fa-address-card w-5 text-center {{ $activeMenu === 'profiles' ? 'text-white' : 'text-slate-400' }}"></i>
-                        Hồ sơ cá nhân
+                        Thông tin cá nhân
                     </a>
 
                     <!-- Quản lý gia đình -->

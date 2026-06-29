@@ -8,8 +8,12 @@
                 <i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
             </a>
             <div>
-                <h1 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">Thêm hồ sơ mới</h1>
-                <p class="text-sm md:text-base text-slate-500 mt-1">Điền thông tin người thân để đặt lịch khám</p>
+                <h1 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">
+                    {{ isset($isSelf) && $isSelf ? 'Cập nhật thông tin cá nhân' : 'Thêm hồ sơ mới' }}
+                </h1>
+                <p class="text-sm md:text-base text-slate-500 mt-1">
+                    {{ isset($isSelf) && $isSelf ? 'Điền thông tin y tế cá nhân của bạn' : 'Điền thông tin người thân để đặt lịch khám' }}
+                </p>
             </div>
         </div>
 
@@ -19,6 +23,9 @@
 
             <form action="{{ route('patient.profiles.store', ['redirect' => request()->query('redirect')]) }}" method="POST" class="relative z-10">
                 @csrf
+                @if(isset($isSelf) && $isSelf)
+                    <input type="hidden" name="is_self" value="1">
+                @endif
                 
                 <div class="space-y-5">
                     <!-- Họ và tên -->
@@ -28,7 +35,7 @@
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <i class="fa-regular fa-user text-slate-400 group-focus-within:text-primary transition-colors"></i>
                             </div>
-                            <input type="text" name="full_name" value="{{ old('full_name') }}" required placeholder="Ví dụ: Nguyễn Văn A"
+                            <input type="text" name="full_name" value="{{ old('full_name', isset($isSelf) && $isSelf ? auth()->user()->full_name : '') }}" required placeholder="Ví dụ: Nguyễn Văn A"
                                    class="pl-11 w-full rounded-2xl border-slate-200 bg-slate-50 shadow-sm focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-300 @error('full_name') border-rose-500 bg-rose-50 @enderror py-3">
                         </div>
                         @error('full_name') <p class="mt-1.5 ml-1 text-xs font-medium text-rose-500"><i class="fa-solid fa-circle-exclamation mr-1"></i> {{ $message }}</p> @enderror
@@ -64,22 +71,42 @@
                                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                     <i class="fa-solid fa-phone text-slate-400 group-focus-within:text-primary transition-colors"></i>
                                 </div>
-                                <input type="text" name="phone" value="{{ old('phone') }}" placeholder="09xxxx..."
+                                <input type="text" name="phone" value="{{ old('phone', isset($isSelf) && $isSelf ? auth()->user()->phone : '') }}" placeholder="09xxxx..."
                                        class="pl-11 w-full rounded-2xl border-slate-200 bg-slate-50 shadow-sm focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-300 py-3">
                             </div>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-bold text-slate-700 mb-1.5 ml-1">CMND / CCCD</label>
+                            @php
+                                $hasIdCard = isset($isSelf) && $isSelf ? !empty(auth()->user()->id_card) : false;
+                            @endphp
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5 ml-1">CMND / CCCD {!! $hasIdCard ? '<span class="text-xs text-rose-500 font-normal ml-1">(Không thể sửa)</span>' : '' !!}</label>
                             <div class="relative group">
                                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                     <i class="fa-regular fa-id-card text-slate-400 group-focus-within:text-primary transition-colors"></i>
                                 </div>
-                                <input type="text" name="id_card" value="{{ old('id_card') }}" placeholder="Số CCCD..."
-                                       class="pl-11 w-full rounded-2xl border-slate-200 bg-slate-50 shadow-sm focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-300 py-3">
+                                <input type="text" name="id_card" value="{{ old('id_card', isset($isSelf) && $isSelf ? auth()->user()->id_card : '') }}" placeholder="Số CCCD..."
+                                       {{ $hasIdCard ? 'readonly' : '' }}
+                                       class="pl-11 w-full rounded-2xl border-slate-200 bg-slate-50 shadow-sm focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-300 py-3 {{ $hasIdCard ? 'cursor-not-allowed opacity-70 bg-slate-100' : '' }}">
                             </div>
                         </div>
                     </div>
+
+                    @if(isset($isSelf) && $isSelf)
+                    <div class="grid grid-cols-1 gap-5">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5 ml-1">Email liên hệ</label>
+                            <div class="relative group">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <i class="fa-solid fa-envelope text-slate-400 group-focus-within:text-primary transition-colors"></i>
+                                </div>
+                                <input type="email" name="email" value="{{ old('email', auth()->user()->email) }}" placeholder="Email..."
+                                       class="pl-11 w-full rounded-2xl border-slate-200 bg-slate-50 shadow-sm focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-300 py-3 @error('email') border-rose-500 bg-rose-50 @enderror">
+                            </div>
+                            @error('email') <p class="mt-1.5 ml-1 text-xs font-medium text-rose-500"><i class="fa-solid fa-circle-exclamation mr-1"></i> {{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                    @endif
 
                     <!-- Địa chỉ -->
                     <div>
@@ -92,6 +119,35 @@
                                    class="pl-11 w-full rounded-2xl border-slate-200 bg-slate-50 shadow-sm focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-300 py-3">
                         </div>
                     </div>
+                    <!-- Dân tộc & Nghề nghiệp -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5 ml-1">Dân tộc</label>
+                            <input type="text" name="ethnicity" value="{{ old('ethnicity') }}" placeholder="Ví dụ: Kinh"
+                                   class="w-full rounded-2xl border-slate-200 bg-slate-50 shadow-sm focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-300 py-3 px-4">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5 ml-1">Nghề nghiệp</label>
+                            <input type="text" name="occupation" value="{{ old('occupation') }}" placeholder="Ví dụ: Nhân viên văn phòng"
+                                   class="w-full rounded-2xl border-slate-200 bg-slate-50 shadow-sm focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-300 py-3 px-4">
+                        </div>
+                    </div>
+
+                    <!-- BHYT -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5 ml-1">Mã thẻ BHYT</label>
+                            <input type="text" name="insurance_code" value="{{ old('insurance_code') }}" placeholder="Mã BHYT..."
+                                   class="w-full rounded-2xl border-slate-200 bg-slate-50 shadow-sm focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-300 py-3 px-4 @error('insurance_code') border-rose-500 bg-rose-50 @enderror">
+                            @error('insurance_code') <p class="mt-1.5 ml-1 text-xs font-medium text-rose-500"><i class="fa-solid fa-circle-exclamation mr-1"></i> {{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5 ml-1">Hạn thẻ BHYT</label>
+                            <input type="date" name="insurance_expiry" value="{{ old('insurance_expiry') }}"
+                                   class="w-full rounded-2xl border-slate-200 bg-slate-50 shadow-sm focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-300 py-3 px-4">
+                        </div>
+                    </div>
+
                 </div>
 
                 <div class="mt-8 pt-6 border-t border-slate-100">

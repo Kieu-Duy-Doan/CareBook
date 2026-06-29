@@ -51,7 +51,7 @@
                             <div class="flex items-center gap-2 mt-1.5 text-sm text-slate-500 font-medium">
                                 <span>{{ $profile->date_of_birth ? \Carbon\Carbon::parse($profile->date_of_birth)->format('d/m/Y') : 'Chưa có NS' }}</span>
                                 <span class="w-1 h-1 rounded-full bg-slate-300"></span>
-                                <span>@if($profile->gender == 'M') Nam @elseif($profile->gender == 'F') Nữ @else Khác @endif</span>
+                                <span>@if($profile->gender == 'male') Nam @elseif($profile->gender == 'female') Nữ @else Khác @endif</span>
                             </div>
                         </div>
                     </div>
