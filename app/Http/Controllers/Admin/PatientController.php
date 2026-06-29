@@ -54,7 +54,13 @@ class PatientController extends Controller
             }
         }
 
-        
+        if ($request->filled('has_insurance')) {
+            if ($request->has_insurance == '1') {
+                $query->whereNotNull('insurance_code');
+            } else {
+                $query->whereNull('insurance_code');
+            }
+        }
 
         $patients = $query->paginate(15)->withQueryString();
 
