@@ -14,7 +14,13 @@ class StoreBookingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'patient_profile_id' => ['required', 'integer', 'exists:patient_profiles,id'],
+            'patient_profile_id' => [
+                'required', 
+                'integer', 
+                \Illuminate\Validation\Rule::exists('patient_profiles', 'id')->where(function ($query) {
+                    $query->where('owner_id', auth()->id());
+                })
+            ],
             'specialty_id'       => ['required', 'integer', 'exists:specialties,id'],
             'doctor_profile_id'  => ['required', 'integer', 'exists:doctor_profiles,id'],
             'appointment_date'   => ['required', 'date', 'after_or_equal:today'],
