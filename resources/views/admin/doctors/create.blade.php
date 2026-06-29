@@ -110,14 +110,6 @@
                     </div>
                     <div class="p-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Mã bác sĩ -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Mã bác sĩ</label>
-                                <input type="text" disabled readonly
-                                       class="w-full border border-gray-200 bg-gray-50 text-gray-500 rounded-lg px-4 py-2 font-mono"
-                                       placeholder="Hệ thống tự động sinh (VD: huanbx01)">
-                            </div>
-
                             <!-- Cấp độ -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Cấp độ chuyên môn <span class="text-red-500">*</span></label>
