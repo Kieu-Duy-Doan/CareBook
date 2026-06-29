@@ -78,6 +78,20 @@ class ReceptionistController extends Controller
         $validated = $request->validated();
 
         DB::transaction(function() use ($validated) {
+            // Tự động sinh mã nhân viên kế tiếp (LT001, LT002, ...)
+            $latestStaff = StaffProfile::where('employee_code', 'regexp', '^LT[0-9]+$')
+                ->orderByRaw('CAST(SUBSTRING(employee_code, 3) AS UNSIGNED) DESC')
+                ->first();
+
+            $nextNumber = 1;
+            if ($latestStaff) {
+                $numberStr = substr($latestStaff->employee_code, 2);
+                if (is_numeric($numberStr)) {
+                    $nextNumber = (int)$numberStr + 1;
+                }
+            }
+            $employeeCode = 'LT' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+
             $user = User::create([
                 'full_name'  => $validated['full_name'],
                 'phone'      => $validated['phone'],
@@ -91,7 +105,7 @@ class ReceptionistController extends Controller
 
             StaffProfile::create([
                 'user_id'        => $user->id,
-                'employee_code'  => $validated['employee_code'],
+                'employee_code'  => $employeeCode,
                 'position'       => 'Lễ tân',
                 'department'     => $validated['department'] ?? null,
                 'internal_phone' => $validated['internal_phone'] ?? null,
@@ -166,7 +180,6 @@ class ReceptionistController extends Controller
             $receptionist->staffProfile()->updateOrCreate(
                 ['user_id' => $receptionist->id],
                 [
-                    'employee_code'  => $validated['employee_code'],
                     'position'       => 'Lễ tân',
                     'department'     => $validated['department'] ?? null,
                     'internal_phone' => $validated['internal_phone'] ?? null,

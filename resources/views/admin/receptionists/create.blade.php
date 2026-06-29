@@ -117,15 +117,6 @@
                     </div>
                     <div class="p-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Mã nhân viên -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Mã nhân viên <span class="text-red-500">*</span></label>
-                                <input type="text" name="employee_code" value="{{ old('employee_code', $nextEmployeeCode) }}" required
-                                       class="w-full border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 px-4 py-2 font-mono @error('employee_code') border-red-500 @enderror"
-                                       placeholder="VD: LT001">
-                                @error('employee_code') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                            </div>
-
 
 
                             <!-- Phòng ban -->
