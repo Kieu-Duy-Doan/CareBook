@@ -57,40 +57,15 @@ class ReceptionistController extends Controller
     }
     public function create()
     {
-        // Tự động sinh mã nhân viên kế tiếp (LT001, LT002, ...)
-        $latestStaff = StaffProfile::where('employee_code', 'regexp', '^LT[0-9]+$')
-            ->orderByRaw('CAST(SUBSTRING(employee_code, 3) AS UNSIGNED) DESC')
-            ->first();
-
-        $nextNumber = 1;
-        if ($latestStaff) {
-            $numberStr = substr($latestStaff->employee_code, 2);
-            if (is_numeric($numberStr)) {
-                $nextNumber = (int)$numberStr + 1;
-            }
-        }
-        $nextEmployeeCode = 'LT' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
-
-        return view('admin.receptionists.create', compact('nextEmployeeCode'));
+        return view('admin.receptionists.create');
     }
     public function store(StoreReceptionistRequest $request)
     {
         $validated = $request->validated();
 
         DB::transaction(function() use ($validated) {
-            // Tự động sinh mã nhân viên kế tiếp (LT001, LT002, ...)
-            $latestStaff = StaffProfile::where('employee_code', 'regexp', '^LT[0-9]+$')
-                ->orderByRaw('CAST(SUBSTRING(employee_code, 3) AS UNSIGNED) DESC')
-                ->first();
-
-            $nextNumber = 1;
-            if ($latestStaff) {
-                $numberStr = substr($latestStaff->employee_code, 2);
-                if (is_numeric($numberStr)) {
-                    $nextNumber = (int)$numberStr + 1;
-                }
-            }
-            $employeeCode = 'LT' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+            // Tự động sinh mã nhân viên dựa theo tên và 2 số tăng dần
+            $employeeCode = $this->generateEmployeeCode($validated['full_name']);
 
             $user = User::create([
                 'full_name'  => $validated['full_name'],
@@ -282,5 +257,38 @@ class ReceptionistController extends Controller
         ]);
 
         return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\ReceptionistsExport($request), 'danh_sach_le_tan.xlsx');
+    }
+
+    private function generateEmployeeCode($fullName)
+    {
+        $slug = \Illuminate\Support\Str::slug($fullName); // "tran-thi-le-tan"
+        $parts = array_filter(explode('-', $slug));
+        
+        if (count($parts) == 1) {
+            $prefix = reset($parts);
+        } else {
+            $firstName = array_pop($parts); // tan
+            $initials = '';
+            foreach ($parts as $part) {
+                if (!empty($part)) {
+                    $initials .= substr($part, 0, 1); // t, t, l
+                }
+            }
+            $prefix = $firstName . $initials; // tanttl
+        }
+
+        $latestStaff = StaffProfile::where('employee_code', 'regexp', '^' . $prefix . '[0-9]{2,}$')
+            ->orderByRaw('CAST(SUBSTRING(employee_code, '.(strlen($prefix)+1).') AS UNSIGNED) DESC')
+            ->first();
+            
+        $nextNumber = 1;
+        if ($latestStaff) {
+            $numberStr = substr($latestStaff->employee_code, strlen($prefix));
+            if (is_numeric($numberStr)) {
+                $nextNumber = (int)$numberStr + 1;
+            }
+        }
+        
+        return $prefix . str_pad($nextNumber, 2, '0', STR_PAD_LEFT);
     }
 }
