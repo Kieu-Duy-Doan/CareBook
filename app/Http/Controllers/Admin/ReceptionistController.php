@@ -8,8 +8,7 @@ use App\Http\Requests\Admin\Validate\StoreReceptionistRequest;
 use App\Http\Requests\Admin\Validate\UpdateReceptionistRequest;
 use App\Models\User;
 use App\Models\StaffProfile;
-use App\Models\SystemLog;
-use Illuminate\Support\Facades\DB;
+
 
 class ReceptionistController extends Controller
 {
