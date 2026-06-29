@@ -19,16 +19,21 @@ class UpdateReceptionistRequest extends FormRequest
         $id = $receptionist->id;
         $staffProfileId = $receptionist->staffProfile?->id;
 
-        return [
+        $rules = [
             'full_name'      => 'required|string|max:100',
             'phone'          => ["required", "string", "max:15", "regex:/^(0|\+84)[3|5|7|8|9][0-9]{8}$/", "unique:users,phone,$id"],
             'username'       => ["required", "string", "max:50", "regex:/^[a-zA-Z0-9_\.]+$/", "unique:users,username,$id"],
-            'id_card'        => "nullable|string|max:20|unique:users,id_card,$id",
             'email'          => "nullable|email|max:150|unique:users,email,$id",
             'department'     => ['required', 'string', 'in:Tiếp nhận bệnh nhân,Chăm sóc khách hàng'],
             'internal_phone' => 'nullable|string|max:15',
             'start_date'     => 'nullable|date|before_or_equal:today',
         ];
+
+        if (empty($receptionist->id_card)) {
+            $rules['id_card'] = "nullable|string|max:20|unique:users,id_card,$id";
+        }
+
+        return $rules;
     }
 
     public function messages()

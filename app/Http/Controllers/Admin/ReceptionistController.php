@@ -147,9 +147,13 @@ class ReceptionistController extends Controller
                 'full_name' => $validated['full_name'],
                 'phone'     => $validated['phone'],
                 'username'  => $validated['username'],
-                'id_card'   => $validated['id_card'] ?? null,
                 'email'     => $validated['email'] ?? null,
             ];
+
+            if (empty($receptionist->id_card)) {
+                $userData['id_card'] = $validated['id_card'] ?? null;
+            }
+
             $receptionist->update($userData);
 
             $receptionist->staffProfile()->updateOrCreate(
