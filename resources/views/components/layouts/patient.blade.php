@@ -250,21 +250,7 @@
                         await this.markAsRead(notif.id);
                     }
                     
-                    // Nếu là thông báo huỷ lịch, chuyển ngay đến form đặt lại lịch với thông tin cũ
-                    if (notif.type === 'cancellation' && notif.appointment_info) {
-                        const info = notif.appointment_info;
-                        const pId = info.patient_profile_id;
-                        const sId = info.specialty_id;
-                        const dId = info.doctor_profile_id || '';
-                        const bMethod = info.booking_method || 'doctor';
-                        const reason = encodeURIComponent(info.reason || '');
-                        window.location.href = `/dat-lich?fast_track=1&patient_profile_id=${pId}&specialty_id=${sId}&doctor_id=${dId}&booking_method=${bMethod}&reason=${reason}`;
-                        return;
-                    }
-
-                    if (notif.ref_type === 'appointment' && notif.ref_id) {
-                        window.location.href = `/lich-hen/${notif.ref_id}`;
-                    }
+                    window.location.href = `/trang-ca-nhan/thong-bao/${notif.id}`;
                 },
 
                 async markAllAsRead() {

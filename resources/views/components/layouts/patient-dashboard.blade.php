@@ -49,6 +49,13 @@
                         <i class="fa-solid fa-pills w-5 text-center {{ $activeMenu === 'prescriptions' ? 'text-white' : 'text-slate-400' }}"></i>
                         Đơn thuốc
                     </a>
+
+                    <!-- Thông báo -->
+                    <a href="{{ route('patient.notifications.page') }}" 
+                       class="flex flex-col lg:flex-row items-center gap-1.5 md:gap-3 px-2 py-3 rounded-xl font-semibold transition-colors text-center lg:text-left text-xs sm:text-sm md:text-base border border-slate-100 lg:border-none {{ $activeMenu === 'notifications' ? 'bg-primary text-white shadow-md shadow-primary/20' : 'text-slate-600 hover:bg-slate-100 hover:text-primary bg-white lg:bg-transparent shadow-sm lg:shadow-none' }}">
+                        <i class="fa-solid fa-bell w-5 text-center {{ $activeMenu === 'notifications' ? 'text-white' : 'text-slate-400' }}"></i>
+                        Thông báo
+                    </a>
                 </nav>
             </aside>
 

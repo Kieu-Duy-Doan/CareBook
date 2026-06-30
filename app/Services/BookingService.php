@@ -271,6 +271,7 @@ class BookingService
     public function findAlternatives(Appointment $appointment): \Illuminate\Support\Collection
     {
         $alternatives = [];
+        $suggestedKeys = [];
         $specialtyId = $appointment->specialty_id;
         $date = Carbon::parse($appointment->appointment_date);
 
@@ -283,8 +284,14 @@ class BookingService
 
             $schedules = $this->querySchedules($dow, null, $specialtyId);
             foreach ($schedules as $schedule) {
-                // Ưu tiên bác sĩ khác nếu cùng ngày
-                if ($i === 0 && $schedule->doctor_profile_id === $appointment->doctor_profile_id) {
+                // Loại trừ luôn bác sĩ đã bị huỷ lịch để bệnh nhân chọn người khác
+                if ($schedule->doctor_profile_id === $appointment->doctor_profile_id) {
+                    continue;
+                }
+
+                // Tránh trùng lặp bác sĩ trong cùng một ngày (do có thể có 2 ca làm việc)
+                $key = $schedule->doctor_profile_id . '_' . $dateString;
+                if (in_array($key, $suggestedKeys)) {
                     continue;
                 }
 
@@ -292,6 +299,7 @@ class BookingService
                 $availableSlots = collect($slots)->filter(fn($s) => $s['available'])->pluck('time')->toArray();
 
                 if (!empty($availableSlots)) {
+                    $suggestedKeys[] = $key;
                     $alternatives[] = (object) [
                         'id'               => $schedule->doctor_profile_id,
                         'full_title'       => $schedule->doctorProfile->full_title ?? ($schedule->doctorProfile->user->full_name ?? 'Bác sĩ'),

@@ -165,7 +165,8 @@
         if (urlParams.get('fast_track')) {
             const pId = parseInt(urlParams.get('patient_profile_id'));
             const sId = parseInt(urlParams.get('specialty_id'));
-            const dId = parseInt(urlParams.get('doctor_id'));
+            const dId = parseInt(urlParams.get('doctor_id')); // Bác sĩ được chọn thay thế
+            const cId = parseInt(urlParams.get('cancelled_doctor_id')); // Bác sĩ cũ bị huỷ
             const bMethod = urlParams.get('booking_method');
             const r = urlParams.get('reason');
             
@@ -175,19 +176,31 @@
             if (sId) {
                 this.selectedSpecialty = this.specialties.find(s => s.id === sId) || null;
             }
+            if (cId) {
+                this.cancelledDoctorId = cId;
+            } else if (!dId && bMethod === 'doctor') {
+                // Tương thích ngược: nếu không có cId nhưng có bMethod=doctor và gọi từ popup huỷ cũ
+                // Nhưng do url thay thế giờ đã truyền dId, nên ta có thể bỏ qua hoặc gán dự phòng.
+            }
 
-            if (bMethod === 'specialty' && sId) {
+            if (bMethod === 'specialty' && sId && !dId) {
                 this.bookingMethod = 'specialty';
                 this.step = 3;
                 this.loadAvailableDates();
             } else if (dId) {
                 this.bookingMethod = 'doctor';
-                this.cancelledDoctorId = dId; // Ghi nhớ bác sĩ này để ẩn khỏi gợi ý
-                this.step = 2;
-                if (this.selectedSpecialty) {
-                    this.doctorSearch = this.selectedSpecialty.name;
+                this.selectedDoctor = this.allDoctors.find(d => d.id === dId) || null;
+                
+                if (this.selectedDoctor) {
+                    this.step = 3;
+                    this.loadAvailableDates();
+                } else {
+                    this.step = 2;
+                    if (this.selectedSpecialty) {
+                        this.doctorSearch = this.selectedSpecialty.name;
+                    }
+                    setTimeout(() => { this.showDoctorModal = true; }, 500);
                 }
-                setTimeout(() => { this.showDoctorModal = true; }, 500);
             } else if (sId) {
                 this.bookingMethod = 'specialty';
                 this.step = 3;

@@ -28,6 +28,27 @@ class NotificationController extends Controller
     }
 
     /**
+     * Show a single notification detail
+     */
+    public function show($id)
+    {
+        $notification = \App\Models\Notification::where('user_id', Auth::id())->findOrFail($id);
+        
+        // Mark as read
+        if (!$notification->is_read) {
+            $notification->is_read = true;
+            $notification->save();
+        }
+
+        $appointment = null;
+        if ($notification->ref_type === 'appointment' && $notification->ref_id) {
+            $appointment = Appointment::with(['doctorProfile', 'specialty'])->find($notification->ref_id);
+        }
+
+        return view('patient.notifications.show', compact('notification', 'appointment'));
+    }
+
+    /**
      * Get recent notifications for the header dropdown
      */
     public function index()
@@ -80,5 +101,15 @@ class NotificationController extends Controller
         $this->notificationService->deletePatientNotification(Auth::id(), $id);
 
         return redirect()->back()->with('success', 'Đã xoá thông báo!');
+    }
+
+    /**
+     * Delete all read notifications
+     */
+    public function destroyRead()
+    {
+        $this->notificationService->deleteReadPatientNotifications(Auth::id());
+
+        return redirect()->back()->with('success', 'Đã dọn dẹp các thông báo đã đọc!');
     }
 }
