@@ -72,7 +72,7 @@
     <!-- Premium Patient Top Nav -->
     <header id="patient-header" class="sticky top-0 z-50 bg-white shadow-sm transition-all duration-300">
         <!-- Top Bar (White) -->
-        <div class="w-full px-4 md:px-6 py-2 md:h-20 flex items-center justify-between gap-2 md:gap-4 relative">
+        <div class="w-full px-4 md:px-8 xl:px-12 py-2 md:h-20 flex items-center justify-between gap-2 md:gap-4 relative">
             <!-- Left Side: Logo -->
             <a href="{{ route('home') }}" class="flex items-center gap-3 group shrink-0 relative z-20">
                 <div class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-secondary text-white flex items-center justify-center text-xl shadow-lg">
@@ -138,7 +138,7 @@
                 <form action="{{ route('logout') }}" method="POST" class="flex items-center">
                     @csrf
                     <button type="submit" class="flex items-center gap-1.5 hover:text-rose-600 transition-colors text-slate-600">
-                        <i class="fa-solid fa-arrow-right-from-bracket"></i> <span class="hidden sm:inline">Đăng xuất</span>
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i> <span>Đăng xuất</span>
                     </button>
                 </form>
                 <div class="px-1.5 py-0.5 border border-slate-300 rounded text-slate-600 font-bold bg-white text-[10px]">VN</div>
@@ -151,7 +151,7 @@
 
         <!-- Bottom Bar (Green Navigation) -->
         <div class="bg-secondary text-white shadow-md">
-            <div class="w-full px-4 md:px-6">
+            <div class="w-full px-4 md:px-8 xl:px-12">
                 <!-- Removed overflow-x-auto to prevent dropdown clipping -->
                 <nav class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 md:gap-8 text-xs md:text-sm font-bold uppercase py-3 md:py-3.5">
                     <a href="{{ route('home') }}" class="whitespace-nowrap hover:text-amber-300 transition-colors">Cổng thông tin</a>

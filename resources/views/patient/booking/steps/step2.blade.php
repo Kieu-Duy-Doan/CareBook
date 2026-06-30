@@ -15,7 +15,7 @@
             <template x-if="suggestedDoctors.length > 0">
                 {{-- Theo bác sĩ gợi ý --}}
                 <div @click="selectMethod('suggested')"
-                     class="group relative flex items-center gap-3 p-4 bg-white border rounded-2xl cursor-pointer transition-all duration-300 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5"
+                     class="group relative flex items-center gap-3 p-4 bg-white border rounded-2xl cursor-pointer transition-colors hover:border-primary hover:bg-primary/5"
                      :class="bookingMethod === 'suggested' ? 'border-primary ring-1 ring-primary/20 bg-primary/5' : 'border-slate-200'">
                      
                     {{-- Active Decor --}}
@@ -35,7 +35,7 @@
 
             {{-- Theo chuyên khoa --}}
             <div @click="selectMethod('specialty')"
-                 class="group relative flex items-center gap-3 p-4 bg-white border rounded-2xl cursor-pointer transition-all duration-300 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5"
+                 class="group relative flex items-center gap-3 p-4 bg-white border rounded-2xl cursor-pointer transition-colors hover:border-primary hover:bg-primary/5"
                  :class="bookingMethod === 'specialty' ? 'border-primary ring-1 ring-primary/20 bg-primary/5' : 'border-slate-200'">
                  
                 {{-- Active Decor --}}
@@ -54,7 +54,7 @@
 
             {{-- Theo bác sĩ --}}
             <div @click="selectMethod('doctor')"
-                 class="group relative flex items-center gap-3 p-4 bg-white border rounded-2xl cursor-pointer transition-all duration-300 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5"
+                 class="group relative flex items-center gap-3 p-4 bg-white border rounded-2xl cursor-pointer transition-colors hover:border-primary hover:bg-primary/5"
                  :class="bookingMethod === 'doctor' ? 'border-primary ring-1 ring-primary/20 bg-primary/5' : 'border-slate-200'">
                  
                 {{-- Active Decor --}}
