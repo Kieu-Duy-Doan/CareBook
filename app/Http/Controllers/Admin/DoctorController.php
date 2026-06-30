@@ -101,7 +101,6 @@ class DoctorController extends Controller
             'email' => 'nullable|email|max:150|unique:users,email',
             'password' => ['required', 'string', Password::min(8)->letters()->mixedCase()->numbers()->symbols(), 'confirmed'],
             // Hồ sơ chuyên môn
-            'doctor_code' => ['required', 'string', 'max:20', 'regex:/^BS\d{3,}$/', 'unique:doctor_profiles,doctor_code'],
             'academic_title' => 'nullable|string|max:100',
             'level' => 'required|in:BS,BSCK1,BSCK2,ThS,TS,PGS,GS',
             'expertise' => 'nullable|string|max:2000',
@@ -132,9 +131,6 @@ class DoctorController extends Controller
             'password.required' => 'Vui lòng nhập mật khẩu.',
             'password.min' => 'Mật khẩu tối thiểu 8 ký tự và phải bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.',
             'password.confirmed' => 'Xác nhận mật khẩu không khớp.',
-            'doctor_code.required' => 'Vui lòng nhập mã bác sĩ.',
-            'doctor_code.regex' => 'Mã bác sĩ phải bắt đầu bằng BS và theo sau bởi ít nhất 3 chữ số (VD: BS001).',
-            'doctor_code.unique' => 'Mã bác sĩ đã tồn tại.',
             'level.required' => 'Vui lòng chọn cấp độ chuyên môn.',
             'specialty_ids.required' => 'Vui lòng chọn ít nhất một chuyên khoa.',
             'specialty_ids.*.exists' => 'Chuyên khoa đã chọn không tồn tại hoặc đã bị vô hiệu hoá.',
@@ -157,10 +153,12 @@ class DoctorController extends Controller
                 'is_active' => true,
             ]);
 
+            $doctorCode = $this->_generateDoctorCode($validated['full_name']);
+
             // Tạo DoctorProfile
             $doctor = DoctorProfile::create([
                 'user_id' => $user->id,
-                'doctor_code' => $validated['doctor_code'],
+                'doctor_code' => $doctorCode,
                 'academic_title' => $validated['academic_title'] ?? null,
                 'level' => $validated['level'],
                 'expertise' => $validated['expertise'] ?? null,
@@ -193,6 +191,42 @@ class DoctorController extends Controller
         return redirect()->route('admin.doctors.index')
             ->with('success', 'Thêm bác sĩ thành công.');
     }
+    public function generateCode(Request $request)
+    {
+        $fullName = $request->input('full_name');
+        if (empty(trim($fullName))) {
+            return response()->json(['doctor_code' => '']);
+        }
+        return response()->json(['doctor_code' => $this->_generateDoctorCode($fullName)]);
+    }
+
+    private function _generateDoctorCode($fullName)
+    {
+        $nameParts = explode(' ', trim($fullName));
+        $firstName = array_pop($nameParts);
+        $initials = '';
+        foreach ($nameParts as $part) {
+            if (!empty($part)) {
+                $initials .= mb_substr($part, 0, 1);
+            }
+        }
+        $baseCode = \Illuminate\Support\Str::slug($firstName . $initials, '');
+        $baseCode = str_replace('-', '', $baseCode);
+
+        $latestProfile = DoctorProfile::where('doctor_code', 'like', $baseCode . '%')
+                                      ->orderBy('id', 'desc')
+                                      ->first();
+        $nextNumber = 1;
+        if ($latestProfile) {
+            $latestCode = $latestProfile->doctor_code;
+            $numberPart = str_replace($baseCode, '', $latestCode);
+            if (is_numeric($numberPart)) {
+                $nextNumber = intval($numberPart) + 1;
+            }
+        }
+        return $baseCode . str_pad($nextNumber, 2, '0', STR_PAD_LEFT);
+    }
+
     public function show($id)
     {
         $doctor = DoctorProfile::with([

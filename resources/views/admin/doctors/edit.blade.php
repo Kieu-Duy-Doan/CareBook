@@ -92,8 +92,9 @@
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Mã bác sĩ <span class="text-red-500">*</span></label>
-                                        <input type="text" name="doctor_code" value="{{ old('doctor_code', $doctor->doctor_code) }}" required
-                                               class="w-full border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 px-4 py-2 font-mono @error('doctor_code') border-red-500 @enderror">
+                                        <input type="hidden" name="doctor_code" value="{{ old('doctor_code', $doctor->doctor_code) }}">
+                                        <input disabled type="text" value="{{ old('doctor_code', $doctor->doctor_code) }}"
+                                               class="w-full border border-gray-300 rounded-lg px-4 py-2 font-mono bg-gray-100 text-gray-500 cursor-not-allowed opacity-70">
                                         @error('doctor_code') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                     </div>
 

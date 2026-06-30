@@ -94,6 +94,7 @@ class CustomerController extends Controller
             'insurance_place'        => 'nullable|string|max:255',
             'insurance_expiry'       => 'nullable|date',
             'symptom_notes'          => 'nullable|string',
+            'medical_history.*'      => 'nullable|file|mimes:pdf|max:10240',
         ], [
             'full_name.required'  => 'Vui lòng nhập họ tên.',
             'phone.required'      => 'Vui lòng nhập số điện thoại.',
@@ -111,9 +112,19 @@ class CustomerController extends Controller
             'date_of_birth.required' => 'Vui lòng nhập ngày sinh.',
             'date_of_birth.before'=> 'Ngày sinh không hợp lệ.',
             'gender.required'     => 'Vui lòng chọn giới tính.',
+            'medical_history.*.mimes'=> 'File tiền sử bệnh lý phải là định dạng PDF.',
+            'medical_history.*.max'  => 'Kích thước file không được vượt quá 10MB.',
         ]);
 
-        \DB::transaction(function() use ($validated) {
+        $medicalHistoryPaths = [];
+        if ($request->hasFile('medical_history')) {
+            foreach ($request->file('medical_history') as $file) {
+                $path = $file->store('medical_histories', 'public');
+                $medicalHistoryPaths[] = $path;
+            }
+        }
+
+        \DB::transaction(function() use ($validated, $medicalHistoryPaths) {
             $user = User::create([
                 'full_name' => $validated['full_name'],
                 'phone'     => $validated['phone'],
@@ -140,6 +151,7 @@ class CustomerController extends Controller
                 'insurance_place' => $validated['insurance_place'] ?? null,
                 'insurance_expiry'=> $validated['insurance_expiry'] ?? null,
                 'symptom_notes'   => $validated['symptom_notes'] ?? null,
+                'medical_history' => !empty($medicalHistoryPaths) ? $medicalHistoryPaths : null,
                 'is_self'         => 1,
             ]);
 

@@ -103,8 +103,8 @@
         <!-- PHẦN 1: BỘ LỌC -->
         <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
             <form action="{{ route('admin.work-schedules.index') }}" method="GET"
-                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div>
+                class="flex flex-col lg:flex-row gap-4 items-end lg:items-center">
+                <div class="w-full lg:flex-1">
                     <select name="doctor_id"
                         class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
                         <option value="">Tất cả bác sĩ</option>
@@ -114,7 +114,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div>
+                <div class="w-full lg:flex-1">
                     <select name="room_id"
                         class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
                         <option value="">Tất cả phòng</option>
@@ -125,7 +125,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div>
+                <div class="w-full lg:flex-1">
                     <select name="day_of_week"
                         class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
                         <option value="">Tất cả các ngày</option>
@@ -139,7 +139,7 @@
                         </option>
                     </select>
                 </div>
-                <div>
+                <div class="w-full lg:flex-1">
                     <select name="status"
                         class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
                         <option value="">Tất cả trạng thái</option>
@@ -148,7 +148,7 @@
                         <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>Tạm ngưng</option>
                     </select>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 shrink-0 w-full lg:w-auto">
                     <button type="submit"
                         class="w-full sm:w-auto bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                         Lọc

@@ -22,7 +22,31 @@
         </div>
         @endif
 
-        <form action="{{ route('admin.doctors.store') }}" method="POST" x-data="{ loading: false }" @submit="loading = true">
+        <form action="{{ route('admin.doctors.store') }}" method="POST" 
+              x-data="{ 
+                  loading: false,
+                  fullName: '{{ old('full_name') }}',
+                  doctorCode: 'Mã sẽ được tạo tự động',
+                  generateDoctorCode() {
+                      if (this.fullName.trim() === '') {
+                          this.doctorCode = 'Mã sẽ được tạo tự động';
+                          return;
+                      }
+                      fetch('{{ route('admin.doctors.generate-code') }}', {
+                          method: 'POST',
+                          headers: {
+                              'Content-Type': 'application/json',
+                              'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                          },
+                          body: JSON.stringify({ full_name: this.fullName })
+                      })
+                      .then(res => res.json())
+                      .then(data => {
+                          this.doctorCode = data.doctor_code || 'Mã sẽ được tạo tự động';
+                      });
+                  }
+              }" 
+              @submit="loading = true">
             @csrf
             
             <div class="grid grid-cols-1 gap-6">
@@ -38,7 +62,8 @@
                             <!-- Họ và tên -->
                             <div class="md:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên đầy đủ <span class="text-red-500">*</span></label>
-                                <input type="text" name="full_name" value="{{ old('full_name') }}" required
+                                <input type="text" name="full_name" required
+                                       x-model="fullName" @blur="generateDoctorCode"
                                        class="w-full border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 px-4 py-2 @error('full_name') border-red-500 @enderror"
                                        placeholder="VD: Nguyễn Văn A">
                                 @error('full_name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
@@ -113,10 +138,8 @@
                             <!-- Mã bác sĩ -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Mã bác sĩ <span class="text-red-500">*</span></label>
-                                <input type="text" name="doctor_code" value="{{ old('doctor_code', $nextDoctorCode) }}" required
-                                       class="w-full border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 px-4 py-2 font-mono @error('doctor_code') border-red-500 @enderror"
-                                       placeholder="VD: BS001">
-                                @error('doctor_code') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                <input disabled type="text" x-model="doctorCode"
+                                       class="w-full border border-gray-300 rounded-lg px-4 py-2 font-mono bg-gray-100 text-gray-500 cursor-not-allowed opacity-70">
                             </div>
 
                             <!-- Cấp độ -->

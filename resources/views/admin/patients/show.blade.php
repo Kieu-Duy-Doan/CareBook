@@ -183,9 +183,20 @@
                         <div class="mt-4">
                             <div class="text-sm text-gray-500 mb-1">Tiền sử bệnh lý</div>
                             @if($profile->medical_history && is_array($profile->medical_history) && count($profile->medical_history) > 0)
-                                <div class="flex flex-wrap gap-1.5">
+                                <div class="flex flex-wrap gap-2">
                                     @foreach($profile->medical_history as $hist)
-                                        <span class="px-2 py-0.5 bg-gray-100 border border-gray-200 rounded text-xs text-gray-700">{{ $hist }}</span>
+                                        <a href="{{ Storage::url($hist) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-green-200 rounded text-xs font-medium text-green-700 hover:bg-green-50 transition" title="Xem trước / Tải về">
+                                            @if(Str::endsWith($hist, ['.pdf']))
+                                                <i class="fa-solid fa-file-pdf text-red-500"></i>
+                                            @elseif(Str::endsWith($hist, ['.doc', '.docx']))
+                                                <i class="fa-solid fa-file-word text-blue-600"></i>
+                                            @elseif(Str::endsWith($hist, ['.png', '.jpg', '.jpeg']))
+                                                <i class="fa-regular fa-image text-green-500"></i>
+                                            @else
+                                                <i class="fa-solid fa-file text-gray-400"></i>
+                                            @endif
+                                            Tệp đính kèm {{ $loop->iteration }}
+                                        </a>
                                     @endforeach
                                 </div>
                             @else

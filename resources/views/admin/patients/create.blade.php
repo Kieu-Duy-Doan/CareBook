@@ -34,7 +34,7 @@
             </div>
         @endif
 
-        <form action="{{ route('admin.patients.store') }}" method="POST" x-data="{ loading: false }"
+        <form action="{{ route('admin.patients.store') }}" method="POST" enctype="multipart/form-data" x-data="{ loading: false }"
             @submit="loading = true">
             @csrf
 
@@ -197,6 +197,11 @@
                         </div>
                         <div class="p-6">
                             <div class="grid grid-cols-1 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Tiền sử bệnh lý (Tải lên file PDF)</label>
+                                    <input type="file" name="medical_history[]" multiple accept=".pdf"
+                                        class="w-full border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Ghi chú triệu chứng, dị
                                         ứng, thông tin khác...</label>

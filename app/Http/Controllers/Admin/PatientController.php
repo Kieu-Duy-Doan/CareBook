@@ -88,6 +88,7 @@ class PatientController extends Controller
             'insurance_place'        => 'nullable|string|max:255',
             'insurance_expiry'       => 'nullable|date',
             'symptom_notes'          => 'nullable|string',
+            'medical_history.*'      => 'nullable|file|mimes:pdf|max:10240',
         ], [
             'owner_id.required'      => 'Vui lòng chọn tài khoản khách hàng quản lý hồ sơ này.',
             'owner_id.exists'        => 'Khách hàng không tồn tại.',
@@ -96,6 +97,8 @@ class PatientController extends Controller
             'date_of_birth.before'   => 'Ngày sinh không hợp lệ.',
             'gender.required'        => 'Vui lòng chọn giới tính.',
             'id_card.regex'          => 'Số CCCD/CMND hồ sơ không đúng định dạng.',
+            'medical_history.*.mimes'=> 'File tiền sử bệnh lý phải là định dạng PDF.',
+            'medical_history.*.max'  => 'Kích thước file không được vượt quá 10MB.',
         ]);
 
         // Validate is_self: A user can only have 1 self profile
@@ -106,7 +109,15 @@ class PatientController extends Controller
             }
         }
 
-        DB::transaction(function() use ($validated) {
+        $medicalHistoryPaths = [];
+        if ($request->hasFile('medical_history')) {
+            foreach ($request->file('medical_history') as $file) {
+                $path = $file->store('medical_histories', 'public');
+                $medicalHistoryPaths[] = $path;
+            }
+        }
+
+        DB::transaction(function() use ($validated, $medicalHistoryPaths) {
             $profile = PatientProfile::create([
                 'patient_code'    => 'BN' . ($validated['id_card'] ?? substr(str_shuffle('0123456789'), 0, 10)),
                 'owner_id'        => $validated['owner_id'],
@@ -122,6 +133,7 @@ class PatientController extends Controller
                 'insurance_place' => $validated['insurance_place'] ?? null,
                 'insurance_expiry'=> $validated['insurance_expiry'] ?? null,
                 'symptom_notes'   => $validated['symptom_notes'] ?? null,
+                'medical_history' => !empty($medicalHistoryPaths) ? $medicalHistoryPaths : null,
                 'is_self'         => $validated['is_self'],
             ]);
 

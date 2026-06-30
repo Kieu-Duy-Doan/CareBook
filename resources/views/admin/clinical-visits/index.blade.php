@@ -10,14 +10,13 @@
 
     <!-- FILTER FORM -->
     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
-        <form action="{{ route('admin.clinical-visits.index') }}" method="GET" class="space-y-4">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div>
+        <form action="{{ route('admin.clinical-visits.index') }}" method="GET" class="flex flex-col lg:flex-row gap-4 items-end">
+            <div class="w-full lg:flex-1">
                     <label class="block text-xs font-medium text-gray-500 mb-1">Ngày khám</label>
                     <input type="date" name="date" value="{{ request('date', date('Y-m-d')) }}"
                         class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none">
                 </div>
-                <div>
+                <div class="w-full lg:flex-1">
                     <label class="block text-xs font-medium text-gray-500 mb-1">Trạng thái khám</label>
                     <select name="status"
                         class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
@@ -33,7 +32,7 @@
                             viện/khoa</option>
                     </select>
                 </div>
-                <div>
+                <div class="w-full lg:flex-1">
                     <label class="block text-xs font-medium text-gray-500 mb-1">Thanh toán</label>
                     <select name="payment_status"
                         class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
@@ -46,7 +45,7 @@
                         </option>
                     </select>
                 </div>
-                <div>
+                <div class="w-full lg:flex-1">
                     <label class="block text-xs font-medium text-gray-500 mb-1">Bác sĩ</label>
                     <select name="doctor_profile_id"
                         class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
@@ -58,7 +57,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div>
+                <div class="w-full lg:flex-1">
                     <label class="block text-xs font-medium text-gray-500 mb-1">Phòng khám</label>
                     <select name="room_id"
                         class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
@@ -69,8 +68,7 @@
                         @endforeach
                     </select>
                 </div>
-            </div>
-            <div class="flex gap-2 justify-end">
+            <div class="flex gap-2 shrink-0 w-full lg:w-auto">
                 <a href="{{ route('admin.clinical-visits.index') }}"
                     class="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors">
                     Đặt lại
