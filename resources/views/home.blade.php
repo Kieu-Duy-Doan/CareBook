@@ -114,13 +114,29 @@
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                @php
+                    function getSpecialtyIcon($name) {
+                        $name = mb_strtolower($name, 'UTF-8');
+                        if (str_contains($name, 'tim')) return 'fa-solid fa-heart-pulse';
+                        if (str_contains($name, 'răng') || str_contains($name, 'hàm')) return 'fa-solid fa-tooth';
+                        if (str_contains($name, 'thần kinh')) return 'fa-solid fa-brain';
+                        if (str_contains($name, 'xương') || str_contains($name, 'khớp')) return 'fa-solid fa-bone';
+                        if (str_contains($name, 'mắt')) return 'fa-solid fa-eye';
+                        if (str_contains($name, 'nhi')) return 'fa-solid fa-baby';
+                        if (str_contains($name, 'tiêu hóa') || str_contains($name, 'tiêu hoá')) return 'fa-solid fa-bacterium';
+                        if (str_contains($name, 'da liễu')) return 'fa-solid fa-spa';
+                        if (str_contains($name, 'tai mũi họng')) return 'fa-solid fa-ear-listen';
+                        if (str_contains($name, 'sản') || str_contains($name, 'phụ khoa')) return 'fa-solid fa-person-pregnant';
+                        return 'fa-solid fa-stethoscope';
+                    }
+                @endphp
                 @foreach($specialties->take(8) as $specialty)
                 <div class="group bg-slate-50 border border-slate-100 rounded-2xl p-4 md:p-6 text-center hover:bg-blue-50 hover:border-blue-200 transition-all shadow-sm hover:shadow-md">
                     <div class="w-16 h-16 mx-auto bg-white border border-slate-100 text-blue-600 rounded-full flex items-center justify-center text-3xl mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors shadow-sm">
                         @if($specialty->image_url)
-                            <img src="{{ $specialty->image_url }}" alt="{{ $specialty->name }}" class="w-10 h-10 object-cover">
+                            <img src="{{ $specialty->image_url }}" alt="{{ $specialty->name }}" class="w-full h-full object-cover rounded-full">
                         @else
-                            <i class="fa-solid fa-stethoscope"></i>
+                            <i class="{{ getSpecialtyIcon($specialty->name) }}"></i>
                         @endif
                     </div>
                     <h3 class="font-bold text-slate-800 text-base md:text-lg group-hover:text-blue-800">{{ $specialty->name }}</h3>
@@ -147,7 +163,7 @@
                 @foreach($doctors->take(4) as $doctor)
                 <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-lg transition-all group flex flex-col h-full">
                     <div class="bg-slate-100 pt-6 px-6 relative flex justify-center">
-                        <img src="{{ $doctor->user->avatar_url ?? 'https://ui-avatars.com/api/?name='.urlencode($doctor->user->full_name).'&background=random' }}" alt="{{ $doctor->user->full_name }}" class="w-32 h-32 object-cover rounded-full border-4 border-white shadow-md z-10 group-hover:scale-105 transition-transform duration-500 bg-white">
+                        <img src="{{ $doctor->user->avatar_url ?? 'https://api.dicebear.com/7.x/initials/svg?seed='.urlencode($doctor->user->full_name).'&backgroundColor=e0e7ff,c7d2fe,a5b4fc,818cf8&textColor=3730a3' }}" alt="{{ $doctor->user->full_name }}" class="w-32 h-32 object-cover rounded-full border-4 border-white shadow-md z-10 group-hover:scale-105 transition-transform duration-500 bg-white">
                         <div class="absolute inset-x-0 bottom-0 h-1/2 bg-blue-600/5"></div>
                     </div>
                     <div class="p-5 text-center flex-1 flex flex-col justify-center">
@@ -176,59 +192,32 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Card 1 -->
+                @foreach($posts as $post)
                 <div class="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-slate-100 flex flex-col">
                     <div class="h-48 bg-slate-200 relative overflow-hidden">
+                        @if($post->thumbnail_url)
+                            <img src="{{ $post->thumbnail_url }}" alt="{{ $post->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        @endif
                         <div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent z-10"></div>
                         <div class="absolute bottom-4 left-4 z-20">
-                            <span class="px-3 py-1 bg-secondary text-white text-xs font-bold rounded-lg">Sự kiện</span>
+                            @php
+                                $badgeColor = 'bg-secondary';
+                                if($post->post_type == 'medical' || $post->post_type == 'Y tế') $badgeColor = 'bg-amber-500';
+                                elseif($post->post_type == 'announcement' || $post->post_type == 'Thông báo') $badgeColor = 'bg-blue-500';
+                            @endphp
+                            <span class="px-3 py-1 {{ $badgeColor }} text-white text-xs font-bold rounded-lg">{{ ucfirst($post->post_type ?? 'Tin tức') }}</span>
                         </div>
                     </div>
                     <div class="p-6 flex-1 flex flex-col">
-                        <p class="text-sm text-slate-500 mb-2"><i class="fa-regular fa-clock mr-1"></i> 25 Tháng 6, 2026</p>
-                        <h3 class="text-xl font-bold text-slate-800 mb-3 group-hover:text-secondary transition-colors line-clamp-2">Bệnh viện CareBook chính thức ra mắt hệ thống đặt lịch khám trực tuyến</h3>
-                        <p class="text-slate-600 line-clamp-3 mb-4 flex-1">Với mong muốn nâng cao chất lượng phục vụ, hệ thống đặt lịch khám trực tuyến sẽ giúp bệnh nhân tiết kiệm thời gian chờ đợi...</p>
-                        <a href="#" class="text-secondary font-bold text-sm inline-flex items-center gap-1 group/link">
+                        <p class="text-sm text-slate-500 mb-2"><i class="fa-regular fa-clock mr-1"></i> {{ \Carbon\Carbon::parse($post->published_at)->format('d \T\h\á\n\g m, Y') }}</p>
+                        <h3 class="text-xl font-bold text-slate-800 mb-3 group-hover:text-secondary transition-colors line-clamp-2">{{ $post->title }}</h3>
+                        <p class="text-slate-600 line-clamp-3 mb-4 flex-1">{{ $post->summary }}</p>
+                        <a href="{{ route('posts.show', $post->slug) }}" class="text-secondary font-bold text-sm inline-flex items-center gap-1 group/link">
                             Xem chi tiết <i class="fa-solid fa-arrow-right group-hover/link:translate-x-1 transition-transform"></i>
                         </a>
                     </div>
                 </div>
-
-                <!-- Card 2 -->
-                <div class="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-slate-100 flex flex-col">
-                    <div class="h-48 bg-slate-200 relative overflow-hidden">
-                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent z-10"></div>
-                        <div class="absolute bottom-4 left-4 z-20">
-                            <span class="px-3 py-1 bg-amber-500 text-white text-xs font-bold rounded-lg">Y tế</span>
-                        </div>
-                    </div>
-                    <div class="p-6 flex-1 flex flex-col">
-                        <p class="text-sm text-slate-500 mb-2"><i class="fa-regular fa-clock mr-1"></i> 24 Tháng 6, 2026</p>
-                        <h3 class="text-xl font-bold text-slate-800 mb-3 group-hover:text-secondary transition-colors line-clamp-2">Hội thảo Quốc tế về Cập nhật chẩn đoán và Điều trị Tim mạch</h3>
-                        <p class="text-slate-600 line-clamp-3 mb-4 flex-1">Hội thảo có sự tham gia của các chuyên gia hàng đầu từ Mỹ và Châu Âu chia sẻ các phương pháp điều trị tiên tiến nhất...</p>
-                        <a href="#" class="text-secondary font-bold text-sm inline-flex items-center gap-1 group/link">
-                            Xem chi tiết <i class="fa-solid fa-arrow-right group-hover/link:translate-x-1 transition-transform"></i>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Card 3 -->
-                <div class="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-slate-100 flex flex-col">
-                    <div class="h-48 bg-slate-200 relative overflow-hidden">
-                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent z-10"></div>
-                        <div class="absolute bottom-4 left-4 z-20">
-                            <span class="px-3 py-1 bg-blue-500 text-white text-xs font-bold rounded-lg">Thông báo</span>
-                        </div>
-                    </div>
-                    <div class="p-6 flex-1 flex flex-col">
-                        <p class="text-sm text-slate-500 mb-2"><i class="fa-regular fa-clock mr-1"></i> 20 Tháng 6, 2026</p>
-                        <h3 class="text-xl font-bold text-slate-800 mb-3 group-hover:text-secondary transition-colors line-clamp-2">Triển khai Đặt lịch qua ứng dụng và Trả kết quả online</h3>
-                        <p class="text-slate-600 line-clamp-3 mb-4 flex-1">Bệnh nhân giờ đây có thể xem trực tiếp kết quả xét nghiệm và đơn thuốc ngay trên hệ thống Portal của bệnh viện...</p>
-                        <a href="#" class="text-secondary font-bold text-sm inline-flex items-center gap-1 group/link">
-                            Xem chi tiết <i class="fa-solid fa-arrow-right group-hover/link:translate-x-1 transition-transform"></i>
-                        </a>
-                    </div>
-                </div>
+                @endforeach
             </div>
 
             <div class="text-center mt-10">

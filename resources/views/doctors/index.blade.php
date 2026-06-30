@@ -57,7 +57,7 @@
                         @foreach($doctors as $doctor)
                         <div class="bg-white rounded-2xl overflow-hidden shadow-md border border-slate-100 hover:shadow-xl transition-all group flex flex-col h-full">
                             <div class="bg-slate-100 pt-6 px-6 relative flex justify-center">
-                                <img src="{{ $doctor->user->avatar_url ?? 'https://ui-avatars.com/api/?name='.urlencode($doctor->user->full_name).'&background=random' }}" alt="{{ $doctor->user->full_name }}" class="w-32 h-32 object-cover rounded-full border-4 border-white shadow-md z-10 group-hover:scale-105 transition-transform duration-500 bg-white">
+                                <img src="{{ $doctor->user->avatar_url ?? 'https://api.dicebear.com/7.x/initials/svg?seed='.urlencode($doctor->user->full_name).'&backgroundColor=e0e7ff,c7d2fe,a5b4fc,818cf8&textColor=3730a3' }}" alt="{{ $doctor->user->full_name }}" class="w-32 h-32 object-cover rounded-full border-4 border-white shadow-md z-10 group-hover:scale-105 transition-transform duration-500 bg-white">
                                 <div class="absolute inset-x-0 bottom-0 h-1/2 bg-blue-600/5"></div>
                             </div>
                             <div class="p-5 text-center flex-1 flex flex-col justify-center">

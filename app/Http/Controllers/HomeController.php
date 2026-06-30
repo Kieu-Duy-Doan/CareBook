@@ -18,9 +18,15 @@ class HomeController extends Controller
             'user:id,full_name,avatar_url',
             'specialties:id,name',
         ])
-        ->whereHas('workSchedules', fn($q) => $q->where('is_active', true))
+        ->orderByDesc('experience_years')
+        ->take(4)
         ->get();
 
-        return view('home', compact('specialties', 'doctors'));
+        $posts = \App\Models\Post::where('is_published', true)
+            ->latest('published_at')
+            ->take(3)
+            ->get(['id', 'title', 'slug', 'thumbnail_url', 'summary', 'published_at', 'post_type']);
+
+        return view('home', compact('specialties', 'doctors', 'posts'));
     }
 }

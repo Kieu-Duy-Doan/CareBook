@@ -80,9 +80,9 @@
 
                 <!-- Desktop Navigation -->
                 <nav class="hidden lg:flex items-center gap-6 xl:gap-8 font-bold text-slate-700 text-[15px]">
-                    <a href="{{ route('home') }}" class="text-secondary border-b-2 border-secondary py-1">Trang chủ</a>
-                    <a href="{{ route('doctors.directory') }}" class="hover:text-secondary transition-colors py-1">Đội ngũ bác sĩ</a>
-                    <a href="{{ route('posts.index') }}" class="hover:text-secondary transition-colors py-1 {{ request()->routeIs('posts.*') ? 'text-secondary font-bold' : '' }}">Tin tức</a>
+                    <a href="{{ route('home') }}" class="py-1 transition-colors {{ request()->routeIs('home') ? 'text-secondary border-b-2 border-secondary' : 'hover:text-secondary' }}">Trang chủ</a>
+                    <a href="{{ route('doctors.directory') }}" class="py-1 transition-colors {{ request()->routeIs('doctors.directory') ? 'text-secondary border-b-2 border-secondary' : 'hover:text-secondary' }}">Đội ngũ bác sĩ</a>
+                    <a href="{{ route('posts.index') }}" class="py-1 transition-colors {{ request()->routeIs('posts.*') ? 'text-secondary border-b-2 border-secondary' : 'hover:text-secondary' }}">Tin tức</a>
                     
                     @auth
                         <!-- User Menu -->

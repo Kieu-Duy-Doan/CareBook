@@ -13,8 +13,7 @@ class DoctorDirectoryController extends Controller
     {
         $specialties = Specialty::where('is_active', true)->orderBy('display_order')->get(['id', 'name']);
 
-        $query = DoctorProfile::with(['user:id,full_name,avatar_url', 'specialties:id,name'])
-            ->whereHas('workSchedules', fn($q) => $q->where('is_active', true));
+        $query = DoctorProfile::with(['user:id,full_name,avatar_url', 'specialties:id,name']);
 
         if ($request->filled('search')) {
             $search = $request->input('search');
