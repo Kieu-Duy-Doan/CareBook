@@ -23,7 +23,7 @@ class BookingController extends Controller
      * GET /dat-lich
      * Render SPA booking page với dữ liệu cần thiết.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
         $user = auth()->user();
 
@@ -53,10 +53,22 @@ class BookingController extends Controller
             'room_name'           => null, // sẽ được resolve khi chọn ngày
         ]);
 
+        // Xử lý thông báo huỷ lịch (nếu có)
+        $suggestedDoctors = [];
+        if ($request->has('notification_id')) {
+            $notification = \App\Models\Notification::where('id', $request->notification_id)
+                ->where('user_id', $user->id)
+                ->first();
+                
+            if ($notification && !empty($notification->data['alternatives'])) {
+                $suggestedDoctors = $notification->data['alternatives'];
+            }
+        }
+
         // Gán user's patientProfiles cho blade template
         $user->setRelation('patientProfiles', $profiles);
 
-        return view('patient.booking.index', compact('specialties', 'doctors'));
+        return view('patient.booking.index', compact('specialties', 'doctors', 'suggestedDoctors'));
     }
 
     /**

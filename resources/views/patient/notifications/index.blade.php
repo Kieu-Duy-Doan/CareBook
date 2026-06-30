@@ -1,8 +1,17 @@
-<x-layouts.patient title="Hộp thư thông báo">
-    <div class="max-w-4xl mx-auto px-4 py-8">
+<x-layouts.patient-dashboard title="Hộp thư thông báo" active-menu="notifications">
+    <div>
         <div class="flex items-center justify-between mb-6">
-            <h1 class="text-2xl font-bold text-slate-800"><i class="fa-solid fa-bell text-secondary mr-2"></i> Hộp thư thông báo</h1>
-            <a href="{{ route('patient.dashboard') }}" class="text-sm font-semibold text-slate-500 hover:text-secondary transition-colors"><i class="fa-solid fa-arrow-left"></i> Trở về trang cá nhân</a>
+            <h2 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-bell text-secondary mr-2"></i> Hộp thư thông báo</h2>
+            
+            @if($notifications->count() > 0)
+                <form action="{{ route('patient.notifications.destroy-read') }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn dọn dẹp tất cả thông báo đã đọc?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="text-sm px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg transition-colors flex items-center gap-2">
+                    Xoá thông báo đã đọc
+                    </button>
+                </form>
+            @endif
         </div>
 
         @if(session('success'))
@@ -12,7 +21,7 @@
             </div>
         @endif
 
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div>
             @if($notifications->isEmpty())
                 <div class="p-12 text-center text-slate-500 flex flex-col items-center">
                     <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
@@ -21,9 +30,9 @@
                     <p class="font-medium">Bạn chưa có thông báo nào.</p>
                 </div>
             @else
-                <div class="divide-y divide-slate-100">
+                <div class="divide-y divide-slate-100 border border-slate-100 rounded-xl overflow-hidden">
                     @foreach($notifications as $notif)
-                        <div class="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-colors hover:bg-slate-50 {{ !$notif->is_read ? 'bg-blue-50/30' : '' }}">
+                        <div class="p-4 md:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-colors hover:bg-slate-50 {{ !$notif->is_read ? 'bg-blue-50/30' : '' }}">
                             <div class="flex items-start gap-4 flex-1">
                                 <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 {{ $notif->type === 'cancellation' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600' }}">
                                     @if($notif->type === 'cancellation')
@@ -41,30 +50,24 @@
                                             <span class="px-2 py-0.5 bg-blue-500 text-white text-[10px] font-bold rounded-full uppercase">Mới</span>
                                         @endif
                                     </div>
-                                    <p class="text-slate-600 text-sm mb-2 leading-relaxed">{{ $notif->content }}</p>
+                                    <p class="text-slate-600 text-sm mb-2 leading-relaxed line-clamp-2">{{ $notif->content }}</p>
                                     <div class="flex items-center gap-3 text-xs text-slate-400 font-medium">
                                         <span title="{{ $notif->created_at->format('d/m/Y H:i') }}"><i class="fa-regular fa-clock"></i> {{ $notif->created_at->diffForHumans() }}</span>
-                                        @if($notif->ref_type === 'appointment' && $notif->ref_id)
-                                            <span>&bull;</span>
-                                            @if($notif->type === 'cancellation')
-                                                @php $apt = \App\Models\Appointment::find($notif->ref_id); @endphp
-                                                @if($apt)
-                                                    <a href="{{ url('/dat-lich?fast_track=1&patient_profile_id='.$apt->patient_profile_id.'&specialty_id='.$apt->specialty_id.'&doctor_id='.$apt->doctor_profile_id.'&booking_method='.($apt->booking_method ?? 'doctor').'&reason='.urlencode($apt->reason ?? '')) }}" class="text-secondary hover:underline font-bold"><i class="fa-regular fa-calendar-check"></i> Chọn lịch thay thế</a>
-                                                @endif
-                                            @else
-                                                <a href="{{ route('patient.appointments.show', $notif->ref_id) }}" class="text-secondary hover:underline font-bold"><i class="fa-solid fa-link"></i> Xem chi tiết lịch</a>
-                                            @endif
-                                        @endif
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="flex items-center gap-2 sm:ml-4 self-end sm:self-auto shrink-0">
+                            <div class="flex items-center gap-1 sm:ml-4 self-end sm:self-auto shrink-0">
+                                @if($notif->ref_type === 'appointment' && $notif->ref_id)
+                                    <a href="{{ route('patient.notifications.show', $notif->id) }}" class="p-2 text-slate-400 hover:text-primary hover:bg-blue-50 rounded-lg transition-colors" title="Xem chi tiết">
+                                        <i class="fa-solid fa-eye text-lg"></i>
+                                    </a>
+                                @endif
                                 <form action="{{ route('patient.notifications.destroy', $notif->id) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xoá thông báo này?');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Xoá thông báo">
-                                        <i class="fa-regular fa-trash-can"></i> <span class="text-sm font-semibold sm:hidden ml-1">Xoá</span>
+                                    <button type="submit" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Xoá">
+                                        <i class="fa-regular fa-trash-can text-lg"></i>
                                     </button>
                                 </form>
                             </div>
@@ -72,10 +75,10 @@
                     @endforeach
                 </div>
 
-                <div class="p-4 bg-slate-50 border-t border-slate-100">
+                <div class="pt-6">
                     {{ $notifications->links() }}
                 </div>
             @endif
         </div>
     </div>
-</x-layouts.patient>
+</x-layouts.patient-dashboard>

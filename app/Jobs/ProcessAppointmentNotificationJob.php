@@ -51,8 +51,8 @@ class ProcessAppointmentNotificationJob implements ShouldQueue
                 break;
 
             case 'cancellation':
-                $notificationService->notifyCancellation($this->appointment);
                 $alternatives = $bookingService->findAlternatives($this->appointment);
+                $notificationService->notifyCancellation($this->appointment, $alternatives->toArray());
                 if ($patientEmail) {
                     Mail::to($patientEmail)->send(new CancellationMail($this->appointment, $alternatives));
                 }

@@ -6,9 +6,11 @@
          x-transition:leave="transition ease-in duration-200"
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-50 bg-black/50"
+         class="fixed inset-0 bg-black/50 flex items-end md:items-start justify-center p-0 md:p-6 md:pt-32"
+         style="z-index: 9999;"
          @click.self="showSlotModal = false">
-        <div class="absolute bottom-0 left-0 right-0 md:relative md:w-full md:max-w-3xl md:mx-auto md:mt-[10vh] bg-white rounded-t-3xl md:rounded-3xl max-h-[80vh] md:max-h-[80vh] flex flex-col shadow-2xl"
+        <div class="w-full md:max-w-3xl bg-white rounded-t-3xl md:rounded-3xl flex flex-col shadow-2xl overflow-hidden"
+             style="max-height: calc(100vh - 150px);"
              @click.stop>
             {{-- Header modal --}}
             <div class="flex items-center justify-between px-5 py-4 rounded-t-3xl" style="background-color:var(--primary);">
@@ -29,7 +31,7 @@
             </div>
 
             {{-- Slots --}}
-            <div x-show="!loadingSlots" class="overflow-y-auto flex-1 px-5 py-4">
+            <div x-show="!loadingSlots" class="overflow-y-auto flex-1 min-h-0 px-5 py-4">
 
                 {{-- Phòng khám --}}
                 <div x-show="selectedDoctor?.room_name"
