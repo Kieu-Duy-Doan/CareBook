@@ -268,9 +268,49 @@ class BookingService
         return $this->querySchedules($dow, $doctorId, $specialtyId)->isNotEmpty();
     }
 
+    public function findAlternatives(Appointment $appointment): \Illuminate\Support\Collection
+    {
+        $alternatives = [];
+        $specialtyId = $appointment->specialty_id;
+        $date = Carbon::parse($appointment->appointment_date);
+
+        // Quét trong 3 ngày tới
+        for ($i = 0; $i < 3; $i++) {
+            $checkDate = clone $date;
+            $checkDate->addDays($i);
+            $dateString = $checkDate->format('Y-m-d');
+            $dow = $this->toDow($checkDate);
+
+            $schedules = $this->querySchedules($dow, null, $specialtyId);
+            foreach ($schedules as $schedule) {
+                // Ưu tiên bác sĩ khác nếu cùng ngày
+                if ($i === 0 && $schedule->doctor_profile_id === $appointment->doctor_profile_id) {
+                    continue;
+                }
+
+                $slots = $this->getAvailableSlots($schedule->doctor_profile_id, $dateString);
+                $availableSlots = collect($slots)->filter(fn($s) => $s['available'])->pluck('time')->toArray();
+
+                if (!empty($availableSlots)) {
+                    $alternatives[] = (object) [
+                        'id'               => $schedule->doctor_profile_id,
+                        'full_title'       => $schedule->doctorProfile->full_title ?? ($schedule->doctorProfile->user->full_name ?? 'Bác sĩ'),
+                        'alternative_date' => $dateString,
+                    ];
+                }
+
+                if (count($alternatives) >= 3) {
+                    return collect($alternatives);
+                }
+            }
+        }
+
+        return collect($alternatives);
+    }
+
     private function querySchedules(int $dow, ?int $doctorId, ?int $specialtyId)
     {
-        $query = WorkSchedule::with('room')
+        $query = WorkSchedule::with(['room', 'doctorProfile.user'])
             ->where('day_of_week', $dow)
             ->where('is_active', true);
 
