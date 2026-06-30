@@ -6,8 +6,13 @@ use App\Http\Controllers\Controller;
 
 class PrescriptionController extends Controller
 {
+    public function index()
+    {
+        return redirect()->route('patient.records.index');
+    }
+
     public function show($id)
     {
-        return view('patient.prescriptions.show', compact('id'));
+        return redirect()->route('patient.records.index');
     }
 }

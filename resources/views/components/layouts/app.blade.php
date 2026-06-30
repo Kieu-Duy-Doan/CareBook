@@ -46,54 +46,53 @@
 
 <body class="min-h-screen flex flex-col">
 
-    <!-- Top Contact Bar (Bach Mai Style) -->
-    <div class="bg-secondary text-white py-2 hidden md:block">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-end items-center gap-6 text-sm font-medium">
-            <span class="flex items-center gap-2 border border-white/30 rounded-full px-4 py-1 hover:bg-white/10 transition-colors">
-                <i class="fa-solid fa-phone-volume"></i>
-                Gọi tổng đài 1900.888.866
-            </span>
-            <a href="{{ route('patient.booking.index') }}" class="flex items-center gap-2 border border-white/30 rounded-full px-4 py-1 hover:bg-white/10 transition-colors">
-                <i class="fa-regular fa-calendar-check"></i>
-                Đặt lịch khám
-            </a>
-            <div class="flex items-center gap-2">
-                <span class="fi fi-vn rounded-sm shadow-sm"></span>
-            </div>
-        </div>
-    </div>
-
     <!-- Main Header -->
-    <header class="bg-white sticky top-0 z-50 shadow-sm border-b border-slate-100 transition-all duration-300">
+    <header class="bg-white/90 backdrop-blur-md sticky top-0 z-50 shadow-sm border-b border-slate-100 transition-all duration-300" x-data="{ mobileMenuOpen: false }">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-20">
                 <!-- Logo & Brand -->
-                <a href="{{ route('home') }}" class="flex items-center gap-4 group shrink-0">
-                    <div class="w-12 h-12 rounded-full bg-secondary text-white flex items-center justify-center text-xl shadow-lg shadow-secondary/20 group-hover:scale-105 transition-transform duration-300">
+                <a href="{{ route('home') }}" class="flex items-center gap-3 group shrink-0">
+                    <div class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary text-white flex items-center justify-center text-lg md:text-xl shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform duration-300">
                         <i class="fa-solid fa-hospital"></i>
                     </div>
-                    <div>
-                        <h1 class="font-bold text-xl md:text-2xl text-secondary uppercase tracking-tight group-hover:text-secondary-dark transition-colors">Bệnh Viện CareBook</h1>
-                        <p class="text-[10px] md:text-xs text-secondary/70 font-semibold uppercase tracking-widest">CareBook Hospital</p>
+                    <div class="hidden sm:block">
+                        <h1 class="font-bold text-lg md:text-xl text-primary uppercase tracking-tight group-hover:text-primary-dark transition-colors leading-tight">CareBook</h1>
+                        <p class="text-[9px] md:text-[10px] text-primary/70 font-semibold uppercase tracking-widest leading-none mt-0.5">Hospital</p>
                     </div>
                 </a>
 
                 <!-- Desktop Navigation -->
-                <nav class="hidden lg:flex items-center gap-6 xl:gap-8 font-bold text-slate-700 text-[15px]">
-                    <a href="{{ route('home') }}" class="py-1 transition-colors {{ request()->routeIs('home') ? 'text-secondary border-b-2 border-secondary' : 'hover:text-secondary' }}">Trang chủ</a>
-                    <a href="{{ route('doctors.directory') }}" class="py-1 transition-colors {{ request()->routeIs('doctors.directory') ? 'text-secondary border-b-2 border-secondary' : 'hover:text-secondary' }}">Đội ngũ bác sĩ</a>
-                    <a href="{{ route('posts.index') }}" class="py-1 transition-colors {{ request()->routeIs('posts.*') ? 'text-secondary border-b-2 border-secondary' : 'hover:text-secondary' }}">Tin tức</a>
-                    
+                <nav class="hidden lg:flex items-center gap-8 font-semibold text-slate-700 text-[15px]">
+                    <a href="{{ route('home') }}" class="py-2 transition-colors relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-primary after:transition-transform after:duration-300 {{ request()->routeIs('home') ? 'text-primary after:scale-x-100' : 'hover:text-primary after:scale-x-0 hover:after:scale-x-100' }}">Trang chủ</a>
+                    <a href="{{ route('doctors.directory') }}" class="py-2 transition-colors relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-primary after:transition-transform after:duration-300 {{ request()->routeIs('doctors.directory') ? 'text-primary after:scale-x-100' : 'hover:text-primary after:scale-x-0 hover:after:scale-x-100' }}">Đội ngũ bác sĩ</a>
+                    <a href="{{ route('posts.index') }}" class="py-2 transition-colors relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-primary after:transition-transform after:duration-300 {{ request()->routeIs('posts.*') ? 'text-primary after:scale-x-100' : 'hover:text-primary after:scale-x-0 hover:after:scale-x-100' }}">Tin tức</a>
+                </nav>
+
+                <!-- Right Actions -->
+                <div class="flex items-center gap-3 md:gap-5">
+                    <!-- Hotline (Hidden on very small screens) -->
+                    <div class="hidden xl:flex items-center gap-2 text-slate-600 font-medium text-sm">
+                        <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center animate-bounce-slow">
+                            <i class="fa-solid fa-phone-volume"></i>
+                        </div>
+                        <span class="text-slate-800">1900.888.866</span>
+                    </div>
+
+                    <!-- Booking Button -->
+                    <a href="{{ route('patient.booking.index') }}" class="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-full bg-amber-400 text-slate-900 font-bold hover:bg-amber-500 hover:-translate-y-0.5 transition-all shadow-md shadow-amber-400/20 text-sm">
+                        <i class="fa-regular fa-calendar-check"></i> Đặt khám
+                    </a>
+
                     @auth
                         <!-- User Menu -->
-                        <div x-data="{ open: false }" class="relative ml-4">
+                        <div x-data="{ open: false }" class="relative">
                             <button @click="open = !open" @click.outside="open = false"
-                                    class="flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 hover:border-secondary hover:text-secondary transition-colors bg-slate-50">
-                                <div class="w-6 h-6 rounded-full bg-secondary/10 flex items-center justify-center text-xs text-secondary shrink-0">
+                                    class="flex items-center gap-2 px-3 py-2 rounded-full border border-slate-200 hover:border-primary hover:text-primary transition-all bg-white hover:bg-primary-light/30 hover:shadow-sm">
+                                <div class="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary font-bold shrink-0">
                                     {{ substr(auth()->user()->full_name ?? 'U', 0, 1) }}
                                 </div>
-                                <span>{{ auth()->user()->full_name ?? 'Tài khoản' }}</span>
-                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
+                                <span class="hidden sm:block text-sm font-semibold max-w-[100px] truncate">{{ explode(' ', auth()->user()->full_name ?? '')[count(explode(' ', auth()->user()->full_name ?? '')) - 1] }}</span>
+                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300 text-slate-400" :class="open ? 'rotate-180' : ''"></i>
                             </button>
 
                             <div x-show="open" x-cloak 
@@ -103,17 +102,21 @@
                                  x-transition:leave="transition ease-in duration-150"
                                  x-transition:leave-start="opacity-100 translate-y-0 scale-100"
                                  x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-                                 class="absolute right-0 mt-3 w-56 rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] bg-white border border-slate-100 overflow-hidden z-50">
+                                 class="absolute right-0 mt-3 w-60 rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] bg-white border border-slate-100 overflow-hidden z-50">
                                 
-                                <div class="px-5 py-3.5 bg-slate-50/50 border-b border-slate-100">
+                                <div class="px-5 py-4 bg-slate-50/80 border-b border-slate-100">
                                     <p class="text-sm font-bold text-slate-800 truncate">{{ auth()->user()->full_name ?? '' }}</p>
-                                    <p class="text-xs font-medium text-slate-500 truncate mt-0.5">{{ auth()->user()->phone ?? auth()->user()->email ?? '' }}</p>
+                                    <p class="text-xs font-medium text-slate-500 truncate mt-1">{{ auth()->user()->phone ?? auth()->user()->email ?? '' }}</p>
                                 </div>
                                 
                                 <div class="p-2 space-y-1">
-                                    <a href="{{ route('patient.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-700 rounded-xl hover:bg-slate-50 hover:text-secondary transition-colors">
-                                        <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 group-hover:text-secondary"><i class="fa-solid fa-house-medical"></i></div>
-                                        Trang cá nhân
+                                    <a href="{{ route('patient.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-700 rounded-xl hover:bg-primary-light/50 hover:text-primary transition-colors">
+                                        <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 group-hover:text-primary"><i class="fa-solid fa-id-card"></i></div>
+                                        Hồ sơ cá nhân
+                                    </a>
+                                    <a href="{{ route('patient.appointments.index') }}" class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-700 rounded-xl hover:bg-primary-light/50 hover:text-primary transition-colors">
+                                        <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 group-hover:text-primary"><i class="fa-regular fa-calendar-lines"></i></div>
+                                        Lịch sử khám
                                     </a>
                                 </div>
                                 <div class="p-2 border-t border-slate-100">
@@ -128,19 +131,28 @@
                             </div>
                         </div>
                     @else
-                        <a href="{{ route('patient.login') }}" class="ml-4 flex items-center gap-2 px-5 py-2.5 rounded-full bg-secondary text-white hover:bg-secondary-dark transition-colors shadow-lg shadow-secondary/20">
-                            <i class="fa-regular fa-user text-sm"></i>
-                            Đăng nhập
+                        <a href="{{ route('patient.login') }}" class="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-white hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20 text-sm font-semibold">
+                            <i class="fa-regular fa-user"></i>
+                            <span>Đăng nhập</span>
                         </a>
                     @endauth
-                </nav>
-
-                <!-- Mobile Menu Button -->
-                <div class="lg:hidden flex items-center gap-4">
-                    <button class="text-secondary hover:bg-slate-100 p-2 rounded-lg transition-colors">
-                        <i class="fa-solid fa-bars text-2xl"></i>
+                    
+                    <!-- Mobile Menu Toggle -->
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="lg:hidden w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                        <i class="fa-solid fa-bars text-xl" x-show="!mobileMenuOpen"></i>
+                        <i class="fa-solid fa-xmark text-xl" x-show="mobileMenuOpen" x-cloak></i>
                     </button>
                 </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation Menu (Hidden by default) -->
+        <div x-show="mobileMenuOpen" x-collapse x-cloak class="lg:hidden border-t border-slate-100 bg-white">
+            <div class="px-4 py-4 space-y-2">
+                <a href="{{ route('home') }}" class="block px-4 py-3 rounded-xl font-medium {{ request()->routeIs('home') ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50' }}">Trang chủ</a>
+                <a href="{{ route('doctors.directory') }}" class="block px-4 py-3 rounded-xl font-medium {{ request()->routeIs('doctors.directory') ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50' }}">Đội ngũ bác sĩ</a>
+                <a href="{{ route('posts.index') }}" class="block px-4 py-3 rounded-xl font-medium {{ request()->routeIs('posts.*') ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50' }}">Tin tức</a>
+                <a href="{{ route('patient.booking.index') }}" class="block px-4 py-3 mt-4 rounded-xl font-bold bg-amber-400 text-slate-900 text-center shadow-sm">Đặt lịch khám ngay</a>
             </div>
         </div>
     </header>
@@ -221,6 +233,7 @@
     </footer>
 
     @stack('scripts')
+    <x-chatbot-widget />
 </body>
 
 </html>

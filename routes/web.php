@@ -11,10 +11,12 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // Danh sách Bác sĩ
 use App\Http\Controllers\DoctorDirectoryController;
+
 Route::get('/doi-ngu-bac-si', [DoctorDirectoryController::class, 'index'])->name('doctors.directory');
 
 // Tin tức
 use App\Http\Controllers\PostController;
+
 Route::get('/tin-tuc', [PostController::class, 'index'])->name('posts.index');
 Route::get('/tin-tuc/{slug}', [PostController::class, 'show'])->name('posts.show');
 
@@ -24,7 +26,13 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::get('/dang-ky', [AuthController::class, 'showRegister'])->name('register');
+Route::post('/dang-ky', [AuthController::class, 'register'])->name('register.post');
 Route::get('/dang-nhap', [AuthController::class, 'showPatientLogin'])->name('patient.login');
+Route::get('/quen-mat-khau', [AuthController::class, 'showForgotPassword'])->name('password.request');
+Route::post('/quen-mat-khau', [AuthController::class, 'sendResetLinkEmail'])->name('password.email');
+Route::get('/dat-lai-mat-khau/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
+Route::post('/dat-lai-mat-khau', [AuthController::class, 'reset'])->name('password.update');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout'])->name('logout');
 
@@ -87,7 +95,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::delete('/{id}', [\App\Http\Controllers\Admin\CustomerController::class, 'destroy'])->name('destroy');
     });
     Route::prefix('specialties')->name('specialties.')->group(function () {
-         Route::post('/import', [\App\Http\Controllers\Admin\SpecialtyController::class, 'import'])->name('import');
+        Route::post('/import', [\App\Http\Controllers\Admin\SpecialtyController::class, 'import'])->name('import');
         Route::get('/export', [\App\Http\Controllers\Admin\SpecialtyController::class, 'export'])->name('export');
         Route::get('/download-template', [\App\Http\Controllers\Admin\SpecialtyController::class, 'downloadTemplate'])->name('download-template');
         Route::get('/', [\App\Http\Controllers\Admin\SpecialtyController::class, 'index'])->name('index');
@@ -263,7 +271,7 @@ Route::middleware('auth')->prefix('lich-hen')->name('patient.appointments.')->gr
 // PATIENT — Dashboard (Trang cá nhân)
 // ──────────────────────────────────────────────────────────
 Route::middleware('auth')->prefix('trang-ca-nhan')->name('patient.')->group(function () {
-    Route::get('/', function() {
+    Route::get('/', function () {
         return redirect()->route('patient.profiles.index');
     })->name('dashboard');
 
@@ -273,9 +281,11 @@ Route::middleware('auth')->prefix('trang-ca-nhan')->name('patient.')->group(func
     Route::get('/ket-qua-kham/{record}', [\App\Http\Controllers\Patient\MedicalRecordController::class, 'show'])->name('records.show');
     Route::get('/don-thuoc', [\App\Http\Controllers\Patient\PrescriptionController::class, 'index'])->name('prescriptions.index');
     Route::get('/don-thuoc/{prescription}', [\App\Http\Controllers\Patient\PrescriptionController::class, 'show'])->name('prescriptions.show');
-    
+
     // Notifications API & Page
     Route::get('/thong-bao', [\App\Http\Controllers\Patient\NotificationController::class, 'page'])->name('notifications.page');
+    Route::delete('/thong-bao-da-doc', [\App\Http\Controllers\Patient\NotificationController::class, 'destroyRead'])->name('notifications.destroy-read');
+    Route::get('/thong-bao/{id}', [\App\Http\Controllers\Patient\NotificationController::class, 'show'])->name('notifications.show');
     Route::delete('/thong-bao/{id}', [\App\Http\Controllers\Patient\NotificationController::class, 'destroy'])->name('notifications.destroy');
     Route::get('/api/thong-bao', [\App\Http\Controllers\Patient\NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/api/thong-bao/doc', [\App\Http\Controllers\Patient\NotificationController::class, 'markAsRead'])->name('notifications.read');
