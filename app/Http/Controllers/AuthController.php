@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
+use Illuminate\Auth\Events\PasswordReset;
 use App\Models\User;
 use App\Models\SystemLog;
 use App\Models\PatientProfile;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -113,6 +116,89 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/');
+    }
+
+    public function showForgotPassword(Request $request)
+    {
+        if (Auth::check()) {
+            return $this->redirectToDashboard();
+        }
+
+        return view('auth.passwords.email', [
+            'login_type' => $request->query('login_type', 'patient'),
+        ]);
+    }
+
+    public function sendResetLinkEmail(Request $request)
+    {
+        $request->validate([
+            'phone' => 'required|string',
+        ], [
+            'phone.required' => 'Vui lòng nhập số điện thoại.',
+        ]);
+
+        $user = User::where('phone', $request->phone)->first();
+
+        if (! $user) {
+            return back()->withInput()->with('error', 'Không tìm thấy tài khoản với số điện thoại này.');
+        }
+
+        if (! $user->email) {
+            return back()->withInput()->with('error', 'Tài khoản không có email để gửi đường dẫn đặt lại mật khẩu.');
+        }
+
+        $status = Password::sendResetLink(['email' => $user->email]);
+
+        return $status === Password::RESET_LINK_SENT
+            ? back()->with('success', 'Đã gửi liên kết đặt lại mật khẩu tới email của bạn. Vui lòng kiểm tra hộp thư.')->withInput()
+            : back()->withInput()->with('error', 'Không thể gửi liên kết đặt lại mật khẩu. Vui lòng thử lại sau.');
+    }
+
+    public function showResetForm(Request $request, $token = null)
+    {
+        return view('auth.passwords.reset', [
+            'token' => $token,
+            'email' => $request->query('email'),
+            'login_type' => $request->query('login_type', 'patient'),
+        ]);
+    }
+
+    public function reset(Request $request)
+    {
+        $request->validate([
+            'token' => 'required|string',
+            'email' => 'required|email',
+            'password' => 'required|string|confirmed|min:6',
+        ], [
+            'email.required' => 'Vui lòng nhập email.',
+            'email.email' => 'Email không đúng định dạng.',
+            'password.required' => 'Vui lòng nhập mật khẩu mới.',
+            'password.confirmed' => 'Xác nhận mật khẩu không khớp.',
+        ]);
+
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user, $password) use ($request) {
+                $user->password = Hash::make($password);
+                $user->setRememberToken(Str::random(60));
+                $user->save();
+
+                event(new PasswordReset($user));
+            }
+        );
+
+        if ($status === Password::PASSWORD_RESET) {
+            return redirect($this->getLoginRoute($request->input('login_type')))
+                ->with('success', 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.');
+        }
+
+        return back()->withInput($request->only('email'))
+            ->with('error', 'Đặt lại mật khẩu không thành công. Vui lòng thử lại.');
+    }
+
+    protected function getLoginRoute(string $loginType = 'patient'): string
+    {
+        return $loginType === 'admin' ? route('login') : route('patient.login');
     }
 
     /**

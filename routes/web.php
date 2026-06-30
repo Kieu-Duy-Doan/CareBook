@@ -27,6 +27,10 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::get('/dang-ky', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/dang-ky', [AuthController::class, 'register'])->name('register.post');
 Route::get('/dang-nhap', [AuthController::class, 'showPatientLogin'])->name('patient.login');
+Route::get('/quen-mat-khau', [AuthController::class, 'showForgotPassword'])->name('password.request');
+Route::post('/quen-mat-khau', [AuthController::class, 'sendResetLinkEmail'])->name('password.email');
+Route::get('/dat-lai-mat-khau/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
+Route::post('/dat-lai-mat-khau', [AuthController::class, 'reset'])->name('password.update');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout'])->name('logout');
 

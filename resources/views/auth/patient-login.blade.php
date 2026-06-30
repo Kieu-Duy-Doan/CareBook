@@ -86,7 +86,7 @@
                 <div>
                     <div class="flex items-center justify-between mb-1.5">
                         <label for="password" class="block text-sm font-bold text-slate-700">Mật khẩu</label>
-                        <a href="#" class="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors">Quên mật khẩu?</a>
+                        <a href="{{ route('password.request', ['login_type' => 'patient']) }}" class="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors">Quên mật khẩu?</a>
                     </div>
                     <div class="relative group">
                         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-600 transition-colors">
