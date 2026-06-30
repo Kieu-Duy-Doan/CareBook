@@ -3,7 +3,7 @@
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h1 class="text-2xl font-bold text-slate-900">Chi tiết lịch hẹn</h1>
-                <p class="text-slate-500">Xem thông tin lịch khám, kết quả khám, đơn thuốc và phí dịch vụ.</p>
+                <p class="text-slate-500">Xem thông tin lịch khám .</p>
             </div>
             <div class="flex flex-wrap items-center gap-3">
                 <a href="{{ route('patient.appointments.index') }}" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition"><i class="fa-solid fa-chevron-left"></i> Quay lại</a>
@@ -66,98 +66,6 @@
                             <div class="font-semibold text-slate-900">Lý do khám</div>
                             <p class="mt-2 text-slate-700">{{ $appointment->reason }}</p>
                         </div>
-                    @endif
-                </section>
-
-                <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                    <div class="flex items-center justify-between gap-4">
-                        <h2 class="text-xl font-semibold text-slate-900">Kết quả khám</h2>
-                        @if (! $appointment->medicalRecord)
-                            <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">Chưa có</span>
-                        @endif
-                    </div>
-
-                    @if ($appointment->medicalRecord)
-                        <div class="mt-5 grid gap-4">
-                            <div class="rounded-3xl bg-slate-50 p-4 text-sm text-slate-700">
-                                <div class="text-xs uppercase tracking-[0.25em] text-slate-500">Chẩn đoán</div>
-                                <div class="mt-2 font-semibold text-slate-900">{{ $appointment->medicalRecord->diagnosis }}</div>
-                            </div>
-                            <div class="grid gap-4 sm:grid-cols-2">
-                                <div class="rounded-3xl bg-slate-50 p-4 text-sm text-slate-700">
-                                    <div class="text-xs uppercase tracking-[0.25em] text-slate-500">Mã ICD-10</div>
-                                    <div class="mt-2 font-semibold text-slate-900">{{ $appointment->medicalRecord->icd10_code ?? '—' }}</div>
-                                </div>
-                                <div class="rounded-3xl bg-slate-50 p-4 text-sm text-slate-700">
-                                    <div class="text-xs uppercase tracking-[0.25em] text-slate-500">Ngày hẹn tái khám</div>
-                                    <div class="mt-2 font-semibold text-slate-900">{{ $appointment->medicalRecord->followup_date?->format('d/m/Y') ?? 'Không hẹn' }}</div>
-                                </div>
-                            </div>
-                            @if ($appointment->medicalRecord->conclusion)
-                                <div class="rounded-3xl bg-slate-50 p-4 text-sm text-slate-700">
-                                    <div class="text-xs uppercase tracking-[0.25em] text-slate-500">Kết luận</div>
-                                    <p class="mt-2 text-slate-900">{{ $appointment->medicalRecord->conclusion }}</p>
-                                </div>
-                            @endif
-                            @if ($appointment->medicalRecord->advice)
-                                <div class="rounded-3xl bg-slate-50 p-4 text-sm text-slate-700">
-                                    <div class="text-xs uppercase tracking-[0.25em] text-slate-500">Dặn dò</div>
-                                    <p class="mt-2 text-slate-900">{{ $appointment->medicalRecord->advice }}</p>
-                                </div>
-                            @endif
-                        </div>
-                    @else
-                        <div class="mt-4 rounded-3xl border border-slate-100 bg-slate-50 p-6 text-sm text-slate-600 text-center">Chưa có kết quả khám cho lịch hẹn này.</div>
-                    @endif
-                </section>
-
-                <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                    <div class="flex items-center justify-between gap-4">
-                        <h2 class="text-xl font-semibold text-slate-900">Đơn thuốc</h2>
-                        @php
-                            $prescription = optional($appointment->medicalRecord)->prescription;
-                        @endphp
-                        @if (! optional($prescription)->items)
-                            <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">Chưa có</span>
-                        @endif
-                    </div>
-
-                    @php
-                        $prescriptionItems = optional($prescription)->items;
-                        if (is_string($prescriptionItems)) {
-                            $prescriptionItems = json_decode($prescriptionItems, true);
-                        }
-                    @endphp
-
-                    @if (!empty($prescriptionItems) && is_array($prescriptionItems))
-                        <div class="mt-5 overflow-x-auto">
-                            <table class="min-w-full divide-y divide-slate-200 text-sm">
-                                <thead class="bg-slate-50">
-                                    <tr>
-                                        <th class="px-4 py-3 text-left font-semibold text-slate-500 uppercase tracking-[0.15em]">Thuốc</th>
-                                        <th class="px-4 py-3 text-center font-semibold text-slate-500 uppercase tracking-[0.15em]">Số lượng</th>
-                                        <th class="px-4 py-3 text-left font-semibold text-slate-500 uppercase tracking-[0.15em]">Cách dùng</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-slate-200 bg-white">
-                                    @foreach ($prescriptionItems as $item)
-                                        <tr>
-                                            <td class="px-4 py-4 text-slate-900">{{ $item['medication_name'] ?? $item['name'] ?? '—' }}</td>
-                                            <td class="px-4 py-4 text-center text-slate-700">{{ $item['quantity'] ?? '—' }}</td>
-                                            <td class="px-4 py-4 text-slate-700">{{ $item['instructions'] ?? $item['usage'] ?? '—' }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                        @if ($appointment->medicalRecord->prescription->general_note)
-                            <div class="mt-4 rounded-3xl bg-amber-50 p-4 text-sm text-amber-900 border border-amber-100">
-                                <div class="font-semibold text-slate-900">Ghi chú đơn thuốc</div>
-                                <p class="mt-2 text-slate-700">{{ $appointment->medicalRecord->prescription->general_note }}</p>
-                            </div>
-                        @endif
-                    @else
-                        <div class="mt-4 rounded-3xl border border-slate-100 bg-slate-50 p-6 text-sm text-slate-600 text-center">Chưa có đơn thuốc cho lịch hẹn này.</div>
                     @endif
                 </section>
             </div>

@@ -127,7 +127,7 @@
                             </label>
                         </div>
                         <div class="text-sm">
-                            <a href="#" class="font-medium text-blue-600 hover:text-blue-500">Quên mật khẩu?</a>
+                            <a href="{{ route('password.request', ['login_type' => 'admin']) }}" class="font-medium text-blue-600 hover:text-blue-500">Quên mật khẩu?</a>
                         </div>
                     </div>
 

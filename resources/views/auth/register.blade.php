@@ -8,7 +8,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <style>body { font-family: 'Be Vietnam Pro', sans-serif; }</style>
+    <style>
+        body { font-family: 'Be Vietnam Pro', sans-serif; }
+        [x-cloak] { display: none !important; }
+    </style>
 </head>
 <body class="antialiased bg-slate-50 text-slate-800 min-h-screen flex flex-col">
     <header class="bg-blue-600 py-3 px-6 flex items-center justify-between shadow-md relative z-20">
@@ -47,7 +50,20 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('register.post') }}" class="space-y-4" x-data="{loading:false, showPassword:false}">
+            @if($errors->any())
+                <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4 rounded-r-xl text-sm text-red-700">
+                    <p class="font-bold mb-1">Vui lòng kiểm tra lại thông tin:</p>
+                    <ul class="list-disc list-inside space-y-0.5">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('register.post') }}" class="space-y-4"
+                x-data="{loading:false, showPassword:false}"
+                @submit="loading = true">
                 @csrf
 
                 <div>
@@ -60,26 +76,38 @@
                 <div>
                     <label class="block text-sm font-bold text-slate-700 mb-1.5">Số điện thoại</label>
                     <input type="text" name="phone" value="{{ old('phone') }}" required
+                        placeholder="VD: 0901234567" inputmode="numeric" maxlength="10"
+                        pattern="0[35789][0-9]{8}" title="Số điện thoại Việt Nam 10 số, bắt đầu bằng 03, 05, 07, 08 hoặc 09"
                         class="block w-full pl-4 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none">
                     @error('phone') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1.5">Email (Gmail)</label>
+                    <input type="email" name="email" value="{{ old('email') }}" required
+                        placeholder="VD: tenban@gmail.com"
+                        class="block w-full pl-4 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none">
+                    <p class="text-xs text-slate-500 mt-1">Dùng để khôi phục mật khẩu khi quên</p>
+                    @error('email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-bold text-slate-700 mb-1.5">Mật khẩu</label>
                         <div class="relative">
-                            <input :type="showPassword ? 'text' : 'password'" name="password" required
+                            <input :type="showPassword ? 'text' : 'password'" name="password" required minlength="8"
                                 class="block w-full pl-4 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none">
                             <button type="button" @click="showPassword = !showPassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400">
                                 <i class="fa-solid" :class="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
                             </button>
                         </div>
                         @error('password') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        <p class="text-xs text-slate-500 mt-1">Tối thiểu 8 ký tự</p>
                     </div>
 
                     <div>
                         <label class="block text-sm font-bold text-slate-700 mb-1.5">Xác nhận mật khẩu</label>
-                        <input type="password" name="password_confirmation" required
+                        <input type="password" name="password_confirmation" required minlength="8"
                             class="block w-full pl-4 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none">
                     </div>
                 </div>
@@ -88,6 +116,7 @@
                     <div>
                         <label class="block text-sm font-bold text-slate-700 mb-1.5">Ngày sinh</label>
                         <input type="date" name="date_of_birth" value="{{ old('date_of_birth') }}" required
+                            max="{{ now()->subDay()->toDateString() }}"
                             class="block w-full pl-4 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium">
                         @error('date_of_birth') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
@@ -95,16 +124,19 @@
                         <label class="block text-sm font-bold text-slate-700 mb-1.5">Giới tính</label>
                         <select name="gender" required class="block w-full pl-4 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium">
                             <option value="">--Chọn--</option>
-                            <option value="male">Nam</option>
-                            <option value="female">Nữ</option>
-                            <option value="other">Khác</option>
+                            <option value="male" {{ old('gender') === 'male' ? 'selected' : '' }}>Nam</option>
+                            <option value="female" {{ old('gender') === 'female' ? 'selected' : '' }}>Nữ</option>
+                            <option value="other" {{ old('gender') === 'other' ? 'selected' : '' }}>Khác</option>
                         </select>
                         @error('gender') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-slate-700 mb-1.5">CCCD/CMND</label>
-                        <input type="text" name="id_card" value="{{ old('id_card') }}" class="block w-full pl-4 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium">
+                        <input type="text" name="id_card" value="{{ old('id_card') }}" inputmode="numeric" maxlength="12"
+                            pattern="([0-9]{9}|[0-9]{12})" title="Nhập 9 số (CMND) hoặc 12 số (CCCD)"
+                            class="block w-full pl-4 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium">
                         @error('id_card') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                        <p class="text-xs text-slate-500 mt-1">9 hoặc 12 chữ số</p>
                     </div>
                 </div>
 
@@ -135,10 +167,12 @@
                 </div>
 
                 <div class="pt-2">
-                    <button type="submit" :disabled="loading" @click="loading = true"
+                    <button type="submit" :disabled="loading"
                         class="w-full flex justify-center items-center py-4 px-4 rounded-xl shadow-lg text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed transition-all">
                         <span x-show="!loading" class="tracking-wide uppercase">Đăng ký</span>
-                        <span x-show="loading" class="flex items-center gap-2" style="display:none;"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Đang xử lý...</span>
+                        <span x-show="loading" x-cloak class="flex items-center gap-2">
+                            <i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...
+                        </span>
                     </button>
                 </div>
 
@@ -151,5 +185,8 @@
         <p class="mt-8 text-sm text-slate-400 font-medium z-10 text-center">&copy; {{ date('Y') }} CareBook Hospital. Bảo mật thông tin y tế.</p>
     </main>
 
+    @if($errors->any())
+        <script>window.scrollTo({ top: 0, behavior: 'smooth' });</script>
+    @endif
 </body>
 </html>
