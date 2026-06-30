@@ -158,42 +158,65 @@ class AuthController extends Controller
         $genderMap = ['M' => 'male', 'F' => 'female', 'O' => 'other'];
         $validated['gender'] = $genderMap[$validated['gender']] ?? $validated['gender'];
 
-        DB::transaction(function() use ($validated) {
-            $user = User::create([
-                'full_name' => $validated['full_name'],
-                'phone' => $validated['phone'],
-                'email' => $validated['email'] ?? null,
-                'password' => Hash::make($validated['password']),
-                'role' => 'patient',
-                'is_active' => true,
+        foreach (['email','id_card','address','occupation','ethnicity','insurance_code','insurance_place','insurance_expiry'] as $field) {
+            if (array_key_exists($field, $validated) && $validated[$field] === '') {
+                $validated[$field] = null;
+            }
+        }
+
+        $baseUsername = 'bn_' . preg_replace('/[^0-9a-z]/', '', strtolower($validated['phone']));
+        $username = substr($baseUsername, 0, 45);
+        $suffix = 1;
+        while (User::where('username', $username)->exists()) {
+            $username = substr($baseUsername, 0, 40) . '_' . $suffix++;
+        }
+
+        try {
+            DB::transaction(function() use ($validated, $username) {
+                $user = User::create([
+                    'full_name' => $validated['full_name'],
+                    'phone' => $validated['phone'],
+                    'username' => $username,
+                    'email' => $validated['email'] ?? null,
+                    'password' => Hash::make($validated['password']),
+                    'role' => 'patient',
+                    'is_active' => true,
+                ]);
+
+                PatientProfile::create([
+                    'patient_code' => 'BN' . substr(str_shuffle('0123456789'), 0, 10),
+                    'owner_id' => $user->id,
+                    'full_name' => $validated['full_name'],
+                    'date_of_birth' => $validated['date_of_birth'],
+                    'gender' => $validated['gender'],
+                    'id_card' => $validated['id_card'] ?? null,
+                    'phone' => $validated['phone'] ?? null,
+                    'address' => $validated['address'] ?? null,
+                    'occupation' => $validated['occupation'] ?? null,
+                    'ethnicity' => $validated['ethnicity'] ?? null,
+                    'insurance_code' => $validated['insurance_code'] ?? null,
+                    'insurance_place' => $validated['insurance_place'] ?? null,
+                    'insurance_expiry' => $validated['insurance_expiry'] ?? null,
+                    'is_self' => true,
+                ]);
+
+                SystemLog::create([
+                    'user_id' => $user->id,
+                    'action' => 'USER_REGISTER',
+                    'module' => 'auth',
+                    'ip_address' => request()->ip(),
+                    'description' => 'Patient registered: ' . $user->full_name,
+                ]);
+            });
+        } catch (\Throwable $exception) {
+            logger()->error('Patient registration failed', [
+                'message' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
+                'input' => $request->all(),
             ]);
 
-            PatientProfile::create([
-                'patient_code' => 'BN' . substr(str_shuffle('0123456789'), 0, 10),
-                'owner_id' => $user->id,
-                'full_name' => $validated['full_name'],
-                'date_of_birth' => $validated['date_of_birth'],
-                'gender' => $validated['gender'],
-                'id_card' => $validated['id_card'] ?? null,
-                'phone' => $validated['phone'] ?? null,
-                'address' => $validated['address'] ?? null,
-                'occupation' => $validated['occupation'] ?? null,
-                'ethnicity' => $validated['ethnicity'] ?? null,
-                'insurance_code' => $validated['insurance_code'] ?? null,
-                'insurance_place' => $validated['insurance_place'] ?? null,
-                'insurance_expiry' => $validated['insurance_expiry'] ?? null,
-                'symptom_notes' => $validated['symptom_notes'] ?? null,
-                'is_self' => true,
-            ]);
-
-            SystemLog::create([
-                'user_id' => $user->id,
-                'action' => 'USER_REGISTER',
-                'module' => 'auth',
-                'ip_address' => request()->ip(),
-                'description' => 'Patient registered: ' . $user->full_name,
-            ]);
-        });
+            return back()->withInput()->with('error', 'Đăng ký thất bại. Vui lòng kiểm tra lại thông tin và thử lại.');
+        }
 
         return redirect()->route('patient.login')->with('success', 'Đăng ký thành công. Vui lòng đăng nhập.');
     }

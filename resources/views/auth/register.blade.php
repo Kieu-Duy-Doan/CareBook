@@ -95,9 +95,9 @@
                         <label class="block text-sm font-bold text-slate-700 mb-1.5">Giới tính</label>
                         <select name="gender" required class="block w-full pl-4 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium">
                             <option value="">--Chọn--</option>
-                            <option value="male">Nam</option>
-                            <option value="female">Nữ</option>
-                            <option value="other">Khác</option>
+                            <option value="male" {{ old('gender') === 'male' ? 'selected' : '' }}>Nam</option>
+                            <option value="female" {{ old('gender') === 'female' ? 'selected' : '' }}>Nữ</option>
+                            <option value="other" {{ old('gender') === 'other' ? 'selected' : '' }}>Khác</option>
                         </select>
                         @error('gender') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
