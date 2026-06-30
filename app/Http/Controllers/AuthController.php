@@ -220,20 +220,28 @@ class AuthController extends Controller
     {
         $request->validate([
             'full_name' => 'required|string|max:150',
-            'phone' => 'required|string|max:15|unique:users,phone',
-            'password' => 'required|string|confirmed|min:6',
+            'phone' => ['required', 'string', 'max:15', 'regex:/^(0[35789])[0-9]{8}$/', 'unique:users,phone'],
+            'email' => 'required|email|max:150|unique:users,email',
+            'password' => 'required|string|confirmed|min:8',
             'date_of_birth' => 'required|date|before:today',
             'gender' => 'required|in:male,female,other,M,F,O',
-            'id_card' => 'nullable|string|max:20|unique:patient_profiles,id_card',
-            'email' => 'nullable|email|max:150|unique:users,email',
+            'id_card' => ['nullable', 'string', 'regex:/^([0-9]{9}|[0-9]{12})$/', 'unique:users,id_card', 'unique:patient_profiles,id_card'],
         ], [
             'full_name.required' => 'Vui lòng nhập họ và tên.',
             'phone.required' => 'Vui lòng nhập số điện thoại.',
             'phone.unique' => 'Số điện thoại đã được sử dụng.',
+            'phone.regex' => 'Số điện thoại không đúng định dạng Việt Nam.',
+            'email.required' => 'Vui lòng nhập email (Gmail).',
+            'email.email' => 'Email không đúng định dạng.',
+            'email.unique' => 'Email đã được sử dụng.',
             'password.required' => 'Vui lòng nhập mật khẩu.',
             'password.confirmed' => 'Xác nhận mật khẩu không khớp.',
+            'password.min' => 'Mật khẩu tối thiểu 8 ký tự.',
             'date_of_birth.required' => 'Vui lòng chọn ngày sinh.',
+            'date_of_birth.before' => 'Ngày sinh không hợp lệ.',
             'gender.required' => 'Vui lòng chọn giới tính.',
+            'id_card.regex' => 'Số CCCD/CMND không đúng định dạng (9 hoặc 12 số).',
+            'id_card.unique' => 'Số CCCD/CMND đã được sử dụng.',
         ]);
 
         $validated = $request->only([
@@ -250,27 +258,31 @@ class AuthController extends Controller
             }
         }
 
-        $baseUsername = 'bn_' . preg_replace('/[^0-9a-z]/', '', strtolower($validated['phone']));
+        $baseUsername = 'bn_' . preg_replace('/\D/', '', $validated['phone']);
         $username = substr($baseUsername, 0, 45);
-        $suffix = 1;
-        while (User::where('username', $username)->exists()) {
-            $username = substr($baseUsername, 0, 40) . '_' . $suffix++;
+        if (User::where('username', $username)->exists()) {
+            $username = substr($baseUsername, 0, 40) . '_' . strtolower(Str::random(4));
         }
 
         try {
-            DB::transaction(function() use ($validated, $username) {
+            $user = DB::transaction(function () use ($validated, $username) {
                 $user = User::create([
                     'full_name' => $validated['full_name'],
                     'phone' => $validated['phone'],
                     'username' => $username,
-                    'email' => $validated['email'] ?? null,
-                    'password' => Hash::make($validated['password']),
+                    'id_card' => $validated['id_card'] ?? null,
+                    'email' => $validated['email'],
+                    'password' => $validated['password'],
                     'role' => 'patient',
                     'is_active' => true,
                 ]);
 
+                $patientCode = ! empty($validated['id_card'])
+                    ? 'BN' . $validated['id_card']
+                    : 'BN' . substr(str_shuffle('0123456789'), 0, 10);
+
                 PatientProfile::create([
-                    'patient_code' => 'BN' . substr(str_shuffle('0123456789'), 0, 10),
+                    'patient_code' => $patientCode,
                     'owner_id' => $user->id,
                     'full_name' => $validated['full_name'],
                     'date_of_birth' => $validated['date_of_birth'],
@@ -286,24 +298,31 @@ class AuthController extends Controller
                     'is_self' => true,
                 ]);
 
+                return $user;
+            });
+
+            try {
                 SystemLog::create([
                     'user_id' => $user->id,
                     'action' => 'USER_REGISTER',
                     'module' => 'auth',
-                    'ip_address' => request()->ip(),
+                    'ip_address' => $request->ip(),
                     'description' => 'Patient registered: ' . $user->full_name,
                 ]);
-            });
+            } catch (\Throwable) {
+                // Không chặn đăng ký nếu ghi log thất bại
+            }
         } catch (\Throwable $exception) {
             logger()->error('Patient registration failed', [
                 'message' => $exception->getMessage(),
-                'trace' => $exception->getTraceAsString(),
-                'input' => $request->all(),
+                'phone' => $request->input('phone'),
             ]);
 
             return back()->withInput()->with('error', 'Đăng ký thất bại. Vui lòng kiểm tra lại thông tin và thử lại.');
         }
 
-        return redirect()->route('patient.login')->with('success', 'Đăng ký thành công. Vui lòng đăng nhập.');
+        return redirect()
+            ->route('patient.login')
+            ->with('success', 'Đăng ký thành công! Vui lòng đăng nhập bằng số điện thoại và mật khẩu vừa tạo.');
     }
 }
