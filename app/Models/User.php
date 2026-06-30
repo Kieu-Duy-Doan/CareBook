@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Notifications\ResetPasswordNotification;
 
 class User extends Authenticatable
 {
@@ -93,5 +94,12 @@ class User extends Authenticatable
             'patient' => 'Bệnh nhân',
             default => 'Không xác định',
         };
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $loginType = request()->input('login_type', 'patient');
+
+        $this->notify(new ResetPasswordNotification($token, $loginType));
     }
 }

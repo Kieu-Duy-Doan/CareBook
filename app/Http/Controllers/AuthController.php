@@ -132,30 +132,53 @@ class AuthController extends Controller
     public function sendResetLinkEmail(Request $request)
     {
         $request->validate([
-            'phone' => 'required|string',
+            'identifier' => 'required|string|max:150',
+            'login_type' => 'nullable|in:patient,admin',
         ], [
-            'phone.required' => 'Vui lòng nhập số điện thoại.',
+            'identifier.required' => 'Vui lòng nhập số điện thoại hoặc email.',
         ]);
 
-        $user = User::where('phone', $request->phone)->first();
+        $identifier = trim($request->input('identifier'));
+        $loginType = $request->input('login_type', 'patient');
+        $request->merge(['login_type' => $loginType]);
+
+        $user = filter_var($identifier, FILTER_VALIDATE_EMAIL)
+            ? User::where('email', $identifier)->first()
+            : User::where('phone', $identifier)->first();
 
         if (! $user) {
-            return back()->withInput()->with('error', 'Không tìm thấy tài khoản với số điện thoại này.');
+            return back()->withInput()->with('error', 'Không tìm thấy tài khoản với thông tin này.');
+        }
+
+        if (! $user->is_active) {
+            return back()->withInput()->with('error', 'Tài khoản đã bị khoá. Liên hệ quản trị viên.');
         }
 
         if (! $user->email) {
-            return back()->withInput()->with('error', 'Tài khoản không có email để gửi đường dẫn đặt lại mật khẩu.');
+            return back()->withInput()->with('error', 'Tài khoản chưa có email. Vui lòng liên hệ quản trị viên hoặc cập nhật email trong hồ sơ.');
         }
 
         $status = Password::sendResetLink(['email' => $user->email]);
 
-        return $status === Password::RESET_LINK_SENT
-            ? back()->with('success', 'Đã gửi liên kết đặt lại mật khẩu tới email của bạn. Vui lòng kiểm tra hộp thư.')->withInput()
-            : back()->withInput()->with('error', 'Không thể gửi liên kết đặt lại mật khẩu. Vui lòng thử lại sau.');
+        if ($status === Password::RESET_LINK_SENT) {
+            $message = 'Đã gửi liên kết đặt lại mật khẩu tới email: ' . $this->maskEmail($user->email) . '. Vui lòng kiểm tra hộp thư (và cả thư mục Spam).';
+
+            if (config('mail.default') === 'log') {
+                $message .= ' (Hệ thống đang dùng chế độ ghi log — kiểm tra file storage/logs/laravel.log để xem nội dung email.)';
+            }
+
+            return back()->with('success', $message);
+        }
+
+        return back()->withInput()->with('error', $this->passwordResetErrorMessage($status));
     }
 
     public function showResetForm(Request $request, $token = null)
     {
+        if (Auth::check()) {
+            return $this->redirectToDashboard();
+        }
+
         return view('auth.passwords.reset', [
             'token' => $token,
             'email' => $request->query('email'),
@@ -168,18 +191,20 @@ class AuthController extends Controller
         $request->validate([
             'token' => 'required|string',
             'email' => 'required|email',
-            'password' => 'required|string|confirmed|min:6',
+            'password' => 'required|string|confirmed|min:8',
+            'login_type' => 'nullable|in:patient,admin',
         ], [
             'email.required' => 'Vui lòng nhập email.',
             'email.email' => 'Email không đúng định dạng.',
             'password.required' => 'Vui lòng nhập mật khẩu mới.',
             'password.confirmed' => 'Xác nhận mật khẩu không khớp.',
+            'password.min' => 'Mật khẩu tối thiểu 8 ký tự.',
         ]);
 
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
-            function ($user, $password) use ($request) {
-                $user->password = Hash::make($password);
+            function ($user, $password) {
+                $user->password = $password;
                 $user->setRememberToken(Str::random(60));
                 $user->save();
 
@@ -188,12 +213,34 @@ class AuthController extends Controller
         );
 
         if ($status === Password::PASSWORD_RESET) {
-            return redirect($this->getLoginRoute($request->input('login_type')))
+            return redirect($this->getLoginRoute($request->input('login_type', 'patient')))
                 ->with('success', 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.');
         }
 
-        return back()->withInput($request->only('email'))
-            ->with('error', 'Đặt lại mật khẩu không thành công. Vui lòng thử lại.');
+        return back()->withInput($request->only('email', 'login_type'))
+            ->with('error', $this->passwordResetErrorMessage($status));
+    }
+
+    protected function passwordResetErrorMessage(string $status): string
+    {
+        return match ($status) {
+            Password::INVALID_USER => 'Không tìm thấy tài khoản với email này.',
+            Password::INVALID_TOKEN => 'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu liên kết mới.',
+            Password::RESET_THROTTLED => 'Bạn đã yêu cầu quá nhiều lần. Vui lòng đợi ' . config('auth.passwords.users.throttle', 60) . ' giây rồi thử lại.',
+            default => 'Không thể xử lý yêu cầu đặt lại mật khẩu. Vui lòng thử lại sau.',
+        };
+    }
+
+    protected function maskEmail(string $email): string
+    {
+        if (! str_contains($email, '@')) {
+            return $email;
+        }
+
+        [$local, $domain] = explode('@', $email, 2);
+        $visible = mb_substr($local, 0, min(2, mb_strlen($local)));
+
+        return $visible . str_repeat('*', max(1, mb_strlen($local) - 2)) . '@' . $domain;
     }
 
     protected function getLoginRoute(string $loginType = 'patient'): string
