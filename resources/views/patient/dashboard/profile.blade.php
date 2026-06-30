@@ -1,144 +1,225 @@
 <x-layouts.patient-dashboard title="Thông tin cá nhân" activeMenu="profiles">
-    <div>
+    <div x-data="{ lightboxOpen: false, lightboxImg: '' }">
+        <!-- Top Action Bar -->
         <div class="flex items-center justify-between mb-8">
             <div>
-                <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">Thông tin cá nhân</h1>
-                <p class="text-slate-500 mt-2 text-sm md:text-base">Quản lý thông tin tài khoản và thông tin y tế cá nhân của bạn</p>
+                <h2 class="text-xl font-bold text-slate-800">Chi tiết hồ sơ</h2>
+                <p class="text-slate-500 text-sm mt-1">Các thông tin quan trọng trong hồ sơ y tế của bạn</p>
             </div>
-            <a href="{{ $profile ? route('patient.profiles.edit', $profile->id) : route('patient.profiles.create', ['is_self' => 1]) }}" 
-               class="group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary text-white font-semibold rounded-2xl overflow-hidden transition-all hover:bg-primary-dark hover:shadow-lg hover:shadow-primary/30 active:scale-95">
-                <i class="fa-regular fa-pen-to-square relative z-10"></i>
-                <span class="hidden sm:inline relative z-10">Cập nhật thông tin</span>
+            <a href="{{ $profile ? route('patient.profiles.edit', $profile->id) : route('patient.profiles.create', ['is_self' => 1]) }}"
+                class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary text-white font-semibold rounded-xl transition-colors hover:bg-primary-dark">
+                <i class="fa-regular fa-pen-to-square"></i>
+                <span>Cập nhật thông tin</span>
             </a>
         </div>
 
-        <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 relative overflow-hidden mb-6">
-            <div class="absolute top-0 right-0 w-64 h-64 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/5 to-transparent rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+        <div class="flex flex-col md:flex-row gap-8">
+            <!-- Left Column: Avatar & Status -->
+            <div class="w-full md:w-64 shrink-0 flex flex-col items-center">
+                <div
+                    class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 w-full flex flex-col items-center relative overflow-hidden">
+                    <div class="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-primary/10 to-transparent"></div>
 
-            <div class="flex flex-col md:flex-row gap-8 relative z-10">
-                <!-- Avatar column -->
-                <div class="flex flex-col items-center shrink-0">
-                    <div class="w-32 h-32 rounded-3xl bg-gradient-to-br from-primary/10 to-blue-50 border-4 border-white shadow-lg flex items-center justify-center mb-4 overflow-hidden">
-                        @if($user->avatar_url)
-                            <img src="{{ asset('storage/' . $user->avatar_url) }}" alt="Avatar" class="w-full h-full object-cover">
+                    <div
+                        class="w-28 h-28 rounded-3xl bg-white shadow-md border border-slate-50 flex items-center justify-center mb-5 overflow-hidden relative z-10">
+                        @if ($user->avatar_url)
+                            <img src="{{ asset('storage/' . $user->avatar_url) }}" alt="Avatar"
+                                class="w-full h-full object-cover">
                         @else
                             <span class="text-4xl font-black text-primary/40">{{ $user->avatar_initials }}</span>
                         @endif
                     </div>
-                    <div class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-sm">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+
+                    <h3 class="font-bold text-lg text-slate-800 mb-1 text-center relative z-10">{{ $user->full_name }}
+                    </h3>
+                    <div
+                        class="bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm border border-emerald-100 relative z-10">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                         Đang hoạt động
                     </div>
                 </div>
+            </div>
 
-                <!-- Info columns -->
-                <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                    <!-- Account Info -->
-                    <div class="space-y-6">
-                        <h3 class="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2 mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-user-shield text-primary"></i> Thông tin tài khoản
-                        </h3>
-                        
-                        <div class="space-y-4">
-                            <div>
-                                <p class="text-sm text-slate-500 font-medium mb-1">Họ và tên</p>
-                                <p class="font-semibold text-slate-800 text-lg">{{ $user->full_name }}</p>
-                            </div>
-                            
-                            <div>
-                                <p class="text-sm text-slate-500 font-medium mb-1">Số điện thoại</p>
-                                <p class="font-semibold text-slate-800">{{ $user->phone ?? 'Chưa cập nhật' }}</p>
-                            </div>
-
-                            <div>
-                                <p class="text-sm text-slate-500 font-medium mb-1">Email</p>
-                                <p class="font-semibold text-slate-800">{{ $user->email ?? 'Chưa cập nhật' }}</p>
-                            </div>
-                            
-                            <div>
-                                <p class="text-sm text-slate-500 font-medium mb-1">Căn cước công dân</p>
-                                <p class="font-semibold text-slate-800">{{ $user->id_card ?? 'Chưa cập nhật' }}</p>
-                            </div>
+            <!-- Right Column: Info Grids -->
+            <div class="flex-1 space-y-6">
+                <!-- Thông tin tài khoản -->
+                <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
+                    <h3
+                        class="text-lg font-bold text-slate-800 border-b border-slate-100 pb-4 mb-6 flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                            <i class="fa-solid fa-user-shield"></i>
                         </div>
-                    </div>
+                        Thông tin tài khoản
+                    </h3>
 
-                    <!-- Medical Profile Info -->
-                    <div class="space-y-6">
-                        <h3 class="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2 mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-notes-medical text-primary"></i> Thông tin y tế cá nhân
-                        </h3>
-                        
-                        <div class="space-y-4">
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <p class="text-sm text-slate-500 font-medium mb-1">Ngày sinh</p>
-                                    <p class="font-semibold text-slate-800">{{ $profile && $profile->date_of_birth ? \Carbon\Carbon::parse($profile->date_of_birth)->format('d/m/Y') : 'Chưa cập nhật' }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-slate-500 font-medium mb-1">Giới tính</p>
-                                    <p class="font-semibold text-slate-800">
-                                        @if($profile && $profile->gender == 'male') Nam 
-                                        @elseif($profile && $profile->gender == 'female') Nữ 
-                                        @elseif($profile && $profile->gender == 'other') Khác
-                                        @else Chưa cập nhật @endif
-                                    </p>
-                                </div>
-                            </div>
-                            
-                            <div>
-                                <p class="text-sm text-slate-500 font-medium mb-1">Địa chỉ</p>
-                                <p class="font-semibold text-slate-800">{{ $profile->address ?? 'Chưa cập nhật' }}</p>
-                            </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8">
+                        <div class="group">
+                            <p class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1.5">Họ và tên</p>
+                            <p class="font-semibold text-slate-800 text-[15px]">{{ $user->full_name }}</p>
+                        </div>
 
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <p class="text-sm text-slate-500 font-medium mb-1">Dân tộc</p>
-                                    <p class="font-semibold text-slate-800">{{ $profile->ethnicity ?? 'Chưa cập nhật' }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-slate-500 font-medium mb-1">Nghề nghiệp</p>
-                                    <p class="font-semibold text-slate-800">{{ $profile->occupation ?? 'Chưa cập nhật' }}</p>
-                                </div>
-                            </div>
+                        <div class="group">
+                            <p class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1.5">Số điện thoại
+                            </p>
+                            <p class="font-semibold text-slate-800 text-[15px]">{{ $user->phone ?? 'Chưa cập nhật' }}
+                            </p>
+                        </div>
 
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <p class="text-sm text-slate-500 font-medium mb-1">Mã BHYT</p>
-                                    <p class="font-semibold text-slate-800">{{ $profile->insurance_code ?? 'Chưa cập nhật' }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-slate-500 font-medium mb-1">Hạn thẻ BHYT</p>
-                                    <p class="font-semibold text-slate-800">{{ $profile && $profile->insurance_expiry ? \Carbon\Carbon::parse($profile->insurance_expiry)->format('d/m/Y') : 'Chưa cập nhật' }}</p>
-                                </div>
-                            </div>
+                        <div class="group">
+                            <p class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1.5">Email</p>
+                            <p class="font-semibold text-slate-800 text-[15px]">{{ $user->email ?? 'Chưa cập nhật' }}
+                            </p>
+                        </div>
 
-                            <div class="mt-6 pt-6 border-t border-slate-100">
-                                <h4 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                    <i class="fa-solid fa-file-waveform text-rose-500"></i> Tiền sử y tế
-                                </h4>
-                                
-                                <div>
-                                    @if($profile && $profile->medical_history)
-                                        <div class="flex flex-wrap gap-2 mt-2">
-                                            @php
-                                                $historyArray = is_string($profile->medical_history) ? json_decode($profile->medical_history, true) : $profile->medical_history;
-                                            @endphp
-                                            @if(is_array($historyArray) && count($historyArray) > 0)
-                                                @foreach($historyArray as $history)
-                                                    <span class="px-3 py-1 bg-rose-50 text-rose-600 rounded-lg text-sm font-medium border border-rose-100">{{ $history }}</span>
-                                                @endforeach
-                                            @else
-                                                <p class="font-semibold text-slate-800">Không có</p>
-                                            @endif
-                                        </div>
-                                    @else
-                                        <p class="font-semibold text-slate-800">Chưa cập nhật</p>
-                                    @endif
-                                </div>
-                            </div>
+                        <div class="group">
+                            <p class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1.5">Căn cước công
+                                dân</p>
+                            <p class="font-semibold text-slate-800 text-[15px]">{{ $user->id_card ?? 'Chưa cập nhật' }}
+                            </p>
                         </div>
                     </div>
                 </div>
+
+                <!-- Thông tin y tế -->
+                <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
+                    <h3
+                        class="text-lg font-bold text-slate-800 border-b border-slate-100 pb-4 mb-6 flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center">
+                            <i class="fa-solid fa-notes-medical"></i>
+                        </div>
+                        Thông tin y tế cá nhân
+                    </h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8">
+                        <div class="group">
+                            <p class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1.5">Ngày sinh</p>
+                            <p class="font-semibold text-slate-800 text-[15px]">
+                                {{ $profile && $profile->date_of_birth ? \Carbon\Carbon::parse($profile->date_of_birth)->format('d/m/Y') : 'Chưa cập nhật' }}
+                            </p>
+                        </div>
+
+                        <div class="group">
+                            <p class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1.5">Giới tính</p>
+                            <p class="font-semibold text-slate-800 text-[15px]">
+                                @if ($profile && $profile->gender == 'male')
+                                    Nam
+                                @elseif($profile && $profile->gender == 'female')
+                                    Nữ
+                                @elseif($profile && $profile->gender == 'other')
+                                    Khác
+                                @else
+                                    Chưa cập nhật
+                                @endif
+                            </p>
+                        </div>
+
+                        <div class="group sm:col-span-2">
+                            <p class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1.5">Địa chỉ</p>
+                            <p class="font-semibold text-slate-800 text-[15px]">
+                                {{ $profile->address ?? 'Chưa cập nhật' }}</p>
+                        </div>
+
+                        <div class="group">
+                            <p class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1.5">Dân tộc</p>
+                            <p class="font-semibold text-slate-800 text-[15px]">
+                                {{ $profile->ethnicity ?? 'Chưa cập nhật' }}</p>
+                        </div>
+
+                        <div class="group">
+                            <p class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1.5">Nghề nghiệp
+                            </p>
+                            <p class="font-semibold text-slate-800 text-[15px]">
+                                {{ $profile->occupation ?? 'Chưa cập nhật' }}</p>
+                        </div>
+
+                        <div class="group border-t border-slate-50 pt-4 mt-2">
+                            <p class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1.5">Mã BHYT</p>
+                            <p class="font-bold text-primary text-[15px]">
+                                {{ $profile->insurance_code ?? 'Chưa cập nhật' }}</p>
+                        </div>
+
+                        <div class="group border-t border-slate-50 pt-4 mt-2">
+                            <p class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1.5">Hạn thẻ BHYT
+                            </p>
+                            <p class="font-semibold text-slate-800 text-[15px]">
+                                {{ $profile && $profile->insurance_expiry ? \Carbon\Carbon::parse($profile->insurance_expiry)->format('d/m/Y') : 'Chưa cập nhật' }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Tiền sử y tế (Fixed Bug) -->
+                    <div class="mt-8 pt-6 border-t border-slate-100">
+                        <h4 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <div
+                                class="w-6 h-6 rounded border border-rose-100 bg-rose-50 text-rose-500 flex items-center justify-center text-xs">
+                                <i class="fa-solid fa-file-waveform"></i>
+                            </div>
+                            Tiền sử y tế / Hồ sơ đính kèm
+                        </h4>
+
+                        <div>
+                            @if ($profile && $profile->medical_history)
+                                @php
+                                    $historyArray = is_string($profile->medical_history)
+                                        ? json_decode($profile->medical_history, true)
+                                        : $profile->medical_history;
+                                @endphp
+
+                                @if (is_array($historyArray) && count($historyArray) > 0)
+                                    <div class="flex flex-wrap gap-4 mt-2">
+                                        @foreach ($historyArray as $history)
+                                            @if (str_contains(strtolower($history), 'http') &&
+                                                    (str_contains(strtolower($history), 'cloudinary') ||
+                                                        str_contains(strtolower($history), '.jpg') ||
+                                                        str_contains(strtolower($history), '.png')))
+                                                <!-- Image Thumbnail -->
+                                                <div @click="lightboxOpen = true; lightboxImg = '{{ $history }}'"
+                                                    class="w-24 h-24 rounded-xl overflow-hidden cursor-pointer border-2 border-slate-100 hover:border-primary transition-colors group relative">
+                                                    <img src="{{ $history }}" class="w-full h-full object-cover"
+                                                        alt="Tiền sử y tế">
+                                                    <div
+                                                        class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <i
+                                                            class="fa-solid fa-magnifying-glass-plus text-white text-xl"></i>
+                                                    </div>
+                                                </div>
+                                            @else
+                                                <!-- Text Badge (Fallback) -->
+                                                <span
+                                                    class="px-4 py-2 bg-slate-50 text-slate-700 rounded-xl text-sm font-medium border border-slate-200 shadow-sm">{{ $history }}</span>
+                                            @endif
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <p class="text-sm font-medium text-slate-500 italic">Không có hồ sơ đính kèm</p>
+                                @endif
+                            @else
+                                <p class="text-sm font-medium text-slate-500 italic">Chưa cập nhật</p>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lightbox Modal -->
+        <div x-show="lightboxOpen" x-cloak
+            class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/90 backdrop-blur-sm p-4 sm:p-8"
+            @keydown.escape.window="lightboxOpen = false">
+            <div x-show="lightboxOpen" @click.outside="lightboxOpen = false"
+                x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                class="relative max-w-4xl w-full max-h-[90vh] flex flex-col">
+
+                <!-- Close Button -->
+                <button @click="lightboxOpen = false"
+                    class="absolute -top-12 right-0 w-10 h-10 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+
+                <!-- Image -->
+                <img :src="lightboxImg" class="w-full h-full object-contain rounded-2xl shadow-2xl" alt="Phóng to">
             </div>
         </div>
     </div>
