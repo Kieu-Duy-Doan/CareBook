@@ -58,6 +58,11 @@ class ProcessAppointmentNotificationJob implements ShouldQueue
                 }
                 break;
 
+            case 'patient_cancelled':
+                $notificationService->notifyPatientCancellation($this->appointment);
+                // Bỏ qua gửi email đề xuất bác sĩ vì bệnh nhân tự huỷ
+                break;
+
             case 'reminder_2h':
                 $notificationService->notifyReminder($this->appointment, '2 tiếng');
                 // You can add email sending here if desired

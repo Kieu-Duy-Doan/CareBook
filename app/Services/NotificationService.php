@@ -174,6 +174,20 @@ class NotificationService
         );
     }
 
+    public function notifyPatientCancellation(Appointment $appointment): Notification
+    {
+        $time = \Carbon\Carbon::parse($appointment->appointment_time)->format('H:i');
+        $date = $appointment->appointment_date->format('d/m/Y');
+        $doctorName = $appointment->doctorProfile->full_title ?? 'Chưa xác định';
+
+        return $this->logWebNotification(
+            $appointment,
+            'Huỷ lịch hẹn thành công',
+            "Bạn đã chủ động huỷ lịch hẹn khám lúc {$time} ngày {$date} với {$doctorName}. Mã lịch hẹn: {$appointment->appointment_code}.",
+            'cancellation'
+        );
+    }
+
     /**
      * Get paginated notifications for a patient
      */
