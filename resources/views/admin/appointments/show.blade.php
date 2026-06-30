@@ -439,7 +439,7 @@
                                                             default => 'gray',
                                                         };
                                                         $visitLabel = match ($visit->status) {
-                                                            'pending' => 'Chờ khám',
+                                                            'pending' => 'Đã tiếp nhận',
                                                             'examining' => 'Đang khám',
                                                             'completed' => 'Hoàn thành',
                                                             'cancelled' => 'Đã huỷ',
@@ -742,9 +742,9 @@
                                 <select name="status" required
                                     class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
                                     <option value="pending"
-                                        {{ $appointment->status === 'pending' ? 'selected' : '' }}>Chờ khám</option>
+                                        {{ $appointment->status === 'pending' ? 'selected' : '' }}>Đã tiếp nhận</option>
                                     <option value="checked_in"
-                                        {{ $appointment->status === 'checked_in' ? 'selected' : '' }}>Đã tiếp nhận
+                                        {{ $appointment->status === 'checked_in' ? 'selected' : '' }}>Đã checkin
                                     </option>
                                     <option value="examining"
                                         {{ $appointment->status === 'examining' ? 'selected' : '' }}>Đang khám</option>
@@ -804,8 +804,8 @@
                                         Chuyển sang:
                                         @php
                                             $labelMap = [
-                                                'pending' => 'Chờ khám',
-                                                'checked_in' => 'Đã tiếp nhận',
+                                                'pending' => 'Đã tiếp nhận',
+                                                'checked_in' => 'Đã checkin',
                                                 'examining' => 'Đang khám',
                                                 'completed' => 'Hoàn thành',
                                                 'cancelled' => 'Đã huỷ',

@@ -107,8 +107,8 @@ class Appointment extends Model
     public function getStatusLabelAttribute(): string
     {
         return match($this->status) {
-            'pending'    => 'Chờ khám',
-            'checked_in' => 'Đã tiếp nhận',
+            'pending'    => 'Đã tiếp nhận',
+            'checked_in' => 'Đã checkin',
             'examining'  => 'Đang khám',
             'completed'  => 'Hoàn thành',
             'cancelled'  => 'Đã huỷ',
