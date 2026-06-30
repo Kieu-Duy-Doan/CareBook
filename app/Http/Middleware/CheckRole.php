@@ -16,13 +16,29 @@ class CheckRole
      */
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
-        if (!Auth::check()) {
-            return redirect()->route('login');
+        if (! Auth::check()) {
+            if ($request->is('admin/*') || $request->is('admin')) {
+                return redirect()->route('login');
+            }
+
+            return redirect()->route('patient.login');
         }
 
         $user = Auth::user();
 
-        if (!in_array($user->role, $roles)) {
+        if (! in_array($user->role, $roles, true)) {
+            if ($user->role === 'patient') {
+                return redirect()
+                    ->route('patient.dashboard')
+                    ->with('error', 'Bạn không có quyền truy cập khu vực quản trị.');
+            }
+
+            if (in_array($user->role, ['admin', 'doctor', 'receptionist'], true)) {
+                return redirect()
+                    ->route('admin.dashboard')
+                    ->with('error', 'Bạn không có quyền truy cập trang này.');
+            }
+
             abort(403, 'Bạn không có quyền truy cập trang này.');
         }
 

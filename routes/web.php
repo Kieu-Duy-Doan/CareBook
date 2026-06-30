@@ -36,7 +36,7 @@ Route::post('/dat-lai-mat-khau', [AuthController::class, 'reset'])->name('passwo
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout'])->name('logout');
 
-Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,doctor,receptionist'])->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/ajax-search', [\App\Http\Controllers\Admin\UserController::class, 'ajaxSearch'])->name('ajax-search');
@@ -249,7 +249,7 @@ Route::prefix('api')->name('api.')->group(function () {
 // ──────────────────────────────────────────────────────────
 // PATIENT — Hồ sơ thành viên
 // ──────────────────────────────────────────────────────────
-Route::middleware('auth')->prefix('ho-so')->name('patient.profiles.')->group(function () {
+Route::middleware(['auth', 'role:patient'])->prefix('ho-so')->name('patient.profiles.')->group(function () {
     Route::get('/', [\App\Http\Controllers\Patient\ProfileController::class, 'index'])->name('index');
     Route::get('/them-moi', [\App\Http\Controllers\Patient\ProfileController::class, 'create'])->name('create');
     Route::post('/', [\App\Http\Controllers\Patient\ProfileController::class, 'store'])->name('store');
@@ -261,7 +261,7 @@ Route::middleware('auth')->prefix('ho-so')->name('patient.profiles.')->group(fun
 // ──────────────────────────────────────────────────────────
 // PATIENT — Lịch sử đặt khám
 // ──────────────────────────────────────────────────────────
-Route::middleware('auth')->prefix('lich-hen')->name('patient.appointments.')->group(function () {
+Route::middleware(['auth', 'role:patient'])->prefix('lich-hen')->name('patient.appointments.')->group(function () {
     Route::get('/', [\App\Http\Controllers\Patient\AppointmentController::class, 'index'])->name('index');
     Route::get('/{id}', [\App\Http\Controllers\Patient\AppointmentController::class, 'show'])->name('show');
     Route::post('/{id}/cancel', [\App\Http\Controllers\Patient\AppointmentController::class, 'cancel'])->name('cancel');
@@ -270,8 +270,13 @@ Route::middleware('auth')->prefix('lich-hen')->name('patient.appointments.')->gr
 // ──────────────────────────────────────────────────────────
 // PATIENT — Dashboard (Trang cá nhân)
 // ──────────────────────────────────────────────────────────
+<<<<<<< HEAD
 Route::middleware('auth')->prefix('trang-ca-nhan')->name('patient.')->group(function () {
     Route::get('/', function () {
+=======
+Route::middleware(['auth', 'role:patient'])->prefix('trang-ca-nhan')->name('patient.')->group(function () {
+    Route::get('/', function() {
+>>>>>>> aa8e413 (sua loi dang ki)
         return redirect()->route('patient.profiles.index');
     })->name('dashboard');
 
@@ -295,7 +300,7 @@ Route::middleware('auth')->prefix('trang-ca-nhan')->name('patient.')->group(func
 // ──────────────────────────────────────────────────────────
 // PATIENT — Đặt lịch khám
 // ──────────────────────────────────────────────────────────
-Route::middleware('auth')->prefix('dat-lich')->name('patient.booking.')->group(function () {
+Route::middleware(['auth', 'role:patient'])->prefix('dat-lich')->name('patient.booking.')->group(function () {
     // Trang SPA booking
     Route::get('/', [\App\Http\Controllers\Patient\BookingController::class, 'index'])
         ->name('index');
@@ -319,5 +324,10 @@ Route::middleware('auth')->prefix('dat-lich')->name('patient.booking.')->group(f
 
 // Alias route cho blade template (booking.store)
 Route::post('/dat-lich', [\App\Http\Controllers\Patient\BookingController::class, 'store'])
+<<<<<<< HEAD
     ->middleware('auth')
     ->name('booking.store');
+=======
+    ->middleware(['auth', 'role:patient'])
+    ->name('booking.store');
+>>>>>>> aa8e413 (sua loi dang ki)
