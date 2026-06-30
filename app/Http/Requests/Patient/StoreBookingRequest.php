@@ -42,4 +42,40 @@ class StoreBookingRequest extends FormRequest
             'appointment_time.date_format'=> 'Giờ khám không hợp lệ.',
         ];
     }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $appointmentDate = $this->input('appointment_date');
+            $appointmentTime = $this->input('appointment_time');
+            $patientProfileId = $this->input('patient_profile_id');
+            
+            if ($appointmentDate && $appointmentTime && $patientProfileId) {
+                // Lấy tất cả các lịch khám của hồ sơ này trong ngày (bao gồm cả trạng thái cancelled)
+                $profileAppointments = \App\Models\Appointment::where('patient_profile_id', $patientProfileId)
+                    ->whereDate('appointment_date', $appointmentDate)
+                    ->get();
+
+                // Yêu cầu 1: Mỗi hồ sơ được đặt tối đa 2 lần/ngày (tính cả lịch đã huỷ)
+                if ($profileAppointments->count() >= 2) {
+                    $validator->errors()->add('patient_profile_id', 'Hồ sơ bệnh nhân này đã đạt giới hạn đặt 2 lịch trong ngày ' . \Carbon\Carbon::parse($appointmentDate)->format('d/m/Y') . ' (bao gồm cả lịch đã huỷ). Vui lòng chọn hồ sơ khác.');
+                    return;
+                }
+
+                // Yêu cầu 2: Thời gian đặt lịch phải cách nhau ít nhất 2 tiếng (120 phút)
+                $newTime = \Carbon\Carbon::parse($appointmentTime);
+                foreach ($profileAppointments as $appointment) {
+                    $existingTime = \Carbon\Carbon::parse($appointment->appointment_time);
+                    
+                    // Tính khoảng cách tuyệt đối bằng phút giữa 2 khung giờ
+                    $diffInMinutes = abs($newTime->diffInMinutes($existingTime, false));
+                    
+                    if ($diffInMinutes < 120) {
+                        $validator->errors()->add('appointment_time', 'Giờ khám phải cách các lịch khám đã đặt trong ngày ít nhất 2 tiếng để tránh spam.');
+                        break;
+                    }
+                }
+            }
+        });
+    }
 }

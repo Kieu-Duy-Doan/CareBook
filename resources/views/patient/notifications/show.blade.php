@@ -44,7 +44,7 @@
                 </div>
             @endif
 
-            @if($notification->type === 'cancellation')
+            @if($notification->type === 'cancellation' && $notification->title === 'Lịch khám đã bị huỷ')
                 <div class="border-t border-slate-200 pt-8">
                     <h3 class="text-lg font-bold text-slate-800 mb-4">Gợi ý lịch khám thay thế</h3>
                     
