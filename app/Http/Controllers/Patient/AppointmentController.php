@@ -50,7 +50,7 @@ class AppointmentController extends Controller
             ->findOrFail($id);
 
         if (!in_array($appointment->status, ['pending'])) {
-            return back()->with('error', 'Chỉ có lịch hẹn ở trạng thái "Chờ khám" mới có thể huỷ.');
+            return back()->with('error', 'Chỉ có lịch hẹn ở trạng thái "Đã tiếp nhận" mới có thể huỷ.');
         }
 
         $appointment->update(['status' => 'cancelled']);

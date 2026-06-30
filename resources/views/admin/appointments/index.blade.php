@@ -82,10 +82,9 @@
                     <select name="status"
                         class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
                         <option value="">Tất cả trạng thái</option>
-                        <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Chờ khám
+                        <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Đã tiếp nhận
                         </option>
-                        <option value="checked_in" {{ request('status') === 'checked_in' ? 'selected' : '' }}>Đã tiếp
-                            nhận</option>
+                        <option value="checked_in" {{ request('status') === 'checked_in' ? 'selected' : '' }}>Đã checkin</option>
                         <option value="examining" {{ request('status') === 'examining' ? 'selected' : '' }}>Đang khám
                         </option>
                         <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>Hoàn thành
@@ -143,10 +142,10 @@
         <div class="flex flex-wrap items-center gap-2 text-xs">
             <span
                 class="inline-flex items-center px-2 py-1 rounded bg-yellow-100 text-yellow-800 border border-yellow-200">
-                Chờ khám: {{ $statusCounts['pending'] ?? 0 }}
+                Đã tiếp nhận: {{ $statusCounts['pending'] ?? 0 }}
             </span>
             <span class="inline-flex items-center px-2 py-1 rounded bg-blue-100 text-blue-800 border border-blue-200">
-                Đã tiếp nhận: {{ $statusCounts['checked_in'] ?? 0 }}
+                Đã checkin: {{ $statusCounts['checked_in'] ?? 0 }}
             </span>
             <span
                 class="inline-flex items-center px-2 py-1 rounded bg-purple-100 text-purple-800 border border-purple-200">

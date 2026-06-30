@@ -295,7 +295,7 @@
                                                     default => 'bg-gray-100 text-gray-700'
                                                 };
                                                 $statusText = match($appointment->status) {
-                                                    'pending' => 'Chờ khám',
+                                                    'pending' => 'Đã tiếp nhận',
                                                     'confirmed' => 'Đã xác nhận',
                                                     'completed' => 'Hoàn thành',
                                                     'cancelled' => 'Đã huỷ',
