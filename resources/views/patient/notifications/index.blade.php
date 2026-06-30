@@ -53,20 +53,21 @@
                                     <p class="text-slate-600 text-sm mb-2 leading-relaxed line-clamp-2">{{ $notif->content }}</p>
                                     <div class="flex items-center gap-3 text-xs text-slate-400 font-medium">
                                         <span title="{{ $notif->created_at->format('d/m/Y H:i') }}"><i class="fa-regular fa-clock"></i> {{ $notif->created_at->diffForHumans() }}</span>
-                                        @if($notif->ref_type === 'appointment' && $notif->ref_id)
-                                            <span>&bull;</span>
-                                            <a href="{{ route('patient.notifications.show', $notif->id) }}" class="text-secondary hover:underline font-bold"><i class="fa-solid fa-link"></i> Xem chi tiết thông báo</a>
-                                        @endif
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="flex items-center gap-2 sm:ml-4 self-end sm:self-auto shrink-0">
+                            <div class="flex items-center gap-1 sm:ml-4 self-end sm:self-auto shrink-0">
+                                @if($notif->ref_type === 'appointment' && $notif->ref_id)
+                                    <a href="{{ route('patient.notifications.show', $notif->id) }}" class="p-2 text-slate-400 hover:text-primary hover:bg-blue-50 rounded-lg transition-colors" title="Xem chi tiết">
+                                        <i class="fa-solid fa-eye text-lg"></i>
+                                    </a>
+                                @endif
                                 <form action="{{ route('patient.notifications.destroy', $notif->id) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xoá thông báo này?');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Xoá thông báo">
-                                        <i class="fa-regular fa-trash-can"></i> <span class="text-sm font-semibold sm:hidden ml-1">Xoá</span>
+                                    <button type="submit" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Xoá">
+                                        <i class="fa-regular fa-trash-can text-lg"></i>
                                     </button>
                                 </form>
                             </div>
