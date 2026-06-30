@@ -270,13 +270,8 @@ Route::middleware(['auth', 'role:patient'])->prefix('lich-hen')->name('patient.a
 // ──────────────────────────────────────────────────────────
 // PATIENT — Dashboard (Trang cá nhân)
 // ──────────────────────────────────────────────────────────
-<<<<<<< HEAD
-Route::middleware('auth')->prefix('trang-ca-nhan')->name('patient.')->group(function () {
-    Route::get('/', function () {
-=======
 Route::middleware(['auth', 'role:patient'])->prefix('trang-ca-nhan')->name('patient.')->group(function () {
     Route::get('/', function() {
->>>>>>> aa8e413 (sua loi dang ki)
         return redirect()->route('patient.profiles.index');
     })->name('dashboard');
 
@@ -324,10 +319,5 @@ Route::middleware(['auth', 'role:patient'])->prefix('dat-lich')->name('patient.b
 
 // Alias route cho blade template (booking.store)
 Route::post('/dat-lich', [\App\Http\Controllers\Patient\BookingController::class, 'store'])
-<<<<<<< HEAD
-    ->middleware('auth')
-    ->name('booking.store');
-=======
     ->middleware(['auth', 'role:patient'])
     ->name('booking.store');
->>>>>>> aa8e413 (sua loi dang ki)
