@@ -40,6 +40,16 @@
                         <div class="absolute top-5 right-5 flex items-center gap-1.5 bg-gradient-to-r from-primary/10 to-primary/5 text-primary text-xs font-bold px-3 py-1.5 rounded-xl border border-primary/10">
                             <i class="fa-solid fa-shield-heart"></i> Chính chủ
                         </div>
+                    @else
+                        @if($profile->relationship)
+                        @php
+                            $relMap = ['parent' => 'Bố/Mẹ', 'spouse' => 'Vợ/Chồng', 'child' => 'Con', 'other' => 'Khác'];
+                            $relLabel = $relMap[$profile->relationship] ?? $profile->relationship;
+                        @endphp
+                        <div class="absolute top-5 right-5 flex items-center gap-1.5 bg-gradient-to-r from-teal-50 to-teal-100 text-teal-700 text-xs font-bold px-3 py-1.5 rounded-xl border border-teal-200">
+                            <i class="fa-solid fa-users"></i> {{ $relLabel }}
+                        </div>
+                        @endif
                     @endif
                     
                     <div class="flex items-start gap-4 mb-6 relative z-10">

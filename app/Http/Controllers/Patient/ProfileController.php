@@ -39,11 +39,18 @@ class ProfileController extends Controller
         $hasSelf = PatientProfile::where('owner_id', auth()->id())->where('is_self', true)->exists();
         $isSelf = $isSelfRequested && !$hasSelf;
 
+        if (!$isSelf) {
+            $familyCount = PatientProfile::where('owner_id', auth()->id())->where('is_self', false)->count();
+            if ($familyCount >= 5) {
+                return back()->with('error', 'Bạn chỉ được phép quản lý tối đa 5 hồ sơ người thân.')->withInput();
+            }
+        }
+
         $rules = [
             'full_name' => 'required|string|max:255',
             'date_of_birth' => 'required|date|before:today',
             'gender' => 'required|in:male,female,other,M,F,O',
-            'id_card' => 'nullable|string|max:20',
+            'id_card' => 'nullable|string|max:20|unique:patient_profiles,id_card',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
             'occupation' => 'nullable|string|max:100',
@@ -58,6 +65,8 @@ class ProfileController extends Controller
 
         if ($isSelf) {
             $rules['email'] = 'nullable|email|max:150|unique:users,email,' . auth()->id();
+        } else {
+            $rules['relationship'] = 'required|in:parent,spouse,child,other';
         }
 
         $messages = [
@@ -80,6 +89,9 @@ class ProfileController extends Controller
             'email.email' => 'Email không đúng định dạng.',
             'email.max' => 'Email không được vượt quá 150 ký tự.',
             'email.unique' => 'Email này đã được sử dụng.',
+            'relationship.required' => 'Vui lòng chọn mối quan hệ.',
+            'relationship.in' => 'Mối quan hệ không hợp lệ.',
+            'id_card.unique' => 'Số CMND/CCCD này đã được sử dụng trong hệ thống.',
         ];
 
         $validated = $request->validate($rules, $messages);
@@ -146,7 +158,7 @@ class ProfileController extends Controller
             'full_name' => 'required|string|max:255',
             'date_of_birth' => 'required|date|before:today',
             'gender' => 'required|in:male,female,other,M,F,O',
-            'id_card' => 'nullable|string|max:20',
+            'id_card' => 'nullable|string|max:20|unique:patient_profiles,id_card,' . $profile->id,
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
             'occupation' => 'nullable|string|max:100',
@@ -161,6 +173,8 @@ class ProfileController extends Controller
 
         if ($profile->is_self) {
             $rules['email'] = 'nullable|email|max:150|unique:users,email,' . auth()->id();
+        } else {
+            $rules['relationship'] = 'required|in:parent,spouse,child,other';
         }
 
         $messages = [
@@ -183,6 +197,9 @@ class ProfileController extends Controller
             'email.email' => 'Email không đúng định dạng.',
             'email.max' => 'Email không được vượt quá 150 ký tự.',
             'email.unique' => 'Email này đã được sử dụng.',
+            'relationship.required' => 'Vui lòng chọn mối quan hệ.',
+            'relationship.in' => 'Mối quan hệ không hợp lệ.',
+            'id_card.unique' => 'Số CMND/CCCD này đã được sử dụng trong hệ thống.',
         ];
 
         $validated = $request->validate($rules, $messages);

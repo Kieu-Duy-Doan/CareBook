@@ -23,6 +23,7 @@ class PatientProfile extends Model
         'medical_history',
         'symptom_notes',
         'is_self',
+        'relationship',
     ];
 
     protected function casts(): array
