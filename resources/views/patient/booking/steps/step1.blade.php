@@ -36,6 +36,10 @@
                                   class="text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
                                 Chủ tài khoản
                             </span>
+                            <span x-show="!profile.is_self && profile.relationship"
+                                  class="text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 border border-emerald-200"
+                                  x-text="{ child: 'Con', spouse: 'Vợ/Chồng', parent: 'Bố/Mẹ', other: 'Khác' }[profile.relationship] || profile.relationship">
+                            </span>
                         </div>
                         <div class="flex items-center gap-5 text-base font-medium text-slate-600 flex-wrap">
                             <span x-show="profile.phone" class="flex items-center gap-2">

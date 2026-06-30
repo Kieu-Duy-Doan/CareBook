@@ -30,7 +30,7 @@ class BookingController extends Controller
         // Hồ sơ bệnh nhân của user (eager load)
         $profiles = PatientProfile::where('owner_id', $user->id)
             ->orderByDesc('is_self')
-            ->get(['id', 'full_name', 'date_of_birth', 'phone', 'gender', 'is_self']);
+            ->get(['id', 'full_name', 'date_of_birth', 'phone', 'gender', 'is_self', 'relationship']);
 
         // Chuyên khoa đang hoạt động
         $specialties = Specialty::where('is_active', true)
