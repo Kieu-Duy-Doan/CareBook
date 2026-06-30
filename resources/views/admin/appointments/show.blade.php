@@ -481,6 +481,13 @@
                     </div>
                 @endif
 
+            </div> <!-- End Tab 1 (Tổng quan) -->
+
+            <!-- Tab 2: Kết quả khám / Medical Record -->
+            <div x-show="activeTab === 'medical_record'" style="display: none;" class="space-y-6 print:hidden"
+                x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100">
+
                 <!-- Kết quả khám / Medical Record -->
                 @if ($appointment->medicalRecord)
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -516,12 +523,12 @@
                             @endif
 
                             <!-- Dặn dò -->
-                            @if ($appointment->medicalRecord->treatment_plan)
+                            @if ($appointment->medicalRecord->advice)
                                 <div>
                                     <h4
                                         class="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2 border-b border-gray-100 pb-2">
                                         Kế hoạch điều trị / Dặn dò</h4>
-                                    <p class="text-sm text-gray-800">{{ $appointment->medicalRecord->treatment_plan }}
+                                    <p class="text-sm text-gray-800">{{ $appointment->medicalRecord->advice }}
                                     </p>
                                 </div>
                             @endif
@@ -533,11 +540,10 @@
                                     <div class="text-xs text-gray-500 font-medium mb-1">Hướng giải quyết:</div>
                                     <div class="text-sm font-medium text-gray-900">
                                         @php
-                                            $resultLabel = match ($appointment->medicalRecord->result_status) {
+                                            $resultLabel = match ($appointment->medicalRecord->treatment_result) {
                                                 'outpatient' => 'Điều trị ngoại trú',
-                                                'inpatient' => 'Nhập viện',
-                                                'transfer' => 'Chuyển viện',
-                                                'follow_up' => 'Theo dõi thêm',
+                                                'admitted' => 'Nhập viện',
+                                                'monitoring' => 'Theo dõi thêm',
                                                 default => 'Không xác định',
                                             };
                                         @endphp
@@ -546,10 +552,10 @@
                                 </div>
                                 <div>
                                     <div class="text-xs text-gray-500 font-medium mb-1">Hẹn tái khám:</div>
-                                    @if ($appointment->medicalRecord->follow_up_date)
+                                    @if ($appointment->medicalRecord->followup_date)
                                         <div class="text-sm font-bold text-blue-600"><i
                                                 class="fa-regular fa-calendar mr-1"></i>
-                                            {{ \Carbon\Carbon::parse($appointment->medicalRecord->follow_up_date)->format('d/m/Y') }}
+                                            {{ \Carbon\Carbon::parse($appointment->medicalRecord->followup_date)->format('d/m/Y') }}
                                         </div>
                                     @else
                                         <div class="text-sm font-medium text-gray-900">Không hẹn tái khám</div>
@@ -558,6 +564,41 @@
                             </div>
                         </div>
                     </div>
+                @else
+                    <div class="text-center py-12 text-gray-500 bg-white rounded-xl shadow-sm border border-gray-100">
+                        <div class="mb-3"><i class="fa-solid fa-file-medical text-4xl text-gray-300"></i></div>
+                        <p>Chưa có kết quả khám cho lịch hẹn này.</p>
+                    </div>
+                @endif
+
+                <!-- Tiền sử bệnh án (File PDF đính kèm từ PatientProfile) -->
+                @if ($appointment->patientProfile && $appointment->patientProfile->medical_history)
+                    @php 
+                        $historyFiles = is_string($appointment->patientProfile->medical_history) ? json_decode($appointment->patientProfile->medical_history, true) : $appointment->patientProfile->medical_history;
+                        $pdfFiles = is_array($historyFiles) ? array_filter($historyFiles, function($f) { return is_string($f) && str_starts_with($f, 'http'); }) : [];
+                    @endphp
+                    @if (count($pdfFiles) > 0)
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
+                                <i class="fa-solid fa-folder-open text-blue-500"></i>
+                                <h3 class="text-lg font-bold text-gray-900">Bệnh án tiền sử (Đính kèm)</h3>
+                            </div>
+                            <div class="p-6">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    @foreach($pdfFiles as $file)
+                                        <a href="{{ $file }}" target="_blank" class="flex items-center gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition">
+                                            <i class="fa-solid fa-file-pdf text-red-500 text-2xl"></i>
+                                            <div class="flex-1 overflow-hidden">
+                                                <div class="text-sm font-medium text-gray-900 truncate">File bệnh án {{ $loop->iteration }}</div>
+                                                <div class="text-xs text-gray-500 truncate">{{ $file }}</div>
+                                            </div>
+                                            <i class="fa-solid fa-arrow-up-right-from-square text-gray-400"></i>
+                                        </a>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 @endif
             </div> <!-- End Tab 2 -->
 
@@ -612,7 +653,7 @@
 
                     <div class="p-6">
                         @if (optional($appointment->medicalRecord)->prescription &&
-                                optional($appointment->medicalRecord->prescription)->items->isNotEmpty())
+                                !empty(optional($appointment->medicalRecord->prescription)->items))
                             <div>
                                 <h4
                                     class="text-sm font-bold text-gray-900 uppercase tracking-wide mb-3 flex items-center gap-2">
@@ -638,18 +679,18 @@
                                                 <tr>
                                                     <td class="px-4 py-3">
                                                         <div class="font-medium text-gray-900">
-                                                            {{ $item['medication_name'] ?? ($item->medication_name ?? '') }}
+                                                            {{ data_get($item, 'medication_name', data_get($item, 'name', '')) }}
                                                         </div>
-                                                        @if (!empty($item['dosage_form'] ?? $item->dosage_form))
+                                                        @if (data_get($item, 'dosage_form') || data_get($item, 'unit'))
                                                             <div class="text-xs text-gray-500 mt-0.5">
-                                                                {{ $item['dosage_form'] ?? $item->dosage_form }}</div>
+                                                                {{ data_get($item, 'dosage_form', data_get($item, 'unit', '')) }}</div>
                                                         @endif
                                                     </td>
                                                     <td class="px-4 py-3 text-center font-bold text-gray-900">
-                                                        {{ $item['quantity'] ?? ($item->quantity ?? '') }}
+                                                        {{ data_get($item, 'quantity', '') }}
                                                     </td>
                                                     <td class="px-4 py-3 text-gray-700">
-                                                        {{ $item['instructions'] ?? ($item->instructions ?? '') }}
+                                                        {{ data_get($item, 'instructions', data_get($item, 'usage', '')) }}
                                                     </td>
                                                 </tr>
                                             @endforeach

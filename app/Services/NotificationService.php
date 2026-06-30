@@ -116,7 +116,7 @@ class NotificationService
     /**
      * Ghi thông báo In-Web cho người dùng liên quan đến lịch khám
      */
-    public function logWebNotification(Appointment $appointment, string $title, string $content, string $type = 'appointment'): Notification
+    public function logWebNotification(Appointment $appointment, string $title, string $content, string $type = 'appointment', array $data = []): Notification
     {
         return Notification::create([
             'user_id' => $appointment->booked_by_user_id,
@@ -128,6 +128,7 @@ class NotificationService
             'is_read' => false,
             'ref_type' => 'appointment',
             'ref_id' => $appointment->id,
+            'data' => empty($data) ? null : $data,
             'created_at' => now(),
         ]);
     }
@@ -158,7 +159,7 @@ class NotificationService
         );
     }
 
-    public function notifyCancellation(Appointment $appointment): Notification
+    public function notifyCancellation(Appointment $appointment, array $alternatives = []): Notification
     {
         $time = \Carbon\Carbon::parse($appointment->appointment_time)->format('H:i');
         $date = $appointment->appointment_date->format('d/m/Y');
@@ -168,7 +169,8 @@ class NotificationService
             $appointment,
             'Lịch khám đã bị huỷ',
             "Rất tiếc, lịch hẹn lúc {$time} ngày {$date} với {$doctorName} của bạn đã bị huỷ. Mã lịch hẹn: {$appointment->appointment_code}.",
-            'cancellation' // <--- Set type to cancellation
+            'cancellation', // <--- Set type to cancellation
+            ['alternatives' => $alternatives] // Save suggested doctors
         );
     }
 
@@ -224,6 +226,16 @@ class NotificationService
     {
         Notification::where('user_id', $userId)
             ->where('id', $notificationId)
+            ->delete();
+    }
+
+    /**
+     * Delete all read notifications for a patient
+     */
+    public function deleteReadPatientNotifications(int $userId): void
+    {
+        Notification::where('user_id', $userId)
+            ->where('is_read', true)
             ->delete();
     }
 }

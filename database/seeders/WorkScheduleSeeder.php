@@ -28,16 +28,16 @@ class WorkScheduleSeeder extends Seeder
                     'doctor_profile_id' => $doctor->id,
                     'room_id' => $room->id,
                     'day_of_week' => $day, // 2=T2, 3=T3,..., 7=T7, 1=CN
-                    'start_time' => '07:30:00',
-                    'end_time' => '11:30:00',
+                    'start_time' => '07:00:00',
+                    'end_time' => '11:00:00',
                 ]);
                 // Chiều
                 WorkSchedule::create([
                     'doctor_profile_id' => $doctor->id,
                     'room_id' => $room->id,
                     'day_of_week' => $day,
-                    'start_time' => '13:30:00',
-                    'end_time' => '17:30:00',
+                    'start_time' => '13:00:00',
+                    'end_time' => '17:00:00',
                 ]);
             }
         }

@@ -277,6 +277,8 @@ Route::middleware('auth')->prefix('trang-ca-nhan')->name('patient.')->group(func
     
     // Notifications API & Page
     Route::get('/thong-bao', [\App\Http\Controllers\Patient\NotificationController::class, 'page'])->name('notifications.page');
+    Route::delete('/thong-bao-da-doc', [\App\Http\Controllers\Patient\NotificationController::class, 'destroyRead'])->name('notifications.destroy-read');
+    Route::get('/thong-bao/{id}', [\App\Http\Controllers\Patient\NotificationController::class, 'show'])->name('notifications.show');
     Route::delete('/thong-bao/{id}', [\App\Http\Controllers\Patient\NotificationController::class, 'destroy'])->name('notifications.destroy');
     Route::get('/api/thong-bao', [\App\Http\Controllers\Patient\NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/api/thong-bao/doc', [\App\Http\Controllers\Patient\NotificationController::class, 'markAsRead'])->name('notifications.read');

@@ -18,6 +18,7 @@ class Notification extends Model {
         'ref_type',
         'ref_id',
         'is_read',
+        'data',
         'created_at',
     ];
 
@@ -29,6 +30,7 @@ class Notification extends Model {
             'is_sent' => 'boolean',
             'is_read' => 'boolean',
             'created_at' => 'datetime',
+            'data' => 'array',
         ];
     }
 
