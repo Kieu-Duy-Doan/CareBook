@@ -11,6 +11,9 @@
     /* BƯỚC 2 — Phương thức */
     bookingMethod: null,
 
+    /* Nhánh Bác sĩ Gợi ý (Từ thông báo huỷ lịch) */
+    suggestedDoctors: {{ json_encode($suggestedDoctors ?? []) }},
+
     /* Nhánh Chuyên khoa */
     specialties: {{ $specialties->toJson() }},
     selectedSpecialty: null,
@@ -61,7 +64,7 @@
 
     get canGoStep3() {
         if (this.bookingMethod === 'specialty') return this.selectedSpecialty !== null;
-        if (this.bookingMethod === 'doctor') return this.selectedDoctor !== null;
+        if (this.bookingMethod === 'doctor' || this.bookingMethod === 'suggested') return this.selectedDoctor !== null;
         return false;
     },
 
@@ -104,7 +107,7 @@
     async loadAvailableDates() {
         this.loadingDates = true;
         this.availableDates = [];
-        const params = this.bookingMethod === 'doctor'
+        const params = (this.bookingMethod === 'doctor' || this.bookingMethod === 'suggested')
             ? '?doctor_id=' + this.selectedDoctor.id
             : '?specialty_id=' + this.selectedSpecialty.id;
         try {
@@ -140,7 +143,7 @@
     async loadSlots() {
         if (!this.selectedDate) return;
         this.loadingSlots = true;
-        const params = this.bookingMethod === 'doctor'
+        const params = (this.bookingMethod === 'doctor' || this.bookingMethod === 'suggested')
             ? '?doctor_id=' + this.selectedDoctor.id + '&date=' + this.selectedDate.date
             : '?specialty_id=' + this.selectedSpecialty.id + '&date=' + this.selectedDate.date;
         try {
@@ -162,11 +165,22 @@
 
     init() {
         const urlParams = new URLSearchParams(window.location.search);
+        
+        // Nhận phương thức đặt lịch từ URL (Ví dụ: từ thông báo huỷ lịch)
+        const initialMethod = urlParams.get('booking_method');
+        if (initialMethod === 'suggested' && this.suggestedDoctors.length > 0) {
+            this.bookingMethod = 'suggested';
+        }
+        
+        const cId = parseInt(urlParams.get('cancelled_doctor_id'));
+        if (cId) {
+            this.cancelledDoctorId = cId;
+        }
+
         if (urlParams.get('fast_track')) {
             const pId = parseInt(urlParams.get('patient_profile_id'));
             const sId = parseInt(urlParams.get('specialty_id'));
             const dId = parseInt(urlParams.get('doctor_id')); // Bác sĩ được chọn thay thế
-            const cId = parseInt(urlParams.get('cancelled_doctor_id')); // Bác sĩ cũ bị huỷ
             const bMethod = urlParams.get('booking_method');
             const r = urlParams.get('reason');
             
@@ -176,11 +190,8 @@
             if (sId) {
                 this.selectedSpecialty = this.specialties.find(s => s.id === sId) || null;
             }
-            if (cId) {
-                this.cancelledDoctorId = cId;
-            } else if (!dId && bMethod === 'doctor') {
-                // Tương thích ngược: nếu không có cId nhưng có bMethod=doctor và gọi từ popup huỷ cũ
-                // Nhưng do url thay thế giờ đã truyền dId, nên ta có thể bỏ qua hoặc gán dự phòng.
+            if (!dId && bMethod === 'doctor') {
+                // Tương thích ngược: nếu không có dId nhưng có bMethod=doctor và gọi từ popup huỷ cũ
             }
 
             if (bMethod === 'specialty' && sId && !dId) {
@@ -229,7 +240,7 @@
 
     {{-- ===== PROGRESS STEPPER ===== --}}
     <div class="sticky z-30 bg-white/90 backdrop-blur-sm border-b shadow-sm transition-all top-[110px] md:top-[124px]" style="border-color:#e2e8f0;">
-        <div class="max-w-5xl mx-auto px-4 py-3">
+        <div class="max-w-5xl mx-auto px-4 py-2">
             <div class="flex items-start justify-between relative">
                 {{-- Line nền xám --}}
                 <div class="absolute h-0.5 bg-gray-200 z-0" style="top:16px; left:10%; right:10%;"></div>
@@ -334,17 +345,8 @@
     </div>
 
     @include('patient.booking.steps.step1')
-
     @include('patient.booking.steps.step2')
-
-    @include('patient.booking.modals.specialty')
-    @include('patient.booking.modals.doctor')
-
-
-
     @include('patient.booking.steps.step3')
-
-    @include('patient.booking.modals.slot')
 
 
     @include('patient.booking.steps.step4')

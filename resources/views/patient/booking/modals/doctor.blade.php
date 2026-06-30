@@ -6,9 +6,11 @@
          x-transition:leave="transition ease-in duration-200"
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-50 bg-black/50"
+         class="fixed inset-0 bg-black/50 flex items-end md:items-start justify-center p-0 md:p-6 md:pt-32"
+         style="z-index: 9999;"
          @click.self="showDoctorModal = false">
-        <div class="absolute bottom-0 left-0 right-0 md:relative md:w-full md:max-w-3xl md:mx-auto md:mt-[10vh] bg-white rounded-t-3xl md:rounded-3xl max-h-[85vh] md:max-h-[80vh] flex flex-col shadow-2xl"
+        <div class="w-full md:max-w-3xl bg-white rounded-t-3xl md:rounded-3xl flex flex-col shadow-2xl overflow-hidden"
+             style="max-height: calc(100vh - 150px);"
              @click.stop>
             <div class="flex items-center justify-between px-5 py-4 border-b" style="border-color:#e2e8f0;">
                 <div class="flex items-center gap-2">
@@ -31,7 +33,7 @@
                 </div>
             </div>
 
-            <div class="overflow-y-auto flex-1">
+            <div class="overflow-y-auto flex-1 min-h-0">
                 <template x-for="doctor in filteredDoctors" :key="doctor.id">
                     <div @click="selectDoctor(doctor)"
                          class="flex items-center gap-4 px-5 py-4 border-b hover:bg-blue-50 cursor-pointer transition-colors"
