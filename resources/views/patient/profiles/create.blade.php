@@ -28,6 +28,26 @@
                 @endif
                 
                 <div class="space-y-5">
+                    @if(!isset($isSelf) || !$isSelf)
+                    <!-- Mối quan hệ -->
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1.5 ml-1">Mối quan hệ với bạn <span class="text-rose-500">*</span></label>
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i class="fa-solid fa-users text-slate-400 group-focus-within:text-primary transition-colors"></i>
+                            </div>
+                            <select id="relationshipSelect" name="relationship" required class="pl-11 w-full rounded-2xl border-slate-200 bg-slate-50 shadow-sm focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-300 @error('relationship') border-rose-500 bg-rose-50 @enderror py-3 appearance-none">
+                                <option value="" disabled selected>Chọn mối quan hệ</option>
+                                <option value="parent" {{ old('relationship') == 'parent' ? 'selected' : '' }}>Bố/Mẹ</option>
+                                <option value="spouse" {{ old('relationship') == 'spouse' ? 'selected' : '' }}>Vợ/Chồng</option>
+                                <option value="child" {{ old('relationship') == 'child' ? 'selected' : '' }}>Con</option>
+                                <option value="other" {{ old('relationship') == 'other' ? 'selected' : '' }}>Khác</option>
+                            </select>
+                        </div>
+                        @error('relationship') <p class="mt-1.5 ml-1 text-xs font-medium text-rose-500"><i class="fa-solid fa-circle-exclamation mr-1"></i> {{ $message }}</p> @enderror
+                    </div>
+                    @endif
+
                     <!-- Họ và tên -->
                     <div>
                         <label class="block text-sm font-bold text-slate-700 mb-1.5 ml-1">Họ và tên <span class="text-rose-500">*</span></label>
@@ -89,6 +109,7 @@
                                        {{ $hasIdCard ? 'readonly' : '' }}
                                        class="pl-11 w-full rounded-2xl border-slate-200 bg-slate-50 shadow-sm focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-300 py-3 {{ $hasIdCard ? 'cursor-not-allowed opacity-70 bg-slate-100' : '' }}">
                             </div>
+                            <p id="childIdCardNote" class="mt-1.5 ml-1 text-xs font-medium text-amber-600 hidden"><i class="fa-solid fa-circle-info mr-1"></i> Có thể bỏ qua trường này nếu trẻ chưa có CCCD.</p>
                         </div>
                     </div>
 
@@ -158,4 +179,24 @@
             </form>
         </div>
     </div>
-</x-layouts.patient>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const relSelect = document.getElementById('relationshipSelect');
+            const note = document.getElementById('childIdCardNote');
+            
+            if (relSelect && note) {
+                const toggleNote = () => {
+                    if (relSelect.value === 'child') {
+                        note.classList.remove('hidden');
+                    } else {
+                        note.classList.add('hidden');
+                    }
+                };
+                
+                relSelect.addEventListener('change', toggleNote);
+                toggleNote(); // Check on load (in case of old input)
+            }
+        });
+    </script>
+</x-layouts.patient-dashboard>
