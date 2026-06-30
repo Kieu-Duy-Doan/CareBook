@@ -304,6 +304,9 @@ class BookingService
                         'id'               => $schedule->doctor_profile_id,
                         'full_title'       => $schedule->doctorProfile->full_title ?? ($schedule->doctorProfile->user->full_name ?? 'Bác sĩ'),
                         'alternative_date' => $dateString,
+                        'experience_years' => $schedule->doctorProfile->experience_years ?? 0,
+                        'expertise'        => $schedule->doctorProfile->expertise ?? '',
+                        'avatar_url'       => $schedule->doctorProfile->user->avatar_url ?? null,
                     ];
                 }
 
