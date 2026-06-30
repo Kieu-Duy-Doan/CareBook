@@ -24,6 +24,8 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::get('/dang-ky', [AuthController::class, 'showRegister'])->name('register');
+Route::post('/dang-ky', [AuthController::class, 'register'])->name('register.post');
 Route::get('/dang-nhap', [AuthController::class, 'showPatientLogin'])->name('patient.login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout'])->name('logout');

@@ -118,7 +118,7 @@
             <div class="mt-8 pt-6 border-t border-slate-100 text-center">
                 <p class="text-sm font-medium text-slate-500">
                     Bạn chưa có tài khoản? 
-                    <a href="#" class="text-blue-600 hover:text-blue-700 font-bold ml-1 transition-colors">Đăng ký tại đây</a>
+                    <a href="{{ route('register') }}" class="text-blue-600 hover:text-blue-700 font-bold ml-1 transition-colors">Đăng ký tại đây</a>
                 </p>
             </div>
         </div>
