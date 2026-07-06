@@ -33,7 +33,8 @@ class DoctorController extends Controller
 
         $query = DoctorProfile::with(['user', 'specialties'])
             ->whereHas('user') // chỉ lấy có user
-            ->latest('created_at');
+            ->orderBy('updated_at', 'desc')
+            ->orderBy('id', 'desc');
 
         // Filter search: tên hoặc mã bác sĩ
         if ($request->filled('search')) {
@@ -343,6 +344,8 @@ class DoctorController extends Controller
                 ];
             }
             $doctor->specialties()->sync($syncData);
+
+            $doctor->touch();
 
             SystemLog::create([
                 'user_id'     => auth()->id(),

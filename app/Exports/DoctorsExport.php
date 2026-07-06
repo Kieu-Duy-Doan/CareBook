@@ -58,38 +58,37 @@ class DoctorsExport implements FromQuery, WithHeadings, WithMapping
             'Mã BS',
             'Họ tên',
             'Số điện thoại',
-            'Email',
             'Tên đăng nhập',
             'Mật khẩu',
-            'Cấp độ',
+            'CMND/CCCD',
+            'Email',
+            'Trạng thái',
             'Chức danh',
+            'Cấp độ',
+            'Chuyên môn',
             'Kinh nghiệm',
             'Số CCHN',
-            'Chuyên khoa chính',
-            'Các chuyên khoa khác',
-            'Trạng thái',
+            'Giới thiệu',
         ];
     }
 
     public function map($doctor): array
     {
-        $primarySpecialty = $doctor->primary_specialty ? $doctor->primary_specialty->name : '';
-        $otherSpecialties = $doctor->specialties->where('id', '!=', $doctor->primary_specialty?->id)->pluck('name')->implode(', ');
-
         return [
             $doctor->doctor_code,
             $doctor->user->full_name ?? '',
             $doctor->user->phone ?? '',
-            $doctor->user->email ?? '',
             $doctor->user->username ?? '',
-            '', // Mật khẩu rỗng
-            $doctor->level,
+            '',
+            $doctor->user->id_card ?? '',
+            $doctor->user->email ?? '',
+            $doctor->user->is_active ? 'Đang hoạt động' : 'Đã khoá',
             $doctor->academic_title,
+            $doctor->level,
+            $doctor->expertise,
             $doctor->experience_years,
             $doctor->license_number,
-            $primarySpecialty,
-            $otherSpecialties,
-            $doctor->user->is_active ? 'Đang hoạt động' : 'Đã khoá',
+            $doctor->bio,
         ];
     }
 }

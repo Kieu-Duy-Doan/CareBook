@@ -30,45 +30,20 @@ class DoctorsImport implements ToCollection
                 $doctorCode = trim($row[0] ?? '');
                 $fullname   = trim($row[1] ?? '');
                 $phone      = trim($row[2] ?? '');
-                $email      = trim($row[3] ?? '');
-                $username   = trim($row[4] ?? '');
-                $passwordInput = trim($row[5] ?? '');
-                $level      = trim($row[6] ?? '');
-                $title      = trim($row[7] ?? '');
-                $experience = trim($row[8] ?? '');
-                $cchn       = trim($row[9] ?? '');
-                $primarySpecialtyName = trim($row[10] ?? '');
-                $otherSpecialtiesString = trim($row[11] ?? '');
-                $statusInput = trim($row[12] ?? '');
+                $username   = trim($row[3] ?? '');
+                $passwordInput = trim($row[4] ?? '');
+                $idCard     = trim($row[5] ?? '');
+                $email      = trim($row[6] ?? '');
+                $statusInput = trim($row[7] ?? '');
+                $title      = trim($row[8] ?? '');
+                $level      = trim($row[9] ?? '');
+                $expertise  = trim($row[10] ?? '');
+                $experience = trim($row[11] ?? '');
+                $cchn       = trim($row[12] ?? '');
+                $bio        = trim($row[13] ?? '');
 
                 if (empty($username) || empty($fullname)) {
                     continue; // Bỏ qua nếu thiếu trường bắt buộc
-                }
-
-                // Kiểm tra trùng lặp (Unique) ngay lập tức
-                // 1. Username
-                if (User::where('username', $username)->exists()) {
-                    throw new \Exception("Dòng " . ($index + 1) . ": Tên đăng nhập '$username' đã tồn tại trong hệ thống.");
-                }
-
-                // 2. Phone
-                if ($phone && User::where('phone', $phone)->exists()) {
-                    throw new \Exception("Dòng " . ($index + 1) . ": Số điện thoại '$phone' đã tồn tại trong hệ thống.");
-                }
-
-                // 3. Email
-                if ($email && User::where('email', $email)->exists()) {
-                    throw new \Exception("Dòng " . ($index + 1) . ": Email '$email' đã tồn tại trong hệ thống.");
-                }
-
-                // 4. Mã Bác sĩ (nếu có nhập)
-                if ($doctorCode && DoctorProfile::where('doctor_code', $doctorCode)->exists()) {
-                    throw new \Exception("Dòng " . ($index + 1) . ": Mã bác sĩ '$doctorCode' đã tồn tại trong hệ thống.");
-                }
-
-                // 5. Số CCHN
-                if ($cchn && DoctorProfile::where('license_number', $cchn)->exists()) {
-                    throw new \Exception("Dòng " . ($index + 1) . ": Số CCHN '$cchn' đã tồn tại trong hệ thống.");
                 }
 
                 // Trạng thái (nếu rỗng mặc định Đang hoạt động)
@@ -78,85 +53,147 @@ class DoctorsImport implements ToCollection
                     $isActive = ($val === 'đang hoạt động' || $val === '1' || $val === 'true' || $val === 'active');
                 }
 
-                // CHỈ THÊM MỚI (CREATE)
-                if (!$doctorCode) {
-                    $slug = \Illuminate\Support\Str::slug($fullname); // "bui-xuan-huan"
-                    $parts = explode('-', $slug);
+                $existingDoctor = null;
+                if ($doctorCode) {
+                    $existingDoctor = DoctorProfile::where('doctor_code', $doctorCode)->first();
+                }
+
+                if ($existingDoctor) {
+                    $user = $existingDoctor->user;
                     
-                    if (count($parts) == 1) {
-                        $prefix = $parts[0];
-                    } else {
-                        $firstName = array_pop($parts); // huan
-                        $initials = '';
-                        foreach ($parts as $part) {
-                            if (!empty($part)) {
-                                $initials .= substr($part, 0, 1); // b, x
-                            }
-                        }
-                        $prefix = $firstName . $initials; // huanbx
+                    // Kiểm tra trùng lặp khi Update
+                    if ($username !== $user->username && User::where('username', $username)->exists()) {
+                        throw new \Exception("Dòng " . ($index + 1) . ": Tên đăng nhập '$username' đã tồn tại trong hệ thống.");
+                    }
+                    if ($phone && $phone !== $user->phone && User::where('phone', $phone)->exists()) {
+                        throw new \Exception("Dòng " . ($index + 1) . ": Số điện thoại '$phone' đã tồn tại trong hệ thống.");
+                    }
+                    if ($email && $email !== $user->email && User::where('email', $email)->exists()) {
+                        throw new \Exception("Dòng " . ($index + 1) . ": Email '$email' đã tồn tại trong hệ thống.");
+                    }
+                    if ($idCard && $idCard !== $user->id_card && User::where('id_card', $idCard)->exists()) {
+                        throw new \Exception("Dòng " . ($index + 1) . ": CMND/CCCD '$idCard' đã tồn tại trong hệ thống.");
+                    }
+                    if ($cchn && $cchn !== $existingDoctor->license_number && DoctorProfile::where('license_number', $cchn)->exists()) {
+                        throw new \Exception("Dòng " . ($index + 1) . ": Số CCHN '$cchn' đã tồn tại trong hệ thống.");
                     }
 
-                    $latestDoctor = DoctorProfile::where('doctor_code', 'regexp', '^' . $prefix . '[0-9]{2,}$')
-                        ->orderByRaw('CAST(SUBSTRING(doctor_code, '.(strlen($prefix)+1).') AS UNSIGNED) DESC')
-                        ->first();
+                    $userData = [
+                        'full_name' => $fullname,
+                        'phone'     => $phone,
+                        'username'  => $username,
+                        'id_card'   => $idCard ?: null,
+                        'email'     => $email ?: null,
+                        'is_active' => $isActive,
+                    ];
+
+                    if (!empty($passwordInput)) {
+                        $userData['password'] = Hash::make($passwordInput);
+                    }
+
+                    $user->fill($userData);
+                    $userDirty = $user->isDirty();
+                    if ($userDirty) {
+                        $user->save();
+                    }
+
+                    $existingDoctor->fill([
+                        'academic_title'   => $title ?: null,
+                        'level'            => $level ?: 'BS',
+                        'expertise'        => $expertise ?: null,
+                        'experience_years' => $experience !== '' ? $experience : 0,
+                        'license_number'   => $cchn ?: null,
+                        'bio'              => $bio ?: null,
+                    ]);
+                    $doctorDirty = $existingDoctor->isDirty();
+                    if ($doctorDirty) {
+                        $existingDoctor->save();
+                    }
+
+                    // Chỉ đẩy lên đầu nếu có thực sự thay đổi dữ liệu (ở User hoặc DoctorProfile)
+                    if ($userDirty && !$doctorDirty) {
+                        $existingDoctor->touch();
+                    }
+
+                    $importedDoctorCodes[] = $doctorCode;
+                } else {
+                    // Kiểm tra trùng lặp khi Create
+                    if (User::where('username', $username)->exists()) {
+                        throw new \Exception("Dòng " . ($index + 1) . ": Tên đăng nhập '$username' đã tồn tại trong hệ thống.");
+                    }
+                    if ($phone && User::where('phone', $phone)->exists()) {
+                        throw new \Exception("Dòng " . ($index + 1) . ": Số điện thoại '$phone' đã tồn tại trong hệ thống.");
+                    }
+                    if ($email && User::where('email', $email)->exists()) {
+                        throw new \Exception("Dòng " . ($index + 1) . ": Email '$email' đã tồn tại trong hệ thống.");
+                    }
+                    if ($idCard && User::where('id_card', $idCard)->exists()) {
+                        throw new \Exception("Dòng " . ($index + 1) . ": CMND/CCCD '$idCard' đã tồn tại trong hệ thống.");
+                    }
+                    if ($cchn && DoctorProfile::where('license_number', $cchn)->exists()) {
+                        throw new \Exception("Dòng " . ($index + 1) . ": Số CCHN '$cchn' đã tồn tại trong hệ thống.");
+                    }
+                    if ($doctorCode && DoctorProfile::where('doctor_code', $doctorCode)->exists()) {
+                        throw new \Exception("Dòng " . ($index + 1) . ": Mã bác sĩ '$doctorCode' đã tồn tại trong hệ thống.");
+                    }
+
+                    if (!$doctorCode) {
+                        $slug = \Illuminate\Support\Str::slug($fullname); // "bui-xuan-huan"
+                        $parts = explode('-', $slug);
                         
-                    $nextNumber = 1;
-                    if ($latestDoctor) {
-                        $numberStr = substr($latestDoctor->doctor_code, strlen($prefix));
-                        if (is_numeric($numberStr)) {
-                            $nextNumber = (int)$numberStr + 1;
+                        if (count($parts) == 1) {
+                            $prefix = $parts[0];
+                        } else {
+                            $firstName = array_pop($parts); // huan
+                            $initials = '';
+                            foreach ($parts as $part) {
+                                if (!empty($part)) {
+                                    $initials .= substr($part, 0, 1); // b, x
+                                }
+                            }
+                            $prefix = $firstName . $initials; // huanbx
                         }
-                    }
-                    
-                    $doctorCode = $prefix . str_pad($nextNumber, 2, '0', STR_PAD_LEFT);
-                }
 
-                $password = !empty($passwordInput) ? $passwordInput : 'Password@123';
-
-                $user = User::create([
-                    'full_name' => $fullname,
-                    'phone'     => $phone,
-                    'username'  => $username,
-                    'email'     => $email ?: null,
-                    'password'  => Hash::make($password),
-                    'role'      => 'doctor',
-                    'is_active' => $isActive,
-                ]);
-
-                $doctorToSync = DoctorProfile::create([
-                    'user_id'          => $user->id,
-                    'doctor_code'      => $doctorCode,
-                    'academic_title'   => $title ?: null,
-                    'level'            => $level ?: 'BS',
-                    'experience_years' => $experience !== '' ? $experience : 0,
-                    'license_number'   => $cchn ?: null,
-                ]);
-
-                $importedDoctorCodes[] = $doctorCode;
-
-                // Đồng bộ chuyên khoa
-                $syncData = [];
-                if (!empty($primarySpecialtyName)) {
-                    $primarySpecialty = \App\Models\Specialty::where('name', 'like', $primarySpecialtyName)->first();
-                    if ($primarySpecialty) {
-                        $syncData[$primarySpecialty->id] = ['is_primary' => 1];
-                    }
-                }
-
-                if (!empty($otherSpecialtiesString)) {
-                    $otherNames = array_map('trim', explode(',', $otherSpecialtiesString));
-                    foreach ($otherNames as $name) {
-                        if (!empty($name)) {
-                            $sp = \App\Models\Specialty::where('name', 'like', $name)->first();
-                            if ($sp && !isset($syncData[$sp->id])) {
-                                $syncData[$sp->id] = ['is_primary' => 0];
+                        $latestDoctor = DoctorProfile::where('doctor_code', 'regexp', '^' . $prefix . '[0-9]{2,}$')
+                            ->orderByRaw('CAST(SUBSTRING(doctor_code, '.(strlen($prefix)+1).') AS UNSIGNED) DESC')
+                            ->first();
+                            
+                        $nextNumber = 1;
+                        if ($latestDoctor) {
+                            $numberStr = substr($latestDoctor->doctor_code, strlen($prefix));
+                            if (is_numeric($numberStr)) {
+                                $nextNumber = (int)$numberStr + 1;
                             }
                         }
+                        
+                        $doctorCode = $prefix . str_pad($nextNumber, 2, '0', STR_PAD_LEFT);
                     }
-                }
-                
-                if (count($syncData) > 0) {
-                    $doctorToSync->specialties()->sync($syncData);
+
+                    $password = !empty($passwordInput) ? $passwordInput : 'Password@123';
+
+                    $user = User::create([
+                        'full_name' => $fullname,
+                        'phone'     => $phone,
+                        'username'  => $username,
+                        'id_card'   => $idCard ?: null,
+                        'email'     => $email ?: null,
+                        'password'  => Hash::make($password),
+                        'role'      => 'doctor',
+                        'is_active' => $isActive,
+                    ]);
+
+                    $doctorToSync = DoctorProfile::create([
+                        'user_id'          => $user->id,
+                        'doctor_code'      => $doctorCode,
+                        'academic_title'   => $title ?: null,
+                        'level'            => $level ?: 'BS',
+                        'expertise'        => $expertise ?: null,
+                        'experience_years' => $experience !== '' ? $experience : 0,
+                        'license_number'   => $cchn ?: null,
+                        'bio'              => $bio ?: null,
+                    ]);
+
+                    $importedDoctorCodes[] = $doctorCode;
                 }
             }
         });

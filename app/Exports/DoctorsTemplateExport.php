@@ -14,16 +14,17 @@ class DoctorsTemplateExport implements FromArray, WithHeadings, ShouldAutoSize
             'Mã BS',
             'Họ tên',
             'Số điện thoại',
-            'Email',
             'Tên đăng nhập',
             'Mật khẩu',
-            'Cấp độ',
+            'CMND/CCCD',
+            'Email',
+            'Trạng thái',
             'Chức danh',
+            'Cấp độ',
+            'Chuyên môn',
             'Kinh nghiệm',
             'Số CCHN',
-            'Chuyên khoa chính',
-            'Các chuyên khoa khác',
-            'Trạng thái',
+            'Giới thiệu',
         ];
     }
 
@@ -31,19 +32,20 @@ class DoctorsTemplateExport implements FromArray, WithHeadings, ShouldAutoSize
     {
         return [
             [
-                '', 
+                '',
                 'Bùi Xuân Huấn', 
                 '0901234567', 
-                'huanbx@gmail.com', 
                 'bs.huanbx', 
-                'Password@123', 
-                'ThS', 
+                'Password@123',
+                '012345678910',
+                'huanbx@gmail.com', 
+                'Đang hoạt động',
                 'Thạc sĩ', 
+                'ThS', 
+                'Khám bệnh đa khoa',
                 '5', 
                 '123456/BYT-CCHN', 
-                'Khám bệnh đa khoa',
-                'Nội tiết, Tim mạch',
-                'Đang hoạt động'
+                'Giới thiệu về bác sĩ...'
             ]
         ];
     }
