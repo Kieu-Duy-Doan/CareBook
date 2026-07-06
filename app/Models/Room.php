@@ -6,8 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Room extends Model
 {
-    public $timestamps = false;
-
     protected $fillable = [
         'name',
         'room_number',
@@ -16,7 +14,6 @@ class Room extends Model
         'room_type',
         'capacity',
         'is_active',
-        'created_at',
     ];
 
     protected function casts(): array

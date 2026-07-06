@@ -13,7 +13,7 @@ class RoomController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Room::with('specialties')->latest();
+        $query = Room::with('specialties')->orderBy('updated_at', 'desc')->orderBy('id', 'desc');
 
         if ($request->filled('building')) {
             $query->where('building', $request->building);

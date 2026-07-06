@@ -11,6 +11,7 @@ class RoomsTemplateExport implements FromArray, WithHeadings, ShouldAutoSize
     public function headings(): array
     {
         return [
+            'ID',
             'Tên phòng (*)',
             'Số phòng',
             'Tòa nhà',
@@ -25,6 +26,7 @@ class RoomsTemplateExport implements FromArray, WithHeadings, ShouldAutoSize
     {
         return [
             [
+                '',
                 'Phòng khám VIP 1', 
                 '101', 
                 'Khu A', 

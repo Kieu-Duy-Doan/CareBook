@@ -21,21 +21,17 @@ class RoomsImport implements ToCollection
                     continue;
                 }
 
-                $name = trim($row[0] ?? '');
-                $roomNumber = trim($row[1] ?? '');
-                $building = trim($row[2] ?? '');
-                $floor = trim($row[3] ?? '');
-                $roomTypeInput = trim($row[4] ?? '');
-                $capacity = trim($row[5] ?? '');
-                $statusInput = trim($row[6] ?? '');
+                $id = trim($row[0] ?? '');
+                $name = trim($row[1] ?? '');
+                $roomNumber = trim($row[2] ?? '');
+                $building = trim($row[3] ?? '');
+                $floor = trim($row[4] ?? '');
+                $roomTypeInput = trim($row[5] ?? '');
+                $capacity = trim($row[6] ?? '');
+                $statusInput = trim($row[7] ?? '');
 
                 if (empty($name)) {
                     continue;
-                }
-
-                // Kiểm tra trùng lặp Tên phòng
-                if (Room::where('name', $name)->exists()) {
-                    throw new \Exception("Dòng " . ($index + 1) . ": Tên phòng '$name' đã tồn tại trong hệ thống.");
                 }
 
                 $isActive = true;
@@ -47,6 +43,35 @@ class RoomsImport implements ToCollection
                 $roomType = 'examination';
                 if (in_array(strtolower($roomTypeInput), ['examination', 'diagnostic', 'surgery', 'other'])) {
                     $roomType = strtolower($roomTypeInput);
+                }
+
+                if ($id) {
+                    $room = Room::find($id);
+                    if ($room) {
+                        if ($name !== $room->name && Room::where('name', $name)->exists()) {
+                            throw new \Exception("Dòng " . ($index + 1) . ": Tên phòng '$name' đã tồn tại trong hệ thống.");
+                        }
+
+                        $room->fill([
+                            'name' => $name,
+                            'room_number' => $roomNumber ?: null,
+                            'building' => $building ?: null,
+                            'floor' => $floor ?: null,
+                            'room_type' => $roomType,
+                            'capacity' => is_numeric($capacity) ? (int)$capacity : null,
+                            'is_active' => $isActive,
+                        ]);
+
+                        if ($room->isDirty()) {
+                            $room->save();
+                        }
+                        continue;
+                    }
+                }
+
+                // Create
+                if (Room::where('name', $name)->exists()) {
+                    throw new \Exception("Dòng " . ($index + 1) . ": Tên phòng '$name' đã tồn tại trong hệ thống.");
                 }
 
                 Room::create([

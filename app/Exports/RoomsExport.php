@@ -42,14 +42,13 @@ class RoomsExport implements FromQuery, WithHeadings, WithMapping
     {
         return [
             'ID',
-            'Tên phòng',
+            'Tên phòng (*)',
             'Số phòng',
             'Tòa nhà',
             'Tầng',
-            'Loại phòng',
+            'Loại phòng (*)',
             'Sức chứa',
-            'Trạng thái',
-            'Ngày tạo'
+            'Trạng thái'
         ];
     }
 
@@ -64,7 +63,6 @@ class RoomsExport implements FromQuery, WithHeadings, WithMapping
             $room->room_type,
             $room->capacity,
             $room->is_active ? 'Đang hoạt động' : 'Ngừng hoạt động',
-            $room->created_at ? $room->created_at->format('d/m/Y H:i') : '',
         ];
     }
 }

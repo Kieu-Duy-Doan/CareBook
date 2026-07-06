@@ -17,7 +17,7 @@ return new class extends Migration
             $table->enum('room_type', ['examination', 'diagnostic', 'surgery', 'other'])->default('examination');
             $table->tinyInteger('capacity')->nullable();
             $table->boolean('is_active')->default(true);
-            $table->timestamp('created_at')->useCurrent();
+            $table->timestamps();
         });
     }
 
