@@ -21,7 +21,8 @@ class ReceptionistController extends Controller
 
         $query = User::with('staffProfile')
             ->where('role', 'receptionist')
-            ->latest('created_at');
+            ->orderBy('updated_at', 'desc')
+            ->orderBy('id', 'desc');
 
         if ($request->filled('search')) {
             $query->where(function($q) use ($request) {
@@ -229,6 +230,8 @@ class ReceptionistController extends Controller
                     'start_date'     => $validated['start_date'] ?? null,
                 ]
             );
+
+            $receptionist->touch();
 
             SystemLog::create([
                 'user_id'     => auth()->id(),

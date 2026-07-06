@@ -54,14 +54,15 @@ class ReceptionistsExport implements FromQuery, WithHeadings, WithMapping
             'Mã NV',
             'Họ tên',
             'Số điện thoại',
-            'Email',
             'Tên đăng nhập',
             'Mật khẩu',
-            'Số CCCD',
+            'CMND/CCCD',
+            'Email',
+            'Trạng thái',
+            'Vị trí',
             'Phòng ban',
             'SĐT nội bộ',
             'Ngày vào làm',
-            'Trạng thái'
         ];
     }
 
@@ -71,14 +72,15 @@ class ReceptionistsExport implements FromQuery, WithHeadings, WithMapping
             $receptionist->staffProfile->employee_code ?? '',
             $receptionist->full_name ?? '',
             $receptionist->phone ?? '',
-            $receptionist->email ?? '',
             $receptionist->username ?? '',
-            '', // Mật khẩu rỗng
+            '',
             $receptionist->id_card ?? '',
+            $receptionist->email ?? '',
+            $receptionist->is_active ? 'Đang hoạt động' : 'Đã khoá',
+            $receptionist->staffProfile->position ?? '',
             $receptionist->staffProfile->department ?? '',
             $receptionist->staffProfile->internal_phone ?? '',
             $receptionist->staffProfile->start_date ?? '',
-            $receptionist->is_active ? 'Đang hoạt động' : 'Đã khoá',
         ];
     }
 }

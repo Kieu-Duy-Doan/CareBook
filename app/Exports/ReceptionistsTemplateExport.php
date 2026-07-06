@@ -14,14 +14,15 @@ class ReceptionistsTemplateExport implements FromArray, WithHeadings, ShouldAuto
             'Mã NV',
             'Họ tên',
             'Số điện thoại',
-            'Email',
             'Tên đăng nhập',
             'Mật khẩu',
-            'Số CCCD',
+            'CMND/CCCD',
+            'Email',
+            'Trạng thái',
+            'Vị trí',
             'Phòng ban',
             'SĐT nội bộ',
             'Ngày vào làm',
-            'Trạng thái'
         ];
     }
 
@@ -32,14 +33,15 @@ class ReceptionistsTemplateExport implements FromArray, WithHeadings, ShouldAuto
                 '', 
                 'Trần Thị B', 
                 '0912345678', 
-                'tranthib@gmail.com', 
                 'lt.tranthib', 
                 'Password@123', 
                 '012345678910', 
+                'tranthib@gmail.com', 
+                'Đang hoạt động',
+                'Lễ tân',
                 'Tiếp nhận bệnh nhân', 
                 '101', 
                 '2023-01-01', 
-                'Đang hoạt động'
             ]
         ];
     }
