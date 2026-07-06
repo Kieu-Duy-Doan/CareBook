@@ -11,19 +11,27 @@ class WorkSchedulesTemplateExport implements FromArray, WithHeadings
     {
         return [
             [
+                '',
                 'BS01',
+                '',
                 'Phòng Khám 01',
                 '2',
                 'Sáng',
+                '',
+                '',
                 '15',
                 '16',
                 'Đang hoạt động'
             ],
             [
+                '',
                 'BS02',
+                '',
                 'Phòng Khám 02',
                 '3',
                 'Chiều',
+                '',
+                '',
                 '20',
                 '12',
                 'Đang hoạt động'
@@ -34,10 +42,14 @@ class WorkSchedulesTemplateExport implements FromArray, WithHeadings
     public function headings(): array
     {
         return [
+            'ID',
             'Mã Bác sĩ (*)',
+            'Tên Bác sĩ',
             'Tên phòng (*)',
             'Thứ (1-7) (*)',
             'Ca làm việc (Sáng/Chiều) (*)',
+            'Giờ bắt đầu',
+            'Giờ kết thúc',
             'Thời gian khám mỗi bệnh nhân (phút)',
             'Số bệnh nhân tối đa',
             'Trạng thái'

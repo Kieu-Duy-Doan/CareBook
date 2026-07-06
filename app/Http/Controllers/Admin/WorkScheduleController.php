@@ -65,8 +65,8 @@ class WorkScheduleController extends Controller
         $rooms = Room::where('is_active', true)->orderBy('name')->get();
 
         $query = WorkSchedule::with(['doctor.user', 'room'])
-            ->orderBy('day_of_week')
-            ->orderBy('start_time');
+            ->orderBy('updated_at', 'desc')
+            ->orderBy('id', 'desc');
 
         if ($request->filled('doctor_id')) {
             $query->where('doctor_profile_id', $request->doctor_id);
@@ -110,16 +110,6 @@ class WorkScheduleController extends Controller
 
         if (!$isValidTime) {
             return back()->with('error', 'Thời gian ca trực chỉ được phép là Sáng (07:00 - 11:00) hoặc Chiều (13:00 - 17:00).')->withInput();
-        }
-
-        // Kiểm tra bác sĩ được chọn đã có lịch làm việc tại phòng này vào thứ đã chọn chưa
-        $existsRoom = WorkSchedule::where('doctor_profile_id', $request->doctor_profile_id)
-            ->where('room_id', $request->room_id)
-            ->where('day_of_week', $request->day_of_week)
-            ->exists();
-
-        if ($existsRoom) {
-            return back()->with('error', 'Bác sĩ này đã có lịch tại phòng này vào thứ đã chọn.');
         }
 
         // Kiểm tra bác sĩ được chọn đã có ca làm việc trùng thời gian vào thứ đã chọn chưa

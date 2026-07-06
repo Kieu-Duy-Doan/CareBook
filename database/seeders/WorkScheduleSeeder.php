@@ -18,8 +18,10 @@ class WorkScheduleSeeder extends Seeder
             return;
         }
 
-        foreach ($doctors as $i => $doctor) {
-            $room = $rooms[$i % $rooms->count()];
+        // Để tránh trùng phòng (1 phòng chỉ được 1 bác sĩ trực cùng 1 thời điểm), 
+        // ta chỉ gán lịch cho số lượng bác sĩ bằng đúng số lượng phòng.
+        foreach ($doctors->take($rooms->count()) as $i => $doctor) {
+            $room = $rooms[$i];
 
             // Phân lịch từ T2 đến T6 cho mỗi bác sĩ
             foreach ([2, 3, 4, 5, 6] as $day) {

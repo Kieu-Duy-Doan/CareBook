@@ -48,15 +48,15 @@ class WorkSchedulesExport implements FromQuery, WithHeadings, WithMapping
     {
         return [
             'ID',
-            'Mã Bác sĩ',
+            'Mã Bác sĩ (*)',
             'Tên Bác sĩ',
-            'Tên phòng',
-            'Thứ',
-            'Ca làm việc',
+            'Tên phòng (*)',
+            'Thứ (1-7) (*)',
+            'Ca làm việc (Sáng/Chiều) (*)',
             'Giờ bắt đầu',
             'Giờ kết thúc',
-            'Thời gian khám (phút)',
-            'Số slots',
+            'Thời gian khám mỗi bệnh nhân (phút)',
+            'Số bệnh nhân tối đa',
             'Trạng thái'
         ];
     }
@@ -75,7 +75,7 @@ class WorkSchedulesExport implements FromQuery, WithHeadings, WithMapping
             $schedule->doctor->doctor_code ?? '',
             $schedule->doctor->user->full_name ?? '',
             $schedule->room->name ?? '',
-            $schedule->day_name,
+            $schedule->day_of_week,
             $shift,
             substr($schedule->start_time, 0, 5),
             substr($schedule->end_time, 0, 5),
