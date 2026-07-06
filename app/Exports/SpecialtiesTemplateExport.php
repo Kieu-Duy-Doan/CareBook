@@ -11,6 +11,7 @@ class SpecialtiesTemplateExport implements FromArray, WithHeadings, ShouldAutoSi
     public function headings(): array
     {
         return [
+            'ID',
             'Tên chuyên khoa (*)',
             'Mô tả',
             'Thứ tự hiển thị',
@@ -22,6 +23,7 @@ class SpecialtiesTemplateExport implements FromArray, WithHeadings, ShouldAutoSi
     {
         return [
             [
+                '',
                 'Khám bệnh đa khoa', 
                 'Chuyên khám và điều trị các bệnh lý chung...', 
                 '1', 

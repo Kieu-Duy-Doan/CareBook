@@ -35,11 +35,10 @@ class SpecialtiesExport implements FromQuery, WithHeadings, WithMapping
     {
         return [
             'ID',
-            'Tên chuyên khoa',
+            'Tên chuyên khoa (*)',
             'Mô tả',
             'Thứ tự hiển thị',
-            'Trạng thái',
-            'Ngày tạo'
+            'Trạng thái'
         ];
     }
 
@@ -51,7 +50,6 @@ class SpecialtiesExport implements FromQuery, WithHeadings, WithMapping
             $specialty->description,
             $specialty->display_order,
             $specialty->is_active ? 'Đang hoạt động' : 'Ngừng hoạt động',
-            $specialty->created_at ? $specialty->created_at->format('d/m/Y H:i') : '',
         ];
     }
 }

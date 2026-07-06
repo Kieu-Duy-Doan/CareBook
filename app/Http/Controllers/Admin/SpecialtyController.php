@@ -13,8 +13,8 @@ class SpecialtyController extends Controller {
 public function index() 
     {
      $specialties = Specialty::withCount(['doctors', 'rooms'])
-            ->orderBy('display_order')
-            ->orderBy('name')
+            ->orderBy('updated_at', 'desc')
+            ->orderBy('id', 'desc')
             ->paginate(20);
 
         return view('admin.specialties.index', compact('specialties'));
