@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\Receptionist;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -108,7 +108,7 @@ class AppointmentController extends Controller
             ->pluck('count', 'status')
             ->toArray();
 
-        return view('admin.appointments.index', compact('appointments', 'doctors', 'specialties', 'totalCount', 'statusCounts'));
+        return view('receptionist.appointments.index', compact('appointments', 'doctors', 'specialties', 'totalCount', 'statusCounts'));
     }
 
     public function calendar(Request $request)
@@ -143,13 +143,13 @@ class AppointmentController extends Controller
                 'title' => $title,
                 'start' => $start,
                 'end'   => $end,
-                'url'   => route('admin.appointments.show', $apt->id),
+                'url'   => route('receptionist.appointments.show', $apt->id),
                 'backgroundColor' => $color,
                 'borderColor' => $color,
             ];
         });
 
-        return view('admin.appointments.calendar', compact('doctors', 'specialties', 'events'));
+        return view('receptionist.appointments.calendar', compact('doctors', 'specialties', 'events'));
     }
 
     public function show($id)
@@ -167,7 +167,7 @@ class AppointmentController extends Controller
             'logs.changedBy',
         ])->findOrFail($id);
 
-        return view('admin.appointments.show', compact('appointment'));
+        return view('receptionist.appointments.show', compact('appointment'));
     }
 
     public function create()
@@ -178,7 +178,7 @@ class AppointmentController extends Controller
         $rooms = Room::where('is_active', true)->orderBy('name')->get();
         $users = User::where('is_active', true)->orderBy('full_name')->get();
 
-        return view('admin.appointments.create', compact('patients', 'specialties', 'doctors', 'rooms', 'users'));
+        return view('receptionist.appointments.create', compact('patients', 'specialties', 'doctors', 'rooms', 'users'));
     }
 
     public function store(Request $request)
@@ -270,7 +270,7 @@ class AppointmentController extends Controller
             'reason'         => 'Khởi tạo lịch hẹn bởi Quản trị viên',
         ]);
 
-        return redirect()->route('admin.appointments.index')->with('success', 'Tạo lịch hẹn mới thành công.');
+        return redirect()->route('receptionist.appointments.index')->with('success', 'Tạo lịch hẹn mới thành công.');
     }
 
     public function edit($id)
@@ -289,7 +289,7 @@ class AppointmentController extends Controller
         $rooms = Room::where('is_active', true)->orderBy('name')->get();
         $users = User::where('is_active', true)->orderBy('full_name')->get();
 
-        return view('admin.appointments.edit', compact('appointment', 'patients', 'specialties', 'doctors', 'rooms', 'users'));
+        return view('receptionist.appointments.edit', compact('appointment', 'patients', 'specialties', 'doctors', 'rooms', 'users'));
     }
 
     public function update(Request $request, $id)
@@ -394,7 +394,7 @@ class AppointmentController extends Controller
             }
         }
 
-        return redirect()->route('admin.appointments.index')->with('success', 'Cập nhật lịch hẹn thành công.');
+        return redirect()->route('receptionist.appointments.index')->with('success', 'Cập nhật lịch hẹn thành công.');
     }
 
 
@@ -409,9 +409,9 @@ class AppointmentController extends Controller
                 $appointment->delete();
             });
 
-            return redirect()->route('admin.appointments.index')->with('success', 'Xoá lịch hẹn thành công.');
+            return redirect()->route('receptionist.appointments.index')->with('success', 'Xoá lịch hẹn thành công.');
         } catch (\Exception $e) {
-            return redirect()->route('admin.appointments.index')->with('error', 'Không thể xoá lịch hẹn này. Lịch hẹn có thể đang liên kết với dữ liệu khác trong hệ thống.');
+            return redirect()->route('receptionist.appointments.index')->with('error', 'Không thể xoá lịch hẹn này. Lịch hẹn có thể đang liên kết với dữ liệu khác trong hệ thống.');
         }
     }
 

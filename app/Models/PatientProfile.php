@@ -24,6 +24,7 @@ class PatientProfile extends Model
         'symptom_notes',
         'is_self',
         'relationship',
+        'card_id_change_count',
     ];
 
     protected function casts(): array

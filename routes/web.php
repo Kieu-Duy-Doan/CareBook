@@ -321,3 +321,5 @@ Route::middleware(['auth', 'role:patient'])->prefix('dat-lich')->name('patient.b
 Route::post('/dat-lich', [\App\Http\Controllers\Patient\BookingController::class, 'store'])
     ->middleware(['auth', 'role:patient'])
     ->name('booking.store');
+
+require __DIR__.'/receptionist.php';

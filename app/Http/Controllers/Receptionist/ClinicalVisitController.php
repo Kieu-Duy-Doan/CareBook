@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\Receptionist;
 
 use App\Http\Controllers\Controller;
 use App\Models\ClinicalVisit;
@@ -53,7 +53,7 @@ class ClinicalVisitController extends Controller
         $doctors = DoctorProfile::with('user')->get();
         $rooms = Room::where('is_active', true)->get();
 
-        return view('admin.clinical-visits.index', compact('visits', 'doctors', 'rooms'));
+        return view('receptionist.clinical-visits.index', compact('visits', 'doctors', 'rooms'));
     }
 
     /**
@@ -76,6 +76,6 @@ class ClinicalVisitController extends Controller
             $prescription = Prescription::where('medical_record_id', $medicalRecord->id)->first();
         }
 
-        return view('admin.clinical-visits.show', compact('visit', 'medicalRecord', 'prescription'));
+        return view('receptionist.clinical-visits.show', compact('visit', 'medicalRecord', 'prescription'));
     }
 }

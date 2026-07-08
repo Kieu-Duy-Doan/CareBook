@@ -43,6 +43,16 @@ class ClinicalVisit extends Model
         return $this->belongsTo(Appointment::class);
     }
 
+    public function appointmentLogs()
+    {
+        return $this->hasMany(AppointmentLog::class, 'clinical_visit_id');
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
     public function parentVisit()
     {
         return $this->belongsTo(ClinicalVisit::class, 'parent_visit_id');

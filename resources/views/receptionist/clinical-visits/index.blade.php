@@ -1,4 +1,4 @@
-<x-layouts.admin title="Trung tâm Khám bệnh">
+<x-layouts.receptionist title="Trung tâm Khám bệnh">
     <div class="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
             <h2 class="text-2xl font-bold text-gray-900">Trung tâm Khám bệnh</h2>
@@ -6,11 +6,10 @@
         </div>
     </div>
 
-    <x-admin.appointment-tabs />
 
     <!-- FILTER FORM -->
     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
-        <form action="{{ route('admin.clinical-visits.index') }}" method="GET" class="flex flex-col lg:flex-row gap-4 items-end">
+        <form action="{{ route('receptionist.clinical-visits.index') }}" method="GET" class="flex flex-col lg:flex-row gap-4 items-end">
             <div class="w-full lg:flex-1">
                     <label class="block text-xs font-medium text-gray-500 mb-1">Ngày khám</label>
                     <input type="date" name="date" value="{{ request('date') }}"
@@ -69,7 +68,7 @@
                     </select>
                 </div>
             <div class="flex gap-2 shrink-0 w-full lg:w-auto">
-                <a href="{{ route('admin.clinical-visits.index') }}"
+                <a href="{{ route('receptionist.clinical-visits.index') }}"
                     class="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors">
                     Đặt lại
                 </a>
@@ -111,7 +110,7 @@
                     @forelse($visits as $visit)
                         <tr class="hover:bg-gray-50 transition-colors">
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <a href="{{ route('admin.appointments.show', $visit->appointment_id) }}"
+                                <a href="{{ route('receptionist.appointments.show', $visit->appointment_id) }}"
                                     class="font-mono text-sm font-bold text-blue-600 hover:underline">
                                     {{ $visit->appointment->appointment_code ?? '#' . $visit->appointment_id }}
                                 </a>
@@ -172,9 +171,15 @@
                                     {{ number_format($visit->payment_amount, 0, ',', '.') }}đ</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <a href="{{ route('admin.clinical-visits.show', $visit->id) }}"
-                                    class="text-blue-600 hover:text-blue-900 transition-colors">
-                                    Xem bệnh án <i class="fa-solid fa-arrow-right ml-1"></i>
+                                @if ($visit->payment_status === 'pending')
+                                    <a href="{{ route('receptionist.payments.create', $visit->id) }}"
+                                        class="block text-green-600 hover:text-green-900 transition-colors mb-2">
+                                        <i class="fa-solid fa-money-bill-wave"></i> Thanh toán
+                                    </a>
+                                @endif
+                                <a href="{{ route('receptionist.clinical-visits.show', $visit->id) }}"
+                                    class="block text-blue-600 hover:text-blue-900 transition-colors">
+                                    <i class="fa-solid fa-eye"></i> Xem bệnh án
                                 </a>
                             </td>
                         </tr>
@@ -203,4 +208,4 @@
             </div>
         @endif
     </div>
-</x-layouts.admin>
+</x-layouts.receptionist>

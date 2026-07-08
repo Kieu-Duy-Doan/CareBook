@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\Receptionist;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -64,12 +64,12 @@ class CustomerController extends Controller
 
         $customers = $query->paginate(15)->withQueryString();
 
-        return view('admin.customers.index', compact('customers', 'stats'));
+        return view('receptionist.customers.index', compact('customers', 'stats'));
     }
 
     public function create()
     {
-        return view('admin.customers.create');
+        return view('receptionist.customers.create');
     }
 
     public function store(Request $request)
@@ -166,7 +166,7 @@ class CustomerController extends Controller
             ]);
         });
 
-        return redirect()->route('admin.customers.index')
+        return redirect()->route('receptionist.customers.index')
             ->with('success', 'Thêm khách hàng thành công.');
     }
 
@@ -179,7 +179,7 @@ class CustomerController extends Controller
             ->limit(10)
             ->get();
 
-        return view('admin.customers.show', compact('customer', 'logs'));
+        return view('receptionist.customers.show', compact('customer', 'logs'));
     }
 
     public function edit($id)
@@ -188,7 +188,7 @@ class CustomerController extends Controller
             $q->where('is_self', 1);
         }])->findOrFail($id);
 
-        return view('admin.customers.edit', compact('customer'));
+        return view('receptionist.customers.edit', compact('customer'));
     }
 
     public function update(Request $request, $id)
@@ -299,7 +299,7 @@ class CustomerController extends Controller
             ]);
         });
 
-        return redirect()->route('admin.customers.index')
+        return redirect()->route('receptionist.customers.index')
             ->with('success', 'Cập nhật khách hàng thành công.');
     }
 
@@ -324,7 +324,7 @@ class CustomerController extends Controller
             'ip_address'  => request()->ip(),
         ]);
 
-        return redirect()->route('admin.customers.index')->with('success', 'Đã xoá khách hàng thành công.');
+        return redirect()->route('receptionist.customers.index')->with('success', 'Đã xoá khách hàng thành công.');
     }
 
     public function toggleActive($id)

@@ -20,6 +20,9 @@ class CheckRole
             if ($request->is('admin/*') || $request->is('admin')) {
                 return redirect()->route('login');
             }
+            if ($request->is('receptionist/*') || $request->is('receptionist')) {
+                return redirect()->route('receptionist.login');
+            }
 
             return redirect()->route('patient.login');
         }
@@ -33,7 +36,13 @@ class CheckRole
                     ->with('error', 'Bạn không có quyền truy cập khu vực quản trị.');
             }
 
-            if (in_array($user->role, ['admin', 'doctor', 'receptionist'], true)) {
+            if ($user->role === 'receptionist') {
+                return redirect()
+                    ->route('receptionist.dashboard')
+                    ->with('error', 'Bạn không có quyền truy cập trang này.');
+            }
+
+            if (in_array($user->role, ['admin', 'doctor'], true)) {
                 return redirect()
                     ->route('admin.dashboard')
                     ->with('error', 'Bạn không có quyền truy cập trang này.');

@@ -130,8 +130,8 @@
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Số CCCD / CMND</label>
-                                    <input type="text" name="id_card" value="{{ old('id_card') }}"
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Số CCCD / CMND <span class="text-red-500">*</span></label>
+                                    <input type="text" name="id_card" value="{{ old('id_card') }}" required
                                         class="w-full border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2 @error('id_card') border-red-500 @enderror">
                                 </div>
 
@@ -231,7 +231,7 @@
                             </li>
                             <li class="flex gap-2">
                                 <i class="fa-solid fa-check mt-1"></i>
-                                <span>Mã bệnh nhân (BN...) sẽ được hệ thống <b>tự động tạo ra</b> dựa vào số CMND/CCCD. Nếu không có CMND/CCCD, hệ thống sẽ tự phát sinh mã ngẫu nhiên.</span>
+                                <span>Mã bệnh nhân (BN...) sẽ được hệ thống <b>tự động tạo ra</b> dựa vào số CMND/CCCD.</span>
                             </li>
                         </ul>
                     </div>

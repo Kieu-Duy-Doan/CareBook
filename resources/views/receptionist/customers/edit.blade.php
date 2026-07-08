@@ -1,17 +1,17 @@
-<x-layouts.admin title="Chỉnh sửa Khách hàng — {{ $customer->full_name }}">
+<x-layouts.receptionist title="Chỉnh sửa Khách hàng — {{ $customer->full_name }}">
     <div class="space-y-6">
         <!-- Header -->
         <div class="flex items-center justify-between">
             <nav class="flex text-sm text-gray-500 font-medium">
-                <a href="{{ route('admin.dashboard') }}" class="hover:text-gray-900 transition">Dashboard</a>
+                <a href="{{ route('receptionist.dashboard') }}" class="hover:text-gray-900 transition">Dashboard</a>
                 <span class="mx-2 text-gray-400">/</span>
-                <a href="{{ route('admin.customers.index') }}" class="hover:text-gray-900 transition">Khách hàng</a>
+                <a href="{{ route('receptionist.customers.index') }}" class="hover:text-gray-900 transition">Khách hàng</a>
                 <span class="mx-2 text-gray-400">/</span>
-                <a href="{{ route('admin.customers.show', $customer->id) }}" class="hover:text-gray-900 transition">{{ $customer->full_name }}</a>
+                <a href="{{ route('receptionist.customers.show', $customer->id) }}" class="hover:text-gray-900 transition">{{ $customer->full_name }}</a>
                 <span class="mx-2 text-gray-400">/</span>
                 <span class="text-gray-900">Chỉnh sửa</span>
             </nav>
-            <a href="{{ route('admin.customers.index') }}"
+            <a href="{{ route('receptionist.customers.index') }}"
                 class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition flex items-center gap-2">
                 <i class="fa-solid fa-arrow-left"></i> Quay lại
             </a>
@@ -40,7 +40,7 @@
             </div>
         @endif
 
-        <form action="{{ route('admin.customers.update', $customer->id) }}" method="POST" x-data="{ loading: false }"
+        <form action="{{ route('receptionist.customers.update', $customer->id) }}" method="POST" x-data="{ loading: false }"
             @submit="loading = true">
             @csrf
             @method('PUT')
@@ -290,7 +290,7 @@
             <!-- Nút Lưu -->
             <div class="bg-white border-t border-gray-200 mt-6 pt-6 sticky bottom-0 z-10 pb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
                 <div class="flex items-center justify-end gap-3">
-                    <a href="{{ route('admin.customers.index') }}"
+                    <a href="{{ route('receptionist.customers.index') }}"
                         class="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition">
                         Huỷ bỏ
                     </a>
@@ -306,7 +306,7 @@
         </form>
 
     </div>
-</x-layouts.admin>
+</x-layouts.receptionist>
 
 @php
 function clone_date($date) {

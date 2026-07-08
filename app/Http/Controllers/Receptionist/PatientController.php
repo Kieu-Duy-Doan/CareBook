@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\Receptionist;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -62,13 +62,13 @@ class PatientController extends Controller
 
         $patients = $query->paginate(15)->withQueryString();
 
-        return view('admin.patients.index', compact('patients', 'stats'));
+        return view('receptionist.patients.index', compact('patients', 'stats'));
     }
 
     public function create()
     {
         $customers = User::where('role', 'patient')->where('is_active', true)->get();
-        return view('admin.patients.create', compact('customers'));
+        return view('receptionist.patients.create', compact('customers'));
     }
 
     public function store(Request $request)
@@ -149,7 +149,7 @@ class PatientController extends Controller
             ]);
         });
 
-        return redirect()->route('admin.patients.index')
+        return redirect()->route('receptionist.patients.index')
             ->with('success', 'Thêm hồ sơ bệnh nhân thành công.');
     }
 
@@ -177,7 +177,7 @@ class PatientController extends Controller
             ->limit(10)
             ->get();
 
-        return view('admin.patients.show', compact(
+        return view('receptionist.patients.show', compact(
             'profile', 'appointmentStats', 'logs'
         ));
     }
@@ -186,7 +186,7 @@ class PatientController extends Controller
     {
         $profile = PatientProfile::with('user')->findOrFail($id);
         $customers = User::where('role', 'patient')->where('is_active', true)->get();
-        return view('admin.patients.edit', compact('profile', 'customers'));
+        return view('receptionist.patients.edit', compact('profile', 'customers'));
     }
 
     public function update(Request $request, $id)
@@ -272,7 +272,7 @@ class PatientController extends Controller
             ]);
         });
 
-        return redirect()->route('admin.patients.edit', $id)
+        return redirect()->route('receptionist.patients.edit', $id)
             ->with('success', 'Cập nhật thông tin hồ sơ thành công.');
     }
 

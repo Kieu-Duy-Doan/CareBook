@@ -1,30 +1,19 @@
-<x-layouts.admin title="Chỉnh sửa Hồ sơ Bệnh nhân — {{ $profile->full_name }}">
+<x-layouts.receptionist title="Thêm Hồ sơ Bệnh nhân">
     <div class="space-y-6">
         <!-- Header -->
         <div class="flex items-center justify-between">
             <nav class="flex text-sm text-gray-500 font-medium">
-                <a href="{{ route('admin.dashboard') }}" class="hover:text-gray-900 transition">Dashboard</a>
+                <a href="{{ route('receptionist.dashboard') }}" class="hover:text-gray-900 transition">Dashboard</a>
                 <span class="mx-2 text-gray-400">/</span>
-                <a href="{{ route('admin.patients.index') }}" class="hover:text-gray-900 transition">Hồ sơ bệnh nhân</a>
+                <a href="{{ route('receptionist.patients.index') }}" class="hover:text-gray-900 transition">Hồ sơ bệnh nhân</a>
                 <span class="mx-2 text-gray-400">/</span>
-                <a href="{{ route('admin.patients.show', $profile->id) }}" class="hover:text-gray-900 transition">{{ $profile->full_name }}</a>
-                <span class="mx-2 text-gray-400">/</span>
-                <span class="text-gray-900">Chỉnh sửa</span>
+                <span class="text-gray-900">Thêm mới</span>
             </nav>
-            <a href="{{ route('admin.patients.index') }}"
+            <a href="{{ route('receptionist.patients.index') }}"
                 class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition flex items-center gap-2">
                 <i class="fa-solid fa-arrow-left"></i> Quay lại
             </a>
         </div>
-
-        @if (session('success'))
-            <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)"
-                class="mb-4 flex items-center gap-3 p-4 bg-green-50 border border-green-200 text-green-800 rounded-lg">
-                <i class="fa-solid fa-circle-check"></i>
-                <span>{{ session('success') }}</span>
-                <button @click="show=false" class="ml-auto"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-        @endif
 
         @if ($errors->any())
             <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-800 rounded-lg">
@@ -45,10 +34,9 @@
             </div>
         @endif
 
-        <form action="{{ route('admin.patients.update', $profile->id) }}" method="POST" x-data="{ loading: false }"
+        <form action="{{ route('receptionist.patients.store') }}" method="POST" enctype="multipart/form-data" x-data="{ loading: false }"
             @submit="loading = true">
             @csrf
-            @method('PUT')
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Cột trái: Form (2/3) -->
@@ -71,7 +59,7 @@
                                         class="w-full border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2 @error('owner_id') border-red-500 @enderror">
                                         <option value="">-- Chọn khách hàng --</option>
                                         @foreach($customers as $customer)
-                                            <option value="{{ $customer->id }}" {{ old('owner_id', $profile->owner_id) == $customer->id ? 'selected' : '' }}>
+                                            <option value="{{ $customer->id }}" {{ old('owner_id') == $customer->id ? 'selected' : '' }}>
                                                 {{ $customer->full_name }} ({{ $customer->phone }})
                                             </option>
                                         @endforeach
@@ -82,11 +70,11 @@
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Loại hồ sơ <span class="text-red-500">*</span></label>
                                     <div class="flex items-center gap-6 mt-2">
                                         <label class="flex items-center gap-2 cursor-pointer">
-                                            <input type="radio" name="is_self" value="1" {{ old('is_self', $profile->is_self) == '1' ? 'checked' : '' }} class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                                            <input type="radio" name="is_self" value="1" {{ old('is_self', '0') == '1' ? 'checked' : '' }} class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300">
                                             <span class="text-sm text-gray-700">Hồ sơ bản thân</span>
                                         </label>
                                         <label class="flex items-center gap-2 cursor-pointer">
-                                            <input type="radio" name="is_self" value="0" {{ old('is_self', $profile->is_self) == '0' ? 'checked' : '' }} class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                                            <input type="radio" name="is_self" value="0" {{ old('is_self', '0') == '0' ? 'checked' : '' }} class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300">
                                             <span class="text-sm text-gray-700">Hồ sơ người thân</span>
                                         </label>
                                     </div>
@@ -106,15 +94,8 @@
                         <div class="p-6">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div class="md:col-span-2">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Mã bệnh nhân</label>
-                                    <input type="text" value="{{ $profile->patient_code }}"
-                                        readonly disabled
-                                        class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-100 text-gray-500 cursor-not-allowed">
-                                </div>
-
-                                <div class="md:col-span-2">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên bệnh nhân <span class="text-red-500">*</span></label>
-                                    <input type="text" name="full_name" value="{{ old('full_name', $profile->full_name) }}"
+                                    <input type="text" name="full_name" value="{{ old('full_name') }}"
                                         required
                                         class="w-full border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2 @error('full_name') border-red-500 @enderror">
                                 </div>
@@ -122,7 +103,7 @@
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Ngày sinh <span
                                             class="text-red-500">*</span></label>
-                                    <input type="date" name="date_of_birth" value="{{ old('date_of_birth', clone_date($profile->date_of_birth)) }}"
+                                    <input type="date" name="date_of_birth" value="{{ old('date_of_birth') }}"
                                         max="{{ date('Y-m-d') }}" required
                                         class="w-full border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2 @error('date_of_birth') border-red-500 @enderror">
                                 </div>
@@ -133,49 +114,43 @@
                                     <select name="gender" required
                                         class="w-full border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2 @error('gender') border-red-500 @enderror">
                                         <option value="">-- Chọn giới tính --</option>
-                                        <option value="male" {{ old('gender', $profile->gender) == 'male' ? 'selected' : '' }}>Nam
+                                        <option value="male" {{ old('gender') == 'male' ? 'selected' : '' }}>Nam
                                         </option>
-                                        <option value="female" {{ old('gender', $profile->gender) == 'female' ? 'selected' : '' }}>Nữ
+                                        <option value="female" {{ old('gender') == 'female' ? 'selected' : '' }}>Nữ
                                         </option>
-                                        <option value="other" {{ old('gender', $profile->gender) == 'other' ? 'selected' : '' }}>Khác
+                                        <option value="other" {{ old('gender') == 'other' ? 'selected' : '' }}>Khác
                                         </option>
                                     </select>
                                 </div>
 
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Số điện thoại liên hệ</label>
-                                    <input type="text" name="phone" value="{{ old('phone', $profile->phone) }}"
+                                    <input type="text" name="phone" value="{{ old('phone') }}"
                                         class="w-full border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2 @error('phone') border-red-500 @enderror">
                                 </div>
 
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Số CCCD / CMND <span class="text-red-500">*</span></label>
-                                    @if($profile->card_id_change_count >= 1)
-                                        <input type="text" name="id_card" value="{{ old('id_card', $profile->id_card) }}" readonly
-                                            class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-100 text-gray-500 cursor-not-allowed"
-                                            title="Trường này chỉ được phép cập nhật 1 lần">
-                                    @else
-                                        <input type="text" name="id_card" value="{{ old('id_card', $profile->id_card) }}" required
-                                            class="w-full border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2 @error('id_card') border-red-500 @enderror">
-                                    @endif
+                                    <input type="text" name="id_card" value="{{ old('id_card') }}" required
+                                        class="w-full border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2 @error('id_card') border-red-500 @enderror">
                                 </div>
 
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Dân tộc</label>
-                                    <input type="text" name="ethnicity" value="{{ old('ethnicity', $profile->ethnicity) }}"
+                                    <input type="text" name="ethnicity" value="{{ old('ethnicity') }}"
                                         class="w-full border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2">
                                 </div>
 
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Nghề nghiệp</label>
-                                    <input type="text" name="occupation" value="{{ old('occupation', $profile->occupation) }}"
+                                    <input type="text" name="occupation" value="{{ old('occupation') }}"
                                         class="w-full border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2">
                                 </div>
 
                                 <div class="md:col-span-2">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Địa chỉ</label>
                                     <textarea name="address" rows="2"
-                                        class="w-full border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2">{{ old('address', $profile->address) }}</textarea>
+                                        class="w-full border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2">{{ old('address') }}</textarea>
                                 </div>
                             </div>
                         </div>
@@ -192,21 +167,21 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Mã thẻ BHYT</label>
-                                    <input type="text" name="insurance_code" value="{{ old('insurance_code', $profile->insurance_code) }}"
+                                    <input type="text" name="insurance_code" value="{{ old('insurance_code') }}"
                                         class="w-full border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2 font-mono">
                                 </div>
 
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Ngày hết hạn
                                         thẻ</label>
-                                    <input type="date" name="insurance_expiry" value="{{ old('insurance_expiry', clone_date($profile->insurance_expiry)) }}"
+                                    <input type="date" name="insurance_expiry" value="{{ old('insurance_expiry') }}"
                                         class="w-full border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2">
                                 </div>
 
                                 <div class="md:col-span-2">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Nơi đăng ký KCB ban
                                         đầu</label>
-                                    <input type="text" name="insurance_place" value="{{ old('insurance_place', $profile->insurance_place) }}"
+                                    <input type="text" name="insurance_place" value="{{ old('insurance_place') }}"
                                         class="w-full border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2">
                                 </div>
                             </div>
@@ -223,10 +198,15 @@
                         <div class="p-6">
                             <div class="grid grid-cols-1 gap-6">
                                 <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Tiền sử bệnh lý (Tải lên file PDF)</label>
+                                    <input type="file" name="medical_history[]" multiple accept=".pdf"
+                                        class="w-full border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                </div>
+                                <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Ghi chú triệu chứng, dị
                                         ứng, thông tin khác...</label>
                                     <textarea name="symptom_notes" rows="4"
-                                        class="w-full border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2">{{ old('symptom_notes', $profile->symptom_notes) }}</textarea>
+                                        class="w-full border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2">{{ old('symptom_notes') }}</textarea>
                                 </div>
                             </div>
                         </div>
@@ -251,7 +231,7 @@
                             </li>
                             <li class="flex gap-2">
                                 <i class="fa-solid fa-check mt-1"></i>
-                                <span>Mã bệnh nhân (BN...) được tạo ra duy nhất không thay đổi được.</span>
+                                <span>Mã bệnh nhân (BN...) sẽ được hệ thống <b>tự động tạo ra</b> dựa vào số CMND/CCCD.</span>
                             </li>
                         </ul>
                     </div>
@@ -262,7 +242,7 @@
             <div
                 class="bg-white border-t border-gray-200 mt-6 pt-6 sticky bottom-0 z-10 pb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
                 <div class="flex items-center justify-end gap-3">
-                    <a href="{{ route('admin.patients.index') }}"
+                    <a href="{{ route('receptionist.patients.index') }}"
                         class="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition">
                         Huỷ bỏ
                     </a>
@@ -271,18 +251,11 @@
                         :disabled="loading">
                         <i class="fa-solid fa-spinner fa-spin" x-show="loading" style="display: none;"></i>
                         <i class="fa-solid fa-save" x-show="!loading"></i>
-                        <span>Lưu Hồ Sơ Bệnh Nhân</span>
+                        <span>Thêm Hồ Sơ Bệnh Nhân</span>
                     </button>
                 </div>
             </div>
         </form>
 
     </div>
-</x-layouts.admin>
-
-@php
-function clone_date($date) {
-    if (!$date) return null;
-    return \Carbon\Carbon::parse($date)->format('Y-m-d');
-}
-@endphp
+</x-layouts.receptionist>

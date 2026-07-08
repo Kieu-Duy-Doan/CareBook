@@ -104,6 +104,11 @@ class Appointment extends Model
         return $this->hasMany(AppointmentLog::class)->orderBy('created_at', 'desc');
     }
 
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
     public function getStatusLabelAttribute(): string
     {
         return match($this->status) {
