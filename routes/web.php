@@ -321,3 +321,21 @@ Route::middleware(['auth', 'role:patient'])->prefix('dat-lich')->name('patient.b
 Route::post('/dat-lich', [\App\Http\Controllers\Patient\BookingController::class, 'store'])
     ->middleware(['auth', 'role:patient'])
     ->name('booking.store');
+
+// Route lễ tân
+Route::prefix('receptionist')->name('receptionist.')->group(function () {
+    // Guest routes
+    Route::middleware('guest')->group(function () {
+        Route::get('/login', [\App\Http\Controllers\Receptionist\AuthController::class, 'showLogin'])->name('login');
+        Route::post('/login', [\App\Http\Controllers\Receptionist\AuthController::class, 'login'])->name('login.post');
+        Route::get('/quen-mat-khau', [\App\Http\Controllers\Receptionist\AuthController::class, 'showForgotPassword'])->name('password.request');
+    });
+
+    // Authenticated Receptionist routes
+    Route::middleware(['auth', 'role:receptionist'])->group(function () {
+        Route::post('/logout', [\App\Http\Controllers\Receptionist\AuthController::class, 'logout'])->name('logout');
+
+        // Dashboard
+        Route::get('/dashboard', [\App\Http\Controllers\Receptionist\DashboardController::class, 'index'])->name('dashboard');
+    });
+});
