@@ -337,5 +337,29 @@ Route::prefix('receptionist')->name('receptionist.')->group(function () {
 
         // Dashboard
         Route::get('/dashboard', [\App\Http\Controllers\Receptionist\DashboardController::class, 'index'])->name('dashboard');
+        
+        // Appointments
+        Route::resource('appointments', \App\Http\Controllers\Receptionist\AppointmentController::class);
+        
+        // Patients
+        Route::resource('patients', \App\Http\Controllers\Receptionist\PatientController::class);
+        
+        // Customers
+        Route::resource('customers', \App\Http\Controllers\Receptionist\CustomerController::class);
+        
+        // Clinical Visits
+        Route::resource('clinical-visits', \App\Http\Controllers\Receptionist\ClinicalVisitController::class)->only(['index', 'show']);
+        
+        // Payments
+        Route::get('payments/{clinical_visit}', [\App\Http\Controllers\Receptionist\PaymentController::class, 'create'])->name('payments.create');
+        Route::post('payments/{clinical_visit}/manual', [\App\Http\Controllers\Receptionist\PaymentController::class, 'storeManual'])->name('payments.storeManual');
+        Route::post('payments/{clinical_visit}/payos', [\App\Http\Controllers\Receptionist\PaymentController::class, 'createPayOS'])->name('payments.createPayOS');
+        
+        // Payments (Updating directly on clinical_visits)
+        Route::resource('payments', \App\Http\Controllers\Receptionist\PaymentController::class)->only(['index', 'edit', 'update']);
+        
+        // Profile
+        Route::get('/profile', [\App\Http\Controllers\Receptionist\ProfileController::class, 'index'])->name('profile.index');
+        Route::put('/profile', [\App\Http\Controllers\Receptionist\ProfileController::class, 'update'])->name('profile.update');
     });
 });
