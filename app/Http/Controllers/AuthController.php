@@ -91,7 +91,9 @@ class AuthController extends Controller
     {
         $role = Auth::user()->role;
         return match ($role) {
-            'admin', 'doctor', 'receptionist' => redirect()->route('admin.dashboard'),
+            'admin' => redirect()->route('admin.dashboard'),
+            'doctor' => redirect()->route('doctor.dashboard'),
+            'receptionist' => redirect()->route('receptionist.dashboard'),
             'patient' => redirect()->route('patient.dashboard'),
             default => redirect('/'),
         };

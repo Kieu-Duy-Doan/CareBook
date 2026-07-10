@@ -27,6 +27,11 @@ class AppointmentController extends Controller
             'bookedByUser'
         ])->latest('appointment_date')->latest('appointment_time');
 
+        // Nếu là bác sĩ, chỉ cho phép xem lịch hẹn của mình
+        if (Auth::user()->isDoctor() && Auth::user()->doctorProfile) {
+            $query->where('doctor_profile_id', Auth::user()->doctorProfile->id);
+        }
+
         // Filter theo ngày từ
         if ($request->filled('date_from')) {
             $query->whereDate('appointment_date', '>=', $request->date_from);
@@ -76,6 +81,7 @@ class AppointmentController extends Controller
             ->when($request->filled('doctor_id'), fn($q) => $q->where('doctor_profile_id', $request->doctor_id))
             ->when($request->filled('specialty_id'), fn($q) => $q->where('specialty_id', $request->specialty_id))
             ->when($request->filled('source'), fn($q) => $q->where('source', $request->source))
+            ->when(Auth::user()->isDoctor() && Auth::user()->doctorProfile, fn($q) => $q->where('doctor_profile_id', Auth::user()->doctorProfile->id))
             ->when($request->filled('search'), fn($q) => $q->where(function ($sq) use ($request) {
                 $sq->where('appointment_code', 'like', '%' . $request->search . '%')
                     ->orWhereHas(
@@ -95,6 +101,7 @@ class AppointmentController extends Controller
             ->when($request->filled('doctor_id'), fn($q) => $q->where('doctor_profile_id', $request->doctor_id))
             ->when($request->filled('specialty_id'), fn($q) => $q->where('specialty_id', $request->specialty_id))
             ->when($request->filled('source'), fn($q) => $q->where('source', $request->source))
+            ->when(Auth::user()->isDoctor() && Auth::user()->doctorProfile, fn($q) => $q->where('doctor_profile_id', Auth::user()->doctorProfile->id))
             ->when($request->filled('search'), fn($q) => $q->where(function ($sq) use ($request) {
                 $sq->where('appointment_code', 'like', '%' . $request->search . '%')
                     ->orWhereExists(function ($pq) use ($request) {
@@ -117,9 +124,14 @@ class AppointmentController extends Controller
         $specialties = Specialty::where('is_active', true)->orderBy('name')->get();
 
         // Get appointments for the calendar (usually current month)
-        $appointments = Appointment::with(['patientProfile', 'doctor.user'])
-            ->whereNotIn('status', ['cancelled'])
-            ->get();
+        $query = Appointment::with(['patientProfile', 'doctor.user'])
+            ->whereNotIn('status', ['cancelled']);
+            
+        if (Auth::user()->isDoctor() && Auth::user()->doctorProfile) {
+            $query->where('doctor_profile_id', Auth::user()->doctorProfile->id);
+        }
+            
+        $appointments = $query->get();
 
         // Format data for FullCalendar
         $events = $appointments->map(function ($apt) {
@@ -375,7 +387,7 @@ class AppointmentController extends Controller
 
         $appointment->save();
 
-        if ($newStatus === 'checked_in') {
+        if (in_array($newStatus, ['checked_in', 'examining'])) {
             $this->createClinicalVisitIfNotExists($appointment);
         }
 
@@ -438,7 +450,7 @@ class AppointmentController extends Controller
 
             $appointment->save();
 
-            if ($newStatus === 'checked_in') {
+            if (in_array($newStatus, ['checked_in', 'examining'])) {
                 $this->createClinicalVisitIfNotExists($appointment);
             }
 
@@ -472,6 +484,9 @@ class AppointmentController extends Controller
         }
         if ($request->filled('doctor_id')) {
             $query->where('doctor_profile_id', $request->doctor_id);
+        }
+        if (Auth::user()->isDoctor() && Auth::user()->doctorProfile) {
+            $query->where('doctor_profile_id', Auth::user()->doctorProfile->id);
         }
         if ($request->filled('specialty_id')) {
             $query->where('specialty_id', $request->specialty_id);

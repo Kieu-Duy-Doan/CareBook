@@ -139,4 +139,9 @@ class Appointment extends Model
             default   => 'Không xác định',
         };
     }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
 }
