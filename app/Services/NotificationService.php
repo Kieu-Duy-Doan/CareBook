@@ -133,16 +133,27 @@ class NotificationService
         ]);
     }
 
-    public function notifyBookingSuccess(Appointment $appointment): Notification
+    public function notifyBookingSuccess(Appointment $appointment, string $actor = 'system'): Notification
     {
         $time = \Carbon\Carbon::parse($appointment->appointment_time)->format('H:i');
         $date = $appointment->appointment_date->format('d/m/Y');
         $doctorName = $appointment->doctorProfile->full_title ?? 'Chưa xác định';
 
+        $title = 'Đặt lịch khám thành công';
+        $content = "Lịch hẹn khám lúc {$time} ngày {$date} với {$doctorName} đã được xác nhận. Mã lịch hẹn: {$appointment->appointment_code}.";
+        
+        if ($actor === 'patient') {
+            $content = "Bạn đã đặt lịch khám thành công lúc {$time} ngày {$date} với {$doctorName}. Mã lịch hẹn: {$appointment->appointment_code}.";
+        } else {
+            $content = "Phòng khám đã đặt lịch khám thành công cho bạn lúc {$time} ngày {$date} với {$doctorName}. Mã lịch hẹn: {$appointment->appointment_code}.";
+        }
+        $type = $actor === 'patient' ? 'patient_booking' : 'system_booking';
+
         return $this->logWebNotification(
             $appointment,
-            'Đặt lịch khám thành công',
-            "Lịch hẹn khám lúc {$time} ngày {$date} với {$doctorName} đã được xác nhận. Mã lịch hẹn: {$appointment->appointment_code}."
+            $title,
+            $content,
+            $type
         );
     }
 
@@ -159,17 +170,27 @@ class NotificationService
         );
     }
 
-    public function notifyCancellation(Appointment $appointment, array $alternatives = []): Notification
+    public function notifyCancellation(Appointment $appointment, array $alternatives = [], string $actor = 'system'): Notification
     {
         $time = \Carbon\Carbon::parse($appointment->appointment_time)->format('H:i');
         $date = $appointment->appointment_date->format('d/m/Y');
         $doctorName = $appointment->doctorProfile->full_title ?? 'Chưa xác định';
 
+        $title = 'Lịch khám đã bị huỷ';
+        $content = "Rất tiếc, lịch hẹn lúc {$time} ngày {$date} với {$doctorName} của bạn đã bị huỷ. Mã lịch hẹn: {$appointment->appointment_code}.";
+        $type = 'system_cancellation';
+
+        if ($actor === 'patient') {
+            $title = 'Bạn đã huỷ lịch khám';
+            $content = "Bạn đã huỷ thành công lịch hẹn khám lúc {$time} ngày {$date} với {$doctorName}. Mã lịch hẹn: {$appointment->appointment_code}.";
+            $type = 'patient_cancellation';
+        }
+
         return $this->logWebNotification(
             $appointment,
-            'Lịch khám đã bị huỷ',
-            "Rất tiếc, lịch hẹn lúc {$time} ngày {$date} với {$doctorName} của bạn đã bị huỷ. Mã lịch hẹn: {$appointment->appointment_code}.",
-            'cancellation', // <--- Set type to cancellation
+            $title,
+            $content,
+            $type,
             ['alternatives' => $alternatives] // Save suggested doctors
         );
     }
