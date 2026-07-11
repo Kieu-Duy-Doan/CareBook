@@ -83,7 +83,7 @@ class DoctorsExport implements FromQuery, WithHeadings, WithMapping
             $doctor->user->id_card ?? '',
             $doctor->user->email ?? '',
             $doctor->user->is_active ? 'Đang hoạt động' : 'Đã khoá',
-            $doctor->academic_title,
+            $doctor->full_title,
             $doctor->level,
             $doctor->expertise,
             $doctor->experience_years,

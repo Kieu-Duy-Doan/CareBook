@@ -12,7 +12,9 @@ class DoctorProfile extends Model
     protected $fillable = [
         'user_id',
         'doctor_code',
-        'academic_title',
+        'academic_rank',
+        'degree',
+        'current_position',
         'level',
         'expertise',
         'experience_years',
@@ -45,7 +47,22 @@ class DoctorProfile extends Model
     // Accessors
     public function getFullTitleAttribute(): string
     {
-        $title = $this->academic_title ? $this->academic_title . ' ' : '';
+        $title = '';
+        if ($this->academic_rank && $this->academic_rank !== 'none') {
+            $title .= $this->academic_rank . '. ';
+        }
+        
+        $degreeLabel = match($this->degree) {
+            'BS' => 'BS',
+            'ThS' => 'ThS',
+            'TS' => 'TS',
+            'BSCK1' => 'BSCK1',
+            'BSCK2' => 'BSCK2',
+            'BSNT' => 'BSNT',
+            default => 'BS',
+        };
+        $title .= $degreeLabel . '. ';
+
         return $title . ($this->user?->full_name ?? '');
     }
 
@@ -60,6 +77,18 @@ class DoctorProfile extends Model
             'PGS'   => 'Phó Giáo sư',
             'GS'    => 'Giáo sư',
             default => $this->level,
+        };
+    }
+
+    public function getPositionLabelAttribute(): string
+    {
+        return match($this->current_position) {
+            'INTERN' => 'Bác sĩ Nội trú / Thực hành',
+            'ATTENDING' => 'Bác sĩ Điều trị',
+            'CONSULTANT' => 'Bác sĩ Hội chẩn / Ca trưởng',
+            'DEPARTMENT_HEAD' => 'Phó khoa / Trưởng khoa Lâm sàng',
+            'EXPERT' => 'Giám đốc Chuyên môn / Chuyên gia',
+            default => 'Bác sĩ Điều trị',
         };
     }
 

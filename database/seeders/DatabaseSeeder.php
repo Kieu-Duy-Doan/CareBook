@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             ChatbotSeeder::class,
             FaqSeeder::class,
             PostSeeder::class,
+            DoctorLevelFeeSeeder::class,
         ]);
     }
 }

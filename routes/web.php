@@ -271,7 +271,7 @@ Route::middleware(['auth', 'role:patient'])->prefix('lich-hen')->name('patient.a
 // PATIENT — Dashboard (Trang cá nhân)
 // ──────────────────────────────────────────────────────────
 Route::middleware(['auth', 'role:patient'])->prefix('trang-ca-nhan')->name('patient.')->group(function () {
-    Route::get('/', function() {
+    Route::get('/', function () {
         return redirect()->route('patient.profiles.index');
     })->name('dashboard');
 
