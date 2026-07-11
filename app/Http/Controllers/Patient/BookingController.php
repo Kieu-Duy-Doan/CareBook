@@ -7,6 +7,7 @@ use App\Http\Requests\Patient\StoreBookingRequest;
 use App\Models\DoctorProfile;
 use App\Models\PatientProfile;
 use App\Models\Specialty;
+use App\Models\DoctorLevelFee;
 use App\Services\BookingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -46,15 +47,19 @@ class BookingController extends Controller
         ->get()
         ->map(fn($d) => [
             'id'                  => $d->id,
+            'doctor_code'         => $d->doctor_code,
             'full_title'          => $d->full_title,
+            'level'               => $d->level,
             'level_label'         => $d->level_label,
             'primary_specialty'   => $d->primary_specialty?->name,
             'primary_specialty_id'=> $d->primary_specialty?->id,
+            'specialty_ids'       => $d->specialties->pluck('id')->toArray(),
             'room_name'           => null, // sẽ được resolve khi chọn ngày
         ]);
 
         // Xử lý thông báo huỷ lịch (nếu có)
         $suggestedDoctors = [];
+        $oldAppointment = null;
         if ($request->has('notification_id')) {
             $notification = \App\Models\Notification::where('id', $request->notification_id)
                 ->where('user_id', $user->id)
@@ -62,13 +67,18 @@ class BookingController extends Controller
                 
             if ($notification && !empty($notification->data['alternatives'])) {
                 $suggestedDoctors = $notification->data['alternatives'];
+                if ($notification->ref_type === 'appointment') {
+                    $oldAppointment = \App\Models\Appointment::find($notification->ref_id);
+                }
             }
         }
+
+        $fees = DoctorLevelFee::all();
 
         // Gán user's patientProfiles cho blade template
         $user->setRelation('patientProfiles', $profiles);
 
-        return view('patient.booking.index', compact('specialties', 'doctors', 'suggestedDoctors'));
+        return view('patient.booking.index', compact('specialties', 'doctors', 'suggestedDoctors', 'fees', 'oldAppointment'));
     }
 
     /**
@@ -83,11 +93,16 @@ class BookingController extends Controller
         $request->validate([
             'doctor_id'    => ['nullable', 'integer', 'exists:doctor_profiles,id'],
             'specialty_id' => ['nullable', 'integer', 'exists:specialties,id'],
+            'level'        => ['nullable', 'string'],
         ]);
+
+        $level = $request->input('level');
+        if ($level === 'null') $level = null;
 
         $dates = $this->bookingService->getAvailableDates(
             $request->integer('doctor_id', null) ?: null,
             $request->integer('specialty_id', null) ?: null,
+            $level
         );
 
         return response()->json(['dates' => $dates]);
@@ -107,12 +122,17 @@ class BookingController extends Controller
             'date'         => ['required', 'date', 'after_or_equal:today'],
             'doctor_id'    => ['nullable', 'integer', 'exists:doctor_profiles,id'],
             'specialty_id' => ['nullable', 'integer', 'exists:specialties,id'],
+            'level'        => ['nullable', 'string'],
         ]);
+
+        $level = $request->input('level');
+        if ($level === 'null') $level = null;
 
         $slots = $this->bookingService->getSlots(
             $request->integer('doctor_id', null) ?: null,
             $request->integer('specialty_id', null) ?: null,
             $request->string('date'),
+            $level
         );
 
         return response()->json(['slots' => $slots]);
@@ -136,7 +156,10 @@ class BookingController extends Controller
                 ->route('patient.booking.success', $appointment->id)
                 ->with('success', 'Đặt lịch thành công! Mã lịch hẹn: ' . $appointment->appointment_code);
 
-        } catch (\RuntimeException $e) {
+        } catch (\Exception $e) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $e->getMessage()], 400);
+            }
             return back()
                 ->withInput()
                 ->with('error', $e->getMessage());
