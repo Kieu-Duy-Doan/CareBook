@@ -270,6 +270,8 @@ class AppointmentController extends Controller
             'reason'         => 'Khởi tạo lịch hẹn bởi Quản trị viên',
         ]);
 
+        \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'admin_confirmation');
+
         return redirect()->route('admin.appointments.index')->with('success', 'Tạo lịch hẹn mới thành công.');
     }
 
@@ -390,7 +392,7 @@ class AppointmentController extends Controller
             ]);
 
             if ($newStatus === 'cancelled') {
-                \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'cancellation');
+                \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'admin_cancel');
             }
         }
 
@@ -452,7 +454,7 @@ class AppointmentController extends Controller
             ]);
 
             if ($newStatus === 'cancelled') {
-                \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'cancellation');
+                \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'admin_cancel');
             }
         }
 

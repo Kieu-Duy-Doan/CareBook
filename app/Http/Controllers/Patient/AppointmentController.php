@@ -55,8 +55,8 @@ class AppointmentController extends Controller
 
         $appointment->update(['status' => 'cancelled']);
 
-        // Dispatch cancellation notification
-        \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'cancellation');
+        // Dispatch cancellation notification (by patient, no suggestions needed)
+        \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'patient_cancel');
 
         return redirect()->route('patient.appointments.index')
             ->with('success', 'Huỷ lịch hẹn thành công.');

@@ -142,7 +142,7 @@ class BookingController extends Controller
      * POST /dat-lich
      * Lưu lịch hẹn mới.
      */
-    public function store(StoreBookingRequest $request): RedirectResponse
+    public function store(StoreBookingRequest $request): RedirectResponse|JsonResponse
     {
         try {
             $appointment = $this->bookingService->createAppointment(
@@ -150,7 +150,7 @@ class BookingController extends Controller
                 auth()->user()
             );
 
-            \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'confirmation');
+            \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'patient_confirmation');
 
             return redirect()
                 ->route('patient.booking.success', $appointment->id)
