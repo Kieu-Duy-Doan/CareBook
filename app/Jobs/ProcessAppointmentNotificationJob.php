@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Appointment;
-use App\Services\NotificationService;
+use App\Services\PatientNotificationService;
 use App\Services\BookingService;
 use App\Mail\BookingConfirmationMail;
 use App\Mail\CancellationMail;
@@ -37,10 +37,7 @@ class ProcessAppointmentNotificationJob implements ShouldQueue
         $this->actor = $actor;
     }
 
-    /**
-     * Execute the job.
-     */
-    public function handle(NotificationService $notificationService, BookingService $bookingService): void
+    public function handle(PatientNotificationService $notificationService, BookingService $bookingService): void
     {
         $patientEmail = $this->appointment->bookedByUser->email ?? null;
 

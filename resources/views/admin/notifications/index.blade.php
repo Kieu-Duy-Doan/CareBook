@@ -133,8 +133,7 @@
                                 @if($campaign->total_email > 0 && $campaign->sent_email_count < $campaign->total_email)
                                 <form action="{{ route('admin.notifications.resend') }}" method="POST" class="inline-block" onsubmit="return confirm('Bạn có chắc muốn đặt lại trạng thái để gửi lại thông báo chưa gửi thành công trong chiến dịch này?');">
                                     @csrf
-                                    <input type="hidden" name="title" value="{{ $campaign->title }}">
-                                    <input type="hidden" name="created_at_minute" value="{{ $campaign->created_at_minute }}">
+                                    <input type="hidden" name="batch_id" value="{{ $campaign->batch_id }}">
                                     <button type="submit" class="text-blue-600 hover:text-blue-900" title="Thử gửi lại các email lỗi">
                                         <i class="fa-solid fa-rotate-right"></i>
                                     </button>
@@ -143,8 +142,7 @@
                                 <form action="{{ route('admin.notifications.destroy') }}" method="POST" class="inline-block" onsubmit="return confirm('Xoá chiến dịch này? Hành động này không thể hoàn tác.');">
                                     @csrf
                                     @method('DELETE')
-                                    <input type="hidden" name="title" value="{{ $campaign->title }}">
-                                    <input type="hidden" name="created_at_minute" value="{{ $campaign->created_at_minute }}">
+                                    <input type="hidden" name="batch_id" value="{{ $campaign->batch_id }}">
                                     <button type="submit" class="text-red-600 hover:text-red-900" title="Xóa">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
@@ -186,8 +184,7 @@
                     @if($campaign->total_email > 0 && $campaign->sent_email_count < $campaign->total_email)
                     <form action="{{ route('admin.notifications.resend') }}" method="POST" class="inline-block" onsubmit="return confirm('Gửi lại các email bị lỗi?');">
                         @csrf
-                        <input type="hidden" name="title" value="{{ $campaign->title }}">
-                        <input type="hidden" name="created_at_minute" value="{{ $campaign->created_at_minute }}">
+                        <input type="hidden" name="batch_id" value="{{ $campaign->batch_id }}">
                         <button type="submit" class="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors" title="Gửi lại">
                             <i class="fa-solid fa-rotate-right"></i>
                         </button>
@@ -196,8 +193,7 @@
                     <form action="{{ route('admin.notifications.destroy') }}" method="POST" class="inline-block" onsubmit="return confirm('Xoá chiến dịch này?');">
                         @csrf
                         @method('DELETE')
-                        <input type="hidden" name="title" value="{{ $campaign->title }}">
-                        <input type="hidden" name="created_at_minute" value="{{ $campaign->created_at_minute }}">
+                        <input type="hidden" name="batch_id" value="{{ $campaign->batch_id }}">
                         <button type="submit" class="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-colors" title="Xóa">
                             <i class="fa-solid fa-trash"></i>
                         </button>
