@@ -11,6 +11,8 @@ use App\Services\BookingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
 
 class BookingController extends Controller
 {
@@ -28,9 +30,11 @@ class BookingController extends Controller
             ->orderByDesc('is_self')
             ->get();
             
-        $selectedProfileId = session('booking.patient_profile_id');
+        $draftId = $request->query('draft_id');
+        $booking = $draftId ? Cache::get("booking_draft_{$draftId}", []) : [];
+        $selectedProfileId = $booking['patient_profile_id'] ?? null;
             
-        return view('patient.booking.steps.step1', compact('profiles', 'selectedProfileId'));
+        return view('patient.booking.steps.step1', compact('profiles', 'selectedProfileId', 'draftId'));
     }
 
     public function postStep1(Request $request): RedirectResponse
@@ -39,9 +43,13 @@ class BookingController extends Controller
             'patient_profile_id' => 'required|exists:patient_profiles,id,owner_id,' . auth()->id(),
         ]);
         
-        session()->put('booking.patient_profile_id', $request->patient_profile_id);
+        $draftId = $request->input('draft_id') ?: Str::uuid()->toString();
+        $booking = Cache::get("booking_draft_{$draftId}", []);
+        $booking['patient_profile_id'] = $request->patient_profile_id;
         
-        return redirect()->route('patient.booking.step2');
+        Cache::put("booking_draft_{$draftId}", $booking, now()->addHours(2));
+        
+        return redirect()->route('patient.booking.step2', ['draft_id' => $draftId]);
     }
 
     /**
@@ -49,8 +57,11 @@ class BookingController extends Controller
      */
     public function step2(Request $request): View|RedirectResponse
     {
-        if (!session()->has('booking.patient_profile_id')) {
-            return redirect()->route('patient.booking.step1');
+        $draftId = $request->query('draft_id');
+        $booking = $draftId ? Cache::get("booking_draft_{$draftId}", []) : [];
+        
+        if (empty($booking['patient_profile_id'])) {
+            return redirect()->route('patient.booking.step1', ['draft_id' => $draftId]);
         }
 
         $specialties = Specialty::where('is_active', true)->orderBy('display_order')->get();
@@ -58,39 +69,60 @@ class BookingController extends Controller
             ->whereHas('workSchedules', fn($q) => $q->where('is_active', true))
             ->get();
             
-        $fees = DoctorLevelFee::all();
+        $activeLevels = $doctors->pluck('level')->unique()->toArray();
+        $fees = DoctorLevelFee::whereIn('level', $activeLevels)->get();
         
-        $booking = session('booking', []);
+        $specialtyLevels = [];
+        foreach ($doctors as $doctor) {
+            foreach ($doctor->specialties as $specialty) {
+                $specialtyLevels[$specialty->id][] = $doctor->level;
+            }
+        }
+        foreach ($specialtyLevels as $id => $levels) {
+            $specialtyLevels[$id] = array_values(array_unique($levels));
+        }
         
-        return view('patient.booking.steps.step2', compact('specialties', 'doctors', 'fees', 'booking'));
+        $validSpecialtyIds = array_keys($specialtyLevels);
+        $specialties = $specialties->filter(fn($s) => in_array($s->id, $validSpecialtyIds))->values();
+        
+        return view('patient.booking.steps.step2', compact('specialties', 'doctors', 'fees', 'booking', 'specialtyLevels', 'draftId'));
     }
 
     public function postStep2(Request $request): RedirectResponse
     {
         $request->validate([
+            'draft_id' => 'required|string',
             'booking_method' => 'required|in:specialty,doctor,suggested',
             'specialty_id' => 'required_if:booking_method,specialty|nullable|exists:specialties,id',
             'level' => 'required_if:booking_method,specialty|nullable|string',
             'doctor_id' => 'required_if:booking_method,doctor,suggested|nullable|exists:doctor_profiles,id',
         ]);
         
-        session()->put('booking.booking_method', $request->booking_method);
+        $draftId = $request->input('draft_id');
+        $booking = Cache::get("booking_draft_{$draftId}", []);
+        
+        $booking['booking_method'] = $request->booking_method;
         
         if ($request->booking_method === 'specialty') {
-            session()->put('booking.specialty_id', $request->specialty_id);
-            session()->put('booking.level', $request->level);
-            session()->forget('booking.doctor_id');
+            $booking['specialty_id'] = $request->specialty_id;
+            $booking['level'] = $request->level;
+            unset($booking['doctor_id']);
         } else {
-            session()->put('booking.doctor_id', $request->doctor_id);
-            session()->forget(['booking.specialty_id', 'booking.level']);
+            $booking['doctor_id'] = $request->doctor_id;
+            unset($booking['specialty_id'], $booking['level']);
             // Tự nạp chuyên khoa từ bác sĩ (nếu có 1)
-            $doctor = DoctorProfile::find($request->doctor_id);
-            if ($doctor && $doctor->primary_specialty_id) {
-                session()->put('booking.specialty_id', $doctor->primary_specialty_id);
+            $doctor = DoctorProfile::with('specialties')->find($request->doctor_id);
+            if ($doctor) {
+                $specId = $doctor->primary_specialty_id ?? ($doctor->specialties->first()->id ?? null);
+                if ($specId) {
+                    $booking['specialty_id'] = $specId;
+                }
             }
         }
         
-        return redirect()->route('patient.booking.step3');
+        Cache::put("booking_draft_{$draftId}", $booking, now()->addHours(2));
+        
+        return redirect()->route('patient.booking.step3', ['draft_id' => $draftId]);
     }
 
     /**
@@ -98,9 +130,11 @@ class BookingController extends Controller
      */
     public function step3(Request $request): View|RedirectResponse
     {
-        $booking = session('booking', []);
+        $draftId = $request->query('draft_id');
+        $booking = $draftId ? Cache::get("booking_draft_{$draftId}", []) : [];
+        
         if (empty($booking['patient_profile_id']) || empty($booking['booking_method'])) {
-            return redirect()->route('patient.booking.step1');
+            return redirect()->route('patient.booking.step1', ['draft_id' => $draftId]);
         }
 
         $doctorId = $booking['doctor_id'] ?? null;
@@ -113,23 +147,34 @@ class BookingController extends Controller
         $slots = [];
         
         if ($selectedDate) {
-            $slots = $this->bookingService->getSlots($doctorId, $specialtyId, $selectedDate, $level);
+            $slots = $this->bookingService->getSlots($doctorId, $specialtyId, $selectedDate, $level, $draftId);
         }
 
-        return view('patient.booking.steps.step3', compact('availableDates', 'selectedDate', 'slots', 'booking'));
+        return view('patient.booking.steps.step3', compact('availableDates', 'selectedDate', 'slots', 'booking', 'draftId'));
     }
 
     public function postStep3(Request $request): RedirectResponse
     {
         $request->validate([
+            'draft_id' => 'required|string',
             'date' => 'required|date|after_or_equal:today',
             'time' => 'required|date_format:H:i',
+            'doctor_id' => 'nullable|exists:doctor_profiles,id',
         ]);
         
-        session()->put('booking.date', $request->date);
-        session()->put('booking.time', $request->time);
+        $draftId = $request->input('draft_id');
+        $booking = Cache::get("booking_draft_{$draftId}", []);
         
-        return redirect()->route('patient.booking.step4');
+        $booking['date'] = $request->date;
+        $booking['time'] = $request->time;
+        
+        if ($request->doctor_id) {
+            $booking['doctor_id'] = $request->doctor_id;
+        }
+        
+        Cache::put("booking_draft_{$draftId}", $booking, now()->addHours(2));
+        
+        return redirect()->route('patient.booking.step4', ['draft_id' => $draftId]);
     }
 
     /**
@@ -137,29 +182,40 @@ class BookingController extends Controller
      */
     public function step4(Request $request): View|RedirectResponse
     {
-        $booking = session('booking', []);
+        $draftId = $request->query('draft_id');
+        $booking = $draftId ? Cache::get("booking_draft_{$draftId}", []) : [];
+        
         if (empty($booking['date']) || empty($booking['time'])) {
-            return redirect()->route('patient.booking.step3');
+            return redirect()->route('patient.booking.step3', ['draft_id' => $draftId]);
         }
         
         $profile = PatientProfile::find($booking['patient_profile_id']);
-        $doctor = isset($booking['doctor_id']) ? DoctorProfile::with('user')->find($booking['doctor_id']) : null;
-        $specialty = isset($booking['specialty_id']) ? Specialty::find($booking['specialty_id']) : null;
+        $summary = $this->bookingService->calculateBookingSummary($booking);
         
-        // Tính tiền
-        $totalFee = 0;
-        $level = null;
-        if ($booking['booking_method'] === 'specialty' || $booking['booking_method'] === 'suggested') {
-            $level = $booking['level'] ?? ($doctor ? $doctor->level : null);
-            $fee = DoctorLevelFee::where('level', $level)->first();
-            $totalFee = $fee ? $fee->base_price : 0;
-        } elseif ($booking['booking_method'] === 'doctor') {
-            $level = $doctor ? $doctor->level : null;
-            $fee = DoctorLevelFee::where('level', $level)->first();
-            $totalFee = $fee ? $fee->specific_price : 0;
+        // Khóa slot tạm thời (Soft-lock)
+        $doctorId = $booking['doctor_id'];
+        $date = $booking['date'];
+        $time = $booking['time'];
+        $lockKey = "slot_lock_{$doctorId}_{$date}_{$time}";
+        
+        $currentLock = Cache::get($lockKey);
+        if ($currentLock && $currentLock !== $draftId) {
+            return redirect()->route('patient.booking.step3', ['draft_id' => $draftId])
+                ->with('error', 'Slot này đang được người khác giữ chỗ. Vui lòng chọn giờ khác.');
         }
+        
+        // Giữ chỗ 5 phút
+        Cache::put($lockKey, $draftId, now()->addMinutes(5));
 
-        return view('patient.booking.steps.step4', compact('booking', 'profile', 'doctor', 'specialty', 'totalFee'));
+        return view('patient.booking.steps.step4', [
+            'booking' => $booking,
+            'profile' => $profile,
+            'doctor' => $summary['doctor'],
+            'specialty' => $summary['specialty'],
+            'totalFee' => $summary['totalFee'],
+            'roomName' => $summary['roomName'],
+            'draftId' => $draftId
+        ]);
     }
 
     /**
@@ -168,13 +224,27 @@ class BookingController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
+            'draft_id' => 'required|string',
             'reason' => 'nullable|string|max:1000',
         ]);
         
-        $booking = session('booking', []);
+        $draftId = $request->input('draft_id');
+        $booking = Cache::get("booking_draft_{$draftId}", []);
         
         if (empty($booking['patient_profile_id']) || empty($booking['date']) || empty($booking['time'])) {
             return redirect()->route('patient.booking.step1')->with('error', 'Phiên đặt lịch đã hết hạn, vui lòng thử lại.');
+        }
+        
+        // Kiểm tra Soft-lock lần cuối
+        $doctorId = $booking['doctor_id'];
+        $date = $booking['date'];
+        $time = $booking['time'];
+        $lockKey = "slot_lock_{$doctorId}_{$date}_{$time}";
+        
+        $currentLock = Cache::get($lockKey);
+        if ($currentLock && $currentLock !== $draftId) {
+            return redirect()->route('patient.booking.step3', ['draft_id' => $draftId])
+                ->with('error', 'Slot này đã bị người khác đặt mất. Vui lòng chọn giờ khác.');
         }
 
         // Tạo mảng data cho StoreBookingRequest
@@ -186,7 +256,7 @@ class BookingController extends Controller
             'reason' => $request->reason,
         ];
         
-        if (!empty($booking['doctor_id'])) $data['doctor_id'] = $booking['doctor_id'];
+        if (!empty($booking['doctor_id'])) $data['doctor_profile_id'] = $booking['doctor_id'];
         if (!empty($booking['specialty_id'])) $data['specialty_id'] = $booking['specialty_id'];
         if (!empty($booking['level'])) $data['level'] = $booking['level'];
         
@@ -195,7 +265,8 @@ class BookingController extends Controller
             
             \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'patient_confirmation');
             
-            session()->forget('booking');
+            Cache::forget("booking_draft_{$draftId}");
+            Cache::forget($lockKey);
             
             return redirect()
                 ->route('patient.booking.success', $appointment->id)
@@ -215,25 +286,33 @@ class BookingController extends Controller
             'patient_profile_id' => 'required|exists:patient_profiles,id',
             'doctor_id' => 'required|exists:doctor_profiles,id',
             'specialty_id' => 'nullable|exists:specialties,id',
-            'reason' => 'nullable|string'
+            'reason' => 'nullable|string',
+            'date' => 'nullable|date',
+            'time' => 'nullable|string'
         ]);
         
-        session()->put('booking.patient_profile_id', $request->patient_profile_id);
-        session()->put('booking.booking_method', 'suggested');
-        session()->put('booking.doctor_id', $request->doctor_id);
+        $draftId = Str::uuid()->toString();
+        $booking = [];
+        
+        $booking['patient_profile_id'] = $request->patient_profile_id;
+        $booking['booking_method'] = 'suggested';
+        $booking['doctor_id'] = $request->doctor_id;
         
         if ($request->specialty_id) {
-            session()->put('booking.specialty_id', $request->specialty_id);
+            $booking['specialty_id'] = $request->specialty_id;
         }
         
         // Nếu truyền sẵn date và time (thay thế vào cùng slot)
         if ($request->date && $request->time) {
-            session()->put('booking.date', $request->date);
-            session()->put('booking.time', $request->time);
-            return redirect()->route('patient.booking.step4');
+            $booking['date'] = \Carbon\Carbon::parse($request->date)->format('Y-m-d');
+            $booking['time'] = substr($request->time, 0, 5);
+            Cache::put("booking_draft_{$draftId}", $booking, now()->addHours(2));
+            return redirect()->route('patient.booking.step4', ['draft_id' => $draftId]);
         }
 
-        return redirect()->route('patient.booking.step3')->with('success', 'Đã nạp thông tin đặt lịch thay thế, vui lòng chọn ngày giờ mới.');
+        Cache::put("booking_draft_{$draftId}", $booking, now()->addHours(2));
+        return redirect()->route('patient.booking.step3', ['draft_id' => $draftId])
+            ->with('success', 'Đã nạp thông tin đặt lịch thay thế, vui lòng chọn ngày giờ mới.');
     }
     
     public function success(int $id): View

@@ -24,7 +24,9 @@
             --border: #e2e8f0;
         }
 
-        * { box-sizing: border-box; }
+        * {
+            box-sizing: border-box;
+        }
 
         body {
             font-family: 'Be Vietnam Pro', sans-serif;
@@ -34,35 +36,91 @@
             -moz-osx-font-smoothing: grayscale;
         }
 
-        [x-cloak] { display: none !important; }
+        [x-cloak] {
+            display: none !important;
+        }
 
         /* Animation Utilities */
         @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
+
         .animate-fade-in-down {
             animation: fadeInDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        .text-primary { color: var(--primary); }
-        .bg-primary { background-color: var(--primary); }
-        .border-primary { border-color: var(--primary); }
-        .hover\:bg-primary-dark:hover { background-color: var(--primary-dark); }
-        .bg-primary\/5 { background-color: rgba(37,99,235,0.05); }
-        .bg-primary\/10 { background-color: rgba(37,99,235,0.10); }
-        .border-primary\/10 { border-color: rgba(37,99,235,0.10); }
-        .text-primary\/80 { color: rgba(37,99,235,0.80); }
-        .ring-primary { --tw-ring-color: var(--primary); }
-        .focus\:ring-primary:focus { --tw-ring-color: var(--primary); }
-        .focus\:border-primary:focus { border-color: var(--primary); }
-        
-        .text-secondary { color: var(--secondary); }
-        .bg-secondary { background-color: var(--secondary); }
-        .hover\:text-secondary:hover { color: var(--secondary); }
-        
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .text-primary {
+            color: var(--primary);
+        }
+
+        .bg-primary {
+            background-color: var(--primary);
+        }
+
+        .border-primary {
+            border-color: var(--primary);
+        }
+
+        .hover\:bg-primary-dark:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .bg-primary\/5 {
+            background-color: rgba(37, 99, 235, 0.05);
+        }
+
+        .bg-primary\/10 {
+            background-color: rgba(37, 99, 235, 0.10);
+        }
+
+        .border-primary\/10 {
+            border-color: rgba(37, 99, 235, 0.10);
+        }
+
+        .text-primary\/80 {
+            color: rgba(37, 99, 235, 0.80);
+        }
+
+        .ring-primary {
+            --tw-ring-color: var(--primary);
+        }
+
+        .focus\:ring-primary:focus {
+            --tw-ring-color: var(--primary);
+        }
+
+        .focus\:border-primary:focus {
+            border-color: var(--primary);
+        }
+
+        .text-secondary {
+            color: var(--secondary);
+        }
+
+        .bg-secondary {
+            background-color: var(--secondary);
+        }
+
+        .hover\:text-secondary:hover {
+            color: var(--secondary);
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
     </style>
     @stack('styles')
 </head>
@@ -92,7 +150,7 @@
                     <p class="text-[9px] md:text-[11px] font-semibold uppercase tracking-widest text-secondary opacity-80">CareBook Hospital</p>
                 </div>
             </a>
-            
+
             <!-- Slogan (Centered) -->
             <div class="hidden lg:flex flex-1 justify-center absolute inset-0 items-center pointer-events-none z-10">
                 <span class="text-[1.7rem] font-[cursive] italic drop-shadow-sm text-amber-500">Vì sức khoẻ nhân dân</span>
@@ -104,7 +162,7 @@
                     <i class="fa-solid fa-phone-volume"></i>
                     <span>1900.888.866</span>
                 </div>
-                
+
                 @auth
                 <!-- Tích hợp Thông báo Bệnh nhân (Bell & Popup) -->
                 <div x-data="{ openDropdown: false }" class="relative flex items-center">
@@ -129,20 +187,20 @@
                         </div>
                         <div class="overflow-y-auto flex-1 p-2 space-y-1">
                             @if(isset($notifications) && count($notifications) == 0)
-                                <p class="text-center text-slate-500 py-4 text-xs italic">Chưa có thông báo nào</p>
+                            <p class="text-center text-slate-500 py-4 text-xs italic">Chưa có thông báo nào</p>
                             @endif
                             @if(isset($notifications))
-                                @foreach($notifications as $notif)
-                                    <a href="{{ route('patient.notifications.show', $notif->id) }}" data-loader="true" class="block p-3 rounded-md hover:bg-slate-50 transition-colors cursor-pointer border border-transparent hover:border-slate-100 flex flex-col gap-1 {{ $notif->is_read ? 'opacity-70' : 'bg-blue-50/50' }}">
-                                        <div class="flex justify-between items-start">
-                                            <h4 class="font-bold text-sm {{ $notif->type === 'cancellation' ? 'text-red-600' : 'text-slate-800' }}">{{ $notif->title }}</h4>
-                                            @if(!$notif->is_read)
-                                            <span class="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1"></span>
-                                            @endif
-                                        </div>
-                                        <p class="text-xs text-slate-600 leading-relaxed">{{ $notif->content }}</p>
-                                    </a>
-                                @endforeach
+                            @foreach($notifications as $notif)
+                            <a href="{{ route('patient.notifications.show', $notif->id) }}" data-loader="true" class="block p-3 rounded-md hover:bg-slate-50 transition-colors cursor-pointer border border-transparent hover:border-slate-100 flex flex-col gap-1 {{ $notif->is_read ? 'opacity-70' : 'bg-blue-50/50' }}">
+                                <div class="flex justify-between items-start">
+                                    <h4 class="font-bold text-sm {{ in_array($notif->type, ['cancellation', 'system_cancellation']) ? 'text-red-600' : ($notif->type === 'patient_cancellation' ? 'text-slate-600' : 'text-slate-800') }}">{{ $notif->title }}</h4>
+                                    @if(!$notif->is_read)
+                                    <span class="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1"></span>
+                                    @endif
+                                </div>
+                                <p class="text-xs text-slate-600 leading-relaxed">{{ $notif->content }}</p>
+                            </a>
+                            @endforeach
                             @endif
                         </div>
                         <div class="px-4 py-2 border-t border-slate-100 bg-slate-50 text-center">
@@ -177,29 +235,29 @@
                     <a href="{{ route('home') }}" class="whitespace-nowrap hover:text-amber-300 transition-colors">Cổng thông tin</a>
                     <a href="#" class="whitespace-nowrap hover:text-amber-300 transition-colors hidden sm:block">Đội ngũ bác sĩ</a>
                     <a href="{{ route('patient.booking.step1') }}" class="whitespace-nowrap hover:text-amber-300 transition-colors">Đặt lịch khám</a>
-                    
+
                     @auth
                     <!-- Dropdown Cá nhân -->
                     <div x-data="{ open: false }" class="relative" @mouseleave="open = false" @mouseenter="open = true">
                         <button @click="open = !open" class="whitespace-nowrap flex items-center gap-1.5 hover:text-amber-300 transition-colors outline-none pb-1 md:pb-0 uppercase">
                             Cá nhân <i class="fa-solid fa-chevron-down text-[10px]"></i>
                         </button>
-                        
+
                         <div x-show="open" x-cloak
-                             x-transition:enter="transition ease-out duration-100"
-                             x-transition:enter-start="opacity-0 translate-y-1"
-                             x-transition:enter-end="opacity-100 translate-y-0"
-                             x-transition:leave="transition ease-in duration-75"
-                             x-transition:leave-start="opacity-100 translate-y-0"
-                             x-transition:leave-end="opacity-0 translate-y-1"
-                             class="absolute top-full left-0 md:left-auto md:right-0 mt-0 w-60 bg-white border border-slate-200 shadow-xl rounded-lg py-2 z-50 text-slate-700 normal-case">
-                            
+                            x-transition:enter="transition ease-out duration-100"
+                            x-transition:enter-start="opacity-0 translate-y-1"
+                            x-transition:enter-end="opacity-100 translate-y-0"
+                            x-transition:leave="transition ease-in duration-75"
+                            x-transition:leave-start="opacity-100 translate-y-0"
+                            x-transition:leave-end="opacity-0 translate-y-1"
+                            class="absolute top-full left-0 md:left-auto md:right-0 mt-0 w-60 bg-white border border-slate-200 shadow-xl rounded-lg py-2 z-50 text-slate-700 normal-case">
+
                             <a href="{{ route('patient.dashboard') }}" class="block px-4 py-2 hover:bg-slate-50 text-sm font-semibold transition-colors uppercase hover:text-secondary">Thông tin cá nhân</a>
                             <a href="{{ route('patient.family.index') }}" class="block px-4 py-2 hover:bg-slate-50 text-sm font-semibold transition-colors uppercase hover:text-secondary">Quản lý gia đình</a>
                             <a href="{{ route('patient.records.index') }}" class="block px-4 py-2 hover:bg-slate-50 text-sm font-semibold transition-colors uppercase hover:text-secondary">Kết quả khám bệnh</a>
                             <a href="{{ route('patient.appointments.index') }}" class="block px-4 py-2 hover:bg-slate-50 text-sm font-semibold transition-colors uppercase hover:text-secondary">Lịch sử đặt lịch khám</a>
                             <a href="#" class="block px-4 py-2 hover:bg-slate-50 text-sm font-semibold transition-colors uppercase hover:text-secondary">Thay đổi mật khẩu</a>
-                            
+
                             <div class="border-t border-slate-100 mt-1 pt-1">
                                 <form action="{{ route('logout') }}" method="POST">
                                     @csrf
@@ -262,8 +320,7 @@
                 }
             }
         });
-
-
     </script>
 </body>
+
 </html>

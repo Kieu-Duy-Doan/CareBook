@@ -21,6 +21,50 @@ class BookingService
     // ── API cho SPA Booking ───────────────────────────────────────────────
 
     /**
+     * Tính toán Fee và tìm Room cho Bước 4
+     */
+    public function calculateBookingSummary(array $booking): array
+    {
+        $doctor = isset($booking['doctor_id']) ? DoctorProfile::with('user')->find($booking['doctor_id']) : null;
+        $specialty = isset($booking['specialty_id']) ? \App\Models\Specialty::find($booking['specialty_id']) : null;
+        
+        $totalFee = 0;
+        $level = null;
+        if (($booking['booking_method'] ?? '') === 'specialty' || ($booking['booking_method'] ?? '') === 'suggested') {
+            $level = $booking['level'] ?? ($doctor ? $doctor->level : null);
+            $fee = \App\Models\DoctorLevelFee::where('level', $level)->first();
+            $totalFee = $fee ? $fee->base_price : 0;
+        } elseif (($booking['booking_method'] ?? '') === 'doctor') {
+            $level = $doctor ? $doctor->level : null;
+            $fee = \App\Models\DoctorLevelFee::where('level', $level)->first();
+            $totalFee = $fee ? $fee->specific_price : 0;
+        }
+
+        $roomName = 'Được sắp xếp sau';
+        if (!empty($booking['doctor_id']) && !empty($booking['date'])) {
+            $date = \Carbon\Carbon::parse($booking['date']);
+            $dbDayOfWeek = $date->dayOfWeek === 0 ? 1 : $date->dayOfWeek + 1;
+            
+            $schedule = \App\Models\WorkSchedule::with('room')
+                ->where('doctor_profile_id', $booking['doctor_id'])
+                ->where('day_of_week', $dbDayOfWeek)
+                ->where('is_active', true)
+                ->first();
+                
+            if ($schedule && $schedule->room) {
+                $roomName = $schedule->room->name;
+            }
+        }
+
+        return [
+            'totalFee' => $totalFee,
+            'roomName' => $roomName,
+            'doctor' => $doctor,
+            'specialty' => $specialty
+        ];
+    }
+
+    /**
      * 14 ngày tới có lịch của bác sĩ hoặc chuyên khoa.
      */
     public function getAvailableDates(?int $doctorId, ?int $specialtyId, ?string $level = null): array
@@ -48,11 +92,29 @@ class BookingService
     /**
      * Danh sách slot giờ khám: [{time, available, room_name, doctor_id}].
      */
-    public function getSlots(?int $doctorId, ?int $specialtyId, string $dateStr, ?string $level = null): array
+    public function getSlots(?int $doctorId, ?int $specialtyId, string $dateStr, ?string $level = null, ?string $draftId = null): array
     {
-        $date      = Carbon::parse($dateStr);
-        $dow       = $this->toDow($date);
-        $schedules = $this->querySchedules($dow, $doctorId, $specialtyId, $level);
+        $date = Carbon::parse($dateStr);
+        $dayOfWeek = $date->dayOfWeek === 0 ? 1 : $date->dayOfWeek + 1;
+
+        $query = \App\Models\WorkSchedule::with('room')
+            ->where('day_of_week', $dayOfWeek)
+            ->where('is_active', true);
+
+        if ($doctorId) {
+            $query->where('doctor_profile_id', $doctorId);
+        } elseif ($specialtyId) {
+            $query->whereHas('doctorProfile', function ($q) use ($specialtyId, $level) {
+                $q->whereHas('specialties', function ($sq) use ($specialtyId) {
+                    $sq->where('specialties.id', $specialtyId);
+                });
+                if ($level) {
+                    $q->where('level', $level);
+                }
+            });
+        }
+
+        $schedules = $query->get();
 
         if ($schedules->isEmpty()) {
             return [];
@@ -67,7 +129,7 @@ class BookingService
             $maxSlots = $schedule->max_slots ?: 50;
             $count    = 0;
 
-            $bookedTimes = Appointment::where('appointment_date', $dateStr)
+            $bookedTimes = \App\Models\Appointment::where('appointment_date', $dateStr)
                 ->where('doctor_profile_id', $schedule->doctor_profile_id)
                 ->whereNotIn('status', ['cancelled', 'absent'])
                 ->pluck('appointment_time')
@@ -78,10 +140,14 @@ class BookingService
             while ($current->lt($end) && $count < $maxSlots) {
                 $timeStr = $current->format('H:i');
                 $isPast  = $date->isToday() && $current->lte(Carbon::now());
+                
+                $lockKey = "slot_lock_{$schedule->doctor_profile_id}_{$dateStr}_{$timeStr}";
+                $currentLock = \Illuminate\Support\Facades\Cache::get($lockKey);
+                $isLocked = $currentLock && $currentLock !== $draftId;
 
                 $slots[] = [
                     'time'      => $timeStr,
-                    'available' => !$isPast && !in_array($timeStr, $bookedTimes),
+                    'available' => !$isPast && !in_array($timeStr, $bookedTimes) && !$isLocked,
                     'room_name' => $schedule->room?->name ?? null,
                     'doctor_id' => $schedule->doctor_profile_id,
                 ];
@@ -240,8 +306,13 @@ class BookingService
             if (!$doc) {
                 throw new \Exception('Không tìm thấy thông tin bác sĩ.');
             }
-            if (!$doc->specialties->contains('id', $data['specialty_id'])) {
-                throw new \Exception('Bác sĩ này không thuộc chuyên khoa bạn đã chọn. Vui lòng thử lại.');
+
+            if (empty($data['specialty_id'])) {
+                $data['specialty_id'] = $doc->primary_specialty_id ?? ($doc->specialties->first()->id ?? null);
+            }
+
+            if (empty($data['specialty_id']) || !$doc->specialties->contains('id', $data['specialty_id'])) {
+                throw new \Exception('Bác sĩ này không thuộc chuyên khoa bạn đã chọn hoặc bác sĩ chưa có chuyên khoa. Vui lòng thử lại.');
             }
 
             // Double-check slot còn trống (bên trong transaction sau khi có lock)

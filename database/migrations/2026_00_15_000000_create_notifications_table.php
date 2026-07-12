@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('user_id')->index()->constrained('users')->onDelete('cascade');
             $table->string('title', 255);
             $table->text('content');
-            $table->enum('type', ['appointment', 'result', 'system', 'reminder', 'cancellation'])->index();
+            $table->enum('type', ['appointment', 'result', 'system', 'reminder', 'cancellation', 'system_cancellation', 'patient_cancellation', 'patient_booking', 'system_booking'])->index();
             $table->enum('channel', ['in_web', 'email', 'zalo'])->default('in_web');
             $table->timestamp('scheduled_at')->nullable()->index();
             $table->boolean('is_sent')->default(false);

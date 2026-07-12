@@ -37,6 +37,7 @@
 
         <form action="{{ route('patient.booking.postStep3') }}" method="POST" id="step3-form">
             @csrf
+            <input type="hidden" name="draft_id" value="{{ $draftId ?? '' }}">
             
             {{-- Chọn ngày --}}
             <div class="mb-8">
@@ -48,7 +49,7 @@
                 {{-- Lưới ngày tĩnh --}}
                 <div class="grid grid-cols-4 md:grid-cols-7 gap-3">
                     @foreach($availableDates as $dateObj)
-                        <a href="{{ route('patient.booking.step3', ['date' => $dateObj['date']]) }}" data-loader="true"
+                        <a href="{{ route('patient.booking.step3', ['date' => $dateObj['date'], 'draft_id' => $draftId ?? '']) }}" data-loader="true"
                             class="flex flex-col items-center justify-center py-3 rounded-2xl border-2 transition-all duration-200 hover:-translate-y-1 {{ $selectedDate === $dateObj['date'] ? 'border-primary bg-primary text-white shadow-md shadow-primary/30' : 'border-slate-100 bg-white text-slate-700 hover:border-primary/50 hover:bg-primary/5' }}">
                             <span class="text-[11px] font-bold uppercase tracking-wider mb-1 {{ $selectedDate === $dateObj['date'] ? 'text-primary-100' : 'text-slate-400' }}">{{ $dateObj['day_name'] }}</span>
                             <span class="text-xl font-extrabold">{{ $dateObj['display'] }}</span>
@@ -114,12 +115,14 @@
                                     </div>
                                     <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
                                         @foreach($morningSlots as $slot)
-                                            <label class="flex justify-center items-center gap-1.5 px-2 py-3 rounded-xl border-2 font-bold transition-all duration-200 cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-primary has-[:checked]:text-white has-[:checked]:shadow-md has-[:checked]:shadow-primary/30 has-[:checked]:scale-105 
-                                                {{ !$slot['available'] ? 'border-slate-100 text-slate-300 cursor-not-allowed bg-slate-50 opacity-60' : 'border-slate-200 text-slate-700 hover:border-primary/50 hover:bg-primary/5 hover:text-primary' }}">
-                                                
-                                                <input type="radio" name="time" value="{{ $slot['time'] }}" class="peer hidden" {{ $selectedTime == $slot['time'] ? 'checked' : '' }} @disabled(!$slot['available'])>
-                                                <i class="fa-regular fa-clock text-sm"></i>
-                                                <span class="text-sm md:text-base">{{ $slot['time'] }}</span>
+                                            <label class="relative block cursor-pointer">
+                                                <input type="radio" name="time" value="{{ $slot['time'] }}" data-doctor-id="{{ $slot['doctor_id'] ?? '' }}" class="peer sr-only" {{ $selectedTime == $slot['time'] ? 'checked' : '' }} @disabled(!$slot['available'])>
+                                                <div class="flex justify-center items-center gap-1.5 px-2 py-3 rounded-xl border-2 font-bold transition-all duration-200 
+                                                    peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white peer-checked:shadow-md peer-checked:shadow-primary/30 peer-checked:scale-105
+                                                    {{ !$slot['available'] ? 'border-slate-100 text-slate-300 cursor-not-allowed bg-slate-50 opacity-60' : 'border-slate-200 text-slate-700 hover:border-primary/50 hover:bg-primary/5 hover:text-primary' }}">
+                                                    <i class="fa-regular fa-clock text-sm"></i>
+                                                    <span class="text-sm md:text-base">{{ $slot['time'] }}</span>
+                                                </div>
                                             </label>
                                         @endforeach
                                     </div>
@@ -135,12 +138,14 @@
                                     </div>
                                     <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
                                         @foreach($afternoonSlots as $slot)
-                                            <label class="flex justify-center items-center gap-1.5 px-2 py-3 rounded-xl border-2 font-bold transition-all duration-200 cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-primary has-[:checked]:text-white has-[:checked]:shadow-md has-[:checked]:shadow-primary/30 has-[:checked]:scale-105 
-                                                {{ !$slot['available'] ? 'border-slate-100 text-slate-300 cursor-not-allowed bg-slate-50 opacity-60' : 'border-slate-200 text-slate-700 hover:border-primary/50 hover:bg-primary/5 hover:text-primary' }}">
-                                                
-                                                <input type="radio" name="time" value="{{ $slot['time'] }}" class="peer hidden" {{ $selectedTime == $slot['time'] ? 'checked' : '' }} @disabled(!$slot['available'])>
-                                                <i class="fa-regular fa-clock text-sm"></i>
-                                                <span class="text-sm md:text-base">{{ $slot['time'] }}</span>
+                                            <label class="relative block cursor-pointer">
+                                                <input type="radio" name="time" value="{{ $slot['time'] }}" data-doctor-id="{{ $slot['doctor_id'] ?? '' }}" class="peer sr-only" {{ $selectedTime == $slot['time'] ? 'checked' : '' }} @disabled(!$slot['available'])>
+                                                <div class="flex justify-center items-center gap-1.5 px-2 py-3 rounded-xl border-2 font-bold transition-all duration-200 
+                                                    peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white peer-checked:shadow-md peer-checked:shadow-primary/30 peer-checked:scale-105
+                                                    {{ !$slot['available'] ? 'border-slate-100 text-slate-300 cursor-not-allowed bg-slate-50 opacity-60' : 'border-slate-200 text-slate-700 hover:border-primary/50 hover:bg-primary/5 hover:text-primary' }}">
+                                                    <i class="fa-regular fa-clock text-sm"></i>
+                                                    <span class="text-sm md:text-base">{{ $slot['time'] }}</span>
+                                                </div>
                                             </label>
                                         @endforeach
                                     </div>
@@ -157,6 +162,25 @@
                                     <p class="text-sm mt-1">Vui lòng chọn ngày khác ở phần trên</p>
                                 </div>
                             @endif
+                            <input type="hidden" name="doctor_id" id="selected_doctor_id" value="{{ old('doctor_id', $booking['doctor_id'] ?? '') }}">
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    const timeInputs = document.querySelectorAll('input[name="time"]');
+                                    const docInput = document.getElementById('selected_doctor_id');
+                                    
+                                    // Initialize if one is checked
+                                    timeInputs.forEach(input => {
+                                        if (input.checked && input.dataset.doctorId) {
+                                            docInput.value = input.dataset.doctorId;
+                                        }
+                                        input.addEventListener('change', function() {
+                                            if (this.dataset.doctorId) {
+                                                docInput.value = this.dataset.doctorId;
+                                            }
+                                        });
+                                    });
+                                });
+                            </script>
                         </div>
                     </div>
                 </div>
@@ -175,7 +199,7 @@
 
             {{-- Navigation --}}
             <div class="flex gap-4 sticky bottom-0 bg-white/90 backdrop-blur-md pt-4 pb-4 md:pb-6 border-t border-slate-100 z-20">
-                <a href="{{ route('patient.booking.step2') }}" data-loader="true"
+                <a href="{{ route('patient.booking.step2', ['draft_id' => $draftId ?? '']) }}" data-loader="true"
                     class="w-1/3 md:w-1/4 py-3 md:py-4 bg-slate-100 text-slate-600 rounded-xl text-center font-bold hover:bg-slate-200 transition-colors active:scale-95 text-sm md:text-base">
                     <i class="fa-solid fa-arrow-left mr-1.5"></i> Quay lại
                 </a>
@@ -185,5 +209,4 @@
                 </button>
             </div>
         </form>
-    </div>
 </x-layouts.patient>

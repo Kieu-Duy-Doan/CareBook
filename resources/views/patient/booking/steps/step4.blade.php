@@ -17,8 +17,15 @@
             </div>
         @endif
 
+        @if(session('error'))
+            <div class="p-4 mb-6 text-sm text-red-800 rounded-lg bg-red-50" role="alert">
+                {{ session('error') }}
+            </div>
+        @endif
+
         <form action="{{ route('patient.booking.store') }}" method="POST" id="step4-form">
             @csrf
+            <input type="hidden" name="draft_id" value="{{ $draftId ?? '' }}">
             
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                 {{-- Cột bên trái: Triệu chứng & Lưu ý --}}
@@ -192,13 +199,6 @@
                                     </div>
                                     <div>
                                         <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Phòng khám</p>
-                                        @php
-                                            $roomName = 'Được sắp xếp sau';
-                                            $doc = \App\Models\DoctorProfile::find($booking['doctor_id'] ?? 0);
-                                            if ($doc && $doc->room_name) {
-                                                $roomName = $doc->room_name;
-                                            }
-                                        @endphp
                                         <p class="font-bold text-slate-800">{{ $roomName }}</p>
                                     </div>
                                 </div>
@@ -218,7 +218,7 @@
             </div>
 
             <div class="flex gap-4 sticky bottom-0 bg-white/90 backdrop-blur-md pt-4 pb-4 md:pb-6 border-t border-slate-100 z-20 mt-8">
-                <a href="{{ route('patient.booking.step3') }}" data-loader="true"
+                <a href="{{ route('patient.booking.step3', ['draft_id' => $draftId ?? '']) }}" data-loader="true"
                     class="w-1/3 md:w-1/4 py-3 md:py-4 bg-slate-100 text-slate-600 rounded-xl text-center font-bold hover:bg-slate-200 transition-colors active:scale-95 text-sm md:text-base">
                     <i class="fa-solid fa-arrow-left mr-1.5"></i> Quay lại
                 </a>

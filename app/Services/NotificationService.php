@@ -69,12 +69,12 @@ class NotificationService
                 ];
             }
         }
-        
+
         // 2. Lưu từng chunk 500 dòng
         foreach (array_chunk($insertData, 500) as $chunk) {
             Notification::insert($chunk);
         }
-        
+
         // 3. Dispatch job gửi email
         $this->dispatchEmails($data['title'], $now);
     }
@@ -118,7 +118,7 @@ class NotificationService
      */
     public function logWebNotification(Appointment $appointment, string $title, string $content, string $type = 'appointment', array $data = []): Notification
     {
-        return Notification::create([
+        $notification = Notification::create([
             'user_id' => $appointment->booked_by_user_id,
             'title' => $title,
             'content' => $content,
@@ -131,6 +131,8 @@ class NotificationService
             'data' => empty($data) ? null : $data,
             'created_at' => now(),
         ]);
+
+        return $notification;
     }
 
     public function notifyBookingSuccess(Appointment $appointment, string $actor = 'system'): Notification
@@ -141,7 +143,7 @@ class NotificationService
 
         $title = 'Đặt lịch khám thành công';
         $content = "Lịch hẹn khám lúc {$time} ngày {$date} với {$doctorName} đã được xác nhận. Mã lịch hẹn: {$appointment->appointment_code}.";
-        
+
         if ($actor === 'patient') {
             $content = "Bạn đã đặt lịch khám thành công lúc {$time} ngày {$date} với {$doctorName}. Mã lịch hẹn: {$appointment->appointment_code}.";
         } else {
@@ -232,7 +234,7 @@ class NotificationService
     public function markAsRead(int $userId, ?int $notificationId = null): void
     {
         $query = Notification::where('user_id', $userId);
-        
+
         if ($notificationId) {
             $query->where('id', $notificationId);
         }

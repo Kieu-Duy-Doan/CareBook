@@ -39,9 +39,11 @@
                             class="p-4 md:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-colors hover:bg-slate-50 {{ !$notif->is_read ? 'bg-blue-50/30' : '' }}">
                             <div class="flex items-start gap-4 flex-1">
                                 <div
-                                    class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 {{ $notif->type === 'cancellation' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600' }}">
-                                    @if ($notif->type === 'cancellation')
+                                    class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 {{ in_array($notif->type, ['cancellation', 'system_cancellation']) ? 'bg-red-100 text-red-600' : ($notif->type === 'patient_cancellation' ? 'bg-slate-100 text-slate-600' : 'bg-blue-100 text-blue-600') }}">
+                                    @if (in_array($notif->type, ['cancellation', 'system_cancellation']))
                                         <i class="fa-solid fa-triangle-exclamation"></i>
+                                    @elseif ($notif->type === 'patient_cancellation')
+                                        <i class="fa-solid fa-ban"></i>
                                     @else
                                         <i class="fa-solid fa-bell"></i>
                                     @endif
@@ -49,7 +51,7 @@
                                 <div class="flex-1">
                                     <div class="flex items-center gap-2 mb-1">
                                         <h3
-                                            class="font-bold text-base {{ $notif->type === 'cancellation' ? 'text-red-600' : 'text-slate-800' }}">
+                                            class="font-bold text-base {{ in_array($notif->type, ['cancellation', 'system_cancellation']) ? 'text-red-600' : ($notif->type === 'patient_cancellation' ? 'text-slate-600' : 'text-slate-800') }}">
                                             {{ $notif->title }}
                                         </h3>
                                         @if (!$notif->is_read)

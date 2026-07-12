@@ -125,10 +125,21 @@
                                             <p class="flex items-center gap-2"><i class="fa-regular fa-calendar-check text-green-500"></i> Lịch trống gần nhất: <strong class="text-slate-800 bg-green-100 text-green-700 px-2 py-0.5 rounded">{{ \Carbon\Carbon::parse($doc['alternative_date'])->format('d/m/Y') }}</strong></p>
                                         </div>
                                         <div class="mt-2">
-                                            <a href="{{ route('patient.booking.fastTrack', ['notification' => $notification->id, 'doctor_id' => $doc['id']]) }}" 
-                                               class="w-full px-4 py-2.5 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl transition-all shadow-md shadow-primary/20 active:scale-95 flex items-center justify-center gap-2 text-sm uppercase tracking-wider">
-                                                <i class="fa-solid fa-bolt"></i> Đặt lịch BS này
-                                            </a>
+                                            <form action="{{ route('patient.booking.fastTrack') }}" method="POST">
+                                                @csrf
+                                                <input type="hidden" name="doctor_id" value="{{ $doc['id'] }}">
+                                                <input type="hidden" name="patient_profile_id" value="{{ $appointment->patient_profile_id }}">
+                                                <input type="hidden" name="specialty_id" value="{{ $appointment->specialty_id }}">
+                                                <input type="hidden" name="reason" value="{{ $appointment->reason }}">
+                                                @if(!empty($doc['has_same_slot']) && $doc['has_same_slot'])
+                                                <input type="hidden" name="date" value="{{ \Carbon\Carbon::parse($appointment->appointment_date)->format('Y-m-d') }}">
+                                                <input type="hidden" name="time" value="{{ substr($appointment->appointment_time, 0, 5) }}">
+                                                @endif
+                                                <button type="submit" data-loader="true"
+                                                   class="w-full px-4 py-2.5 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl transition-all shadow-md shadow-primary/20 active:scale-95 flex items-center justify-center gap-2 text-sm uppercase tracking-wider">
+                                                    <i class="fa-solid fa-bolt"></i> Đặt lịch BS này
+                                                </button>
+                                            </form>
                                         </div>
                                     </div>
                                 @endforeach
