@@ -67,7 +67,16 @@
     @stack('styles')
 </head>
 
-<body class="min-h-screen bg-slate-50 flex flex-col">
+<body class="min-h-screen bg-slate-50 flex flex-col relative">
+
+    <!-- Global Loading Overlay -->
+    <div id="global-loader" class="fixed inset-0 z-[9999] bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="relative w-20 h-20">
+            <div class="absolute inset-0 border-4 border-primary/20 rounded-full"></div>
+            <div class="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+        <p class="mt-4 text-primary font-bold text-lg animate-pulse">Đang xử lý...</p>
+    </div>
 
     <!-- Premium Patient Top Nav -->
     <header id="patient-header" class="sticky top-0 z-50 bg-white shadow-sm transition-all duration-300">
@@ -98,35 +107,46 @@
                 
                 @auth
                 <!-- Tích hợp Thông báo Bệnh nhân (Bell & Popup) -->
-                <div x-data="patientNotifications()" x-init="init()" class="relative flex items-center">
+                <div x-data="{ openDropdown: false }" class="relative flex items-center">
                     <!-- Nút Chuông -->
                     <button @click="openDropdown = !openDropdown" class="relative p-2 text-slate-600 hover:text-secondary transition-colors" title="Thông báo">
                         <i class="fa-solid fa-bell text-lg"></i>
-                        <span x-show="unreadCount > 0" x-text="unreadCount" x-cloak class="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-[9px] font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-red-500 rounded-full"></span>
+                        @if(isset($unreadCount) && $unreadCount > 0)
+                        <span class="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-[9px] font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-red-500 rounded-full">{{ $unreadCount }}</span>
+                        @endif
                     </button>
 
                     <!-- Dropdown danh sách -->
-                    <div x-show="openDropdown" @click.away="openDropdown = false" x-cloak class="absolute right-0 top-full mt-2 w-80 bg-white border border-slate-200 shadow-2xl rounded-lg py-2 z-50 overflow-hidden flex flex-col max-h-[80vh]">
+                    <div x-show="openDropdown" @click.away="openDropdown = false" x-cloak style="display: none;" class="absolute right-0 top-full mt-2 w-80 bg-white border border-slate-200 shadow-2xl rounded-lg py-2 z-50 overflow-hidden flex flex-col max-h-[80vh]">
                         <div class="px-4 py-2 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                             <h3 class="font-bold text-slate-800 text-sm">Thông báo của bạn</h3>
-                            <button @click="markAllAsRead" x-show="unreadCount > 0" class="text-xs text-blue-600 hover:text-blue-800 font-semibold">Đánh dấu đã đọc</button>
+                            @if(isset($unreadCount) && $unreadCount > 0)
+                            <form action="{{ route('patient.notifications.read') }}" method="POST" class="inline">
+                                @csrf
+                                <button type="submit" onclick="showGlobalLoader()" class="text-xs text-blue-600 hover:text-blue-800 font-semibold">Đánh dấu đã đọc</button>
+                            </form>
+                            @endif
                         </div>
                         <div class="overflow-y-auto flex-1 p-2 space-y-1">
-                            <template x-if="notifications.length === 0">
+                            @if(isset($notifications) && count($notifications) == 0)
                                 <p class="text-center text-slate-500 py-4 text-xs italic">Chưa có thông báo nào</p>
-                            </template>
-                            <template x-for="notif in notifications" :key="notif.id">
-                                <div @click="handleNotificationClick(notif)" class="p-3 rounded-md hover:bg-slate-50 transition-colors cursor-pointer border border-transparent hover:border-slate-100 flex flex-col gap-1" :class="notif.is_read ? 'opacity-70' : 'bg-blue-50/50'">
-                                    <div class="flex justify-between items-start">
-                                        <h4 class="font-bold text-sm" :class="notif.type === 'cancellation' ? 'text-red-600' : 'text-slate-800'" x-text="notif.title"></h4>
-                                        <span x-show="!notif.is_read" class="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1"></span>
-                                    </div>
-                                    <p class="text-xs text-slate-600 leading-relaxed" x-text="notif.content"></p>
-                                </div>
-                            </template>
+                            @endif
+                            @if(isset($notifications))
+                                @foreach($notifications as $notif)
+                                    <a href="{{ route('patient.notifications.show', $notif->id) }}" data-loader="true" class="block p-3 rounded-md hover:bg-slate-50 transition-colors cursor-pointer border border-transparent hover:border-slate-100 flex flex-col gap-1 {{ $notif->is_read ? 'opacity-70' : 'bg-blue-50/50' }}">
+                                        <div class="flex justify-between items-start">
+                                            <h4 class="font-bold text-sm {{ $notif->type === 'cancellation' ? 'text-red-600' : 'text-slate-800' }}">{{ $notif->title }}</h4>
+                                            @if(!$notif->is_read)
+                                            <span class="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1"></span>
+                                            @endif
+                                        </div>
+                                        <p class="text-xs text-slate-600 leading-relaxed">{{ $notif->content }}</p>
+                                    </a>
+                                @endforeach
+                            @endif
                         </div>
                         <div class="px-4 py-2 border-t border-slate-100 bg-slate-50 text-center">
-                            <a href="{{ route('patient.notifications.page') }}" class="text-xs font-bold text-secondary hover:underline">Xem tất cả thông báo</a>
+                            <a href="{{ route('patient.notifications.page') }}" data-loader="true" class="text-xs font-bold text-secondary hover:underline">Xem tất cả thông báo</a>
                         </div>
                     </div>
                 </div>
@@ -156,7 +176,7 @@
                 <nav class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 md:gap-8 text-xs md:text-sm font-bold uppercase py-3 md:py-3.5">
                     <a href="{{ route('home') }}" class="whitespace-nowrap hover:text-amber-300 transition-colors">Cổng thông tin</a>
                     <a href="#" class="whitespace-nowrap hover:text-amber-300 transition-colors hidden sm:block">Đội ngũ bác sĩ</a>
-                    <a href="{{ route('patient.booking.index') }}" class="whitespace-nowrap hover:text-amber-300 transition-colors">Đặt lịch khám</a>
+                    <a href="{{ route('patient.booking.step1') }}" class="whitespace-nowrap hover:text-amber-300 transition-colors">Đặt lịch khám</a>
                     
                     @auth
                     <!-- Dropdown Cá nhân -->
@@ -203,74 +223,47 @@
 
     @stack('scripts')
     <script>
-        function patientNotifications() {
-            return {
-                notifications: [],
-                unreadCount: 0,
-                openDropdown: false,
-                pollingInterval: null,
-
-                init() {
-                    this.fetchNotifications();
-                    // Polling every 30 seconds
-                    this.pollingInterval = setInterval(() => {
-                        this.fetchNotifications();
-                    }, 30000);
-                },
-
-                async fetchNotifications() {
-                    try {
-                        const res = await fetch('/trang-ca-nhan/api/thong-bao');
-                        const data = await res.json();
-                        this.notifications = data.notifications || [];
-                        this.unreadCount = data.unread_count || 0;
-                    } catch (err) {
-                        console.error('Lỗi khi tải thông báo:', err);
-                    }
-                },
-
-                async markAsRead(id) {
-                    try {
-                        await fetch('/trang-ca-nhan/api/thong-bao/doc', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                            },
-                            body: JSON.stringify({ id: id })
-                        });
-                        this.fetchNotifications();
-                    } catch (err) {
-                        console.error(err);
-                    }
-                },
-
-                async handleNotificationClick(notif) {
-                    if (!notif.is_read) {
-                        await this.markAsRead(notif.id);
-                    }
-                    
-                    window.location.href = `/trang-ca-nhan/thong-bao/${notif.id}`;
-                },
-
-                async markAllAsRead() {
-                    try {
-                        await fetch('/trang-ca-nhan/api/thong-bao/doc', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                            },
-                            body: JSON.stringify({})
-                        });
-                        this.fetchNotifications();
-                        this.openDropdown = false;
-                    } catch (err) {
-                        console.error(err);
-                    }
-                }
+        // Hiển thị Global Loader
+        function showGlobalLoader() {
+            const loader = document.getElementById('global-loader');
+            if (loader) {
+                loader.classList.remove('hidden');
+                // Nhường một chút thời gian để trình duyệt render class hidden trước khi thay đổi opacity
+                setTimeout(() => loader.classList.remove('opacity-0'), 10);
             }
         }
+
+        // Tự động gắn sự kiện hiển thị Loader
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Khi submit bất kỳ form nào
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', () => {
+                    showGlobalLoader();
+                });
+            });
+
+            // 2. Khi click vào thẻ a có data-loader (ví dụ: chuyển bước đặt lịch)
+            document.querySelectorAll('a[data-loader="true"]').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    // Tránh loader nếu link mở tab mới hoặc ngăn chặn mặc định
+                    if (link.target !== '_blank' && !e.defaultPrevented) {
+                        showGlobalLoader();
+                    }
+                });
+            });
+        });
+
+        // Ẩn loader khi người dùng quay lại bằng nút Back của trình duyệt (BFCache)
+        window.addEventListener('pageshow', (e) => {
+            if (e.persisted) {
+                const loader = document.getElementById('global-loader');
+                if (loader) {
+                    loader.classList.add('hidden', 'opacity-0');
+                }
+            }
+        });
+
+
     </script>
 </body>
 </html>

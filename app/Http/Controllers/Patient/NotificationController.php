@@ -83,14 +83,15 @@ class NotificationController extends Controller
         ]);
     }
 
-    /**
-     * Mark a notification as read
-     */
     public function markAsRead(Request $request)
     {
         $this->notificationService->markAsRead(Auth::id(), $request->input('id'));
 
-        return response()->json(['success' => true]);
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+
+        return redirect()->back();
     }
 
     /**

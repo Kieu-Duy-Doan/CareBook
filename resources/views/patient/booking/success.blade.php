@@ -83,7 +83,7 @@
            style="border-color:var(--primary);color:var(--primary);">
             <i class="fa-solid fa-house mr-2"></i>Về trang chủ
         </a>
-        <a href="{{ route('patient.booking.index') }}"
+        <a href="{{ route('patient.booking.step1') }}"
            class="flex-1 py-3 rounded-xl text-center font-semibold text-white transition-colors"
            style="background-color:var(--primary);"
            onmouseover="this.style.backgroundColor='#155a85'"

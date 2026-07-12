@@ -296,28 +296,19 @@ Route::middleware(['auth', 'role:patient'])->prefix('trang-ca-nhan')->name('pati
 // PATIENT — Đặt lịch khám
 // ──────────────────────────────────────────────────────────
 Route::middleware(['auth', 'role:patient'])->prefix('dat-lich')->name('patient.booking.')->group(function () {
-    // Trang SPA booking
-    Route::get('/', [\App\Http\Controllers\Patient\BookingController::class, 'index'])
-        ->name('index');
-
-    // API: 14 ngày có lịch
-    Route::get('/ngay-kha-dung', [\App\Http\Controllers\Patient\BookingController::class, 'availableDates'])
-        ->name('available-dates');
-
-    // API: Slot giờ theo ngày
-    Route::get('/slots', [\App\Http\Controllers\Patient\BookingController::class, 'slots'])
-        ->name('slots');
-
-    // Lưu lịch hẹn
-    Route::post('/', [\App\Http\Controllers\Patient\BookingController::class, 'store'])
-        ->name('store');
-
-    // Trang thành công
-    Route::get('/thanh-cong/{id}', [\App\Http\Controllers\Patient\BookingController::class, 'success'])
-        ->name('success');
+    Route::get('/', [\App\Http\Controllers\Patient\BookingController::class, 'step1'])->name('step1');
+    Route::post('/buoc-1', [\App\Http\Controllers\Patient\BookingController::class, 'postStep1'])->name('postStep1');
+    
+    Route::get('/buoc-2', [\App\Http\Controllers\Patient\BookingController::class, 'step2'])->name('step2');
+    Route::post('/buoc-2', [\App\Http\Controllers\Patient\BookingController::class, 'postStep2'])->name('postStep2');
+    
+    Route::get('/buoc-3', [\App\Http\Controllers\Patient\BookingController::class, 'step3'])->name('step3');
+    Route::post('/buoc-3', [\App\Http\Controllers\Patient\BookingController::class, 'postStep3'])->name('postStep3');
+    
+    Route::get('/xac-nhan', [\App\Http\Controllers\Patient\BookingController::class, 'step4'])->name('step4');
+    Route::post('/store', [\App\Http\Controllers\Patient\BookingController::class, 'store'])->name('store');
+    
+    Route::get('/thanh-cong/{id}', [\App\Http\Controllers\Patient\BookingController::class, 'success'])->name('success');
+    
+    Route::post('/fast-track', [\App\Http\Controllers\Patient\BookingController::class, 'fastTrack'])->name('fastTrack');
 });
-
-// Alias route cho blade template (booking.store)
-Route::post('/dat-lich', [\App\Http\Controllers\Patient\BookingController::class, 'store'])
-    ->middleware(['auth', 'role:patient'])
-    ->name('booking.store');

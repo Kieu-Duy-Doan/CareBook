@@ -2,7 +2,7 @@
     <div>
         <div class="flex items-center gap-4 mb-8">
             @php
-                $redirect = request()->query('redirect') === 'booking' ? route('patient.booking.index') : route('patient.profiles.index');
+                $redirect = request()->query('redirect') === 'booking' ? route('patient.booking.step1') : route('patient.profiles.index');
             @endphp
             <a href="{{ $redirect }}" class="w-12 h-12 rounded-full bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-500 hover:text-primary hover:bg-slate-50 transition-all active:scale-95 group">
                 <i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>

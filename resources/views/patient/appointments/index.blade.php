@@ -5,7 +5,7 @@
                 <h1 class="text-2xl font-bold text-slate-900">Lịch sử đặt lịch khám</h1>
                 <p class="text-slate-500 mt-2">Xem và quản lý các lịch hẹn đã đặt, bao gồm trạng thái và chi tiết.</p>
             </div>
-            <a href="{{ route('patient.booking.index') }}" class="inline-flex items-center justify-center gap-2 rounded-full bg-secondary px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-secondary/20 hover:bg-secondary-dark transition">
+            <a href="{{ route('patient.booking.step1') }}" class="inline-flex items-center justify-center gap-2 rounded-full bg-secondary px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-secondary/20 hover:bg-secondary-dark transition">
                 <i class="fa-solid fa-calendar-plus"></i> Đặt lịch khám mới
             </a>
         </div>
@@ -28,7 +28,7 @@
                 </div>
                 <h2 class="text-lg font-semibold text-slate-900">Chưa có lịch hẹn nào</h2>
                 <p class="mt-2 text-sm text-slate-500">Bạn chưa đặt lịch khám nào. Hãy đặt lịch ngay để quản lý thông tin và kết quả khám dễ dàng.</p>
-                <a href="{{ route('patient.booking.index') }}" class="mt-6 inline-flex items-center justify-center rounded-full bg-secondary px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-secondary/20 hover:bg-secondary-dark transition">Đặt lịch khám</a>
+                <a href="{{ route('patient.booking.step1') }}" class="mt-6 inline-flex items-center justify-center rounded-full bg-secondary px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-secondary/20 hover:bg-secondary-dark transition">Đặt lịch khám</a>
             </div>
         @else
             <div class="grid gap-4">

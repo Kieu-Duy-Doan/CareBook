@@ -123,7 +123,7 @@ class ProfileController extends Controller
         PatientProfile::create($validated);
 
         if ($request->query('redirect') === 'booking') {
-            return redirect()->route('patient.booking.index')->with('success', 'Thêm hồ sơ thành công.');
+            return redirect()->route('patient.booking.step1')->with('success', 'Thêm hồ sơ thành công.');
         }
 
         if ($isSelf) {
