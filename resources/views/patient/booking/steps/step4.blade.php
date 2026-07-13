@@ -1,5 +1,7 @@
 <x-layouts.patient>
     <div class="max-w-5xl mx-auto px-4 py-6">
+        <x-stepper step="4" />
+
         <div class="flex items-center gap-3 mb-6">
             <div>
                 <h2 class="text-xl font-bold text-gray-800">Xác nhận thông tin đặt lịch</h2>
@@ -44,11 +46,15 @@
                                 maxlength="500"
                                 placeholder="Mô tả triệu chứng, tình trạng sức khoẻ hiện tại để bác sĩ có thể chuẩn bị tốt nhất..."
                                 oninput="updateReasonCount(this)"
-                                class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-4 resize-none text-slate-700 focus:outline-none focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 placeholder-slate-400 text-base transition-all">{{ old('reason', '') }}</textarea>
+                                class="w-full bg-slate-50 border-2 {{ $errors->has('reason') ? 'border-red-400 focus:border-red-500 focus:ring-red-100' : 'border-slate-100 focus:border-primary focus:ring-primary/10' }} rounded-2xl px-5 py-4 resize-none text-slate-700 focus:outline-none focus:bg-white focus:ring-4 placeholder-slate-400 text-base transition-all">{{ old('reason', $booking['reason'] ?? '') }}</textarea>
+                            
+                            @error('reason')
+                                <p class="text-sm text-red-600 mt-2 font-medium"><i class="fa-solid fa-circle-exclamation mr-1"></i> {{ $message }}</p>
+                            @enderror
                             
                             <div class="absolute bottom-3 right-4">
                                 <span id="reasonCountSpan" class="text-xs font-bold px-2 py-1 rounded-md bg-slate-200 text-slate-500">
-                                    {{ mb_strlen(old('reason', '')) }}/500
+                                    {{ mb_strlen(old('reason', $booking['reason'] ?? '')) }}/500
                                 </span>
                             </div>
                         </div>

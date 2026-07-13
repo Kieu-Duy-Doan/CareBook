@@ -1,5 +1,7 @@
 <x-layouts.patient>
     <div class="max-w-5xl mx-auto px-4 py-6">
+        <x-stepper step="3" />
+
         <div class="flex items-center gap-3 mb-6">
             <i class="fa-solid fa-calendar-days text-3xl text-primary"></i>
             <div>
@@ -94,8 +96,13 @@
                                 <i class="fa-regular fa-clock text-primary"></i>
                                 <span>Danh sách Giờ khám</span>
                             </div>
-                            <div class="text-sm font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">
-                                Ngày {{ \Carbon\Carbon::parse($selectedDate)->format('d/m/Y') }}
+                            <div class="flex items-center gap-2">
+                                <div id="selected-time-display" class="hidden flex items-center gap-1.5 text-sm font-bold text-white bg-green-500 px-3 py-1 rounded-full shadow-sm transition-all">
+                                    <i class="fa-regular fa-circle-check"></i> Đã chọn: <span></span>
+                                </div>
+                                <div class="text-sm font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">
+                                    Ngày {{ \Carbon\Carbon::parse($selectedDate)->format('d/m/Y') }}
+                                </div>
                             </div>
                         </div>
 
@@ -118,7 +125,7 @@
                                             <label class="relative block cursor-pointer">
                                                 <input type="radio" name="time" value="{{ $slot['time'] }}" data-doctor-id="{{ $slot['doctor_id'] ?? '' }}" class="peer sr-only" {{ $selectedTime == $slot['time'] ? 'checked' : '' }} @disabled(!$slot['available'])>
                                                 <div class="flex justify-center items-center gap-1.5 px-2 py-3 rounded-xl border-2 font-bold transition-all duration-200 
-                                                    peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white peer-checked:shadow-md peer-checked:shadow-primary/30 peer-checked:scale-105
+                                                    peer-checked:border-primary/50 peer-checked:bg-slate-100 peer-checked:text-primary peer-checked:opacity-60 peer-checked:shadow-inner
                                                     {{ !$slot['available'] ? 'border-slate-100 text-slate-300 cursor-not-allowed bg-slate-50 opacity-60' : 'border-slate-200 text-slate-700 hover:border-primary/50 hover:bg-primary/5 hover:text-primary' }}">
                                                     <i class="fa-regular fa-clock text-sm"></i>
                                                     <span class="text-sm md:text-base">{{ $slot['time'] }}</span>
@@ -141,7 +148,7 @@
                                             <label class="relative block cursor-pointer">
                                                 <input type="radio" name="time" value="{{ $slot['time'] }}" data-doctor-id="{{ $slot['doctor_id'] ?? '' }}" class="peer sr-only" {{ $selectedTime == $slot['time'] ? 'checked' : '' }} @disabled(!$slot['available'])>
                                                 <div class="flex justify-center items-center gap-1.5 px-2 py-3 rounded-xl border-2 font-bold transition-all duration-200 
-                                                    peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white peer-checked:shadow-md peer-checked:shadow-primary/30 peer-checked:scale-105
+                                                    peer-checked:border-primary/50 peer-checked:bg-slate-100 peer-checked:text-primary peer-checked:opacity-60 peer-checked:shadow-inner
                                                     {{ !$slot['available'] ? 'border-slate-100 text-slate-300 cursor-not-allowed bg-slate-50 opacity-60' : 'border-slate-200 text-slate-700 hover:border-primary/50 hover:bg-primary/5 hover:text-primary' }}">
                                                     <i class="fa-regular fa-clock text-sm"></i>
                                                     <span class="text-sm md:text-base">{{ $slot['time'] }}</span>
@@ -167,17 +174,32 @@
                                 document.addEventListener('DOMContentLoaded', function() {
                                     const timeInputs = document.querySelectorAll('input[name="time"]');
                                     const docInput = document.getElementById('selected_doctor_id');
+                                    const timeDisplay = document.getElementById('selected-time-display');
+                                    const timeDisplaySpan = timeDisplay ? timeDisplay.querySelector('span') : null;
                                     
-                                    // Initialize if one is checked
-                                    timeInputs.forEach(input => {
-                                        if (input.checked && input.dataset.doctorId) {
-                                            docInput.value = input.dataset.doctorId;
-                                        }
-                                        input.addEventListener('change', function() {
-                                            if (this.dataset.doctorId) {
-                                                docInput.value = this.dataset.doctorId;
+                                    function updateTimeDisplay() {
+                                        const checked = document.querySelector('input[name="time"]:checked');
+                                        if (checked) {
+                                            if (docInput && checked.dataset.doctorId) {
+                                                docInput.value = checked.dataset.doctorId;
                                             }
-                                        });
+                                            if (timeDisplay && timeDisplaySpan) {
+                                                timeDisplaySpan.textContent = checked.value;
+                                                timeDisplay.classList.remove('hidden');
+                                            }
+                                        } else {
+                                            if (timeDisplay) {
+                                                timeDisplay.classList.add('hidden');
+                                            }
+                                        }
+                                    }
+
+                                    // Initialize
+                                    updateTimeDisplay();
+
+                                    // Run on change
+                                    timeInputs.forEach(input => {
+                                        input.addEventListener('change', updateTimeDisplay);
                                     });
                                 });
                             </script>
