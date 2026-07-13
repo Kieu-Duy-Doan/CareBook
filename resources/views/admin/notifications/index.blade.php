@@ -152,9 +152,15 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" class="px-6 py-12 text-center text-gray-500">
-                            <div class="mb-3 text-gray-300"><i class="fa-solid fa-bullhorn text-4xl"></i></div>
-                            <p>Không có chiến dịch thông báo nào</p>
+                        <td colspan="5" class="px-6 py-16 text-center">
+                            <div class="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fa-solid fa-bullhorn text-2xl"></i>
+                            </div>
+                            <p class="text-gray-900 font-bold mb-1">Chưa có chiến dịch nào</p>
+                            <p class="text-gray-500 text-sm mb-4">Bắt đầu tương tác với bệnh nhân bằng cách tạo thông báo mới.</p>
+                            <a href="{{ route('admin.notifications.create') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+                                <i class="fa-solid fa-plus mr-2"></i> Tạo thông báo ngay
+                            </a>
                         </td>
                     </tr>
                     @endforelse
@@ -242,9 +248,15 @@
             </div>
         </div>
         @empty
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center text-gray-500">
-            <div class="mb-3 text-gray-300"><i class="fa-solid fa-bullhorn text-4xl"></i></div>
-            <p class="font-medium">Không có chiến dịch thông báo nào</p>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
+            <div class="w-14 h-14 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                <i class="fa-solid fa-bullhorn text-xl"></i>
+            </div>
+            <p class="text-gray-900 font-bold mb-1">Chưa có chiến dịch nào</p>
+            <p class="text-gray-500 text-sm mb-4">Bắt đầu gửi thông báo đến bệnh nhân.</p>
+            <a href="{{ route('admin.notifications.create') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+                <i class="fa-solid fa-plus mr-2"></i> Tạo mới
+            </a>
         </div>
         @endforelse
 
