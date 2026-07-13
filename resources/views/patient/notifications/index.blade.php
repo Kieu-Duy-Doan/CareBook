@@ -1,16 +1,17 @@
 <x-layouts.patient-dashboard title="Hộp thư thông báo" active-menu="notifications">
     <div>
-        <div class="flex items-center justify-between mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <h2 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-bell text-secondary mr-2"></i> Hộp thư
                 thông báo</h2>
 
             @if ($notifications->count() > 0)
                 <form action="{{ route('patient.notifications.destroy-read') }}" method="POST"
-                    onsubmit="return confirm('Bạn có chắc chắn muốn dọn dẹp tất cả thông báo đã đọc?');">
+                    onsubmit="return confirm('Bạn có chắc chắn muốn dọn dẹp tất cả thông báo đã đọc?');"
+                    class="w-full sm:w-auto">
                     @csrf
                     @method('DELETE')
                     <button type="submit"
-                        class="text-sm px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg transition-colors flex items-center gap-2">
+                        class="w-full sm:w-auto text-sm px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 shrink-0">
                         Xoá thông báo đã đọc
                     </button>
                 </form>

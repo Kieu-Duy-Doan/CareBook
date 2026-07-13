@@ -175,7 +175,7 @@
                     </button>
 
                     <!-- Dropdown danh sách -->
-                    <div x-show="openDropdown" @click.away="openDropdown = false" x-cloak style="display: none;" class="absolute right-0 top-full mt-2 w-80 bg-white border border-slate-200 shadow-2xl rounded-lg py-2 z-50 overflow-hidden flex flex-col max-h-[80vh]">
+                    <div x-show="openDropdown" @click.away="openDropdown = false" x-cloak style="display: none;" class="absolute -right-16 sm:right-0 top-full mt-2 w-[320px] max-w-[90vw] bg-white border border-slate-200 shadow-2xl rounded-lg py-2 z-50 overflow-hidden flex flex-col max-h-[80vh]">
                         <div class="px-4 py-2 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                             <h3 class="font-bold text-slate-800 text-sm">Thông báo của bạn</h3>
                             @if(isset($unreadCount) && $unreadCount > 0)
@@ -250,7 +250,7 @@
                             x-transition:leave="transition ease-in duration-75"
                             x-transition:leave-start="opacity-100 translate-y-0"
                             x-transition:leave-end="opacity-0 translate-y-1"
-                            class="absolute top-full left-0 md:left-auto md:right-0 mt-0 w-60 bg-white border border-slate-200 shadow-xl rounded-lg py-2 z-50 text-slate-700 normal-case">
+                            class="absolute top-full right-0 mt-0 w-[240px] max-w-[90vw] bg-white border border-slate-200 shadow-xl rounded-lg py-2 z-50 text-slate-700 normal-case">
 
                             <a href="{{ route('patient.dashboard') }}" class="block px-4 py-2 hover:bg-slate-50 text-sm font-semibold transition-colors uppercase hover:text-secondary">Thông tin cá nhân</a>
                             <a href="{{ route('patient.family.index') }}" class="block px-4 py-2 hover:bg-slate-50 text-sm font-semibold transition-colors uppercase hover:text-secondary">Quản lý gia đình</a>

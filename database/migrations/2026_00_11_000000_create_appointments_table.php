@@ -21,8 +21,11 @@ return new class extends Migration
             $table->time('appointment_time');
             $table->text('reason');
             $table->enum('status', ['pending', 'checked_in', 'examining', 'completed', 'cancelled', 'absent'])->default('pending')->index();
+            $table->decimal('total_fee', 15, 2)->nullable();
+            $table->boolean('reminded_2h')->default(false);
+            $table->boolean('reminded_30m')->default(false);
             $table->enum('source', ['web', 'counter', 'chatbot'])->default('web');
-            $table->enum('booking_method', ['doctor', 'specialty'])->default('doctor');
+            $table->enum('booking_method', ['doctor', 'specialty', 'suggested'])->default('doctor');
             $table->text('receptionist_note')->nullable();
             $table->smallInteger('vital_pulse')->nullable();
             $table->smallInteger('vital_systolic_bp')->nullable();
