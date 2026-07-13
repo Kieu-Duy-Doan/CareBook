@@ -20,6 +20,7 @@ class Appointment extends Model
         'status',
         'source',
         'booking_method',
+        'total_fee',
         'receptionist_note',
         'vital_pulse',
         'vital_systolic_bp',

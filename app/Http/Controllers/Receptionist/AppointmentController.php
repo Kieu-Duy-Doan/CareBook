@@ -229,6 +229,12 @@ class AppointmentController extends Controller
         $checkedInAt = in_array($request->status, ['checked_in', 'examining', 'completed']) ? now() : null;
         $completedAt = $request->status === 'completed' ? now() : null;
 
+        $totalFee = 0;
+        if ($doctor->level) {
+            $fee = \App\Models\DoctorLevelFee::where('level', $doctor->level)->first();
+            $totalFee = $fee ? $fee->specific_price : 0;
+        }
+
         $appointment = Appointment::create([
             'appointment_code'   => $appointmentCode,
             'patient_profile_id' => $request->patient_profile_id,
@@ -242,6 +248,7 @@ class AppointmentController extends Controller
             'reason'             => $request->reason,
             'status'             => $request->status,
             'source'             => $request->source,
+            'total_fee'          => $totalFee,
             'receptionist_note'  => $request->receptionist_note,
 
             // Vitals
@@ -365,6 +372,13 @@ class AppointmentController extends Controller
         $appointment->vital_bmi = $request->vital_bmi;
         $appointment->vital_note = $request->vital_note;
         $appointment->measured_by = $request->measured_by;
+
+        $totalFee = 0;
+        if ($doctor->level) {
+            $fee = \App\Models\DoctorLevelFee::where('level', $doctor->level)->first();
+            $totalFee = $fee ? $fee->specific_price : 0;
+        }
+        $appointment->total_fee = $totalFee;
 
         if (in_array($newStatus, ['checked_in', 'examining', 'completed']) && is_null($appointment->checked_in_at)) {
             $appointment->checked_in_at = now();
@@ -548,8 +562,8 @@ class AppointmentController extends Controller
             'visit_order' => $nextOrder,
             'is_origin' => true,
             'status' => 'waiting',
-            'payment_amount' => 0,
-            'payment_status' => 'paid',
+            'payment_amount' => $appointment->total_fee ?? 0,
+            'payment_status' => ($appointment->total_fee ?? 0) > 0 ? 'pending' : 'paid',
         ]);
     }
 }

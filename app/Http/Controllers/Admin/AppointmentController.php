@@ -550,6 +550,8 @@ class AppointmentController extends Controller
             'visit_order' => $nextOrder,
             'is_origin' => true,
             'status' => 'waiting',
+            'payment_amount' => $appointment->total_fee ?? 0,
+            'payment_status' => ($appointment->total_fee ?? 0) > 0 ? 'pending' : 'paid',
         ]);
     }
 }
