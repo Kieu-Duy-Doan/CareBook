@@ -431,6 +431,11 @@ class AppointmentController extends Controller
                 return back()->with('error', 'Không thể thay đổi trạng thái của lịch hẹn đã hoàn thành.');
             }
 
+            // Chặn đổi trạng thái của lịch hẹn đang khám sang các trạng thái khác ngoài Hoàn thành
+            if ($oldStatus === 'examining' && $newStatus !== 'examining' && $newStatus !== 'completed') {
+                return back()->with('error', 'Lịch hẹn đang khám chỉ có thể chuyển sang trạng thái Hoàn thành.');
+            }
+
             $appointment->status = $newStatus;
             $appointment->receptionist_note = $request->receptionist_note;
 
@@ -513,30 +518,41 @@ class AppointmentController extends Controller
             return back()->withErrors(['doctor_profile_id' => 'Bác sĩ được chọn không thuộc chuyên khoa đã chỉ định.'])->withInput();
         }
 
-        // Kiểm tra trùng lịch hẹn (Chống trùng lịch bác sĩ và trùng lịch bệnh nhân, loại trừ chính lịch này)
+        // Kiểm tra trùng lịch hẹn (Chống trùng lịch bác sĩ và trùng lịch bệnh nhân - chỉ kiểm tra khi thay đổi thông tin quan trọng)
         if ($request->status !== 'cancelled') {
-            // 1. Kiểm tra bác sĩ trùng lịch
-            $doctorConflict = Appointment::where('doctor_profile_id', $request->doctor_profile_id)
-                ->whereDate('appointment_date', $request->appointment_date)
-                ->whereTime('appointment_time', $request->appointment_time)
-                ->where('status', '!=', 'cancelled')
-                ->where('id', '!=', $id)
-                ->exists();
+            $timeDb = substr($appointment->appointment_time, 0, 5);
+            $timeReq = substr($request->appointment_time, 0, 5);
+            $dateDb = $appointment->appointment_date->format('Y-m-d');
+            $dateReq = $request->appointment_date;
 
-            if ($doctorConflict) {
-                return back()->withErrors(['appointment_time' => 'Bác sĩ này đã có lịch hẹn khác vào khung giờ này. Vui lòng chọn giờ khác.'])->withInput();
+            // 1. Kiểm tra bác sĩ trùng lịch (chỉ khi đổi bác sĩ, ngày hoặc giờ)
+            $doctorChanged = ($appointment->doctor_profile_id != $request->doctor_profile_id) || ($dateDb !== $dateReq) || ($timeDb !== $timeReq);
+            if ($doctorChanged) {
+                $doctorConflict = Appointment::where('doctor_profile_id', $request->doctor_profile_id)
+                    ->whereDate('appointment_date', $request->appointment_date)
+                    ->whereTime('appointment_time', $request->appointment_time)
+                    ->where('status', '!=', 'cancelled')
+                    ->where('id', '!=', $id)
+                    ->exists();
+
+                if ($doctorConflict) {
+                    return back()->withErrors(['appointment_time' => 'Bác sĩ này đã có lịch hẹn khác vào khung giờ này. Vui lòng chọn giờ khác.'])->withInput();
+                }
             }
 
-            // 2. Kiểm tra bệnh nhân trùng lịch
-            $patientConflict = Appointment::where('patient_profile_id', $request->patient_profile_id)
-                ->whereDate('appointment_date', $request->appointment_date)
-                ->whereTime('appointment_time', $request->appointment_time)
-                ->where('status', '!=', 'cancelled')
-                ->where('id', '!=', $id)
-                ->exists();
+            // 2. Kiểm tra bệnh nhân trùng lịch (chỉ khi đổi bệnh nhân, ngày hoặc giờ)
+            $patientChanged = ($appointment->patient_profile_id != $request->patient_profile_id) || ($dateDb !== $dateReq) || ($timeDb !== $timeReq);
+            if ($patientChanged) {
+                $patientConflict = Appointment::where('patient_profile_id', $request->patient_profile_id)
+                    ->whereDate('appointment_date', $request->appointment_date)
+                    ->whereTime('appointment_time', $request->appointment_time)
+                    ->where('status', '!=', 'cancelled')
+                    ->where('id', '!=', $id)
+                    ->exists();
 
-            if ($patientConflict) {
-                return back()->withErrors(['appointment_time' => 'Bệnh nhân này đã có lịch hẹn khác vào cùng khung giờ này.'])->withInput();
+                if ($patientConflict) {
+                    return back()->withErrors(['appointment_time' => 'Bệnh nhân này đã có lịch hẹn khác vào cùng khung giờ này.'])->withInput();
+                }
             }
         }
 
@@ -651,6 +667,11 @@ class AppointmentController extends Controller
         // Chặn chuyển đổi trạng thái của lịch hẹn đã khám hoàn thành
         if ($oldStatus === 'completed' && $newStatus !== 'completed') {
             return back()->with('error', 'Không thể thay đổi trạng thái của lịch hẹn đã hoàn thành.');
+        }
+
+        // Chặn đổi trạng thái của lịch hẹn đang khám sang các trạng thái khác ngoài Hoàn thành
+        if ($oldStatus === 'examining' && $newStatus !== 'examining' && $newStatus !== 'completed') {
+            return back()->with('error', 'Lịch hẹn đang khám chỉ có thể chuyển sang trạng thái Hoàn thành.');
         }
 
         if ($oldStatus !== $newStatus) {
