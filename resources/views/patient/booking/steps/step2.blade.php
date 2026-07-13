@@ -1,8 +1,10 @@
 <x-layouts.patient>
     @php
-        $method = request('method', old('booking_method', $booking['booking_method'] ?? 'specialty'));
+    $method = request('method', old('booking_method', $booking['booking_method'] ?? 'specialty'));
     @endphp
     <div class="max-w-5xl mx-auto px-4 py-6">
+        <x-stepper step="2" />
+
         <div class="flex items-center gap-3 mb-8">
             <i class="fa-solid fa-stethoscope text-3xl text-primary"></i>
             <div>
@@ -14,23 +16,23 @@
         </div>
 
         @if($errors->any())
-            <div class="p-4 mb-6 text-sm text-red-800 rounded-lg bg-red-50" role="alert">
-                <ul class="list-disc pl-5">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
+        <div class="p-4 mb-6 text-sm text-red-800 rounded-lg bg-red-50" role="alert">
+            <ul class="list-disc pl-5">
+                @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
         @endif
 
         <form action="{{ route('patient.booking.postStep2') }}" method="POST" id="step2-form">
             @csrf
             <input type="hidden" name="draft_id" value="{{ $draftId ?? '' }}">
-            
+
             {{-- Các lựa chọn --}}
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
-                
-                @if(isset($booking['suggested_doctors']) && count($booking['suggested_doctors']) > 0)
+
+                @if((isset($booking['suggested_doctors']) && count($booking['suggested_doctors']) > 0) || !empty($booking['is_fast_track']))
                 {{-- Theo bác sĩ gợi ý --}}
                 <a href="{{ route('patient.booking.step2', ['method' => 'suggested', 'draft_id' => $draftId ?? '']) }}" data-loader="true"
                     class="group relative flex flex-col p-5 bg-white border-2 rounded-2xl cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 {{ $method === 'suggested' ? 'border-primary ring-4 ring-primary/10 bg-primary/5' : 'border-slate-100' }}">
@@ -45,7 +47,7 @@
                 @endif
 
                 {{-- Theo chuyên khoa --}}
-                <a href="{{ route('patient.booking.step2', ['method' => 'specialty']) }}" data-loader="true"
+                <a href="{{ route('patient.booking.step2', ['method' => 'specialty', 'draft_id' => $draftId ?? '']) }}" data-loader="true"
                     class="group relative flex flex-col p-5 bg-white border-2 rounded-2xl cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 {{ $method === 'specialty' ? 'border-primary ring-4 ring-primary/10 bg-primary/5' : 'border-slate-100' }}">
                     <div class="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 transition-colors mb-4 {{ $method === 'specialty' ? 'bg-primary text-white shadow-md' : 'bg-blue-50 text-blue-500 group-hover:bg-primary/10 group-hover:text-primary' }}">
                         <i class="fa-solid fa-briefcase-medical text-2xl"></i>
@@ -57,7 +59,7 @@
                 </a>
 
                 {{-- Theo bác sĩ --}}
-                <a href="{{ route('patient.booking.step2', ['method' => 'doctor']) }}" data-loader="true"
+                <a href="{{ route('patient.booking.step2', ['method' => 'doctor', 'draft_id' => $draftId ?? '']) }}" data-loader="true"
                     class="group relative flex flex-col p-5 bg-white border-2 rounded-2xl cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 {{ $method === 'doctor' ? 'border-primary ring-4 ring-primary/10 bg-primary/5' : 'border-slate-100' }}">
                     <div class="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 transition-colors mb-4 {{ $method === 'doctor' ? 'bg-primary text-white shadow-md' : 'bg-blue-50 text-blue-500 group-hover:bg-primary/10 group-hover:text-primary' }}">
                         <i class="fa-solid fa-user-doctor text-2xl"></i>
@@ -78,19 +80,19 @@
                 <div class="bg-white border-2 border-slate-100 rounded-2xl overflow-hidden shadow-sm">
                     <div class="overflow-y-auto max-h-[60vh] md:max-h-[400px]">
                         @php
-                            $selectedSpecialty = old('specialty_id', $booking['specialty_id'] ?? '');
+                        $selectedSpecialty = old('specialty_id', $booking['specialty_id'] ?? '');
                         @endphp
                         @foreach($specialties as $s)
-                            <label class="flex items-center gap-4 px-5 py-4 border-b hover:bg-primary/5 cursor-pointer transition-colors has-[:checked]:bg-primary/5 has-[:checked]:border-primary/20 border-slate-50">
-                                <input type="radio" name="specialty_id" value="{{ $s->id }}" class="hidden" {{ $selectedSpecialty == $s->id ? 'checked' : '' }}>
-                                <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors border-slate-300 custom-radio-circle">
-                                    <div class="w-2.5 h-2.5 rounded-full bg-primary opacity-0 transition-opacity custom-radio-dot"></div>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="font-bold text-lg text-slate-800 custom-radio-text">{{ $s->name }}</p>
-                                    <p class="text-sm text-slate-500 mt-1 line-clamp-2">{{ $s->description }}</p>
-                                </div>
-                            </label>
+                        <label class="flex items-center gap-4 px-5 py-4 border-b hover:bg-primary/5 cursor-pointer transition-colors has-[:checked]:bg-primary/5 has-[:checked]:border-primary/20 border-slate-50">
+                            <input type="radio" name="specialty_id" value="{{ $s->id }}" class="sr-only" {{ $selectedSpecialty == $s->id ? 'checked' : '' }}>
+                            <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors border-slate-300 custom-radio-circle">
+                                <div class="w-2.5 h-2.5 rounded-full bg-primary opacity-0 transition-opacity custom-radio-dot"></div>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="font-bold text-lg text-slate-800 custom-radio-text">{{ $s->name }}</p>
+                                <p class="text-sm text-slate-500 mt-1 line-clamp-2">{{ $s->description }}</p>
+                            </div>
+                        </label>
                         @endforeach
                     </div>
                 </div>
@@ -99,18 +101,18 @@
                 @if($method === 'specialty')
                 <div class="mt-8">
                     <h3 class="text-lg font-bold text-slate-800 mb-4">2. Chọn Học vị bác sĩ mong muốn:</h3>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="flex flex-wrap gap-4">
                         @php
-                            $selectedLevel = old('level', $booking['level'] ?? '');
+                        $selectedLevel = old('level', $booking['level'] ?? '');
                         @endphp
                         @foreach($fees as $fee)
-                            <label class="fee-label relative block cursor-pointer" data-level="{{ $fee->level }}">
-                                <input type="radio" name="level" value="{{ $fee->level }}" class="peer sr-only" {{ $selectedLevel == $fee->level ? 'checked' : '' }}>
-                                <div class="flex flex-col items-center justify-center p-4 bg-white border-2 rounded-2xl transition-all hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5 peer-checked:border-primary peer-checked:ring-4 peer-checked:ring-primary/10 peer-checked:bg-primary/5 border-slate-100 h-full">
-                                    <span class="font-bold text-slate-800 text-lg mb-1">{{ $fee->level }}</span>
-                                    <span class="text-sm text-primary font-bold bg-white px-3 py-1 rounded-full border border-primary/20 shadow-sm">{{ number_format($fee->base_price, 0, ',', '.') }} đ</span>
-                                </div>
-                            </label>
+                        <label class="fee-label relative block cursor-pointer w-[calc(50%-0.5rem)] md:w-auto md:min-w-[160px]" data-level="{{ $fee->level }}">
+                            <input type="radio" name="level" value="{{ $fee->level }}" class="peer sr-only" {{ $selectedLevel == $fee->level ? 'checked' : '' }}>
+                            <div class="flex flex-col items-center justify-center p-4 bg-white border-2 rounded-2xl transition-all hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5 peer-checked:border-primary peer-checked:ring-4 peer-checked:ring-primary/10 peer-checked:bg-primary/5 border-slate-100 h-full w-full">
+                                <span class="font-bold text-slate-800 text-lg mb-1">{{ $fee->level }}</span>
+                                <span class="text-sm text-primary font-bold bg-white px-3 py-1 rounded-full border border-primary/20 shadow-sm">{{ number_format($fee->base_price, 0, ',', '.') }} đ</span>
+                            </div>
+                        </label>
                         @endforeach
                     </div>
                 </div>
@@ -125,24 +127,53 @@
                 <div class="bg-white border-2 border-slate-100 rounded-2xl overflow-hidden shadow-sm">
                     <div class="overflow-y-auto max-h-[60vh] md:max-h-[400px]">
                         @php
-                            $selectedDoctor = old('doctor_id', $booking['doctor_id'] ?? '');
+                        $selectedDoctor = old('doctor_id', $booking['doctor_id'] ?? '');
                         @endphp
                         @foreach($doctors as $doc)
-                            @php
-                                $docSpecialties = $doc->specialties->pluck('id')->join(',');
-                            @endphp
-                            <label class="doctor-label flex items-center gap-4 px-5 py-4 border-b hover:bg-primary/5 cursor-pointer transition-colors has-[:checked]:bg-primary/5 has-[:checked]:border-primary/20 border-slate-50" data-specialties="{{ $docSpecialties }}">
-                                <input type="radio" name="doctor_id" value="{{ $doc->id }}" class="hidden" {{ $selectedDoctor == $doc->id ? 'checked' : '' }}>
-                                <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors border-slate-300 custom-radio-circle">
-                                    <div class="w-2.5 h-2.5 rounded-full bg-primary opacity-0 transition-opacity custom-radio-dot"></div>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="font-bold text-lg text-slate-800 custom-radio-text">{{ $doc->full_title }}</p>
-                                    <p class="text-sm text-slate-500 mt-0.5 line-clamp-1">Mã BS: <strong class="text-slate-700">{{ $doc->doctor_code }}</strong></p>
-                                </div>
-                            </label>
+                        @php
+                        $docSpecialties = $doc->specialties->pluck('id')->join(',');
+                        @endphp
+                        <label class="doctor-label flex items-center gap-4 px-5 py-4 border-b hover:bg-primary/5 cursor-pointer transition-colors has-[:checked]:bg-primary/5 has-[:checked]:border-primary/20 border-slate-50" data-specialties="{{ $docSpecialties }}">
+                            <input type="radio" name="doctor_id" value="{{ $doc->id }}" class="sr-only" {{ $selectedDoctor == $doc->id ? 'checked' : '' }}>
+                            <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors border-slate-300 custom-radio-circle">
+                                <div class="w-2.5 h-2.5 rounded-full bg-primary opacity-0 transition-opacity custom-radio-dot"></div>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="font-bold text-lg text-slate-800 custom-radio-text">{{ $doc->full_title }}</p>
+                                <p class="text-sm text-slate-500 mt-0.5 line-clamp-1">Mã BS: <strong class="text-slate-700">{{ $doc->doctor_code }}</strong></p>
+                            </div>
+                        </label>
                         @endforeach
                     </div>
+                </div>
+            </div>
+            @endif
+
+            {{-- Thông tin Bác sĩ gợi ý --}}
+            @if($method === 'suggested')
+            <div class="mb-8">
+                <h3 class="text-lg font-bold text-slate-800 mb-4">2. Bác sĩ gợi ý đã chọn:</h3>
+                <div class="bg-white border-2 border-primary/20 bg-primary/5 rounded-2xl p-5 shadow-sm">
+                    @php
+                        $suggestedDoctor = \App\Models\DoctorProfile::with('user', 'specialties')->find($booking['doctor_id'] ?? null);
+                    @endphp
+                    @if($suggestedDoctor)
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xl">
+                                <i class="fa-solid fa-user-doctor"></i>
+                            </div>
+                            <div>
+                                <p class="font-bold text-lg text-slate-800">{{ $suggestedDoctor->full_title }}</p>
+                                <p class="text-sm text-slate-500">Chuyên khoa: {{ $suggestedDoctor->specialties->pluck('name')->join(', ') }}</p>
+                            </div>
+                        </div>
+                        <input type="hidden" name="doctor_id" value="{{ $suggestedDoctor->id }}">
+                    @else
+                        <div class="text-center py-4">
+                            <p class="text-red-500 font-bold mb-2">Không tìm thấy thông tin bác sĩ gợi ý.</p>
+                            <p class="text-sm text-slate-500">Vui lòng quay lại bước 1 hoặc chọn phương thức đặt lịch khác.</p>
+                        </div>
+                    @endif
                 </div>
             </div>
             @endif
@@ -169,7 +200,7 @@
                         const circle = label.querySelector('.custom-radio-circle');
                         const dot = label.querySelector('.custom-radio-dot');
                         const text = label.querySelector('.custom-radio-text');
-                        
+
                         if (circle && dot && text) {
                             if (radio.checked) {
                                 circle.classList.add('border-primary');
@@ -199,7 +230,7 @@
 
             function filterOptions() {
                 const selectedSpecialtyRadio = document.querySelector('input[name="specialty_id"]:checked');
-                
+
                 // 1. Filter Levels (for specialty method)
                 const feeLabels = document.querySelectorAll('.fee-label');
                 if (feeLabels.length > 0) {
@@ -214,7 +245,7 @@
                             const level = label.getAttribute('data-level');
                             const input = label.querySelector('input');
                             if (availableLevels.includes(level)) {
-                                label.style.display = 'flex';
+                                label.style.display = 'block';
                             } else {
                                 label.style.display = 'none';
                                 input.checked = false;
