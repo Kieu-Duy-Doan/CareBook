@@ -266,6 +266,30 @@ class AppointmentController extends Controller
             return back()->withErrors(['doctor_profile_id' => 'Bác sĩ được chọn không thuộc chuyên khoa đã chỉ định.'])->withInput();
         }
 
+        // Kiểm tra lịch làm việc (WorkSchedule) của bác sĩ
+        $dayOfWeek = \Carbon\Carbon::parse($request->appointment_date)->dayOfWeek + 1;
+        $reqTime = $request->appointment_time;
+
+        $hasSchedule = \App\Models\WorkSchedule::where('doctor_profile_id', $request->doctor_profile_id)
+            ->where('day_of_week', $dayOfWeek)
+            ->where('is_active', true)
+            ->where('start_time', '<=', $reqTime)
+            ->where('end_time', '>=', $reqTime)
+            ->exists();
+
+        if (!$hasSchedule) {
+            return back()->withErrors(['appointment_time' => 'Bác sĩ không có lịch làm việc đăng ký vào ngày và khung giờ này.'])->withInput();
+        }
+
+        // Chặn đặt/dời lịch về quá khứ trong ngày hôm nay
+        if ($request->appointment_date === now()->toDateString()) {
+            $currentTime = now()->format('H:i');
+            $reqTimeShort = substr($reqTime, 0, 5);
+            if ($reqTimeShort < $currentTime) {
+                return back()->withErrors(['appointment_time' => 'Không thể đặt hoặc dời lịch khám về thời gian trong quá khứ của ngày hôm nay.'])->withInput();
+            }
+        }
+
         // Kiểm tra trùng lịch hẹn (Chống trùng lịch bác sĩ và trùng lịch bệnh nhân)
         if ($request->status !== 'cancelled') {
             // 1. Kiểm tra bác sĩ trùng lịch
@@ -516,6 +540,39 @@ class AppointmentController extends Controller
 
         if (!$doctorBelongsToSpecialty) {
             return back()->withErrors(['doctor_profile_id' => 'Bác sĩ được chọn không thuộc chuyên khoa đã chỉ định.'])->withInput();
+        }
+
+        $timeDb = substr($appointment->appointment_time, 0, 5);
+        $timeReq = substr($request->appointment_time, 0, 5);
+        $dateDb = $appointment->appointment_date->format('Y-m-d');
+        $dateReq = $request->appointment_date;
+
+        $dateTimeOrDoctorChanged = ($appointment->doctor_profile_id != $request->doctor_profile_id) || ($dateDb !== $dateReq) || ($timeDb !== $timeReq);
+
+        if ($dateTimeOrDoctorChanged) {
+            // Kiểm tra lịch làm việc (WorkSchedule) của bác sĩ
+            $dayOfWeek = \Carbon\Carbon::parse($request->appointment_date)->dayOfWeek + 1;
+            $reqTime = $request->appointment_time;
+
+            $hasSchedule = \App\Models\WorkSchedule::where('doctor_profile_id', $request->doctor_profile_id)
+                ->where('day_of_week', $dayOfWeek)
+                ->where('is_active', true)
+                ->where('start_time', '<=', $reqTime)
+                ->where('end_time', '>=', $reqTime)
+                ->exists();
+
+            if (!$hasSchedule) {
+                return back()->withErrors(['appointment_time' => 'Bác sĩ không có lịch làm việc đăng ký vào ngày và khung giờ này.'])->withInput();
+            }
+
+            // Chặn đặt/dời lịch về quá khứ trong ngày hôm nay
+            if ($request->appointment_date === now()->toDateString()) {
+                $currentTime = now()->format('H:i');
+                $reqTimeShort = substr($reqTime, 0, 5);
+                if ($reqTimeShort < $currentTime) {
+                    return back()->withErrors(['appointment_time' => 'Không thể đặt hoặc dời lịch khám về thời gian trong quá khứ của ngày hôm nay.'])->withInput();
+                }
+            }
         }
 
         // Kiểm tra trùng lịch hẹn (Chống trùng lịch bác sĩ và trùng lịch bệnh nhân - chỉ kiểm tra khi thay đổi thông tin quan trọng)
