@@ -45,17 +45,77 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Bệnh nhân <span
                                     class="text-red-500">*</span></label>
-                            <select name="patient_profile_id" required
-                                class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
-                                <option value="">-- Chọn bệnh nhân --</option>
-                                @foreach ($patients as $pat)
-                                    <option value="{{ $pat->id }}"
-                                        {{ old('patient_profile_id') == $pat->id ? 'selected' : '' }}>
-                                        {{ $pat->full_name }} (SĐT: {{ $pat->phone ?? 'N/A' }} - Ngày sinh:
-                                        {{ $pat->date_of_birth ? $pat->date_of_birth->format('d/m/Y') : 'N/A' }})
-                                    </option>
-                                @endforeach
-                            </select>
+                            <div x-data="{
+                                open: false,
+                                search: '',
+                                selectedId: '{{ old('patient_profile_id') }}',
+                                selectedName: '',
+                                patients: [
+                                    @foreach($patients as $pat)
+                                        {
+                                            id: '{{ $pat->id }}',
+                                            name: '{{ addslashes($pat->full_name) }}',
+                                            phone: '{{ $pat->phone ?? '' }}',
+                                            dob: '{{ $pat->date_of_birth ? $pat->date_of_birth->format('d/m/Y') : '' }}'
+                                        },
+                                    @endforeach
+                                ],
+                                init() {
+                                    let selected = this.patients.find(p => p.id == this.selectedId);
+                                    if (selected) {
+                                        this.selectedName = selected.name + (selected.phone ? ' (SĐT: ' + selected.phone + ')' : '');
+                                    }
+                                },
+                                get filteredPatients() {
+                                    if (!this.search) return this.patients;
+                                    let searchLower = this.search.toLowerCase();
+                                    return this.patients.filter(p => 
+                                        p.name.toLowerCase().includes(searchLower) || 
+                                        p.phone.toLowerCase().includes(searchLower)
+                                    );
+                                },
+                                selectPatient(patient) {
+                                    this.selectedId = patient.id;
+                                    this.selectedName = patient.name + (patient.phone ? ' (SĐT: ' + patient.phone + ')' : '');
+                                    this.open = false;
+                                    this.search = '';
+                                }
+                            }" class="relative">
+                                
+                                <input type="hidden" name="patient_profile_id" :value="selectedId" required>
+
+                                <button type="button" @click="open = !open" 
+                                    class="w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm flex items-center justify-between bg-white">
+                                    <span x-text="selectedName || '-- Chọn bệnh nhân --'" class="truncate"></span>
+                                    <i class="fa-solid fa-chevron-down text-xs text-gray-400"></i>
+                                </button>
+
+                                <div x-show="open" @click.outside="open = false" 
+                                    class="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto p-2"
+                                    style="display: none;">
+                                    
+                                    <div class="relative mb-2">
+                                        <input type="text" x-model="search" placeholder="Tìm theo tên hoặc số điện thoại..."
+                                            class="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded-md text-xs outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                        <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-gray-400 text-xs"></i>
+                                    </div>
+
+                                    <ul class="space-y-1">
+                                        <template x-for="p in filteredPatients" :key="p.id">
+                                            <li>
+                                                <button type="button" @click="selectPatient(p)"
+                                                    class="w-full text-left px-3 py-2 text-xs rounded hover:bg-blue-50 hover:text-blue-700 transition-colors flex flex-col">
+                                                    <span class="font-semibold" x-text="p.name"></span>
+                                                    <span class="text-gray-500 text-[10px]" x-text="'SĐT: ' + (p.phone || 'N/A') + ' - Ngày sinh: ' + (p.dob || 'N/A')"></span>
+                                                </button>
+                                            </li>
+                                        </template>
+                                        <li x-show="filteredPatients.length === 0" class="text-center py-4 text-xs text-gray-400">
+                                            Không tìm thấy bệnh nhân nào
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
 
                         <div>
