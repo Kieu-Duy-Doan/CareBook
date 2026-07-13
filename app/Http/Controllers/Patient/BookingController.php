@@ -143,7 +143,7 @@ class BookingController extends Controller
         
         $availableDates = $this->bookingService->getAvailableDates($doctorId, $specialtyId, $level);
         
-        $selectedDate = $request->query('date');
+        $selectedDate = $request->query('date', $booking['date'] ?? null);
         $slots = [];
         
         if ($selectedDate) {
@@ -263,7 +263,7 @@ class BookingController extends Controller
         try {
             $appointment = $this->bookingService->createAppointment($data, auth()->user());
             
-            \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'patient_confirmation');
+            \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'patient_confirmation', 'patient');
             
             Cache::forget("booking_draft_{$draftId}");
             Cache::forget($lockKey);
@@ -297,9 +297,14 @@ class BookingController extends Controller
         $booking['patient_profile_id'] = $request->patient_profile_id;
         $booking['booking_method'] = 'suggested';
         $booking['doctor_id'] = $request->doctor_id;
+        $booking['is_fast_track'] = true;
         
         if ($request->specialty_id) {
             $booking['specialty_id'] = $request->specialty_id;
+        }
+
+        if ($request->reason) {
+            $booking['reason'] = $request->reason;
         }
         
         // Nếu truyền sẵn date và time (thay thế vào cùng slot)
