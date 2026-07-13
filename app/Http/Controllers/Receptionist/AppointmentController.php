@@ -86,12 +86,11 @@ class AppointmentController extends Controller
             }))
             ->count();
 
-        // Aggregate counts by status based on the exact same filters
+        // Aggregate counts by status based on the exact same filters (excluding status filter itself)
         $statusCounts = DB::table('appointments')
             ->select('status', DB::raw('count(*) as count'))
             ->when($request->filled('date_from'), fn($q) => $q->whereDate('appointment_date', '>=', $request->date_from))
             ->when($request->filled('date_to'), fn($q) => $q->whereDate('appointment_date', '<=', $request->date_to))
-            ->when($request->filled('status'), fn($q) => $q->where('status', $request->status))
             ->when($request->filled('doctor_id'), fn($q) => $q->where('doctor_profile_id', $request->doctor_id))
             ->when($request->filled('specialty_id'), fn($q) => $q->where('specialty_id', $request->specialty_id))
             ->when($request->filled('source'), fn($q) => $q->where('source', $request->source))
@@ -116,10 +115,21 @@ class AppointmentController extends Controller
         $doctors = DoctorProfile::with('user')->whereHas('user', fn($q) => $q->where('is_active', true))->get();
         $specialties = Specialty::where('is_active', true)->orderBy('name')->get();
 
-        // Get appointments for the calendar (usually current month)
-        $appointments = Appointment::with(['patientProfile', 'doctor.user'])
-            ->whereNotIn('status', ['cancelled'])
-            ->get();
+        // Get appointments for the calendar (filtered by range if provided)
+        $query = Appointment::with(['patientProfile', 'doctor.user'])
+            ->whereNotIn('status', ['cancelled']);
+
+        if ($request->filled('start') && $request->filled('end')) {
+            $query->whereBetween('appointment_date', [
+                substr($request->start, 0, 10),
+                substr($request->end, 0, 10)
+            ]);
+        } else {
+            $query->whereMonth('appointment_date', now()->month)
+                  ->whereYear('appointment_date', now()->year);
+        }
+
+        $appointments = $query->get();
 
         // Format data for FullCalendar
         $events = $appointments->map(function ($apt) {
@@ -187,13 +197,12 @@ class AppointmentController extends Controller
             'patient_profile_id' => 'required|exists:patient_profiles,id',
             'specialty_id'       => 'required|exists:specialties,id',
             'doctor_profile_id'  => 'required|exists:doctor_profiles,id',
-            'room_id'            => 'required|exists:rooms,id',
+            'room_id'            => 'required|exists:rooms,id,is_active,1',
             'appointment_date'   => 'required|date|after_or_equal:today',
             'appointment_time'   => 'required',
             'status'             => 'required|in:pending,checked_in,examining,completed,cancelled,absent',
             'source'             => 'required|in:web,counter,chatbot',
             'reason'             => 'required|string',
-            'receptionist_note'  => 'nullable|string',
 
             // Vitals
             'vital_pulse'        => 'nullable|integer|min:0',
@@ -209,16 +218,39 @@ class AppointmentController extends Controller
             'measured_by'        => 'nullable|exists:users,id',
         ]);
 
-        // Kiểm tra xem bệnh nhân này đã có lịch hẹn với cùng bác sĩ, cùng ngày và cùng giờ chưa
-        $exists = Appointment::where('patient_profile_id', $request->patient_profile_id)
+        // Xác thực bác sĩ thuộc chuyên khoa được chọn
+        $doctorBelongsToSpecialty = DB::table('doctor_specialties')
             ->where('doctor_profile_id', $request->doctor_profile_id)
-            ->whereDate('appointment_date', $request->appointment_date)
-            ->whereTime('appointment_time', $request->appointment_time)
-            ->where('status', '!=', 'cancelled')
+            ->where('specialty_id', $request->specialty_id)
             ->exists();
 
-        if ($exists && $request->status !== 'cancelled') {
-            return back()->withErrors(['appointment_time' => 'Bệnh nhân này đã có lịch hẹn (chưa huỷ) với bác sĩ vào ngày và khung giờ này. Vui lòng chọn khung giờ khác.'])->withInput();
+        if (!$doctorBelongsToSpecialty) {
+            return back()->withErrors(['doctor_profile_id' => 'Bác sĩ được chọn không thuộc chuyên khoa đã chỉ định.'])->withInput();
+        }
+
+        // Kiểm tra trùng lịch hẹn (Chống trùng lịch bác sĩ và trùng lịch bệnh nhân)
+        if ($request->status !== 'cancelled') {
+            // 1. Kiểm tra bác sĩ trùng lịch
+            $doctorConflict = Appointment::where('doctor_profile_id', $request->doctor_profile_id)
+                ->whereDate('appointment_date', $request->appointment_date)
+                ->whereTime('appointment_time', $request->appointment_time)
+                ->where('status', '!=', 'cancelled')
+                ->exists();
+
+            if ($doctorConflict) {
+                return back()->withErrors(['appointment_time' => 'Bác sĩ này đã có lịch hẹn khác vào khung giờ này. Vui lòng chọn giờ khác.'])->withInput();
+            }
+
+            // 2. Kiểm tra bệnh nhân trùng lịch
+            $patientConflict = Appointment::where('patient_profile_id', $request->patient_profile_id)
+                ->whereDate('appointment_date', $request->appointment_date)
+                ->whereTime('appointment_time', $request->appointment_time)
+                ->where('status', '!=', 'cancelled')
+                ->exists();
+
+            if ($patientConflict) {
+                return back()->withErrors(['appointment_time' => 'Bệnh nhân này đã có lịch hẹn khác vào cùng khung giờ này.'])->withInput();
+            }
         }
 
         $patient = PatientProfile::findOrFail($request->patient_profile_id);
@@ -268,6 +300,11 @@ class AppointmentController extends Controller
             'completed_at'       => $completedAt,
         ]);
 
+        // Tạo lượt khám lâm sàng nếu trạng thái hợp lệ
+        if (in_array($appointment->status, ['checked_in', 'examining', 'completed'])) {
+            $this->createClinicalVisitIfNotExists($appointment);
+        }
+
         AppointmentLog::create([
             'appointment_id' => $appointment->id,
             'old_status'     => null,
@@ -303,11 +340,52 @@ class AppointmentController extends Controller
     {
         $appointment = Appointment::findOrFail($id);
 
+        // Khóa chỉnh sửa đối với lịch đã khám hoặc đang khám
+        $isLocked = in_array($appointment->status, ['examining', 'completed']);
+
+        if ($isLocked) {
+            $restrictedFields = [
+                'patient_profile_id', 'specialty_id', 'doctor_profile_id', 'room_id',
+                'appointment_date', 'appointment_time', 'source', 'reason',
+                'vital_pulse', 'vital_systolic_bp', 'vital_diastolic_bp', 'vital_temperature',
+                'vital_respiratory', 'vital_spo2', 'vital_weight_kg', 'vital_height_cm',
+                'vital_bmi', 'vital_note', 'measured_by'
+            ];
+
+            $changedRestricted = [];
+            foreach ($restrictedFields as $field) {
+                if ($request->has($field)) {
+                    $reqValue = $request->input($field);
+                    $dbValue = $appointment->getAttribute($field);
+
+                    if ($field === 'appointment_date' && $dbValue instanceof \Carbon\Carbon) {
+                        $dbValue = $dbValue->format('Y-m-d');
+                    }
+
+                    if ($reqValue !== null && $reqValue !== '') {
+                        if ($dbValue != $reqValue) {
+                            $changedRestricted[] = $field;
+                        }
+                    } else {
+                        if ($dbValue !== null && $dbValue !== '') {
+                            $changedRestricted[] = $field;
+                        }
+                    }
+                }
+            }
+
+            if (!empty($changedRestricted)) {
+                return back()->withErrors([
+                    'status' => 'Lịch hẹn đang khám hoặc đã hoàn thành. Lễ tân chỉ được cập nhật ghi chú và trạng thái của lịch hẹn.'
+                ])->withInput();
+            }
+        }
+
         $request->validate([
             'patient_profile_id' => 'required|exists:patient_profiles,id',
             'specialty_id'       => 'required|exists:specialties,id',
             'doctor_profile_id'  => 'required|exists:doctor_profiles,id',
-            'room_id'            => 'required|exists:rooms,id',
+            'room_id'            => 'required|exists:rooms,id,is_active,1',
             'appointment_date'   => 'required|date',
             'appointment_time'   => 'required',
             'status'             => 'required|in:pending,checked_in,examining,completed,cancelled,absent',
@@ -329,17 +407,41 @@ class AppointmentController extends Controller
             'measured_by'        => 'nullable|exists:users,id',
         ]);
 
-        // Kiểm tra xem bệnh nhân này đã có lịch hẹn với cùng bác sĩ, cùng ngày và cùng giờ chưa (trừ lịch hiện tại và lịch đã huỷ)
-        $exists = Appointment::where('patient_profile_id', $request->patient_profile_id)
+        // Xác thực bác sĩ thuộc chuyên khoa được chọn
+        $doctorBelongsToSpecialty = DB::table('doctor_specialties')
             ->where('doctor_profile_id', $request->doctor_profile_id)
-            ->whereDate('appointment_date', $request->appointment_date)
-            ->whereTime('appointment_time', $request->appointment_time)
-            ->where('status', '!=', 'cancelled')
-            ->where('id', '!=', $id)
+            ->where('specialty_id', $request->specialty_id)
             ->exists();
 
-        if ($exists && $request->status !== 'cancelled') {
-            return back()->withErrors(['appointment_time' => 'Bệnh nhân này đã có lịch hẹn (chưa huỷ) với bác sĩ vào ngày và khung giờ này. Vui lòng chọn khung giờ khác.'])->withInput();
+        if (!$doctorBelongsToSpecialty) {
+            return back()->withErrors(['doctor_profile_id' => 'Bác sĩ được chọn không thuộc chuyên khoa đã chỉ định.'])->withInput();
+        }
+
+        // Kiểm tra trùng lịch hẹn (Chống trùng lịch bác sĩ và trùng lịch bệnh nhân, loại trừ chính lịch này)
+        if ($request->status !== 'cancelled') {
+            // 1. Kiểm tra bác sĩ trùng lịch
+            $doctorConflict = Appointment::where('doctor_profile_id', $request->doctor_profile_id)
+                ->whereDate('appointment_date', $request->appointment_date)
+                ->whereTime('appointment_time', $request->appointment_time)
+                ->where('status', '!=', 'cancelled')
+                ->where('id', '!=', $id)
+                ->exists();
+
+            if ($doctorConflict) {
+                return back()->withErrors(['appointment_time' => 'Bác sĩ này đã có lịch hẹn khác vào khung giờ này. Vui lòng chọn giờ khác.'])->withInput();
+            }
+
+            // 2. Kiểm tra bệnh nhân trùng lịch
+            $patientConflict = Appointment::where('patient_profile_id', $request->patient_profile_id)
+                ->whereDate('appointment_date', $request->appointment_date)
+                ->whereTime('appointment_time', $request->appointment_time)
+                ->where('status', '!=', 'cancelled')
+                ->where('id', '!=', $id)
+                ->exists();
+
+            if ($patientConflict) {
+                return back()->withErrors(['appointment_time' => 'Bệnh nhân này đã có lịch hẹn khác vào cùng khung giờ này.'])->withInput();
+            }
         }
 
         $patient = PatientProfile::findOrFail($request->patient_profile_id);
@@ -389,8 +491,17 @@ class AppointmentController extends Controller
 
         $appointment->save();
 
-        if ($newStatus === 'checked_in') {
+        // Đồng bộ lượt khám lâm sàng
+        if (in_array($newStatus, ['checked_in', 'examining', 'completed'])) {
             $this->createClinicalVisitIfNotExists($appointment);
+        }
+
+        // Tự động dọn dẹp lượt khám chưa khám nếu hủy lịch/đổi về chờ khám
+        if (in_array($newStatus, ['cancelled', 'pending'])) {
+            $visit = ClinicalVisit::where('appointment_id', $appointment->id)->first();
+            if ($visit && $visit->status === 'waiting') {
+                $visit->delete();
+            }
         }
 
         if ($oldStatus !== $newStatus) {
@@ -418,6 +529,8 @@ class AppointmentController extends Controller
 
         try {
             DB::transaction(function () use ($appointment) {
+                // Xoá lượt khám lâm sàng liên quan trước
+                ClinicalVisit::where('appointment_id', $appointment->id)->delete();
                 // Xoá logs liên quan trước (do có ràng buộc restrictOnDelete)
                 $appointment->logs()->delete();
                 $appointment->delete();
@@ -440,10 +553,15 @@ class AppointmentController extends Controller
         $oldStatus = $appointment->status;
         $newStatus = $request->status;
 
+        // Chặn chuyển đổi trạng thái của lịch hẹn đã khám hoàn thành
+        if ($oldStatus === 'completed' && $newStatus !== 'completed') {
+            return back()->with('error', 'Không thể thay đổi trạng thái của lịch hẹn đã hoàn thành.');
+        }
+
         if ($oldStatus !== $newStatus) {
             $appointment->status = $newStatus;
 
-            if ($newStatus === 'checked_in' && is_null($appointment->checked_in_at)) {
+            if (in_array($newStatus, ['checked_in', 'examining', 'completed']) && is_null($appointment->checked_in_at)) {
                 $appointment->checked_in_at = now();
             }
             if ($newStatus === 'completed' && is_null($appointment->completed_at)) {
@@ -452,8 +570,17 @@ class AppointmentController extends Controller
 
             $appointment->save();
 
-            if ($newStatus === 'checked_in') {
+            // Đồng bộ lượt khám lâm sàng
+            if (in_array($newStatus, ['checked_in', 'examining', 'completed'])) {
                 $this->createClinicalVisitIfNotExists($appointment);
+            }
+
+            // Tự động dọn dẹp lượt khám chưa khám nếu hủy lịch/đổi về chờ khám
+            if (in_array($newStatus, ['cancelled', 'pending'])) {
+                $visit = ClinicalVisit::where('appointment_id', $appointment->id)->first();
+                if ($visit && $visit->status === 'waiting') {
+                    $visit->delete();
+                }
             }
 
             AppointmentLog::create([
