@@ -14,13 +14,15 @@ class BookingConfirmationMail extends Mailable
     use Queueable, SerializesModels;
 
     public Appointment $appointment;
+    public string $actor;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(Appointment $appointment)
+    public function __construct(Appointment $appointment, string $actor = 'system')
     {
         $this->appointment = $appointment;
+        $this->actor = $actor;
     }
 
     /**
@@ -28,8 +30,12 @@ class BookingConfirmationMail extends Mailable
      */
     public function envelope(): Envelope
     {
+        $subject = $this->actor === 'patient'
+            ? 'Xác Nhận Đặt Lịch Khám Thành Công - CareBook'
+            : 'Lịch Khám Đã Được Đặt Thành Công Bởi Phòng Khám - CareBook';
+
         return new Envelope(
-            subject: 'Xác Nhận Đặt Lịch Khám Thành Công - CareBook',
+            subject: $subject,
         );
     }
 

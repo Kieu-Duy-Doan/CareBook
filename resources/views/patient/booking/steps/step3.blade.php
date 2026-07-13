@@ -1,174 +1,234 @@
-{{-- ===== BƯỚC 3: CHỌN LỊCH KHÁM ===== --}}
-    <div x-show="step === 3" class="max-w-5xl mx-auto px-4 py-6">
+<x-layouts.patient>
+    <div class="max-w-5xl mx-auto px-4 py-6">
+        <x-stepper step="3" />
+
         <div class="flex items-center gap-3 mb-6">
-            <i class="fa-solid fa-calendar-days text-3xl" style="color:var(--primary);"></i>
+            <i class="fa-solid fa-calendar-days text-3xl text-primary"></i>
             <div>
                 <h2 class="text-2xl font-bold text-gray-800">Chọn ngày và giờ khám</h2>
                 <p class="text-base text-gray-500 mt-1">
-                    Bệnh nhân: <strong x-text="selectedProfile?.full_name"></strong>
+                    Hồ sơ: <strong>{{ \App\Models\PatientProfile::find($booking['patient_profile_id'])->full_name ?? '' }}</strong>
                 </p>
-                <p class="text-base text-gray-500" x-show="bookingMethod === 'doctor'">
-                    Bác sĩ: <strong x-text="selectedDoctor?.full_title?.toUpperCase()"></strong>
-                </p>
-                <p class="text-base text-gray-500" x-show="bookingMethod === 'specialty'">
-                    Chuyên khoa: <strong x-text="selectedSpecialty?.name"></strong>
-                </p>
+                @if($booking['booking_method'] === 'doctor' || $booking['booking_method'] === 'suggested')
+                    <p class="text-base text-gray-500">
+                        Bác sĩ: <strong>{{ \App\Models\DoctorProfile::find($booking['doctor_id'])->user->full_name ?? '' }}</strong>
+                    </p>
+                @elseif($booking['booking_method'] === 'specialty')
+                    <p class="text-base text-gray-500">
+                        Chuyên khoa: <strong>{{ \App\Models\Specialty::find($booking['specialty_id'])->name ?? '' }}</strong>
+                    </p>
+                @endif
             </div>
         </div>
 
-        {{-- Chọn ngày --}}
-        <div class="mb-6">
-            <p class="font-bold text-base mb-3" style="color:var(--primary);">Chọn ngày khám:</p>
-
-            {{-- Horizontal scroll dates --}}
-            <div class="flex gap-2.5 overflow-x-auto pb-3" style="-ms-overflow-style:none;scrollbar-width:none;">
-                <template x-for="dateObj in availableDates" :key="dateObj.date">
-                    <button @click="selectDate(dateObj)"
-                            type="button"
-                            class="flex-shrink-0 flex flex-col items-center justify-center w-16 h-20 rounded-xl border-2 transition-all"
-                            :class="selectedDate?.date === dateObj.date
-                                ? 'border-primary bg-primary text-white shadow-md scale-105'
-                                : 'border-gray-200 text-gray-600 hover:border-primary/50 hover:bg-primary/5'">
-                        <span class="text-[11px] font-medium uppercase" x-text="dateObj.day_name"></span>
-                        <span class="text-xl font-extrabold my-0.5" x-text="dateObj.display"></span>
-                    </button>
-                </template>
-
-                {{-- Loading skeleton --}}
-                <template x-if="loadingDates">
-                    <div class="flex gap-2.5">
-                        <template x-for="i in [1,2,3,4,5,6]" :key="i">
-                            <div class="flex-shrink-0 w-16 h-20 rounded-xl bg-gray-100 animate-pulse"></div>
-                        </template>
-                    </div>
-                </template>
+        @if($errors->any())
+            <div class="p-4 mb-6 text-sm text-red-800 rounded-lg bg-red-50" role="alert">
+                <ul class="list-disc pl-5">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
             </div>
-        </div>
+        @endif
 
-        {{-- Giờ khám (hiện sau khi chọn ngày) --}}
-        <div x-show="selectedDate" x-transition class="bg-white border rounded-xl p-4 mb-6 shadow-sm" style="border-color:#e2e8f0;">
-            {{-- Header phòng --}}
-            <div class="rounded-lg p-2.5 mb-3" style="background-color:rgba(29,111,164,0.08);">
-                <div class="flex items-center gap-2 font-semibold text-sm" style="color:var(--primary);">
-                    <i class="fa-solid fa-location-dot"></i>
-                    <span x-show="bookingMethod === 'doctor'" x-text="selectedDoctor?.room_name ?? 'Phòng khám'"></span>
-                    <span x-show="bookingMethod === 'specialty'" x-text="selectedSpecialty?.name"></span>
-                </div>
+        @if(session('success'))
+            <div class="p-4 mb-6 text-sm text-green-800 rounded-lg bg-green-50" role="alert">
+                {{ session('success') }}
             </div>
+        @endif
 
-            {{-- Đã chọn slot --}}
-            <div x-show="selectedSlot"
-                 class="flex items-center gap-3 p-3 border-2 rounded-xl mb-3 shadow-sm"
-                 style="background-color:var(--primary-light);border-color:var(--primary);">
-                <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background-color:var(--primary);">
-                    <i class="fa-solid fa-clock text-white text-lg"></i>
-                </div>
-                <div>
-                    <p class="text-xl font-extrabold" style="color:var(--primary);" x-text="selectedSlot?.time"></p>
-                    <p class="text-sm font-medium text-gray-600"
-                       x-text="selectedDate ? 'Ngày: ' + new Date(selectedDate.date).toLocaleDateString('vi-VN') : ''"></p>
-                </div>
-                <i class="fa-solid fa-circle-check text-2xl ml-auto" style="color:#27AE60;"></i>
-            </div>
-
-            {{-- Chọn giờ khám (Inline) --}}
-            <div class="mt-4 bg-white border-2 border-slate-200 rounded-2xl overflow-hidden shadow-sm transition-all hover:border-primary/30">
-                <div class="px-5 py-4 border-b bg-slate-50 flex items-center justify-between">
-                    <div class="flex items-center gap-2 text-slate-800 font-bold">
-                        <i class="fa-solid fa-clock text-primary"></i>
-                        <span>Danh sách Giờ khám</span>
-                    </div>
-                    <div class="text-sm font-medium text-slate-500" x-text="selectedDate ? 'Ngày ' + new Date(selectedDate.date).toLocaleDateString('vi-VN') : ''"></div>
+        <form action="{{ route('patient.booking.postStep3') }}" method="POST" id="step3-form">
+            @csrf
+            <input type="hidden" name="draft_id" value="{{ $draftId ?? '' }}">
+            
+            {{-- Chọn ngày --}}
+            <div class="mb-8">
+                <div class="flex items-center gap-2 mb-4">
+                    <i class="fa-regular fa-calendar-check text-primary text-xl"></i>
+                    <h3 class="text-lg font-bold text-slate-800">Chọn ngày khám:</h3>
                 </div>
 
-                {{-- Loading --}}
-                <div x-show="loadingSlots" class="flex items-center justify-center py-12">
-                    <i class="fa-solid fa-spinner fa-spin text-3xl" style="color:var(--primary);"></i>
+                {{-- Lưới ngày tĩnh --}}
+                <div class="grid grid-cols-4 md:grid-cols-7 gap-3">
+                    @foreach($availableDates as $dateObj)
+                        <a href="{{ route('patient.booking.step3', ['date' => $dateObj['date'], 'draft_id' => $draftId ?? '']) }}" data-loader="true"
+                            class="flex flex-col items-center justify-center py-3 rounded-2xl border-2 transition-all duration-200 hover:-translate-y-1 {{ $selectedDate === $dateObj['date'] ? 'border-primary bg-primary text-white shadow-md shadow-primary/30' : 'border-slate-100 bg-white text-slate-700 hover:border-primary/50 hover:bg-primary/5' }}">
+                            <span class="text-[11px] font-bold uppercase tracking-wider mb-1 {{ $selectedDate === $dateObj['date'] ? 'text-primary-100' : 'text-slate-400' }}">{{ $dateObj['day_name'] }}</span>
+                            <span class="text-xl font-extrabold">{{ $dateObj['display'] }}</span>
+                        </a>
+                    @endforeach
                 </div>
 
-                {{-- Slots --}}
-                <div x-show="!loadingSlots" class="p-5">
-                    {{-- Buổi sáng --}}
-                    <div x-show="slots.filter(s => parseInt(s.time.split(':')[0]) < 12).length > 0" class="mb-6">
-                        <div class="flex items-center gap-2 text-orange-500 font-semibold mb-3 text-base">
-                            <i class="fa-solid fa-sun"></i>
-                            <span>Buổi sáng</span>
+                @if(empty($availableDates))
+                    <div class="w-full text-center py-10 bg-red-50 border border-red-100 rounded-2xl mt-2">
+                        <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-red-100">
+                            <i class="fa-solid fa-calendar-xmark text-2xl text-red-400 block"></i>
                         </div>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap gap-3">
-                            <template x-for="slot in slots.filter(s => parseInt(s.time.split(':')[0]) < 12)" :key="slot.time">
-                                <button @click="selectSlot(slot)"
-                                        :disabled="!slot.available"
-                                        class="flex justify-center md:justify-start items-center gap-2 px-3 py-3 md:px-4 md:py-2.5 rounded-xl border-2 text-base md:text-sm font-medium transition-all"
-                                        :class="{
-                                            'border-gray-100 text-gray-300 cursor-not-allowed line-through bg-gray-50': !slot.available
-                                        }"
-                                        :style="slot.available
-                                            ? (selectedSlot?.time === slot.time
-                                                ? 'background-color:var(--primary);border-color:var(--primary);color:#ffffff;box-shadow:0 4px 14px 0 rgba(37,99,235,0.39);'
-                                                : 'border-color:#e2e8f0;color:#374151;hover:border-primary/50')
-                                            : ''">
-                                    <i class="fa-regular fa-clock text-sm md:text-xs"></i>
-                                    <span x-text="slot.time"></span>
-                                </button>
-                            </template>
+                        <p class="text-red-700 font-bold text-lg mb-1">Không tìm thấy lịch khám</p>
+                        <p class="text-sm text-red-500">Hiện không có bác sĩ nào thuộc học vị/chuyên khoa này rảnh lịch. Vui lòng quay lại bước trước để chọn lại.</p>
+                    </div>
+                @endif
+            </div>
+
+            {{-- Giờ khám (hiện sau khi chọn ngày) --}}
+            @if($selectedDate)
+                <input type="hidden" name="date" value="{{ $selectedDate }}">
+                <div class="bg-white border-2 border-slate-100 rounded-2xl p-5 md:p-6 mb-8 shadow-sm">
+                    {{-- Header phòng --}}
+                    <div class="rounded-xl p-3 mb-5 bg-primary/5 border border-primary/10">
+                        <div class="flex items-center gap-2 font-bold text-primary">
+                            <i class="fa-solid fa-location-dot"></i>
+                            @if($booking['booking_method'] === 'doctor' || $booking['booking_method'] === 'suggested')
+                                <span>Phòng khám của bác sĩ</span>
+                            @else
+                                <span>{{ \App\Models\Specialty::find($booking['specialty_id'])->name ?? 'Phòng khám' }}</span>
+                            @endif
                         </div>
                     </div>
 
-                    {{-- Buổi chiều --}}
-                    <div x-show="slots.filter(s => parseInt(s.time.split(':')[0]) >= 12).length > 0">
-                        <div class="flex items-center gap-2 text-blue-500 font-semibold mb-3 text-base">
-                            <i class="fa-solid fa-cloud-sun"></i>
-                            <span>Buổi chiều</span>
+                    {{-- Chọn giờ khám (Inline) --}}
+                    <div class="mt-2">
+                        @php
+                            $selectedTime = old('time', $booking['time'] ?? '');
+                        @endphp
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-2 text-slate-800 font-bold text-lg">
+                                <i class="fa-regular fa-clock text-primary"></i>
+                                <span>Danh sách Giờ khám</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div id="selected-time-display" class="hidden flex items-center gap-1.5 text-sm font-bold text-white bg-green-500 px-3 py-1 rounded-full shadow-sm transition-all">
+                                    <i class="fa-regular fa-circle-check"></i> Đã chọn: <span></span>
+                                </div>
+                                <div class="text-sm font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">
+                                    Ngày {{ \Carbon\Carbon::parse($selectedDate)->format('d/m/Y') }}
+                                </div>
+                            </div>
                         </div>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap gap-3">
-                            <template x-for="slot in slots.filter(s => parseInt(s.time.split(':')[0]) >= 12)" :key="slot.time">
-                                <button @click="selectSlot(slot)"
-                                        :disabled="!slot.available"
-                                        class="flex justify-center md:justify-start items-center gap-2 px-3 py-3 md:px-4 md:py-2.5 rounded-xl border-2 text-base md:text-sm font-medium transition-all"
-                                        :class="{
-                                            'border-gray-100 text-gray-300 cursor-not-allowed line-through bg-gray-50': !slot.available
-                                        }"
-                                        :style="slot.available
-                                            ? (selectedSlot?.time === slot.time
-                                                ? 'background-color:var(--primary);border-color:var(--primary);color:#ffffff;box-shadow:0 4px 14px 0 rgba(37,99,235,0.39);'
-                                                : 'border-color:#e2e8f0;color:#374151;hover:border-primary/50')
-                                            : ''">
-                                    <i class="fa-regular fa-clock text-sm md:text-xs"></i>
-                                    <span x-text="slot.time"></span>
-                                </button>
-                            </template>
-                        </div>
-                    </div>
 
-                    {{-- Không có slot --}}
-                    <div x-show="slots.length === 0 && !loadingSlots"
-                         class="text-center py-8 text-gray-400">
-                        <i class="fa-solid fa-calendar-xmark text-4xl mb-3 block opacity-50"></i>
-                        <p class="font-medium">Không có lịch khám vào ngày này</p>
-                        <p class="text-sm mt-1">Vui lòng chọn ngày khác ở bảng trên</p>
+                        {{-- Slots --}}
+                        <div>
+                            @php
+                                $morningSlots = array_filter($slots, fn($s) => (int)explode(':', $s['time'])[0] < 12);
+                                $afternoonSlots = array_filter($slots, fn($s) => (int)explode(':', $s['time'])[0] >= 12);
+                            @endphp
+
+                            @if(count($morningSlots) > 0)
+                                {{-- Buổi sáng --}}
+                                <div class="mb-6">
+                                    <div class="flex items-center gap-2 text-orange-500 font-bold mb-3 text-sm uppercase tracking-wide">
+                                        <i class="fa-solid fa-sun"></i>
+                                        <span>Buổi sáng</span>
+                                    </div>
+                                    <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                                        @foreach($morningSlots as $slot)
+                                            <label class="relative block cursor-pointer">
+                                                <input type="radio" name="time" value="{{ $slot['time'] }}" data-doctor-id="{{ $slot['doctor_id'] ?? '' }}" class="peer sr-only" {{ $selectedTime == $slot['time'] ? 'checked' : '' }} @disabled(!$slot['available'])>
+                                                <div class="flex justify-center items-center gap-1.5 px-2 py-3 rounded-xl border-2 font-bold transition-all duration-200 
+                                                    peer-checked:border-primary/50 peer-checked:bg-slate-100 peer-checked:text-primary peer-checked:opacity-60 peer-checked:shadow-inner
+                                                    {{ !$slot['available'] ? 'border-slate-100 text-slate-300 cursor-not-allowed bg-slate-50 opacity-60' : 'border-slate-200 text-slate-700 hover:border-primary/50 hover:bg-primary/5 hover:text-primary' }}">
+                                                    <i class="fa-regular fa-clock text-sm"></i>
+                                                    <span class="text-sm md:text-base">{{ $slot['time'] }}</span>
+                                                </div>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if(count($afternoonSlots) > 0)
+                                {{-- Buổi chiều --}}
+                                <div>
+                                    <div class="flex items-center gap-2 text-blue-500 font-bold mb-3 text-sm uppercase tracking-wide">
+                                        <i class="fa-solid fa-cloud-sun"></i>
+                                        <span>Buổi chiều</span>
+                                    </div>
+                                    <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                                        @foreach($afternoonSlots as $slot)
+                                            <label class="relative block cursor-pointer">
+                                                <input type="radio" name="time" value="{{ $slot['time'] }}" data-doctor-id="{{ $slot['doctor_id'] ?? '' }}" class="peer sr-only" {{ $selectedTime == $slot['time'] ? 'checked' : '' }} @disabled(!$slot['available'])>
+                                                <div class="flex justify-center items-center gap-1.5 px-2 py-3 rounded-xl border-2 font-bold transition-all duration-200 
+                                                    peer-checked:border-primary/50 peer-checked:bg-slate-100 peer-checked:text-primary peer-checked:opacity-60 peer-checked:shadow-inner
+                                                    {{ !$slot['available'] ? 'border-slate-100 text-slate-300 cursor-not-allowed bg-slate-50 opacity-60' : 'border-slate-200 text-slate-700 hover:border-primary/50 hover:bg-primary/5 hover:text-primary' }}">
+                                                    <i class="fa-regular fa-clock text-sm"></i>
+                                                    <span class="text-sm md:text-base">{{ $slot['time'] }}</span>
+                                                </div>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if(empty($slots))
+                                {{-- Không có slot --}}
+                                <div class="text-center py-12 text-slate-400 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <div class="w-16 h-16 rounded-full bg-white flex items-center justify-center mx-auto mb-3 shadow-sm border border-slate-100">
+                                        <i class="fa-solid fa-calendar-xmark text-2xl text-slate-300 block"></i>
+                                    </div>
+                                    <p class="font-bold text-slate-600">Không có lịch khám vào ngày này</p>
+                                    <p class="text-sm mt-1">Vui lòng chọn ngày khác ở phần trên</p>
+                                </div>
+                            @endif
+                            <input type="hidden" name="doctor_id" id="selected_doctor_id" value="{{ old('doctor_id', $booking['doctor_id'] ?? '') }}">
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    const timeInputs = document.querySelectorAll('input[name="time"]');
+                                    const docInput = document.getElementById('selected_doctor_id');
+                                    const timeDisplay = document.getElementById('selected-time-display');
+                                    const timeDisplaySpan = timeDisplay ? timeDisplay.querySelector('span') : null;
+                                    
+                                    function updateTimeDisplay() {
+                                        const checked = document.querySelector('input[name="time"]:checked');
+                                        if (checked) {
+                                            if (docInput && checked.dataset.doctorId) {
+                                                docInput.value = checked.dataset.doctorId;
+                                            }
+                                            if (timeDisplay && timeDisplaySpan) {
+                                                timeDisplaySpan.textContent = checked.value;
+                                                timeDisplay.classList.remove('hidden');
+                                            }
+                                        } else {
+                                            if (timeDisplay) {
+                                                timeDisplay.classList.add('hidden');
+                                            }
+                                        }
+                                    }
+
+                                    // Initialize
+                                    updateTimeDisplay();
+
+                                    // Run on change
+                                    timeInputs.forEach(input => {
+                                        input.addEventListener('change', updateTimeDisplay);
+                                    });
+                                });
+                            </script>
+                        </div>
                     </div>
                 </div>
+            @else
+                {{-- Empty state --}}
+                @if(count($availableDates) > 0)
+                    <div class="bg-slate-50 rounded-2xl p-10 text-center text-slate-400 mb-8 border-2 border-slate-100 border-dashed">
+                        <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                            <i class="fa-solid fa-calendar-day text-4xl text-slate-300"></i>
+                        </div>
+                        <p class="text-lg font-bold text-slate-600 mb-1">Chưa chọn ngày khám</p>
+                        <p class="text-sm">Vui lòng chọn một ngày trong danh sách phía trên để xem các khung giờ trống.</p>
+                    </div>
+                @endif
+            @endif
+
+            {{-- Navigation --}}
+            <div class="flex gap-4 sticky bottom-0 bg-white/90 backdrop-blur-md pt-4 pb-4 md:pb-6 border-t border-slate-100 z-20">
+                <a href="{{ route('patient.booking.step2', ['draft_id' => $draftId ?? '']) }}" data-loader="true"
+                    class="w-1/3 md:w-1/4 py-3 md:py-4 bg-slate-100 text-slate-600 rounded-xl text-center font-bold hover:bg-slate-200 transition-colors active:scale-95 text-sm md:text-base">
+                    <i class="fa-solid fa-arrow-left mr-1.5"></i> Quay lại
+                </a>
+                <button type="submit" @if(!$selectedDate || empty($slots)) disabled @endif
+                    class="flex-1 py-3 md:py-4 rounded-xl font-extrabold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/30 bg-primary hover:bg-primary-dark active:scale-95 text-sm md:text-base">
+                    Tiếp tục <i class="fa-solid fa-arrow-right ml-1.5"></i>
+                </button>
             </div>
-        </div>
-
-        {{-- Empty state --}}
-        <div x-show="!selectedDate"
-             class="bg-gray-50 rounded-3xl p-10 text-center text-gray-400 mb-8 border border-gray-100">
-            <i class="fa-solid fa-calendar text-5xl mb-4 block text-gray-300"></i>
-            <p class="text-lg font-medium">Vui lòng chọn ngày khám ở trên</p>
-        </div>
-
-        {{-- Navigation --}}
-        <div class="flex gap-4 sticky bottom-0 bg-white pt-4 pb-3 border-t border-slate-100 z-20">
-            <button @click="step = 2"
-                    class="w-1/3 md:w-1/4 py-3 border-2 border-primary/20 text-primary rounded-xl font-bold hover:bg-primary/5 transition-colors active:scale-95 text-base">
-                Quay lại
-            </button>
-            <button @click="goStep4()"
-                    :disabled="!canGoStep4"
-                    class="flex-1 py-3 rounded-xl font-extrabold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md bg-primary hover:bg-primary-dark text-base">
-                Tiếp tục <i class="fa-solid fa-arrow-right ml-1.5"></i>
-            </button>
-        </div>
-    </div>
-    {{-- END BƯỚC 3 --}}
+        </form>
+</x-layouts.patient>

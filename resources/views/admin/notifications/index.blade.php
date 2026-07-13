@@ -133,8 +133,7 @@
                                 @if($campaign->total_email > 0 && $campaign->sent_email_count < $campaign->total_email)
                                 <form action="{{ route('admin.notifications.resend') }}" method="POST" class="inline-block" onsubmit="return confirm('Bạn có chắc muốn đặt lại trạng thái để gửi lại thông báo chưa gửi thành công trong chiến dịch này?');">
                                     @csrf
-                                    <input type="hidden" name="title" value="{{ $campaign->title }}">
-                                    <input type="hidden" name="created_at_minute" value="{{ $campaign->created_at_minute }}">
+                                    <input type="hidden" name="batch_id" value="{{ $campaign->batch_id }}">
                                     <button type="submit" class="text-blue-600 hover:text-blue-900" title="Thử gửi lại các email lỗi">
                                         <i class="fa-solid fa-rotate-right"></i>
                                     </button>
@@ -143,8 +142,7 @@
                                 <form action="{{ route('admin.notifications.destroy') }}" method="POST" class="inline-block" onsubmit="return confirm('Xoá chiến dịch này? Hành động này không thể hoàn tác.');">
                                     @csrf
                                     @method('DELETE')
-                                    <input type="hidden" name="title" value="{{ $campaign->title }}">
-                                    <input type="hidden" name="created_at_minute" value="{{ $campaign->created_at_minute }}">
+                                    <input type="hidden" name="batch_id" value="{{ $campaign->batch_id }}">
                                     <button type="submit" class="text-red-600 hover:text-red-900" title="Xóa">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
@@ -154,9 +152,15 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" class="px-6 py-12 text-center text-gray-500">
-                            <div class="mb-3 text-gray-300"><i class="fa-solid fa-bullhorn text-4xl"></i></div>
-                            <p>Không có chiến dịch thông báo nào</p>
+                        <td colspan="5" class="px-6 py-16 text-center">
+                            <div class="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fa-solid fa-bullhorn text-2xl"></i>
+                            </div>
+                            <p class="text-gray-900 font-bold mb-1">Chưa có chiến dịch nào</p>
+                            <p class="text-gray-500 text-sm mb-4">Bắt đầu tương tác với bệnh nhân bằng cách tạo thông báo mới.</p>
+                            <a href="{{ route('admin.notifications.create') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+                                <i class="fa-solid fa-plus mr-2"></i> Tạo thông báo ngay
+                            </a>
                         </td>
                     </tr>
                     @endforelse
@@ -186,8 +190,7 @@
                     @if($campaign->total_email > 0 && $campaign->sent_email_count < $campaign->total_email)
                     <form action="{{ route('admin.notifications.resend') }}" method="POST" class="inline-block" onsubmit="return confirm('Gửi lại các email bị lỗi?');">
                         @csrf
-                        <input type="hidden" name="title" value="{{ $campaign->title }}">
-                        <input type="hidden" name="created_at_minute" value="{{ $campaign->created_at_minute }}">
+                        <input type="hidden" name="batch_id" value="{{ $campaign->batch_id }}">
                         <button type="submit" class="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors" title="Gửi lại">
                             <i class="fa-solid fa-rotate-right"></i>
                         </button>
@@ -196,8 +199,7 @@
                     <form action="{{ route('admin.notifications.destroy') }}" method="POST" class="inline-block" onsubmit="return confirm('Xoá chiến dịch này?');">
                         @csrf
                         @method('DELETE')
-                        <input type="hidden" name="title" value="{{ $campaign->title }}">
-                        <input type="hidden" name="created_at_minute" value="{{ $campaign->created_at_minute }}">
+                        <input type="hidden" name="batch_id" value="{{ $campaign->batch_id }}">
                         <button type="submit" class="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-colors" title="Xóa">
                             <i class="fa-solid fa-trash"></i>
                         </button>
@@ -246,9 +248,15 @@
             </div>
         </div>
         @empty
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center text-gray-500">
-            <div class="mb-3 text-gray-300"><i class="fa-solid fa-bullhorn text-4xl"></i></div>
-            <p class="font-medium">Không có chiến dịch thông báo nào</p>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
+            <div class="w-14 h-14 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                <i class="fa-solid fa-bullhorn text-xl"></i>
+            </div>
+            <p class="text-gray-900 font-bold mb-1">Chưa có chiến dịch nào</p>
+            <p class="text-gray-500 text-sm mb-4">Bắt đầu gửi thông báo đến bệnh nhân.</p>
+            <a href="{{ route('admin.notifications.create') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+                <i class="fa-solid fa-plus mr-2"></i> Tạo mới
+            </a>
         </div>
         @endforelse
 

@@ -3,15 +3,16 @@
 namespace App\Http\Controllers\Patient;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Patient\StoreBookingRequest;
 use App\Models\DoctorProfile;
 use App\Models\PatientProfile;
 use App\Models\Specialty;
+use App\Models\DoctorLevelFee;
 use App\Services\BookingService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
 
 class BookingController extends Controller
 {
@@ -20,133 +21,305 @@ class BookingController extends Controller
     }
 
     /**
-     * GET /dat-lich
-     * Render SPA booking page với dữ liệu cần thiết.
+     * Bước 1: Chọn hồ sơ bệnh nhân
      */
-    public function index(Request $request): View
+    public function step1(Request $request): View
     {
         $user = auth()->user();
-
-        // Hồ sơ bệnh nhân của user (eager load)
         $profiles = PatientProfile::where('owner_id', $user->id)
             ->orderByDesc('is_self')
-            ->get(['id', 'full_name', 'date_of_birth', 'phone', 'gender', 'is_self', 'relationship']);
+            ->get();
+            
+        $draftId = $request->query('draft_id');
+        $booking = $draftId ? Cache::get("booking_draft_{$draftId}", []) : [];
+        $selectedProfileId = $booking['patient_profile_id'] ?? null;
+            
+        return view('patient.booking.steps.step1', compact('profiles', 'selectedProfileId', 'draftId'));
+    }
 
-        // Chuyên khoa đang hoạt động
-        $specialties = Specialty::where('is_active', true)
-            ->orderBy('display_order')
-            ->get(['id', 'name', 'description', 'image_url']);
-
-        // Bác sĩ: eager load user + specialties
-        $doctors = DoctorProfile::with([
-            'user:id,full_name',
-            'specialties:id,name',
-        ])
-        ->whereHas('workSchedules', fn($q) => $q->where('is_active', true))
-        ->get()
-        ->map(fn($d) => [
-            'id'                  => $d->id,
-            'full_title'          => $d->full_title,
-            'level_label'         => $d->level_label,
-            'primary_specialty'   => $d->primary_specialty?->name,
-            'primary_specialty_id'=> $d->primary_specialty?->id,
-            'room_name'           => null, // sẽ được resolve khi chọn ngày
+    public function postStep1(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'patient_profile_id' => 'required|exists:patient_profiles,id,owner_id,' . auth()->id(),
         ]);
+        
+        $draftId = $request->input('draft_id') ?: Str::uuid()->toString();
+        $booking = Cache::get("booking_draft_{$draftId}", []);
+        $booking['patient_profile_id'] = $request->patient_profile_id;
+        
+        Cache::put("booking_draft_{$draftId}", $booking, now()->addHours(2));
+        
+        return redirect()->route('patient.booking.step2', ['draft_id' => $draftId]);
+    }
 
-        // Xử lý thông báo huỷ lịch (nếu có)
-        $suggestedDoctors = [];
-        if ($request->has('notification_id')) {
-            $notification = \App\Models\Notification::where('id', $request->notification_id)
-                ->where('user_id', $user->id)
-                ->first();
-                
-            if ($notification && !empty($notification->data['alternatives'])) {
-                $suggestedDoctors = $notification->data['alternatives'];
-            }
+    /**
+     * Bước 2: Chọn phương thức và chuyên khoa/bác sĩ
+     */
+    public function step2(Request $request): View|RedirectResponse
+    {
+        $draftId = $request->query('draft_id');
+        $booking = $draftId ? Cache::get("booking_draft_{$draftId}", []) : [];
+        
+        if (empty($booking['patient_profile_id'])) {
+            return redirect()->route('patient.booking.step1', ['draft_id' => $draftId]);
         }
 
-        // Gán user's patientProfiles cho blade template
-        $user->setRelation('patientProfiles', $profiles);
-
-        return view('patient.booking.index', compact('specialties', 'doctors', 'suggestedDoctors'));
+        $specialties = Specialty::where('is_active', true)->orderBy('display_order')->get();
+        $doctors = DoctorProfile::with(['user:id,full_name', 'specialties:id,name'])
+            ->whereHas('workSchedules', fn($q) => $q->where('is_active', true))
+            ->get();
+            
+        $activeLevels = $doctors->pluck('level')->unique()->toArray();
+        $fees = DoctorLevelFee::whereIn('level', $activeLevels)->get();
+        
+        $specialtyLevels = [];
+        foreach ($doctors as $doctor) {
+            foreach ($doctor->specialties as $specialty) {
+                $specialtyLevels[$specialty->id][] = $doctor->level;
+            }
+        }
+        foreach ($specialtyLevels as $id => $levels) {
+            $specialtyLevels[$id] = array_values(array_unique($levels));
+        }
+        
+        $validSpecialtyIds = array_keys($specialtyLevels);
+        $specialties = $specialties->filter(fn($s) => in_array($s->id, $validSpecialtyIds))->values();
+        
+        return view('patient.booking.steps.step2', compact('specialties', 'doctors', 'fees', 'booking', 'specialtyLevels', 'draftId'));
     }
 
-    /**
-     * GET /dat-lich/ngay-kha-dung
-     * API: Trả về 14 ngày tới có lịch khám.
-     *
-     * @query doctor_id    int (optional)
-     * @query specialty_id int (optional)
-     */
-    public function availableDates(Request $request): JsonResponse
+    public function postStep2(Request $request): RedirectResponse
     {
         $request->validate([
-            'doctor_id'    => ['nullable', 'integer', 'exists:doctor_profiles,id'],
-            'specialty_id' => ['nullable', 'integer', 'exists:specialties,id'],
+            'draft_id' => 'required|string',
+            'booking_method' => 'required|in:specialty,doctor,suggested',
+            'specialty_id' => 'required_if:booking_method,specialty|nullable|exists:specialties,id',
+            'level' => 'required_if:booking_method,specialty|nullable|string',
+            'doctor_id' => 'required_if:booking_method,doctor,suggested|nullable|exists:doctor_profiles,id',
         ]);
-
-        $dates = $this->bookingService->getAvailableDates(
-            $request->integer('doctor_id', null) ?: null,
-            $request->integer('specialty_id', null) ?: null,
-        );
-
-        return response()->json(['dates' => $dates]);
+        
+        $draftId = $request->input('draft_id');
+        $booking = Cache::get("booking_draft_{$draftId}", []);
+        
+        $booking['booking_method'] = $request->booking_method;
+        
+        if ($request->booking_method === 'specialty') {
+            $booking['specialty_id'] = $request->specialty_id;
+            $booking['level'] = $request->level;
+            unset($booking['doctor_id']);
+        } else {
+            $booking['doctor_id'] = $request->doctor_id;
+            unset($booking['specialty_id'], $booking['level']);
+            // Tự nạp chuyên khoa từ bác sĩ (nếu có 1)
+            $doctor = DoctorProfile::with('specialties')->find($request->doctor_id);
+            if ($doctor) {
+                $specId = $doctor->primary_specialty_id ?? ($doctor->specialties->first()->id ?? null);
+                if ($specId) {
+                    $booking['specialty_id'] = $specId;
+                }
+            }
+        }
+        
+        Cache::put("booking_draft_{$draftId}", $booking, now()->addHours(2));
+        
+        return redirect()->route('patient.booking.step3', ['draft_id' => $draftId]);
     }
 
     /**
-     * GET /dat-lich/slots
-     * API: Trả về danh sách slot giờ khám theo ngày.
-     *
-     * @query doctor_id    int (optional)
-     * @query specialty_id int (optional)
-     * @query date         string Y-m-d (required)
+     * Bước 3: Chọn Ngày và Giờ (Slots)
      */
-    public function slots(Request $request): JsonResponse
+    public function step3(Request $request): View|RedirectResponse
+    {
+        $draftId = $request->query('draft_id');
+        $booking = $draftId ? Cache::get("booking_draft_{$draftId}", []) : [];
+        
+        if (empty($booking['patient_profile_id']) || empty($booking['booking_method'])) {
+            return redirect()->route('patient.booking.step1', ['draft_id' => $draftId]);
+        }
+
+        $doctorId = $booking['doctor_id'] ?? null;
+        $specialtyId = $booking['specialty_id'] ?? null;
+        $level = $booking['level'] ?? null;
+        
+        $availableDates = $this->bookingService->getAvailableDates($doctorId, $specialtyId, $level);
+        
+        $selectedDate = $request->query('date', $booking['date'] ?? null);
+        $slots = [];
+        
+        if ($selectedDate) {
+            $slots = $this->bookingService->getSlots($doctorId, $specialtyId, $selectedDate, $level, $draftId);
+        }
+
+        return view('patient.booking.steps.step3', compact('availableDates', 'selectedDate', 'slots', 'booking', 'draftId'));
+    }
+
+    public function postStep3(Request $request): RedirectResponse
     {
         $request->validate([
-            'date'         => ['required', 'date', 'after_or_equal:today'],
-            'doctor_id'    => ['nullable', 'integer', 'exists:doctor_profiles,id'],
-            'specialty_id' => ['nullable', 'integer', 'exists:specialties,id'],
+            'draft_id' => 'required|string',
+            'date' => 'required|date|after_or_equal:today',
+            'time' => 'required|date_format:H:i',
+            'doctor_id' => 'nullable|exists:doctor_profiles,id',
         ]);
-
-        $slots = $this->bookingService->getSlots(
-            $request->integer('doctor_id', null) ?: null,
-            $request->integer('specialty_id', null) ?: null,
-            $request->string('date'),
-        );
-
-        return response()->json(['slots' => $slots]);
+        
+        $draftId = $request->input('draft_id');
+        $booking = Cache::get("booking_draft_{$draftId}", []);
+        
+        $booking['date'] = $request->date;
+        $booking['time'] = $request->time;
+        
+        if ($request->doctor_id) {
+            $booking['doctor_id'] = $request->doctor_id;
+        }
+        
+        Cache::put("booking_draft_{$draftId}", $booking, now()->addHours(2));
+        
+        return redirect()->route('patient.booking.step4', ['draft_id' => $draftId]);
     }
 
     /**
-     * POST /dat-lich
-     * Lưu lịch hẹn mới.
+     * Bước 4: Xác nhận
      */
-    public function store(StoreBookingRequest $request): RedirectResponse
+    public function step4(Request $request): View|RedirectResponse
     {
+        $draftId = $request->query('draft_id');
+        $booking = $draftId ? Cache::get("booking_draft_{$draftId}", []) : [];
+        
+        if (empty($booking['date']) || empty($booking['time'])) {
+            return redirect()->route('patient.booking.step3', ['draft_id' => $draftId]);
+        }
+        
+        $profile = PatientProfile::find($booking['patient_profile_id']);
+        $summary = $this->bookingService->calculateBookingSummary($booking);
+        
+        // Khóa slot tạm thời (Soft-lock)
+        $doctorId = $booking['doctor_id'];
+        $date = $booking['date'];
+        $time = $booking['time'];
+        $lockKey = "slot_lock_{$doctorId}_{$date}_{$time}";
+        
+        $currentLock = Cache::get($lockKey);
+        if ($currentLock && $currentLock !== $draftId) {
+            return redirect()->route('patient.booking.step3', ['draft_id' => $draftId])
+                ->with('error', 'Slot này đang được người khác giữ chỗ. Vui lòng chọn giờ khác.');
+        }
+        
+        // Giữ chỗ 5 phút
+        Cache::put($lockKey, $draftId, now()->addMinutes(5));
+
+        return view('patient.booking.steps.step4', [
+            'booking' => $booking,
+            'profile' => $profile,
+            'doctor' => $summary['doctor'],
+            'specialty' => $summary['specialty'],
+            'totalFee' => $summary['totalFee'],
+            'roomName' => $summary['roomName'],
+            'draftId' => $draftId
+        ]);
+    }
+
+    /**
+     * Store (Submit final)
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'draft_id' => 'required|string',
+            'reason' => 'nullable|string|max:1000',
+        ]);
+        
+        $draftId = $request->input('draft_id');
+        $booking = Cache::get("booking_draft_{$draftId}", []);
+        
+        if (empty($booking['patient_profile_id']) || empty($booking['date']) || empty($booking['time'])) {
+            return redirect()->route('patient.booking.step1')->with('error', 'Phiên đặt lịch đã hết hạn, vui lòng thử lại.');
+        }
+        
+        // Kiểm tra Soft-lock lần cuối
+        $doctorId = $booking['doctor_id'];
+        $date = $booking['date'];
+        $time = $booking['time'];
+        $lockKey = "slot_lock_{$doctorId}_{$date}_{$time}";
+        
+        $currentLock = Cache::get($lockKey);
+        if ($currentLock && $currentLock !== $draftId) {
+            return redirect()->route('patient.booking.step3', ['draft_id' => $draftId])
+                ->with('error', 'Slot này đã bị người khác đặt mất. Vui lòng chọn giờ khác.');
+        }
+
+        // Tạo mảng data cho StoreBookingRequest
+        $data = [
+            'patient_profile_id' => $booking['patient_profile_id'],
+            'booking_method' => $booking['booking_method'],
+            'appointment_date' => $booking['date'],
+            'appointment_time' => $booking['time'],
+            'reason' => $request->reason,
+        ];
+        
+        if (!empty($booking['doctor_id'])) $data['doctor_profile_id'] = $booking['doctor_id'];
+        if (!empty($booking['specialty_id'])) $data['specialty_id'] = $booking['specialty_id'];
+        if (!empty($booking['level'])) $data['level'] = $booking['level'];
+        
         try {
-            $appointment = $this->bookingService->createAppointment(
-                $request->validated(),
-                auth()->user()
-            );
-
-            \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'confirmation');
-
+            $appointment = $this->bookingService->createAppointment($data, auth()->user());
+            
+            \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'patient_confirmation', 'patient');
+            
+            Cache::forget("booking_draft_{$draftId}");
+            Cache::forget($lockKey);
+            
             return redirect()
                 ->route('patient.booking.success', $appointment->id)
                 ->with('success', 'Đặt lịch thành công! Mã lịch hẹn: ' . $appointment->appointment_code);
 
-        } catch (\RuntimeException $e) {
-            return back()
-                ->withInput()
-                ->with('error', $e->getMessage());
+        } catch (\Exception $e) {
+            return back()->withInput()->with('error', $e->getMessage());
         }
     }
 
     /**
-     * GET /dat-lich/thanh-cong/{id}
-     * Trang xác nhận sau khi đặt lịch thành công.
+     * Fast Track cho Đặt lịch thay thế
      */
+    public function fastTrack(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'patient_profile_id' => 'required|exists:patient_profiles,id',
+            'doctor_id' => 'required|exists:doctor_profiles,id',
+            'specialty_id' => 'nullable|exists:specialties,id',
+            'reason' => 'nullable|string',
+            'date' => 'nullable|date',
+            'time' => 'nullable|string'
+        ]);
+        
+        $draftId = Str::uuid()->toString();
+        $booking = [];
+        
+        $booking['patient_profile_id'] = $request->patient_profile_id;
+        $booking['booking_method'] = 'suggested';
+        $booking['doctor_id'] = $request->doctor_id;
+        $booking['is_fast_track'] = true;
+        
+        if ($request->specialty_id) {
+            $booking['specialty_id'] = $request->specialty_id;
+        }
+
+        if ($request->reason) {
+            $booking['reason'] = $request->reason;
+        }
+        
+        // Nếu truyền sẵn date và time (thay thế vào cùng slot)
+        if ($request->date && $request->time) {
+            $booking['date'] = \Carbon\Carbon::parse($request->date)->format('Y-m-d');
+            $booking['time'] = substr($request->time, 0, 5);
+            Cache::put("booking_draft_{$draftId}", $booking, now()->addHours(2));
+            return redirect()->route('patient.booking.step4', ['draft_id' => $draftId]);
+        }
+
+        Cache::put("booking_draft_{$draftId}", $booking, now()->addHours(2));
+        return redirect()->route('patient.booking.step3', ['draft_id' => $draftId])
+            ->with('success', 'Đã nạp thông tin đặt lịch thay thế, vui lòng chọn ngày giờ mới.');
+    }
+    
     public function success(int $id): View
     {
         $appointment = \App\Models\Appointment::with([

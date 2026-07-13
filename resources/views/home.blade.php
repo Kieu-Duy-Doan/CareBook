@@ -21,7 +21,7 @@
                     Hệ thống đặt lịch khám bệnh trực tuyến nhanh chóng, tiện lợi, giúp bạn chủ động thời gian và lựa chọn bác sĩ chuyên khoa phù hợp nhất.
                 </p>
                 <div class="flex flex-wrap gap-4">
-                    <a href="{{ route('patient.booking.index') }}" class="px-8 py-4 rounded-full bg-amber-400 text-slate-900 font-bold hover:bg-amber-300 hover:-translate-y-1 transition-all duration-300 shadow-lg shadow-amber-400/30 flex items-center gap-2">
+                    <a href="{{ route('patient.booking.step1') }}" class="px-8 py-4 rounded-full bg-amber-400 text-slate-900 font-bold hover:bg-amber-300 hover:-translate-y-1 transition-all duration-300 shadow-lg shadow-amber-400/30 flex items-center gap-2">
                         <i class="fa-regular fa-calendar-check"></i> Đặt lịch ngay
                     </a>
                     <a href="#" class="px-8 py-4 rounded-full bg-white/10 text-white font-bold border border-white/30 hover:bg-white/20 hover:-translate-y-1 transition-all duration-300 backdrop-blur-md flex items-center gap-2">
@@ -66,7 +66,7 @@
                     </div>
                 </a>
 
-                <a href="{{ route('patient.booking.index') }}" class="flex-1 flex items-start gap-4 p-4 md:p-6 hover:bg-slate-50 transition-colors rounded-2xl group">
+                <a href="{{ route('patient.booking.step1') }}" class="flex-1 flex items-start gap-4 p-4 md:p-6 hover:bg-slate-50 transition-colors rounded-2xl group">
                     <div class="w-12 h-12 rounded-2xl bg-secondary/10 text-secondary flex items-center justify-center text-xl shrink-0 group-hover:scale-110 transition-transform duration-300">
                         <i class="fa-regular fa-calendar-plus"></i>
                     </div>

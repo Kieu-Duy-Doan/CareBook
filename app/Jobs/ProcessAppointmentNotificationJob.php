@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Appointment;
-use App\Services\NotificationService;
+use App\Services\PatientNotificationService;
 use App\Services\BookingService;
 use App\Mail\BookingConfirmationMail;
 use App\Mail\CancellationMail;
@@ -24,37 +24,46 @@ class ProcessAppointmentNotificationJob implements ShouldQueue
 
     protected Appointment $appointment;
     protected string $type;
+    protected string $actor;
 
     /**
      * Create a new job instance.
-     * $type can be: 'confirmation', 'cancellation', 'reminder_2h', 'reminder_30m'
+     * $type can be: 'confirmation', 'admin_cancel', 'doctor_cancel', 'patient_cancel', 'reminder_2h', 'reminder_30m'
      */
-    public function __construct(Appointment $appointment, string $type)
+    public function __construct(Appointment $appointment, string $type, string $actor = 'system')
     {
         $this->appointment = $appointment;
         $this->type = $type;
+        $this->actor = $actor;
     }
 
-    /**
-     * Execute the job.
-     */
-    public function handle(NotificationService $notificationService, BookingService $bookingService): void
+    public function handle(PatientNotificationService $notificationService, BookingService $bookingService): void
     {
         $patientEmail = $this->appointment->bookedByUser->email ?? null;
 
         switch ($this->type) {
             case 'confirmation':
-                $notificationService->notifyBookingSuccess($this->appointment);
+            case 'patient_confirmation':
+            case 'admin_confirmation':
+                $notificationService->notifyBookingSuccess($this->appointment, $this->actor);
                 if ($patientEmail) {
-                    Mail::to($patientEmail)->send(new BookingConfirmationMail($this->appointment));
+                    Mail::to($patientEmail)->send(new BookingConfirmationMail($this->appointment, $this->actor));
                 }
                 break;
 
-            case 'cancellation':
+            case 'admin_cancel':
+            case 'doctor_cancel':
                 $alternatives = $bookingService->findAlternatives($this->appointment);
-                $notificationService->notifyCancellation($this->appointment, $alternatives->toArray());
+                $notificationService->notifyCancellation($this->appointment, $alternatives->toArray(), $this->actor);
                 if ($patientEmail) {
-                    Mail::to($patientEmail)->send(new CancellationMail($this->appointment, $alternatives));
+                    Mail::to($patientEmail)->send(new CancellationMail($this->appointment, $alternatives, $this->actor));
+                }
+                break;
+
+            case 'patient_cancel':
+                $notificationService->notifyCancellation($this->appointment, [], $this->actor);
+                if ($patientEmail) {
+                    Mail::to($patientEmail)->send(new CancellationMail($this->appointment, collect([]), $this->actor));
                 }
                 break;
 

@@ -1,13 +1,13 @@
 <x-layouts.patient-dashboard title="Thông tin cá nhân" activeMenu="profiles">
     <div x-data="{ lightboxOpen: false, lightboxImg: '' }">
         <!-- Top Action Bar -->
-        <div class="flex items-center justify-between mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
                 <h2 class="text-xl font-bold text-slate-800">Chi tiết hồ sơ</h2>
                 <p class="text-slate-500 text-sm mt-1">Các thông tin quan trọng trong hồ sơ y tế của bạn</p>
             </div>
             <a href="{{ $profile ? route('patient.profiles.edit', $profile->id) : route('patient.profiles.create', ['is_self' => 1]) }}"
-                class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary text-white font-semibold rounded-xl transition-colors hover:bg-primary-dark">
+                class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary text-white font-semibold rounded-xl transition-colors hover:bg-primary-dark shrink-0 whitespace-nowrap self-start sm:self-auto">
                 <i class="fa-regular fa-pen-to-square"></i>
                 <span>Cập nhật thông tin</span>
             </a>

@@ -98,7 +98,9 @@ class DoctorsImport implements ToCollection
                     }
 
                     $existingDoctor->fill([
-                        'academic_title'   => $title ?: null,
+                        'academic_rank'    => 'none',
+                        'degree'           => 'BS',
+                        'current_position' => 'ATTENDING',
                         'level'            => $level ?: 'BS',
                         'expertise'        => $expertise ?: null,
                         'experience_years' => $experience !== '' ? $experience : 0,
@@ -185,7 +187,9 @@ class DoctorsImport implements ToCollection
                     $doctorToSync = DoctorProfile::create([
                         'user_id'          => $user->id,
                         'doctor_code'      => $doctorCode,
-                        'academic_title'   => $title ?: null,
+                        'academic_rank'    => 'none',
+                        'degree'           => 'BS',
+                        'current_position' => 'ATTENDING',
                         'level'            => $level ?: 'BS',
                         'expertise'        => $expertise ?: null,
                         'experience_years' => $experience !== '' ? $experience : 0,

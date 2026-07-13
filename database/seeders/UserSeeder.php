@@ -60,7 +60,9 @@ class UserSeeder extends Seeder
         DoctorProfile::create([
             'user_id' => $bs1->id,
             'doctor_code' => 'BS001',
-            'academic_title' => 'TS.',
+            'academic_rank' => 'none',
+            'degree' => 'TS',
+            'current_position' => 'ATTENDING',
             'level' => 'TS',
         ]);
 
@@ -74,8 +76,10 @@ class UserSeeder extends Seeder
         DoctorProfile::create([
             'user_id' => $bs2->id,
             'doctor_code' => 'BS002',
-            'academic_title' => 'PGS.TS.',
-            'level' => 'PGS',
+            'academic_rank' => 'PGS',
+            'degree' => 'TS',
+            'current_position' => 'CONSULTANT',
+            'level' => 'TS',
         ]);
 
         $bs3 = User::create([
@@ -88,7 +92,9 @@ class UserSeeder extends Seeder
         DoctorProfile::create([
             'user_id' => $bs3->id,
             'doctor_code' => 'BS003',
-            'academic_title' => 'ThS.',
+            'academic_rank' => 'none',
+            'degree' => 'ThS',
+            'current_position' => 'ATTENDING',
             'level' => 'ThS',
         ]);
         $bs4 = User::create([
@@ -98,7 +104,7 @@ class UserSeeder extends Seeder
             'password' => Hash::make('Bacsi@123'),
             'role' => 'doctor',
         ]);
-        DoctorProfile::create(['user_id' => $bs4->id, 'doctor_code' => 'BS004', 'academic_title' => 'BSCK1.', 'level' => 'BSCK1']);
+        DoctorProfile::create(['user_id' => $bs4->id, 'doctor_code' => 'BS004', 'academic_rank' => 'none', 'degree' => 'BSCK1', 'current_position' => 'ATTENDING', 'level' => 'BSCK1']);
 
         $bs5 = User::create([
             'full_name' => 'Phạm Đức Đam',
@@ -107,7 +113,7 @@ class UserSeeder extends Seeder
             'password' => Hash::make('Bacsi@123'),
             'role' => 'doctor',
         ]);
-        DoctorProfile::create(['user_id' => $bs5->id, 'doctor_code' => 'BS005', 'academic_title' => 'BSCK2.', 'level' => 'BSCK2']);
+        DoctorProfile::create(['user_id' => $bs5->id, 'doctor_code' => 'BS005', 'academic_rank' => 'none', 'degree' => 'BSCK2', 'current_position' => 'CONSULTANT', 'level' => 'BSCK2']);
 
         $bs6 = User::create([
             'full_name' => 'Ngô Bảo Châu',
@@ -116,7 +122,7 @@ class UserSeeder extends Seeder
             'password' => Hash::make('Bacsi@123'),
             'role' => 'doctor',
         ]);
-        DoctorProfile::create(['user_id' => $bs6->id, 'doctor_code' => 'BS006', 'academic_title' => 'GS.', 'level' => 'GS']);
+        DoctorProfile::create(['user_id' => $bs6->id, 'doctor_code' => 'BS006', 'academic_rank' => 'GS', 'degree' => 'TS', 'current_position' => 'EXPERT', 'level' => 'TS']);
 
         $bs7 = User::create([
             'full_name' => 'Vũ Thu Thủy',
@@ -125,7 +131,7 @@ class UserSeeder extends Seeder
             'password' => Hash::make('Bacsi@123'),
             'role' => 'doctor',
         ]);
-        DoctorProfile::create(['user_id' => $bs7->id, 'doctor_code' => 'BS007', 'academic_title' => 'BS.', 'level' => 'BS']);
+        DoctorProfile::create(['user_id' => $bs7->id, 'doctor_code' => 'BS007', 'academic_rank' => 'none', 'degree' => 'BS', 'current_position' => 'INTERN', 'level' => 'BS']);
 
         $bs8 = User::create([
             'full_name' => 'Đinh Tuấn Anh',
@@ -134,7 +140,7 @@ class UserSeeder extends Seeder
             'password' => Hash::make('Bacsi@123'),
             'role' => 'doctor',
         ]);
-        DoctorProfile::create(['user_id' => $bs8->id, 'doctor_code' => 'BS008', 'academic_title' => 'ThS.', 'level' => 'ThS']);
+        DoctorProfile::create(['user_id' => $bs8->id, 'doctor_code' => 'BS008', 'academic_rank' => 'none', 'degree' => 'ThS', 'current_position' => 'ATTENDING', 'level' => 'ThS']);
 
         $bs9 = User::create([
             'full_name' => 'Lý Thảo Tâm',
@@ -143,7 +149,7 @@ class UserSeeder extends Seeder
             'password' => Hash::make('Bacsi@123'),
             'role' => 'doctor',
         ]);
-        DoctorProfile::create(['user_id' => $bs9->id, 'doctor_code' => 'BS009', 'academic_title' => 'TS.', 'level' => 'TS']);
+        DoctorProfile::create(['user_id' => $bs9->id, 'doctor_code' => 'BS009', 'academic_rank' => 'none', 'degree' => 'TS', 'current_position' => 'DEPARTMENT_HEAD', 'level' => 'TS']);
 
         $bs10 = User::create([
             'full_name' => 'Châu Kiều Oanh',
@@ -152,7 +158,7 @@ class UserSeeder extends Seeder
             'password' => Hash::make('Bacsi@123'),
             'role' => 'doctor',
         ]);
-        DoctorProfile::create(['user_id' => $bs10->id, 'doctor_code' => 'BS010', 'academic_title' => 'BS.', 'level' => 'BS']);
+        DoctorProfile::create(['user_id' => $bs10->id, 'doctor_code' => 'BS010', 'academic_rank' => 'none', 'degree' => 'BS', 'current_position' => 'INTERN', 'level' => 'BS']);
 
         // Additional doctors for duplicate specialties (to test alternative doctor suggestions)
         $bs11 = User::create([
@@ -162,7 +168,7 @@ class UserSeeder extends Seeder
             'password' => Hash::make('Bacsi@123'),
             'role' => 'doctor',
         ]);
-        DoctorProfile::create(['user_id' => $bs11->id, 'doctor_code' => 'BS011', 'academic_title' => 'ThS.', 'level' => 'ThS']);
+        DoctorProfile::create(['user_id' => $bs11->id, 'doctor_code' => 'BS011', 'academic_rank' => 'none', 'degree' => 'ThS', 'current_position' => 'ATTENDING', 'level' => 'ThS']);
 
         $bs12 = User::create([
             'full_name' => 'Nguyễn Bích Phương',
@@ -171,7 +177,7 @@ class UserSeeder extends Seeder
             'password' => Hash::make('Bacsi@123'),
             'role' => 'doctor',
         ]);
-        DoctorProfile::create(['user_id' => $bs12->id, 'doctor_code' => 'BS012', 'academic_title' => 'BS.', 'level' => 'BS']);
+        DoctorProfile::create(['user_id' => $bs12->id, 'doctor_code' => 'BS012', 'academic_rank' => 'none', 'degree' => 'BS', 'current_position' => 'INTERN', 'level' => 'BS']);
 
         $bs13 = User::create([
             'full_name' => 'Võ Đình Tuấn',
@@ -180,7 +186,7 @@ class UserSeeder extends Seeder
             'password' => Hash::make('Bacsi@123'),
             'role' => 'doctor',
         ]);
-        DoctorProfile::create(['user_id' => $bs13->id, 'doctor_code' => 'BS013', 'academic_title' => 'BSCK1.', 'level' => 'BSCK1']);
+        DoctorProfile::create(['user_id' => $bs13->id, 'doctor_code' => 'BS013', 'academic_rank' => 'none', 'degree' => 'BSCK1', 'current_position' => 'ATTENDING', 'level' => 'BSCK1']);
 
         $bs14 = User::create([
             'full_name' => 'Trịnh Hồng Ngọc',
@@ -189,7 +195,7 @@ class UserSeeder extends Seeder
             'password' => Hash::make('Bacsi@123'),
             'role' => 'doctor',
         ]);
-        DoctorProfile::create(['user_id' => $bs14->id, 'doctor_code' => 'BS014', 'academic_title' => 'TS.', 'level' => 'TS']);
+        DoctorProfile::create(['user_id' => $bs14->id, 'doctor_code' => 'BS014', 'academic_rank' => 'none', 'degree' => 'TS', 'current_position' => 'DEPARTMENT_HEAD', 'level' => 'TS']);
 
         $bs15 = User::create([
             'full_name' => 'Phan Nhật Nam',
@@ -198,7 +204,7 @@ class UserSeeder extends Seeder
             'password' => Hash::make('Bacsi@123'),
             'role' => 'doctor',
         ]);
-        DoctorProfile::create(['user_id' => $bs15->id, 'doctor_code' => 'BS015', 'academic_title' => 'BSCK2.', 'level' => 'BSCK2']);
+        DoctorProfile::create(['user_id' => $bs15->id, 'doctor_code' => 'BS015', 'academic_rank' => 'none', 'degree' => 'BSCK2', 'current_position' => 'CONSULTANT', 'level' => 'BSCK2']);
 
         // Patients
         $bn1 = User::create([

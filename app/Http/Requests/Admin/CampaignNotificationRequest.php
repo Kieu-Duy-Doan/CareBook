@@ -14,8 +14,7 @@ class CampaignNotificationRequest extends FormRequest
     public function rules()
     {
         return [
-            'title' => 'required|string',
-            'created_at_minute' => 'required|string',
+            'batch_id' => 'required|uuid',
         ];
     }
 }

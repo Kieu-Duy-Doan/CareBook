@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('patient_profiles', function (Blueprint $table) {
             $table->id();
+            $table->string('patient_code')->nullable();
             $table->foreignId('owner_id')->constrained('users')->restrictOnDelete();
             $table->string('full_name', 100);
             $table->date('date_of_birth');
@@ -25,6 +26,7 @@ return new class extends Migration
             $table->json('medical_history')->nullable();
             $table->text('symptom_notes')->nullable();
             $table->boolean('is_self')->default(false);
+            $table->string('relationship', 50)->nullable()->comment('Mối quan hệ với chủ tài khoản (nếu không phải là chính mình)');
             $table->timestamps();
         });
     }

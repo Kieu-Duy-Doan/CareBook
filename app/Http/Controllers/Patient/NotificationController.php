@@ -6,13 +6,13 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Appointment;
-use App\Services\NotificationService;
+use App\Services\PatientNotificationService;
 
 class NotificationController extends Controller
 {
-    protected NotificationService $notificationService;
+    protected PatientNotificationService $notificationService;
 
-    public function __construct(NotificationService $notificationService)
+    public function __construct(PatientNotificationService $notificationService)
     {
         $this->notificationService = $notificationService;
     }
@@ -59,11 +59,23 @@ class NotificationController extends Controller
         $notifications = $this->notificationService->getRecentPatientNotifications($userId, 20);
         $unreadCount = $this->notificationService->getUnreadCount($userId);
 
-        // Map and append appointment info for cancellation type
-        $notificationsData = $notifications->map(function($notif) {
+        // Lấy danh sách ID của các lịch hẹn từ thông báo (chỉ loại cancellation và ref_type = appointment)
+        $appointmentIds = $notifications->where('type', 'cancellation')
+            ->where('ref_type', 'appointment')
+            ->pluck('ref_id')
+            ->filter()
+            ->unique();
+
+        // Query 1 lần để lấy tất cả các Appointment cần thiết (Sửa N+1 Query)
+        $appointments = $appointmentIds->isNotEmpty() 
+            ? Appointment::whereIn('id', $appointmentIds)->get()->keyBy('id') 
+            : collect();
+
+        // Map and append appointment info
+        $notificationsData = $notifications->map(function($notif) use ($appointments) {
             $data = $notif->toArray();
             if ($notif->type === 'cancellation' && $notif->ref_type === 'appointment' && $notif->ref_id) {
-                $appointment = Appointment::find($notif->ref_id);
+                $appointment = $appointments->get($notif->ref_id);
                 if ($appointment) {
                     $data['appointment_info'] = [
                         'patient_profile_id' => $appointment->patient_profile_id,
@@ -83,14 +95,15 @@ class NotificationController extends Controller
         ]);
     }
 
-    /**
-     * Mark a notification as read
-     */
     public function markAsRead(Request $request)
     {
         $this->notificationService->markAsRead(Auth::id(), $request->input('id'));
 
-        return response()->json(['success' => true]);
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+
+        return redirect()->back();
     }
 
     /**

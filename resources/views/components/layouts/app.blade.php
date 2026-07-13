@@ -79,7 +79,7 @@
                     </div>
 
                     <!-- Booking Button -->
-                    <a href="{{ route('patient.booking.index') }}" class="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-full bg-amber-400 text-slate-900 font-bold hover:bg-amber-500 hover:-translate-y-0.5 transition-all shadow-md shadow-amber-400/20 text-sm">
+                    <a href="{{ route('patient.booking.step1') }}" class="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-full bg-amber-400 text-slate-900 font-bold hover:bg-amber-500 hover:-translate-y-0.5 transition-all shadow-md shadow-amber-400/20 text-sm">
                         <i class="fa-regular fa-calendar-check"></i> Đặt khám
                     </a>
 
@@ -152,7 +152,7 @@
                 <a href="{{ route('home') }}" class="block px-4 py-3 rounded-xl font-medium {{ request()->routeIs('home') ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50' }}">Trang chủ</a>
                 <a href="{{ route('doctors.directory') }}" class="block px-4 py-3 rounded-xl font-medium {{ request()->routeIs('doctors.directory') ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50' }}">Đội ngũ bác sĩ</a>
                 <a href="{{ route('posts.index') }}" class="block px-4 py-3 rounded-xl font-medium {{ request()->routeIs('posts.*') ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50' }}">Tin tức</a>
-                <a href="{{ route('patient.booking.index') }}" class="block px-4 py-3 mt-4 rounded-xl font-bold bg-amber-400 text-slate-900 text-center shadow-sm">Đặt lịch khám ngay</a>
+                <a href="{{ route('patient.booking.step1') }}" class="block px-4 py-3 mt-4 rounded-xl font-bold bg-amber-400 text-slate-900 text-center shadow-sm">Đặt lịch khám ngay</a>
             </div>
         </div>
     </header>
