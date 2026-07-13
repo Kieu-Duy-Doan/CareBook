@@ -105,22 +105,22 @@
                                 </button>
 
                                 <div x-show="open" @click.outside="open = false" 
-                                    class="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto p-2"
-                                    style="display: none;">
+                                    class="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg p-1.5"
+                                    style="max-height: 240px; overflow-y: auto; display: none;">
                                     
-                                    <div class="relative mb-2">
+                                    <div class="relative mb-1.5">
                                         <input type="text" x-model="search" placeholder="Tìm theo tên hoặc số điện thoại..."
-                                            class="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded-md text-xs outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
-                                        <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-gray-400 text-xs"></i>
+                                            class="w-full pl-8 pr-3 py-1 border border-gray-300 rounded-md text-xs outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                        <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2 text-gray-400 text-xs"></i>
                                     </div>
 
-                                    <ul class="space-y-1">
+                                    <ul class="space-y-0.5">
                                         <template x-for="p in filteredPatients" :key="p.id">
                                             <li>
                                                 <button type="button" @click="selectPatient(p)"
-                                                    class="w-full text-left px-3 py-2 text-xs rounded hover:bg-blue-50 hover:text-blue-700 transition-colors flex flex-col">
-                                                    <span class="font-semibold" x-text="p.name"></span>
-                                                    <span class="text-gray-500 text-[10px]" x-text="'SĐT: ' + (p.phone || 'N/A') + ' - Ngày sinh: ' + (p.dob || 'N/A')"></span>
+                                                    class="w-full text-left px-2.5 py-1 text-xs rounded hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center justify-between gap-2">
+                                                    <span class="font-semibold truncate max-w-[150px] sm:max-w-[200px]" x-text="p.name"></span>
+                                                    <span class="text-gray-400 text-[10px] shrink-0" x-text="(p.phone ? p.phone : 'N/A') + (p.dob ? ' | ' + p.dob : '')"></span>
                                                 </button>
                                             </li>
                                         </template>
