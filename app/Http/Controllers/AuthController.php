@@ -58,9 +58,12 @@ class AuthController extends Controller
                 return back()->withInput()->with('error', 'Tài khoản này không phải là bệnh nhân.');
             }
             
-            // Nếu đăng nhập từ trang admin/nhân viên nhưng tài khoản lại là bệnh nhân
-            if ($loginType === 'admin' && $user->role === 'patient') {
+            // Cổng quản trị (/login) chỉ dành cho admin và doctor
+            if ($loginType === 'admin' && ! in_array($user->role, ['admin', 'doctor'], true)) {
                 Auth::logout();
+                if ($user->role === 'receptionist') {
+                    return back()->withInput()->with('error', 'Lễ tân vui lòng đăng nhập qua cổng Lễ tân (/receptionist/login).');
+                }
                 return back()->withInput()->with('error', 'Bạn không có quyền đăng nhập vào cổng quản trị.');
             }
 
@@ -91,9 +94,10 @@ class AuthController extends Controller
     {
         $role = Auth::user()->role;
         return match ($role) {
-            'admin', 'doctor', 'receptionist' => redirect()->route('admin.dashboard'),
-            'patient' => redirect()->route('patient.dashboard'),
-            default => redirect('/'),
+            'admin', 'doctor' => redirect()->route('admin.dashboard'),
+            'receptionist'    => redirect()->route('receptionist.dashboard'),
+            'patient'         => redirect()->route('patient.dashboard'),
+            default           => redirect('/'),
         };
     }
 

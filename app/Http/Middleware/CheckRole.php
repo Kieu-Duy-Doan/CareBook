@@ -10,13 +10,33 @@ use Illuminate\Support\Facades\Auth;
 class CheckRole
 {
     /**
+     * Redirect user to their correct home dashboard based on their role.
+     */
+    private function redirectToDashboard(string $role, string $errorMessage): Response
+    {
+        $route = match ($role) {
+            'admin', 'doctor' => 'admin.dashboard',
+            'receptionist'    => 'receptionist.dashboard',
+            'patient'         => 'patient.dashboard',
+            default           => 'home',
+        };
+
+        return redirect()->route($route)->with('error', $errorMessage);
+    }
+
+    /**
      * Handle an incoming request.
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
+        // Not authenticated at all
         if (! Auth::check()) {
+            if ($request->is('receptionist/*') || $request->is('receptionist')) {
+                return redirect()->route('receptionist.login');
+            }
+
             if ($request->is('admin/*') || $request->is('admin')) {
                 return redirect()->route('login');
             }
@@ -26,20 +46,12 @@ class CheckRole
 
         $user = Auth::user();
 
+        // User is authenticated but does not have the required role
         if (! in_array($user->role, $roles, true)) {
-            if ($user->role === 'patient') {
-                return redirect()
-                    ->route('patient.dashboard')
-                    ->with('error', 'Bạn không có quyền truy cập khu vực quản trị.');
-            }
-
-            if (in_array($user->role, ['admin', 'doctor', 'receptionist'], true)) {
-                return redirect()
-                    ->route('admin.dashboard')
-                    ->with('error', 'Bạn không có quyền truy cập trang này.');
-            }
-
-            abort(403, 'Bạn không có quyền truy cập trang này.');
+            return $this->redirectToDashboard(
+                $user->role,
+                'Bạn không có quyền truy cập trang này.'
+            );
         }
 
         return $next($request);
