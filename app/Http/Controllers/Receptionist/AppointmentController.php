@@ -332,7 +332,7 @@ class AppointmentController extends Controller
         $appointment = Appointment::create([
             'appointment_code'   => $appointmentCode,
             'patient_profile_id' => $request->patient_profile_id,
-            'booked_by_user_id'  => $patient->owner_id ?? Auth::id(),
+            'booked_by_user_id'  => $request->source === 'counter' ? Auth::id() : ($patient->owner_id ?? Auth::id()),
             'specialty_id'       => $request->specialty_id,
             'doctor_level'       => $doctor->level,
             'room_id'            => $request->room_id,
@@ -356,7 +356,11 @@ class AppointmentController extends Controller
             'vital_height_cm'    => $request->vital_height_cm,
             'vital_bmi'          => $request->vital_bmi,
             'vital_note'         => $request->vital_note,
-            'measured_by'        => $request->measured_by,
+            'measured_by'        => $request->measured_by ?? (
+                ($request->filled('vital_pulse') || $request->filled('vital_systolic_bp') || $request->filled('vital_diastolic_bp') || $request->filled('vital_temperature') || $request->filled('vital_respiratory') || $request->filled('vital_spo2') || $request->filled('vital_weight_kg') || $request->filled('vital_height_cm'))
+                ? Auth::id()
+                : null
+            ),
 
             'checked_in_at'      => $checkedInAt,
             'completed_at'       => $completedAt,
@@ -619,7 +623,7 @@ class AppointmentController extends Controller
         $newStatus = $request->status;
 
         $appointment->patient_profile_id = $request->patient_profile_id;
-        $appointment->booked_by_user_id = $patient->owner_id ?? Auth::id();
+        $appointment->booked_by_user_id = $request->source === 'counter' ? Auth::id() : ($patient->owner_id ?? Auth::id());
         $appointment->specialty_id = $request->specialty_id;
         $appointment->doctor_level = $doctor->level;
         $appointment->room_id = $request->room_id;
@@ -641,7 +645,11 @@ class AppointmentController extends Controller
         $appointment->vital_height_cm = $request->vital_height_cm;
         $appointment->vital_bmi = $request->vital_bmi;
         $appointment->vital_note = $request->vital_note;
-        $appointment->measured_by = $request->measured_by;
+        $appointment->measured_by = $request->measured_by ?? (
+            ($request->filled('vital_pulse') || $request->filled('vital_systolic_bp') || $request->filled('vital_diastolic_bp') || $request->filled('vital_temperature') || $request->filled('vital_respiratory') || $request->filled('vital_spo2') || $request->filled('vital_weight_kg') || $request->filled('vital_height_cm'))
+            ? Auth::id()
+            : null
+        );
 
         $totalFee = 0;
         if ($doctor->level) {
