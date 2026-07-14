@@ -244,6 +244,26 @@ Route::prefix('api')->name('api.')->group(function () {
     // Lấy danh lịch làm việc theo bác sĩ và ngày
     Route::get('/work-schedule/by-doctor-date/{doctorId}/{appointmentDate}', [\App\Http\Controllers\Api\WorkScheduleController::class, 'getWorkSchedule'])->name('work-schedule');
     Route::post('/chatbot/message', [\App\Http\Controllers\Api\ChatbotController::class, 'sendMessage'])->name('chatbot.message');
+
+    // SePay Webhook (xác thực bởi VerifySePayWebhook middleware)
+    Route::post('/webhooks/sepay', [\App\Http\Controllers\Api\Webhook\SePayWebhookController::class, 'handle'])
+        ->middleware(\App\Http\Middleware\VerifySePayWebhook::class)
+        ->name('webhooks.sepay');
+
+    // Polling check thanh toán (checkout page)
+    Route::get('/payments/{appointment}/check-status', function ($appointmentId) {
+        $appointment = \App\Models\Appointment::with('clinicalVisits.payments')->find($appointmentId);
+        if (!$appointment) {
+            return response()->json(['paid' => false, 'paid_amount' => 0]);
+        }
+        $summary = app(\App\Services\PaymentService::class)->calculateSummary($appointment);
+
+        return response()->json([
+            'paid' => $summary['remaining_to_pay'] <= 0, // Đã thanh toán xong nếu số tiền còn lại <= 0
+            'paid_amount' => $summary['amount_paid'],
+            'remaining_to_pay' => $summary['remaining_to_pay']
+        ]);
+    })->name('payments.check-status');
 });
 
 // ──────────────────────────────────────────────────────────
@@ -298,18 +318,18 @@ Route::middleware(['auth', 'role:patient'])->prefix('trang-ca-nhan')->name('pati
 Route::middleware(['auth', 'role:patient'])->prefix('dat-lich')->name('patient.booking.')->group(function () {
     Route::get('/', [\App\Http\Controllers\Patient\BookingController::class, 'step1'])->name('step1');
     Route::post('/buoc-1', [\App\Http\Controllers\Patient\BookingController::class, 'postStep1'])->name('postStep1');
-    
+
     Route::get('/buoc-2', [\App\Http\Controllers\Patient\BookingController::class, 'step2'])->name('step2');
     Route::post('/buoc-2', [\App\Http\Controllers\Patient\BookingController::class, 'postStep2'])->name('postStep2');
-    
+
     Route::get('/buoc-3', [\App\Http\Controllers\Patient\BookingController::class, 'step3'])->name('step3');
     Route::post('/buoc-3', [\App\Http\Controllers\Patient\BookingController::class, 'postStep3'])->name('postStep3');
-    
+
     Route::get('/xac-nhan', [\App\Http\Controllers\Patient\BookingController::class, 'step4'])->name('step4');
     Route::post('/store', [\App\Http\Controllers\Patient\BookingController::class, 'store'])->name('store');
-    
+
     Route::get('/thanh-cong/{id}', [\App\Http\Controllers\Patient\BookingController::class, 'success'])->name('success');
-    
+
     Route::post('/fast-track', [\App\Http\Controllers\Patient\BookingController::class, 'fastTrack'])->name('fastTrack');
 });
 
@@ -333,27 +353,30 @@ Route::prefix('receptionist')->name('receptionist.')->group(function () {
 
         // Dashboard
         Route::get('/dashboard', [\App\Http\Controllers\Receptionist\DashboardController::class, 'index'])->name('dashboard');
-        
+
         // Appointments
         Route::resource('appointments', \App\Http\Controllers\Receptionist\AppointmentController::class);
-        
+
         // Patients
         Route::resource('patients', \App\Http\Controllers\Receptionist\PatientController::class);
-        
+
         // Customers
         Route::resource('customers', \App\Http\Controllers\Receptionist\CustomerController::class);
-        
+
         // Clinical Visits
         Route::resource('clinical-visits', \App\Http\Controllers\Receptionist\ClinicalVisitController::class)->only(['index', 'show']);
-        
+
+        // Customer Display
+        Route::get('customer-display', [\App\Http\Controllers\Receptionist\CustomerDisplayController::class, 'index'])->name('customer-display.index');
+        Route::get('customer-display/status', [\App\Http\Controllers\Receptionist\CustomerDisplayController::class, 'status'])->name('customer-display.status');
+
         // Payments
-        Route::get('payments/{clinical_visit}', [\App\Http\Controllers\Receptionist\PaymentController::class, 'create'])->name('payments.create');
-        Route::post('payments/{clinical_visit}/manual', [\App\Http\Controllers\Receptionist\PaymentController::class, 'storeManual'])->name('payments.storeManual');
-        Route::post('payments/{clinical_visit}/payos', [\App\Http\Controllers\Receptionist\PaymentController::class, 'createPayOS'])->name('payments.createPayOS');
-        
-        // Payments (Updating directly on clinical_visits)
-        Route::resource('payments', \App\Http\Controllers\Receptionist\PaymentController::class)->only(['index', 'edit', 'update']);
-        
+        Route::get('payments/{appointment}/checkout', [\App\Http\Controllers\Receptionist\PaymentController::class, 'create'])->name('payments.create');
+        Route::post('payments/{appointment}/manual', [\App\Http\Controllers\Receptionist\PaymentController::class, 'storeManual'])->name('payments.storeManual');
+
+        // Payments history
+        Route::resource('payments', \App\Http\Controllers\Receptionist\PaymentController::class)->only(['index', 'show']);
+
         // Profile
         Route::get('/profile', [\App\Http\Controllers\Receptionist\ProfileController::class, 'index'])->name('profile.index');
         Route::put('/profile', [\App\Http\Controllers\Receptionist\ProfileController::class, 'update'])->name('profile.update');
