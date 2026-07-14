@@ -39,6 +39,7 @@ class PaymentService
                 'remaining_to_pay' => 0,
                 'overpaid_amount' => 0,
                 'all_visits' => collect(),
+                'pending_visits' => collect(),
             ];
         }
 
@@ -58,6 +59,7 @@ class PaymentService
         $calc['remaining_to_pay'] = max(0, $calc['patient_pays'] - $amountPaid);
         $calc['overpaid_amount'] = max(0, $amountPaid - $calc['patient_pays']);
         $calc['all_visits'] = $allVisits;
+        $calc['pending_visits'] = $allVisits->where('payment_status', 'pending')->values();
 
         return $calc;
     }
