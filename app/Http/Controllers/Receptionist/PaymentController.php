@@ -3,167 +3,185 @@
 namespace App\Http\Controllers\Receptionist;
 
 use App\Http\Controllers\Controller;
+use App\Models\Appointment;
+use App\Models\Payment;
 use App\Models\ClinicalVisit;
+use App\Services\SePayService;
+use App\Services\PaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class PaymentController extends Controller
 {
+    protected SePayService $sepayService;
+    protected PaymentService $paymentService;
+
+    public function __construct(SePayService $sepayService, PaymentService $paymentService)
+    {
+        $this->sepayService = $sepayService;
+        $this->paymentService = $paymentService;
+    }
+
     /**
-     * Danh sách lịch sử thanh toán & hoá đơn
+     * Tab 1 & 2: Danh sách Hóa đơn & Lịch sử thanh toán
      */
     public function index(Request $request)
     {
-        $query = ClinicalVisit::with([
-            'appointment.patientProfile',
+        // Xóa hiển thị màn hình phụ khi lễ tân quay về danh sách
+        \Illuminate\Support\Facades\Cache::forget('receptionist_active_checkout_' . \Illuminate\Support\Facades\Auth::id());
+
+        $tab = $request->input('tab', 'pending'); // 'pending' or 'history'
+
+        $query = Appointment::with([
+            'patientProfile',
             'doctorProfile.user',
-            'room',
-            'collectedBy'
+            'specialty',
+            'clinicalVisits',
+            'payments'
         ]);
 
-        // Filter by Date
+        // Lọc theo khoảng ngày (dựa trên ngày đặt lịch)
         if ($request->filled('date')) {
-            $query->whereDate('created_at', $request->input('date'));
+            $query->whereDate('appointment_date', $request->input('date'));
         }
 
-        // Filter by Payment Status
-        if ($request->filled('payment_status')) {
-            $query->where('payment_status', $request->input('payment_status'));
+        // Lọc theo Tab (Chờ thu tiền vs Lịch sử)
+        if ($tab === 'pending') {
+            // Lấy các Appointment có ClinicalVisits đang pending
+            $query->whereHas('clinicalVisits', function($q) {
+                $q->where('payment_status', 'pending');
+            });
+        } else {
+            // Lấy các Appointment có Payments
+            $query->has('payments');
+            
+            // Filter theo phương thức thanh toán
+            if ($request->filled('method')) {
+                $method = $request->input('method');
+                $query->whereHas('payments', function($q) use ($method) {
+                    $q->where('method', $method);
+                });
+            }
         }
 
-        // Search by Patient Name or Code
+        // Tìm kiếm
         if ($request->filled('search')) {
             $search = $request->input('search');
-            $query->whereHas('appointment.patientProfile', function ($q) use ($search) {
-                $q->where('full_name', 'like', '%' . $search . '%')
-                  ->orWhere('patient_code', 'like', '%' . $search . '%');
+            $query->where(function($q) use ($search) {
+                $q->where('appointment_code', 'like', "%{$search}%")
+                  ->orWhereHas('patientProfile', function($q2) use ($search) {
+                      $q2->where('full_name', 'like', "%{$search}%")
+                         ->orWhere('patient_code', 'like', "%{$search}%");
+                  });
             });
         }
 
-        $visits = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
+        $appointments = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
 
-        // Calculate statistics for today
+        // Thống kê nhanh hôm nay
         $today = Carbon::today();
         
-        $totalCollectedToday = ClinicalVisit::whereDate('paid_at', $today)
-            ->where('payment_status', 'paid')
-            ->sum('payment_amount');
+        $totalCollectedToday = Payment::whereDate('paid_at', $today)
+            ->where('status', 'completed')
+            ->sum('amount');
 
-        $cashCollectedToday = ClinicalVisit::whereDate('paid_at', $today)
-            ->where('payment_status', 'paid')
-            ->where('payment_method', 'cash')
-            ->sum('payment_amount');
-
-        $qrCollectedToday = ClinicalVisit::whereDate('paid_at', $today)
-            ->where('payment_status', 'paid')
-            ->where('payment_method', 'qr')
-            ->sum('payment_amount');
-
+        // Tổng tiền cần thu: Tổng tiền của tất cả các visits chưa thanh toán tạo hôm nay
+        // Note: Để đơn giản, ta tính theo các visits tạo hôm nay
         $pendingAmountToday = ClinicalVisit::whereDate('created_at', $today)
             ->where('payment_status', 'pending')
             ->sum('payment_amount');
+        // Wait, patient's insurance could reduce this, but for quick stats, this is an estimate.
+        // Actually, let's keep it simple.
+
+        $qrCollectedToday = Payment::whereDate('paid_at', $today)
+            ->where('status', 'completed')
+            ->where('method', 'qr')
+            ->sum('amount');
 
         return view('receptionist.payments.index', compact(
-            'visits', 
+            'appointments', 
+            'tab',
             'totalCollectedToday', 
-            'cashCollectedToday', 
-            'qrCollectedToday', 
-            'pendingAmountToday'
+            'pendingAmountToday',
+            'qrCollectedToday'
         ));
     }
 
     /**
-     * Màn hình chuẩn bị thanh toán
+     * Lịch sử thanh toán chi tiết (show)
      */
-    public function create($id)
+    public function show(string $id)
     {
-        $visit = ClinicalVisit::with([
-            'appointment.patientProfile',
-            'doctorProfile.user',
-            'room'
+        // Xóa hiển thị màn hình phụ khi lễ tân quay về xem chi tiết
+        \Illuminate\Support\Facades\Cache::forget('receptionist_active_checkout_' . \Illuminate\Support\Facades\Auth::id());
+
+        $appointment = Appointment::with([
+            'patientProfile',
+            'payments.collectedBy',
+            'clinicalVisits' => function($q) {
+                $q->where('payment_status', '!=', 'pending');
+            }
         ])->findOrFail($id);
 
-        if ($visit->payment_status !== 'pending') {
-            return redirect()->route('receptionist.payments.index')
-                ->with('error', 'Lượt khám này đã được xử lý thanh toán.');
-        }
-
-        return view('receptionist.payments.create', compact('visit'));
+        return view('receptionist.payments.show', compact('appointment'));
     }
 
     /**
-     * Xử lý thanh toán thủ công (Tiền mặt, Bảo hiểm, Miễn phí)
+     * Màn hình chuẩn bị thanh toán (Popup quét mã QR hoặc Thanh toán tiền mặt)
      */
-    public function storeManual(Request $request, $id)
+    public function create(Request $request, string $id)
     {
-        $request->validate([
-            'payment_method' => 'required|in:cash,insurance,waived',
-        ], [
-            'payment_method.required' => 'Vui lòng chọn hình thức thanh toán.',
-            'payment_method.in' => 'Hình thức thanh toán không hợp lệ.',
-        ]);
+        $appointment = Appointment::with([
+            'patientProfile',
+            'doctorProfile.user',
+            'clinicalVisits'
+        ])->findOrFail($id);
 
-        $visit = ClinicalVisit::findOrFail($id);
+        $summary = $this->paymentService->calculateSummary($appointment);
 
-        if ($visit->payment_status !== 'pending') {
-            return redirect()->route('receptionist.payments.index')
-                ->with('error', 'Lượt khám này đã được xử lý thanh toán.');
+        $qrUrl = null;
+        if ($summary['remaining_to_pay'] > 0) {
+            $qrUrl = $this->sepayService->generateVietQrUrl($appointment, $summary['remaining_to_pay']);
         }
 
-        $method = $request->input('payment_method');
+        $receptionistId = \Illuminate\Support\Facades\Auth::id();
+        $timeCacheKey = 'receptionist_active_checkout_time_' . $receptionistId;
+        $appointmentCacheKey = 'receptionist_active_checkout_' . $receptionistId;
         
-        $visit->payment_status = $method === 'waived' ? 'waived' : 'paid';
-        $visit->payment_method = $method;
-        $visit->collected_by = Auth::id();
-        $visit->paid_at = now();
-        $visit->save();
+        $startTime = \Illuminate\Support\Facades\Cache::get($timeCacheKey);
+        
+        // Nếu chuyển sang bệnh nhân khác hoặc có request renew = 1, thì reset lại timer
+        $currentCachedAppointment = \Illuminate\Support\Facades\Cache::get($appointmentCacheKey);
+        if (!$startTime || $request->has('renew') || $currentCachedAppointment != $id) {
+            $startTime = time();
+            \Illuminate\Support\Facades\Cache::put($timeCacheKey, $startTime, now()->addMinutes(60));
+        }
 
-        return redirect()->route('receptionist.payments.index')
-            ->with('success', 'Đã ghi nhận thanh toán thành công cho bệnh nhân.');
+        // Kích hoạt hiển thị lên Màn hình phụ (Customer Display) cho lễ tân hiện tại
+        \Illuminate\Support\Facades\Cache::put($appointmentCacheKey, $id, now()->addMinutes(60));
+
+        return view('receptionist.payments.checkout', compact('appointment', 'summary', 'qrUrl', 'startTime'));
     }
 
     /**
-     * Khởi tạo cổng thanh toán giả lập PayOS QR
+     * Xử lý thanh toán thủ công (Tiền mặt)
      */
-    public function createPayOS($id)
+    public function storeManual(Request $request, string $id)
     {
-        $visit = ClinicalVisit::with([
-            'appointment.patientProfile',
-            'doctorProfile.user',
-            'room'
-        ])->findOrFail($id);
+        $appointment = Appointment::findOrFail($id);
 
-        if ($visit->payment_status !== 'pending') {
+        $summary = $this->paymentService->calculateSummary($appointment);
+
+        if ($summary['patient_pays'] <= 0) {
+            $this->paymentService->createZeroFeePayment($appointment, Auth::user());
             return redirect()->route('receptionist.payments.index')
-                ->with('error', 'Lượt khám này đã được xử lý thanh toán.');
+                ->with('success', 'Đã ghi nhận thanh toán hoàn tất (BHYT chi trả 100% / Miễn phí).');
         }
 
-        // Tạo nội dung chuyển khoản mã hoá
-        $transactionRef = 'CB' . str_pad($visit->id, 6, '0', STR_PAD_LEFT);
-
-        return view('receptionist.payments.checkout', compact('visit', 'transactionRef'));
-    }
-
-    /**
-     * Cập nhật trạng thái thanh toán khi giả lập PayOS thành công
-     */
-    public function update(Request $request, $id)
-    {
-        $visit = ClinicalVisit::findOrFail($id);
-
-        if ($visit->payment_status !== 'pending') {
-            return redirect()->route('receptionist.payments.index')
-                ->with('error', 'Lượt khám này đã được xử lý thanh toán.');
-        }
-
-        $visit->payment_status = 'paid';
-        $visit->payment_method = 'qr';
-        $visit->collected_by = Auth::id();
-        $visit->paid_at = now();
-        $visit->save();
+        $this->paymentService->createCashPayment($appointment, Auth::user());
 
         return redirect()->route('receptionist.payments.index')
-            ->with('success', 'Thanh toán qua PayOS QR đã được xử lý và xác nhận thành công.');
+            ->with('success', 'Đã ghi nhận thanh toán tiền mặt thành công.');
     }
 }

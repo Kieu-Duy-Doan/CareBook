@@ -62,4 +62,11 @@ class ClinicalVisit extends Model
     {
         return $this->belongsTo(User::class, 'collected_by');
     }
+
+    public function payments()
+    {
+        return $this->belongsToMany(Payment::class, 'payment_clinical_visit')
+                    ->withPivot('amount_allocated')
+                    ->withTimestamps();
+    }
 }

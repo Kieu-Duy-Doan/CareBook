@@ -153,7 +153,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end gap-3">
                                     @if ($visit->payment_status === 'pending')
-                                        <a href="{{ route('receptionist.payments.create', $visit->id) }}"
+                                        <a href="{{ route('receptionist.payments.create', $visit->appointment_id) }}"
                                             class="inline-flex items-center px-3 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-md text-xs font-semibold transition-colors">
                                             <i class="fa-solid fa-credit-card mr-1"></i> Thu tiền
                                         </a>
