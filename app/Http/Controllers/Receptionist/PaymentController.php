@@ -49,17 +49,17 @@ class PaymentController extends Controller
         // Lọc theo Tab (Chờ thu tiền vs Lịch sử)
         if ($tab === 'pending') {
             // Lấy các Appointment có ClinicalVisits đang pending
-            $query->whereHas('clinicalVisits', function($q) {
+            $query->whereHas('clinicalVisits', function ($q) {
                 $q->where('payment_status', 'pending');
             });
         } else {
             // Lấy các Appointment có Payments
             $query->has('payments');
-            
+
             // Filter theo phương thức thanh toán
             if ($request->filled('method')) {
                 $method = $request->input('method');
-                $query->whereHas('payments', function($q) use ($method) {
+                $query->whereHas('payments', function ($q) use ($method) {
                     $q->where('method', $method);
                 });
             }
@@ -68,12 +68,12 @@ class PaymentController extends Controller
         // Tìm kiếm
         if ($request->filled('search')) {
             $search = $request->input('search');
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('appointment_code', 'like', "%{$search}%")
-                  ->orWhereHas('patientProfile', function($q2) use ($search) {
-                      $q2->where('full_name', 'like', "%{$search}%")
-                         ->orWhere('patient_code', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('patientProfile', function ($q2) use ($search) {
+                        $q2->where('full_name', 'like', "%{$search}%")
+                            ->orWhere('patient_code', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -81,7 +81,7 @@ class PaymentController extends Controller
 
         // Thống kê nhanh hôm nay
         $today = Carbon::today();
-        
+
         $totalCollectedToday = Payment::whereDate('paid_at', $today)
             ->where('status', 'completed')
             ->sum('amount');
@@ -100,9 +100,9 @@ class PaymentController extends Controller
             ->sum('amount');
 
         return view('receptionist.payments.index', compact(
-            'appointments', 
+            'appointments',
             'tab',
-            'totalCollectedToday', 
+            'totalCollectedToday',
             'pendingAmountToday',
             'qrCollectedToday'
         ));
@@ -119,7 +119,7 @@ class PaymentController extends Controller
         $appointment = Appointment::with([
             'patientProfile',
             'payments.collectedBy',
-            'clinicalVisits' => function($q) {
+            'clinicalVisits' => function ($q) {
                 $q->where('payment_status', '!=', 'pending');
             }
         ])->findOrFail($id);
@@ -148,9 +148,9 @@ class PaymentController extends Controller
         $receptionistId = \Illuminate\Support\Facades\Auth::id();
         $timeCacheKey = 'receptionist_active_checkout_time_' . $receptionistId;
         $appointmentCacheKey = 'receptionist_active_checkout_' . $receptionistId;
-        
+
         $startTime = \Illuminate\Support\Facades\Cache::get($timeCacheKey);
-        
+
         // Nếu chuyển sang bệnh nhân khác hoặc có request renew = 1, thì reset lại timer
         $currentCachedAppointment = \Illuminate\Support\Facades\Cache::get($appointmentCacheKey);
         if (!$startTime || $request->has('renew') || $currentCachedAppointment != $id) {

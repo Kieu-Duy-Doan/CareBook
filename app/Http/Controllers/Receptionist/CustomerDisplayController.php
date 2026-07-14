@@ -45,7 +45,7 @@ class CustomerDisplayController extends Controller
         }
 
         $appointment = Appointment::with(['patientProfile', 'clinicalVisits'])->find($activeAppointmentId);
-        
+
         if (!$appointment) {
             return response()->json(['status' => 'idle']);
         }
