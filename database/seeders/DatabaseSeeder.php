@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             FaqSeeder::class,
             PostSeeder::class,
             DoctorLevelFeeSeeder::class,
+            PaymentDemoSeeder::class,
         ]);
     }
 }
