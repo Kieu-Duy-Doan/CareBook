@@ -83,6 +83,9 @@
                         <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-700">TK Đang hoạt động</span>
                     @else
                         <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700">TK Đã khóa</span>
+                        @if($profile->user->locked_reason === 'spam_cancellation')
+                            <div class="text-xs text-red-600 mt-1 font-medium"><i class="fa-solid fa-triangle-exclamation"></i> Khoá do huỷ lịch quá nhiều</div>
+                        @endif
                     @endif
                 </div>
             </div>

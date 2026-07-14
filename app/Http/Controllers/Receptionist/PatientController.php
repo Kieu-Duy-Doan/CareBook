@@ -307,7 +307,10 @@ class PatientController extends Controller
                 return redirect()->back()->with('error', 'Bạn không thể khoá tài khoản của chính mình.');
             }
 
-            $user->update(['is_active' => !$user->is_active]);
+            $user->update([
+                'is_active' => !$user->is_active,
+                'locked_reason' => $user->is_active ? null : null
+            ]);
 
             $action = $user->is_active ? 'USER_UNLOCKED' : 'USER_LOCKED';
             SystemLog::create([

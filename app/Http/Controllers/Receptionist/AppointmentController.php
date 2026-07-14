@@ -723,6 +723,10 @@ class AppointmentController extends Controller
         $request->validate([
             'status' => 'required|in:pending,checked_in,examining,completed,cancelled,absent',
             'reason' => 'nullable|string|max:500'
+        ], [
+            'status.required' => 'Vui lòng chọn trạng thái.',
+            'status.in' => 'Trạng thái không hợp lệ.',
+            'reason.max' => 'Lý do không được vượt quá 500 ký tự.',
         ]);
 
         $appointment = Appointment::findOrFail($id);

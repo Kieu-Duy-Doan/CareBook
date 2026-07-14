@@ -140,7 +140,16 @@
                             </div>
                             <div class="flex-1 min-w-0">
                                 <p class="font-bold text-lg text-slate-800 custom-radio-text">{{ $doc->full_title }}</p>
-                                <p class="text-sm text-slate-500 mt-0.5 line-clamp-1">Mã BS: <strong class="text-slate-700">{{ $doc->doctor_code }}</strong></p>
+                                <div class="flex items-center gap-3 mt-1">
+                                    <p class="text-sm text-slate-500 line-clamp-1">Mã BS: <strong class="text-slate-700">{{ $doc->doctor_code }}</strong></p>
+                                    @php
+                                        $feeForDoc = $fees->firstWhere('level', $doc->level);
+                                        $price = $feeForDoc ? $feeForDoc->specific_price : 0;
+                                    @endphp
+                                    <span class="text-xs text-primary font-bold bg-primary/10 px-2.5 py-1 rounded-md border border-primary/20">
+                                        {{ number_format($price, 0, ',', '.') }} đ
+                                    </span>
+                                </div>
                             </div>
                         </label>
                         @endforeach

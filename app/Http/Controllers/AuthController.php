@@ -44,7 +44,11 @@ class AuthController extends Controller
         $user = User::where('phone', $request->phone)->first();
 
         if ($user && !$user->is_active) {
-            return back()->withInput()->with('error', 'Tài khoản đã bị khoá. Liên hệ quản trị viên.');
+            $errorMsg = 'Tài khoản đã bị khoá. Liên hệ quản trị viên.';
+            if ($user->locked_reason === 'spam_cancellation') {
+                $errorMsg = 'Tài khoản của bạn đã bị khóa do hủy lịch khám quá nhiều lần. Vui lòng liên hệ Hotline: ' . config('booking.admin_phone') . ' hoặc Lễ tân để được hỗ trợ mở khóa.';
+            }
+            return back()->withInput()->with('error', $errorMsg);
         }
 
         if (Auth::attempt(['phone' => $request->phone, 'password' => $request->password], $request->boolean('remember'))) {

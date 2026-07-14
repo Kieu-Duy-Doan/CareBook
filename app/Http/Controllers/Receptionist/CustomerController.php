@@ -330,7 +330,10 @@ class CustomerController extends Controller
     public function toggleActive($id)
     {
         $customer = User::findOrFail($id);
-        $customer->update(['is_active' => !$customer->is_active]);
+        $customer->update([
+            'is_active' => !$customer->is_active,
+            'locked_reason' => $customer->is_active ? null : null
+        ]);
 
         SystemLog::create([
             'user_id'     => auth()->id(),

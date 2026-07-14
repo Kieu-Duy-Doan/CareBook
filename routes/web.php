@@ -92,6 +92,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,doctor']
         Route::get('/{id}', [\App\Http\Controllers\Admin\CustomerController::class, 'show'])->name('show');
         Route::get('/{id}/edit', [\App\Http\Controllers\Admin\CustomerController::class, 'edit'])->name('edit');
         Route::put('/{id}', [\App\Http\Controllers\Admin\CustomerController::class, 'update'])->name('update');
+        Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\CustomerController::class, 'toggleActive'])->name('toggle-active');
         Route::delete('/{id}', [\App\Http\Controllers\Admin\CustomerController::class, 'destroy'])->name('destroy');
     });
     Route::prefix('specialties')->name('specialties.')->group(function () {
@@ -358,9 +359,11 @@ Route::prefix('receptionist')->name('receptionist.')->group(function () {
         Route::resource('appointments', \App\Http\Controllers\Receptionist\AppointmentController::class);
 
         // Patients
+        Route::patch('patients/{id}/toggle-active', [\App\Http\Controllers\Receptionist\PatientController::class, 'toggleActive'])->name('patients.toggle-active');
         Route::resource('patients', \App\Http\Controllers\Receptionist\PatientController::class);
 
         // Customers
+        Route::patch('customers/{id}/toggle-active', [\App\Http\Controllers\Receptionist\CustomerController::class, 'toggleActive'])->name('customers.toggle-active');
         Route::resource('customers', \App\Http\Controllers\Receptionist\CustomerController::class);
 
         // Clinical Visits

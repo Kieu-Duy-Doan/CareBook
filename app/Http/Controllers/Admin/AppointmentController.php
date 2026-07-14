@@ -183,7 +183,7 @@ class AppointmentController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $rules = [
             'patient_profile_id' => 'required|exists:patient_profiles,id',
             'specialty_id'       => 'required|exists:specialties,id',
             'doctor_profile_id'  => 'required|exists:doctor_profiles,id',
@@ -207,7 +207,45 @@ class AppointmentController extends Controller
             'vital_bmi'          => 'nullable|numeric|min:0',
             'vital_note'         => 'nullable|string',
             'measured_by'        => 'nullable|exists:users,id',
-        ]);
+        ];
+
+        $messages = [
+            'required' => 'Trường :attribute không được để trống.',
+            'exists' => 'Trường :attribute được chọn không hợp lệ hoặc đã bị vô hiệu hóa.',
+            'date' => 'Trường :attribute phải là định dạng ngày hợp lệ.',
+            'after_or_equal' => 'Trường :attribute phải là ngày hôm nay hoặc sau đó.',
+            'in' => 'Trường :attribute chọn giá trị không hợp lệ.',
+            'integer' => 'Trường :attribute phải là số nguyên.',
+            'numeric' => 'Trường :attribute phải là số.',
+            'min' => 'Trường :attribute không được nhỏ hơn :min.',
+            'string' => 'Trường :attribute phải là chuỗi ký tự.',
+        ];
+
+        $attributes = [
+            'patient_profile_id' => 'bệnh nhân',
+            'specialty_id' => 'chuyên khoa',
+            'doctor_profile_id' => 'bác sĩ',
+            'room_id' => 'phòng khám',
+            'appointment_date' => 'ngày khám',
+            'appointment_time' => 'giờ khám',
+            'status' => 'trạng thái',
+            'source' => 'nguồn đặt',
+            'reason' => 'lý do khám',
+            'receptionist_note' => 'ghi chú',
+            'vital_pulse' => 'mạch',
+            'vital_systolic_bp' => 'huyết áp tâm thu',
+            'vital_diastolic_bp' => 'huyết áp tâm trương',
+            'vital_temperature' => 'nhiệt độ',
+            'vital_respiratory' => 'nhịp thở',
+            'vital_spo2' => 'SpO2',
+            'vital_weight_kg' => 'cân nặng',
+            'vital_height_cm' => 'chiều cao',
+            'vital_bmi' => 'chỉ số BMI',
+            'vital_note' => 'ghi chú sinh hiệu',
+            'measured_by' => 'người đo',
+        ];
+
+        $request->validate($rules, $messages, $attributes);
 
         // Kiểm tra xem bệnh nhân này đã có lịch hẹn với cùng bác sĩ, cùng ngày và cùng giờ chưa
         $exists = Appointment::where('patient_profile_id', $request->patient_profile_id)
@@ -298,7 +336,7 @@ class AppointmentController extends Controller
     {
         $appointment = Appointment::findOrFail($id);
 
-        $request->validate([
+        $rules = [
             'patient_profile_id' => 'required|exists:patient_profiles,id',
             'specialty_id'       => 'required|exists:specialties,id',
             'doctor_profile_id'  => 'required|exists:doctor_profiles,id',
@@ -322,7 +360,44 @@ class AppointmentController extends Controller
             'vital_bmi'          => 'nullable|numeric|min:0',
             'vital_note'         => 'nullable|string',
             'measured_by'        => 'nullable|exists:users,id',
-        ]);
+        ];
+
+        $messages = [
+            'required' => 'Trường :attribute không được để trống.',
+            'exists' => 'Trường :attribute được chọn không hợp lệ hoặc đã bị vô hiệu hóa.',
+            'date' => 'Trường :attribute phải là định dạng ngày hợp lệ.',
+            'in' => 'Trường :attribute chọn giá trị không hợp lệ.',
+            'integer' => 'Trường :attribute phải là số nguyên.',
+            'numeric' => 'Trường :attribute phải là số.',
+            'min' => 'Trường :attribute không được nhỏ hơn :min.',
+            'string' => 'Trường :attribute phải là chuỗi ký tự.',
+        ];
+
+        $attributes = [
+            'patient_profile_id' => 'bệnh nhân',
+            'specialty_id' => 'chuyên khoa',
+            'doctor_profile_id' => 'bác sĩ',
+            'room_id' => 'phòng khám',
+            'appointment_date' => 'ngày khám',
+            'appointment_time' => 'giờ khám',
+            'status' => 'trạng thái',
+            'source' => 'nguồn đặt',
+            'reason' => 'lý do khám',
+            'receptionist_note' => 'ghi chú',
+            'vital_pulse' => 'mạch',
+            'vital_systolic_bp' => 'huyết áp tâm thu',
+            'vital_diastolic_bp' => 'huyết áp tâm trương',
+            'vital_temperature' => 'nhiệt độ',
+            'vital_respiratory' => 'nhịp thở',
+            'vital_spo2' => 'SpO2',
+            'vital_weight_kg' => 'cân nặng',
+            'vital_height_cm' => 'chiều cao',
+            'vital_bmi' => 'chỉ số BMI',
+            'vital_note' => 'ghi chú sinh hiệu',
+            'measured_by' => 'người đo',
+        ];
+
+        $request->validate($rules, $messages, $attributes);
 
         // Kiểm tra xem bệnh nhân này đã có lịch hẹn với cùng bác sĩ, cùng ngày và cùng giờ chưa (trừ lịch hiện tại và lịch đã huỷ)
         $exists = Appointment::where('patient_profile_id', $request->patient_profile_id)
@@ -422,6 +497,10 @@ class AppointmentController extends Controller
         $request->validate([
             'status' => 'required|in:pending,checked_in,examining,completed,cancelled,absent',
             'reason' => 'nullable|string|max:500'
+        ], [
+            'status.required' => 'Vui lòng chọn trạng thái.',
+            'status.in' => 'Trạng thái không hợp lệ.',
+            'reason.max' => 'Lý do không được vượt quá 500 ký tự.',
         ]);
 
         $appointment = Appointment::findOrFail($id);
