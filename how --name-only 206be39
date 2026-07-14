@@ -1,0 +1,104 @@
+[33m206be39[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdoan-receptionist[m[33m, [m[1;31morigin/doan-receptionist[m[33m)[m mẫu phía lễ tân
+[33mbd5aef0[m fix import lịch làm việc
+[33ma7910de[m fix import phòng khám
+[33m5ba4147[m fix import chuyên khoa
+[33mdd5cb06[m fix import lễ tân
+[33m32a7416[m sửa chức năng import bác sĩ
+[33m4099d81[m sửa conflic trong web.php
+[33m4b75280[m  loi phan quyen dang ki
+[33m4a33a6f[m Merge branch 'main' into doan2
+[33meeb4b3c[m Fix lỗi
+[33m9f7c18b[m Merge branch 'update/cuong-ui-ux-patient'
+[33ma58f7aa[m Merge branch lethai into main: dang ky, quen mat khau, ket qua kham
+[33m0cc3456[m Merge branch 'main' of https://github.com/Kieu-Duy-Doan/CareBook
+[33m7f2c0f2[m[33m ([m[1;31morigin/update/cuong-ui-ux-patient[m[33m)[m update giao diện tối ưu hóa với người dùng gọn gàng hơn
+[33m528fa6e[m update loi quen mat khau
+[33mbc2e2dc[m sua loi dang ki va hoan thien dang ki
+[33m1f94456[m  chuc nang quen mat khau
+[33m3e5ed79[m Merge branch 'feature/cuong-notification-detail'
+[33mc535efd[m UI: Đổi link text thành icon button gọn gàng trong hộp thư thông báo
+[33m50f5d7d[m Feat: Nâng cấp UI và hiển thị chi tiết bác sĩ gợi ý trong thông báo huỷ lịch
+[33m6cfd82e[m Feat: Bổ sung thông tin CCCD, BHYT vào bước xác nhận đặt lịch
+[33m4b6110c[m Refactor: Chuyển đổi giao diện chọn lịch khám từ Modal sang Inline
+[33m7ab281d[m thêm dữ liệu seeder, sửa giao diện xem chi tiết lịch hẹn
+[33mc1277fc[m  hoan thien phan ket qua kham va don thuoc
+[33mcc25494[m  xoa don thuoc va ket qua kham trong xem chi tiet don kham
+[33m898534e[m  chuc nang dang ki
+[33m0c66c9d[m Merge pull request #9 from Kieu-Duy-Doan/quanghuy
+[33mef11d88[m[33m ([m[1;31morigin/quanghuy[m[33m)[m sua lai luong lich hen
+[33m842f4b5[m Merge pull request #8 from Kieu-Duy-Doan/quanghuy
+[33mafa5fce[m cai thien giao dien client
+[33m4ad0393[m feat: Nâng cấp luồng thông báo huỷ lịch cho bệnh nhân
+[33ma518ddc[m Merge pull request #7 from Kieu-Duy-Doan/feature/cuong-notification-patient
+[33m8c8ade5[m Merge remote-tracking branch 'origin/feature/cuong-notification-patient' into feature/cuong-notification-detail
+[33m98b278e[m[33m ([m[1;31morigin/feature/cuong-notification-patient[m[33m)[m fix(booking): convert findAlternatives return type to Collection to resolve CancellationMail type error
+[33mfe95e05[m Merge pull request #6 from Kieu-Duy-Doan/quanghuy
+[33md765b9a[m fix loi tai giao dien nguoi dung
+[33md592e82[m Merge pull request #5 from Kieu-Duy-Doan/quanghuy
+[33m47f2dcd[m them truong relationship tai bang patient_profile
+[33m9f00e81[m Merge pull request #4 from Kieu-Duy-Doan/feature/cuong-notification-patient
+[33md12b81b[m Merge main into feature/cuong-notification-patient and resolve conflict in AppointmentController
+[33m3449d05[m fix(booking): resolve IDOR in patient profile selection, prevent slot race conditions with lockForUpdate, and fix 30m reminder overlap
+[33ma122a7e[m feat(ui): redesign booking interface with full-width responsive grid and improved accessibility for elderly patients
+[33m6c6ad17[m feat(booking): update appointment controllers, model, and routes to support new booking and notification flow
+[33m138874d[m refactor(notification): consolidate scattered notification jobs into a unified ProcessAppointmentNotificationJob and update NotificationService
+[33mbd36650[m feat: thêm dữ liệu mẫu và hoàn thiện chức năng đặt lịch khám
+[33m25d853b[m Fix lỗi sai đường dẫn đăng nhập và thêm dữ liệu lịch làm việc buổi chiều
+[33m50dd163[m hoan thien chuc nang lich su dat lich
+[33m3ff9ba6[m hoan thien thong tin ca nhan nguoi dung
+[33m820815b[m phat trien giao dien ho so ca nhan
+[33m9b5573f[m phat trien them ho so ca nhan
+[33m472013a[m feat: Hoàn thiện hệ thống thông báo tự động (Email & In-Web)
+[33m323fe61[m[33m ([m[1;31morigin/feature/cuong-booking-flow[m[33m)[m fix: lỗi Chọn ngày khám bị kẹt skeleton loader
+[33m4cf8f97[m feat: triển khai luồng đặt lịch khám bệnh SPA
+[33m5c77695[m Merge pull request #3 from Kieu-Duy-Doan/quanghuy
+[33mb82eeac[m hoan thien trang tin tuc
+[33mb41c6a4[m them giao dien cac bai viet
+[33mc040b4c[m xu ly loi 419 tai logout
+[33mfebaadf[m xu ly logic quan li ho so gia dinh
+[33mcbb2d99[m hoan thanh giao dien sua ho so ca nhan
+[33m5a825c6[m hoan thanh giao dien them ho so
+[33mc2a16af[m hoan thanh giao dien ho so ca nhan
+[33m9bcfdad[m xu ly logic ho so ca nhan
+[33m03211e9[m xu ly logic landing page
+[33macfee01[m xu ly logic dang nhap client
+[33meb77124[m hoan thanh giao dien dang nhap client
+[33mcae1920[m hoan thanh giao dien landing page: Doi ngu bac si
+[33m0220f56[m viet landing page doi ngu bac si giao dien client
+[33md32bf83[m hoan thanh route client
+[33ma9a747f[m them giao dien dang xuat
+[33m478ec5e[m hoan thanh giao dien cai dat cua nguoi dung
+[33mf9dc46c[m hoan thanh layout client
+[33m90d5f35[m hoan thien giao dien trang chu
+[33m156b7be[m xu ly giao dien trang chu
+[33m5a16936[m xu ly controller giao dien nguoi dung
+[33mb5d32d4[m Merge branch 'main' of https://github.com/Kieu-Duy-Doan/CareBook into quanghuy
+[33m1b03f4b[m import export excel, tách quản lý bệnh nhân và khách
+[33m15f6256[m them tinh nang dong bo tai lich hen va kham lam sang
+[33m263b337[m[33m ([m[1;31morigin/update/cuong-dashboard-admin[m[33m)[m update giao diện và lọc của dashboard, fix lỗi không hiện sửa tài khoản quản trị viên
+[33m8a54d59[m[33m ([m[1;31morigin/update/cuong-chatbot-management[m[33m)[m Refactor: Hoàn thiện UI và chuẩn hóa code module Chatbot & FAQ
+[33m09a923c[m[33m ([m[1;31morigin/update/cuong-notification-management[m[33m)[m updade(notification): tối ưu module Quản lý Thông báo, Thiết kế lại giao diện email (system_notification) chuẩn responsive
+[33md0db6c1[m[33m ([m[1;31morigin/update/cuong-system-management[m[33m)[m update(System Setting): tách Service, fix lỗi OOM export JSON, thêm tính năng xóa Logo vật lý và hiển thị thông báo lỗi Validation
+[33m6dae7e9[m fix lỗi
+[33m087962e[m thêm route posts, thêm nút bài viết trên sidebar
+[33me72db5e[m Merge branch 'quanghuy'
+[33m9f6f311[m[33m ([m[1;31morigin/feature/cuong-faqs-management[m[33m)[m fix: Lỗi giao diện câu hỏi thường gặp
+[33m408dd59[m Thêm router  xóa câu hỏi FAQ
+[33m474d155[m Thêm chức năng bật tắt trạng thái câu hỏi FAQ
+[33m2403636[m Thêm chức năng cập nhật câu hỏi FAQ
+[33m6f42d29[m Thêm chức năng tạo mới và hiện thị câu hỏi FAQ
+[33m24fc31c[m feat(database): tạo bảng migrations
+[33m474efbe[m[33m ([m[1;31morigin/feature/cuong-admin-dashboard[m[33m)[m feat: js xử lí vẽ biểu đồ chức năng admin dashboard
+[33mfa7415f[m feat: chức năng admin dashboard
+[33m6d2c568[m[33m ([m[1;31morigin/feature/cuong-chatbot-management[m[33m)[m fix lỗi router
+[33m56e919f[m feat: gắn chức năng quản lí chatbot vào sidebar
+[33m6732caa[m feat(chatbot): tích hợp widget chat người dùng và api trả lời tự động
+[33m7b7646d[m feat(chatbot): thêm chức năng theo dõi lịch sử phiên chat (sessions)
+[33m148b1b2[m feat(chatbot): thêm chức năng quản lý câu trả lời (responses)
+[33m229a968[m feat(chatbot): thêm chức năng quản lý kịch bản (intents)
+[33m9a7f6af[m feat(chatbot): display intents list and admin sidebar menu
+[33m0034e53[m feat(chatbot): add database migrations and models
+[33m0ce00f7[m[33m ([m[1;31morigin/feature/cuong-notification-management[m[33m)[m update: thêm thư viện js lọc người nhận cho chức năng quản lí thông báo trang create
+[33ma690c39[m feat: chức năng tạo thông báo mới
+[33m10edc56[m fix: Lỗi model quản lí thông báo
+[33mb5195ca[m feat: Chức năng quản lí thông báo trang tạo thông
