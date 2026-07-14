@@ -95,6 +95,15 @@
 
         <!-- QR Code & Thanh toán (Cột phải) -->
         <div class="space-y-6">
+            @if(isset($summary['amount_paid']) && $summary['amount_paid'] > 0 && $summary['remaining_to_pay'] > 0)
+            <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl shadow-sm text-center">
+                <i class="fa-solid fa-triangle-exclamation text-amber-500 text-3xl mb-2"></i>
+                <h3 class="font-bold text-amber-800 text-lg">Thanh toán chưa đủ</h3>
+                <p class="text-amber-700 text-sm">Khách đã chuyển khoản <strong>{{ number_format($summary['amount_paid'], 0, ',', '.') }}đ</strong>. Còn thiếu <strong>{{ number_format($summary['remaining_to_pay'], 0, ',', '.') }}đ</strong>.</p>
+                <p class="text-amber-600 text-xs mt-1">Vui lòng quét mã QR mới hoặc thu tiền mặt phần còn lại.</p>
+            </div>
+            @endif
+
             @if($summary['remaining_to_pay'] > 0)
             <!-- Thanh toán SePay QR -->
             <div class="bg-white rounded-xl border border-blue-100 shadow-sm overflow-hidden relative">
@@ -122,14 +131,20 @@
                         </div>
                     </div>
 
-                    <div id="payment-status-banner" class="bg-blue-50 text-blue-800 text-sm p-3 rounded-lg flex items-center justify-between font-medium">
-                        <div class="flex items-center">
-                            <i class="fa-solid fa-circle-notch fa-spin mr-2 text-blue-600" id="payment-spinner"></i> <span id="payment-status-text">Đang chờ thanh toán...</span>
+                        <div id="payment-status-banner" class="bg-blue-50 text-blue-800 text-sm p-3 rounded-lg flex items-center justify-between font-medium">
+                            <div class="flex items-center">
+                                <i class="fa-solid fa-circle-notch fa-spin mr-2 text-blue-600" id="payment-spinner"></i> <span id="payment-status-text">Đang chờ thanh toán...</span>
+                            </div>
+                            <div class="text-blue-700 font-mono font-bold bg-blue-100 px-2 py-0.5 rounded" id="qr-countdown">05:00</div>
                         </div>
-                        <div class="text-blue-700 font-mono font-bold bg-blue-100 px-2 py-0.5 rounded" id="qr-countdown">05:00</div>
+
+                        <div class="mt-4">
+                            <button onclick="window.location.href = '?renew=1'" class="w-full px-4 py-2 bg-white text-blue-600 hover:bg-blue-50 font-medium rounded-lg transition-colors border border-blue-200 text-sm shadow-sm flex items-center justify-center">
+                                <i class="fa-solid fa-arrows-rotate mr-2"></i> Làm mới mã QR
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
 
             <!-- Thanh toán Tiền mặt -->
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
