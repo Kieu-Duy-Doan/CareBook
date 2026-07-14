@@ -12,14 +12,14 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         <!-- Chi tiết hóa đơn (Cột trái) -->
         <div class="lg:col-span-2 space-y-6">
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                 <div class="p-5 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
                     <h3 class="font-bold text-gray-900"><i class="fa-solid fa-file-invoice mr-2 text-emerald-600"></i> Thông tin Bệnh nhân & Dịch vụ</h3>
                 </div>
-                
+
                 <div class="p-5">
                     <div class="flex flex-col sm:flex-row gap-6 mb-6 pb-6 border-b border-gray-100">
                         <div class="flex-1">
@@ -48,7 +48,7 @@
                                 @foreach($summary['all_visits'] as $visit)
                                 <tr class="border-b border-gray-50 last:border-0">
                                     <td class="py-3 px-4 font-medium text-gray-900">
-                                        {{ $visit->is_origin ? 'Phí Khám Bệnh' : 'Dịch vụ Cận lâm sàng / Khác' }} 
+                                        {{ $visit->is_origin ? 'Phí Khám Bệnh' : 'Dịch vụ Cận lâm sàng / Khác' }}
                                         <span class="text-xs text-gray-400 block font-mono">#{{ $visit->id }}</span>
                                     </td>
                                     <td class="py-3 px-4 text-right font-bold text-gray-900">{{ number_format($visit->payment_amount, 0, ',', '.') }}đ</td>
@@ -57,13 +57,13 @@
                             </tbody>
                         </table>
                     </div>
-                    
+
                     <div class="mt-6 bg-gray-50 rounded-lg p-5">
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-gray-600">Tổng phí ({{ count($summary['all_visits']) }} mục):</span>
                             <span class="font-bold text-gray-900">{{ number_format($summary['total_amount'], 0, ',', '.') }}đ</span>
                         </div>
-                        
+
                         @if($summary['is_expired'])
                         <div class="mb-2 p-2 bg-red-50 text-red-700 text-xs rounded border border-red-100">
                             {{ $summary['warning_message'] }}
@@ -96,124 +96,124 @@
         <!-- QR Code & Thanh toán (Cột phải) -->
         <div class="space-y-6">
             @if($summary['remaining_to_pay'] > 0)
-                <!-- Thanh toán SePay QR -->
-                <div class="bg-white rounded-xl border border-blue-100 shadow-sm overflow-hidden relative">
-                    <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
-                    <div class="p-6 text-center">
-                        <div class="flex items-center justify-center gap-2 mb-4 opacity-60">
-                            <i class="fa-solid fa-bolt text-blue-600 text-xl"></i>
-                            <span class="font-black tracking-wider text-lg text-blue-600 uppercase">SePay</span>
-                        </div>
-                        <h3 class="font-bold text-gray-900 mb-1">Thanh toán chuyển khoản</h3>
-                        <p class="text-sm text-gray-500 mb-6">Mở App Ngân hàng và quét mã QR</p>
-                        
-                        <div id="qr-container" class="bg-gray-50 p-4 rounded-xl inline-block border border-gray-200 shadow-inner mb-4 relative overflow-hidden">
-                            <!-- Hiệu ứng quét -->
-                            <div class="absolute inset-0 border-2 border-blue-400 rounded-xl opacity-20 pointer-events-none animate-pulse"></div>
-                            <img src="{{ $qrUrl }}" alt="QR Code" class="w-48 h-48 mx-auto rounded-lg transition-all duration-300" id="qr-image">
-                            
-                            <!-- Overlay Hết hạn -->
-                            <div id="qr-expired-overlay" class="hidden absolute inset-0 bg-white/90 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center">
-                                <i class="fa-solid fa-clock-rotate-left text-3xl text-gray-500 mb-2"></i>
-                                <p class="font-bold text-gray-800">Mã QR hết hạn</p>
-                                <button onclick="window.location.href = '?renew=1'" class="mt-2 px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
-                                    <i class="fa-solid fa-rotate-right mr-1"></i> Tạo mới
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div id="payment-status-banner" class="bg-blue-50 text-blue-800 text-sm p-3 rounded-lg flex items-center justify-between font-medium">
-                            <div class="flex items-center">
-                                <i class="fa-solid fa-circle-notch fa-spin mr-2 text-blue-600" id="payment-spinner"></i> <span id="payment-status-text">Đang chờ thanh toán...</span>
-                            </div>
-                            <div class="text-blue-700 font-mono font-bold bg-blue-100 px-2 py-0.5 rounded" id="qr-countdown">05:00</div>
-                        </div>
+            <!-- Thanh toán SePay QR -->
+            <div class="bg-white rounded-xl border border-blue-100 shadow-sm overflow-hidden relative">
+                <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+                <div class="p-6 text-center">
+                    <div class="flex items-center justify-center gap-2 mb-4 opacity-60">
+                        <i class="fa-solid fa-bolt text-blue-600 text-xl"></i>
+                        <span class="font-black tracking-wider text-lg text-blue-600 uppercase">SePay</span>
                     </div>
-                </div>
+                    <h3 class="font-bold text-gray-900 mb-1">Thanh toán chuyển khoản</h3>
+                    <p class="text-sm text-gray-500 mb-6">Mở App Ngân hàng và quét mã QR</p>
 
-                <!-- Thanh toán Tiền mặt -->
-                <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div class="p-5 border-b border-gray-100">
-                        <h3 class="font-bold text-gray-900">Thanh toán Tiền mặt</h3>
-                    </div>
-                    <div class="p-5">
-                        <form action="{{ route('receptionist.payments.storeManual', $appointment->id) }}" method="POST">
-                            @csrf
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Tổng tiền cần thu (VNĐ)</label>
-                                <input type="text" value="{{ number_format($summary['remaining_to_pay'], 0, ',', '.') }}đ" readonly
-                                    class="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg font-mono text-lg font-bold text-gray-900 cursor-not-allowed">
-                            </div>
-                            <button type="submit" onclick="return confirm('Xác nhận đã thu đủ tiền mặt từ khách?')"
-                                class="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 px-4 rounded-lg transition-colors flex justify-center items-center">
-                                <i class="fa-solid fa-money-bill-wave mr-2"></i> Xác nhận Thu tiền mặt
+                    <div id="qr-container" class="bg-gray-50 p-4 rounded-xl inline-block border border-gray-200 shadow-inner mb-4 relative overflow-hidden">
+                        <!-- Hiệu ứng quét -->
+                        <div class="absolute inset-0 border-2 border-blue-400 rounded-xl opacity-20 pointer-events-none animate-pulse"></div>
+                        <img src="{{ $qrUrl }}" alt="QR Code" class="w-48 h-48 mx-auto rounded-lg transition-all duration-300" id="qr-image">
+
+                        <!-- Overlay Hết hạn -->
+                        <div id="qr-expired-overlay" class="hidden absolute inset-0 bg-white/90 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center">
+                            <i class="fa-solid fa-clock-rotate-left text-3xl text-gray-500 mb-2"></i>
+                            <p class="font-bold text-gray-800">Mã QR hết hạn</p>
+                            <button onclick="window.location.href = '?renew=1'" class="mt-2 px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                                <i class="fa-solid fa-rotate-right mr-1"></i> Tạo mới
                             </button>
-                        </form>
+                        </div>
+                    </div>
+
+                    <div id="payment-status-banner" class="bg-blue-50 text-blue-800 text-sm p-3 rounded-lg flex items-center justify-between font-medium">
+                        <div class="flex items-center">
+                            <i class="fa-solid fa-circle-notch fa-spin mr-2 text-blue-600" id="payment-spinner"></i> <span id="payment-status-text">Đang chờ thanh toán...</span>
+                        </div>
+                        <div class="text-blue-700 font-mono font-bold bg-blue-100 px-2 py-0.5 rounded" id="qr-countdown">05:00</div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Thanh toán Tiền mặt -->
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="p-5 border-b border-gray-100">
+                    <h3 class="font-bold text-gray-900">Thanh toán Tiền mặt</h3>
+                </div>
+                <div class="p-5">
+                    <form action="{{ route('receptionist.payments.storeManual', $appointment->id) }}" method="POST">
+                        @csrf
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tổng tiền cần thu (VNĐ)</label>
+                            <input type="text" value="{{ number_format($summary['remaining_to_pay'], 0, ',', '.') }}đ" readonly
+                                class="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg font-mono text-lg font-bold text-gray-900 cursor-not-allowed">
+                        </div>
+                        <button type="submit" onclick="return confirm('Xác nhận đã thu đủ tiền mặt từ khách?')"
+                            class="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 px-4 rounded-lg transition-colors flex justify-center items-center">
+                            <i class="fa-solid fa-money-bill-wave mr-2"></i> Xác nhận Thu tiền mặt
+                        </button>
+                    </form>
+                </div>
+            </div>
             @else
-                @if($summary['patient_pays'] > 0)
-                    <!-- Đã thanh toán (có thể có tiền thừa) -->
-                    <div class="bg-white rounded-xl border border-emerald-100 shadow-sm overflow-hidden relative">
-                        <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-emerald-500 to-emerald-600"></div>
-                        <div class="p-6 text-center">
-                            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
-                                <i class="fa-solid fa-check-double"></i>
-                            </div>
-                            <h3 class="font-bold text-gray-900 mb-1">Thanh toán hoàn tất!</h3>
-                            <p class="text-sm text-gray-500 mb-4">Hồ sơ này đã được thanh toán đủ chi phí.</p>
-                            
-                            <div class="bg-gray-50 rounded-lg p-4 mb-6 text-left text-sm">
-                                <div class="flex justify-between mb-2">
-                                    <span class="text-gray-600">Khách cần trả:</span>
-                                    <span class="font-bold">{{ number_format($summary['patient_pays'], 0, ',', '.') }}đ</span>
-                                </div>
-                                <div class="flex justify-between mb-2">
-                                    <span class="text-gray-600">Khách đã trả:</span>
-                                    <span class="font-bold text-emerald-600">{{ number_format($summary['amount_paid'], 0, ',', '.') }}đ</span>
-                                </div>
-                                @if($summary['overpaid_amount'] > 0)
-                                    <div class="flex justify-between pt-2 border-t border-gray-200 mt-2">
-                                        <span class="font-bold text-amber-600">Tiền thừa cần thối:</span>
-                                        <span class="font-bold text-amber-600">{{ number_format($summary['overpaid_amount'], 0, ',', '.') }}đ</span>
-                                    </div>
-                                @endif
-                            </div>
-                            
-                            @if($summary['overpaid_amount'] > 0)
-                            <a href="{{ route('receptionist.payments.show', $appointment->id) }}"
-                                class="w-full inline-flex bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-4 rounded-lg transition-colors justify-center items-center">
-                                <i class="fa-solid fa-hand-holding-dollar mr-2"></i> Đã hoàn trả tiền thừa & Chuyển tới In Hóa Đơn
-                            </a>
-                            @else
-                            <a href="{{ route('receptionist.payments.show', $appointment->id) }}"
-                                class="w-full inline-flex bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg transition-colors justify-center items-center">
-                                <i class="fa-solid fa-print mr-2"></i> Chuyển tới trang In Hóa Đơn
-                            </a>
-                            @endif
-                        </div>
+            @if($summary['patient_pays'] > 0)
+            <!-- Đã thanh toán (có thể có tiền thừa) -->
+            <div class="bg-white rounded-xl border border-emerald-100 shadow-sm overflow-hidden relative">
+                <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-emerald-500 to-emerald-600"></div>
+                <div class="p-6 text-center">
+                    <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                        <i class="fa-solid fa-check-double"></i>
                     </div>
-                @else
-                    <!-- Miễn phí / BHYT 100% -->
-                    <div class="bg-white rounded-xl border border-emerald-100 shadow-sm overflow-hidden relative">
-                        <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-emerald-500 to-emerald-600"></div>
-                        <div class="p-6 text-center">
-                            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
-                                <i class="fa-solid fa-shield-check"></i>
-                            </div>
-                            <h3 class="font-bold text-gray-900 mb-1">Bảo hiểm / Miễn phí</h3>
-                            <p class="text-sm text-gray-500 mb-6">Hồ sơ này không phát sinh chi phí cần thu từ bệnh nhân.</p>
-                            
-                            <form action="{{ route('receptionist.payments.storeManual', $appointment->id) }}" method="POST">
-                                @csrf
-                                <button type="submit"
-                                    class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg transition-colors flex justify-center items-center">
-                                    <i class="fa-solid fa-check-circle mr-2"></i> Xác nhận Hoàn tất
-                                </button>
-                            </form>
+                    <h3 class="font-bold text-gray-900 mb-1">Thanh toán hoàn tất!</h3>
+                    <p class="text-sm text-gray-500 mb-4">Hồ sơ này đã được thanh toán đủ chi phí.</p>
+
+                    <div class="bg-gray-50 rounded-lg p-4 mb-6 text-left text-sm">
+                        <div class="flex justify-between mb-2">
+                            <span class="text-gray-600">Khách cần trả:</span>
+                            <span class="font-bold">{{ number_format($summary['patient_pays'], 0, ',', '.') }}đ</span>
                         </div>
+                        <div class="flex justify-between mb-2">
+                            <span class="text-gray-600">Khách đã trả:</span>
+                            <span class="font-bold text-emerald-600">{{ number_format($summary['amount_paid'], 0, ',', '.') }}đ</span>
+                        </div>
+                        @if($summary['overpaid_amount'] > 0)
+                        <div class="flex justify-between pt-2 border-t border-gray-200 mt-2">
+                            <span class="font-bold text-amber-600">Tiền thừa cần thối:</span>
+                            <span class="font-bold text-amber-600">{{ number_format($summary['overpaid_amount'], 0, ',', '.') }}đ</span>
+                        </div>
+                        @endif
                     </div>
-                @endif
+
+                    @if($summary['overpaid_amount'] > 0)
+                    <a href="{{ route('receptionist.payments.show', $appointment->id) }}"
+                        class="w-full inline-flex bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-4 rounded-lg transition-colors justify-center items-center">
+                        <i class="fa-solid fa-hand-holding-dollar mr-2"></i> Đã hoàn trả tiền thừa & Chuyển tới In Hóa Đơn
+                    </a>
+                    @else
+                    <a href="{{ route('receptionist.payments.show', $appointment->id) }}"
+                        class="w-full inline-flex bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg transition-colors justify-center items-center">
+                        <i class="fa-solid fa-print mr-2"></i> Chuyển tới trang In Hóa Đơn
+                    </a>
+                    @endif
+                </div>
+            </div>
+            @else
+            <!-- Miễn phí / BHYT 100% -->
+            <div class="bg-white rounded-xl border border-emerald-100 shadow-sm overflow-hidden relative">
+                <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-emerald-500 to-emerald-600"></div>
+                <div class="p-6 text-center">
+                    <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                        <i class="fa-solid fa-shield-check"></i>
+                    </div>
+                    <h3 class="font-bold text-gray-900 mb-1">Bảo hiểm / Miễn phí</h3>
+                    <p class="text-sm text-gray-500 mb-6">Hồ sơ này không phát sinh chi phí cần thu từ bệnh nhân.</p>
+
+                    <form action="{{ route('receptionist.payments.storeManual', $appointment->id) }}" method="POST">
+                        @csrf
+                        <button type="submit"
+                            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg transition-colors flex justify-center items-center">
+                            <i class="fa-solid fa-check-circle mr-2"></i> Xác nhận Hoàn tất
+                        </button>
+                    </form>
+                </div>
+            </div>
+            @endif
             @endif
         </div>
     </div>
@@ -226,25 +226,25 @@
         // QR Countdown Timer (5 phút) đồng bộ server
         const serverStartTime = Number("{{ $startTime ?? time() }}");
         let qrExpired = false;
-        
+
         function updateTimer() {
             if (qrExpired) return;
-            
+
             let nowUnix = Math.floor(Date.now() / 1000);
             let elapsed = nowUnix - serverStartTime;
             let timeLeft = 300 - elapsed;
-            
+
             if (timeLeft <= 0) {
                 qrExpired = true;
                 if (typeof checkPaymentInterval !== 'undefined') {
                     clearInterval(checkPaymentInterval); // Ngừng polling khi hết hạn
                 }
-                
+
                 // Cập nhật UI hết hạn
                 document.getElementById('qr-countdown').innerText = '00:00';
                 document.getElementById('qr-image').classList.add('blur-[4px]', 'opacity-50');
                 document.getElementById('qr-expired-overlay').classList.remove('hidden');
-                
+
                 if (statusBanner) {
                     statusBanner.classList.remove('bg-blue-50', 'text-blue-800');
                     statusBanner.classList.add('bg-gray-100', 'text-gray-600', 'border', 'border-gray-300');
@@ -257,7 +257,7 @@
                 let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
                 let s = (timeLeft % 60).toString().padStart(2, '0');
                 document.getElementById('qr-countdown').innerText = m + ':' + s;
-                
+
                 // Khi còn dưới 1 phút thì đổi màu cảnh báo
                 if (timeLeft <= 60) {
                     document.getElementById('qr-countdown').classList.replace('bg-blue-100', 'bg-red-100');
@@ -265,13 +265,13 @@
                 }
             }
         }
-        
+
         updateTimer(); // Chạy ngay lập tức để đè lên 05:00 mặc định
         const countdownTimer = setInterval(updateTimer, 1000);
 
         let checkPaymentInterval = setInterval(function() {
             if (qrExpired) return;
-            
+
             fetch(`/api/payments/${appointmentId}/check-status`)
                 .then(response => response.json())
                 .then(data => {

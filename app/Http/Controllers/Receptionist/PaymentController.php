@@ -140,22 +140,44 @@ class PaymentController extends Controller
 
         $summary = $this->paymentService->calculateSummary($appointment);
 
-        $qrUrl = null;
-        if ($summary['remaining_to_pay'] > 0) {
-            $qrUrl = $this->sepayService->generateVietQrUrl($appointment, $summary['remaining_to_pay']);
-        }
-
         $receptionistId = \Illuminate\Support\Facades\Auth::id();
         $timeCacheKey = 'receptionist_active_checkout_time_' . $receptionistId;
         $appointmentCacheKey = 'receptionist_active_checkout_' . $receptionistId;
+        $intentCacheKeySession = 'receptionist_active_checkout_intent_' . $receptionistId;
 
         $startTime = \Illuminate\Support\Facades\Cache::get($timeCacheKey);
 
-        // Nếu chuyển sang bệnh nhân khác hoặc có request renew = 1, thì reset lại timer
+        // Nếu chuyển sang bệnh nhân khác hoặc có request renew = 1, thì reset lại timer và sinh mã mới
         $currentCachedAppointment = \Illuminate\Support\Facades\Cache::get($appointmentCacheKey);
+        
         if (!$startTime || $request->has('renew') || $currentCachedAppointment != $id) {
             $startTime = time();
             \Illuminate\Support\Facades\Cache::put($timeCacheKey, $startTime, now()->addMinutes(60));
+
+            // Sinh mã Intent Code mới (dùng một lần) - không dùng dấu gạch ngang vì ngân hàng có thể cắt mất
+            $intentCode = 'APT' . $appointment->id . strtoupper(\Illuminate\Support\Str::random(5));
+            \Illuminate\Support\Facades\Cache::put($intentCacheKeySession, $intentCode, now()->addMinutes(60));
+
+            // Lưu vào global cache cho Webhook - TTL 10 phút để có buffer
+            \Illuminate\Support\Facades\Cache::put('qr_intent_' . $intentCode, $appointment->id, now()->addMinutes(10));
+        } else {
+            // Lấy lại mã intent đang dùng dở
+            $intentCode = \Illuminate\Support\Facades\Cache::get($intentCacheKeySession);
+
+            if (!$intentCode) {
+                // Phòng hờ: intent session cache bị mất, sinh mã mới
+                $intentCode = 'APT' . $appointment->id . strtoupper(\Illuminate\Support\Str::random(5));
+                \Illuminate\Support\Facades\Cache::put($intentCacheKeySession, $intentCode, now()->addMinutes(60));
+            }
+
+            // CRITICAL FIX: Luôn refresh TTL của qr_intent_ mỗi khi trang được load
+            // để đảm bảo cache không expire trước khi webhook kịp đến.
+            \Illuminate\Support\Facades\Cache::put('qr_intent_' . $intentCode, $appointment->id, now()->addMinutes(10));
+        }
+
+        $qrUrl = null;
+        if ($summary['remaining_to_pay'] > 0) {
+            $qrUrl = $this->sepayService->generateVietQrUrl($appointment, $summary['remaining_to_pay'], $intentCode);
         }
 
         // Kích hoạt hiển thị lên Màn hình phụ (Customer Display) cho lễ tân hiện tại
