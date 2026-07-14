@@ -50,7 +50,7 @@ class PaymentService
                 $payments->push($payment);
             }
         }
-        $payments = $payments->unique('id');
+        $payments = $payments->unique('id')->where('status', 'completed');
 
         $amountPaid = $payments->sum('amount');
 

@@ -14,6 +14,7 @@ class Payment extends Model
     protected $fillable = [
         'appointment_id',
         'transaction_code',
+        'intent_code',
         'amount',
         'method',
         'status',

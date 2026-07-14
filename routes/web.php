@@ -376,6 +376,9 @@ Route::prefix('receptionist')->name('receptionist.')->group(function () {
         // Payments
         Route::get('payments/{appointment}/checkout', [\App\Http\Controllers\Receptionist\PaymentController::class, 'create'])->name('payments.create');
         Route::post('payments/{appointment}/manual', [\App\Http\Controllers\Receptionist\PaymentController::class, 'storeManual'])->name('payments.storeManual');
+        Route::post('payments/{appointment}/refund', [\App\Http\Controllers\Receptionist\PaymentController::class, 'confirmRefund'])->name('payments.refund');
+        Route::get('payments/{appointment}/print-vat', [\App\Http\Controllers\Receptionist\PaymentController::class, 'printVat'])->name('payments.printVat');
+        Route::get('payments/{appointment}/print-deposit', [\App\Http\Controllers\Receptionist\PaymentController::class, 'printDeposit'])->name('payments.printDeposit');
 
         // Payments history
         Route::resource('payments', \App\Http\Controllers\Receptionist\PaymentController::class)->only(['index', 'show']);
