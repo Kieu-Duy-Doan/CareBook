@@ -95,6 +95,11 @@ class Appointment extends Model
         return $this->hasMany(ClinicalVisit::class);
     }
 
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
     public function medicalRecord()
     {
         return $this->hasOne(MedicalRecord::class);
