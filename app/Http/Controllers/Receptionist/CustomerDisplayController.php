@@ -52,9 +52,12 @@ class CustomerDisplayController extends Controller
 
         $summary = $this->paymentService->calculateSummary($appointment);
 
+        $intentCacheKeySession = 'receptionist_active_checkout_intent_' . $receptionistId;
+        $intentCode = Cache::get($intentCacheKeySession);
+
         $qrUrl = null;
         if ($summary['remaining_to_pay'] > 0) {
-            $qrUrl = $this->sepayService->generateVietQrUrl($appointment, $summary['remaining_to_pay']);
+            $qrUrl = $this->sepayService->generateVietQrUrl($appointment, $summary['remaining_to_pay'], $intentCode);
         }
 
         return response()->json([

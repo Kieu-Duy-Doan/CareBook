@@ -38,81 +38,80 @@
         </div>
 
         <!-- Checkout State -->
-        <div id="state-checkout" class="hidden w-full max-w-6xl transition-all duration-500">
-            <div class="text-center mb-12">
-                <h2 class="text-5xl font-black text-gray-900 mb-4">Thông tin Thanh toán</h2>
-                <p class="text-2xl text-gray-500">Bệnh nhân: <span id="cd-patient-name" class="font-bold text-gray-800 uppercase"></span></p>
+        <div id="state-checkout" class="hidden w-full max-w-2xl mx-auto transition-all duration-500">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-black text-gray-900 mb-2">Thông tin Thanh toán</h2>
+                <p class="text-xl text-gray-500">Bệnh nhân: <span id="cd-patient-name" class="font-bold text-gray-800 uppercase"></span></p>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-stretch">
-                <!-- Left: Bill Summary -->
-                <div class="bg-gray-50 rounded-3xl p-10 border border-gray-200 flex flex-col justify-center shadow-inner">
-                    <h3 class="text-3xl font-bold text-gray-900 mb-8 border-b border-gray-200 pb-6">Chi tiết Chi phí</h3>
+            <div class="flex flex-col gap-6">
+                <!-- Top: Bill Summary -->
+                <div class="bg-gray-50 rounded-2xl p-6 border border-gray-200 shadow-sm">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4 border-b border-gray-200 pb-3">Chi tiết Chi phí</h3>
                     
-                    <div class="space-y-6 text-2xl">
+                    <div class="space-y-4 text-lg">
                         <div class="flex justify-between items-center">
                             <span class="text-gray-600">Tổng chi phí:</span>
                             <span id="cd-total-amount" class="font-bold text-gray-900">0đ</span>
                         </div>
-                        <div class="flex justify-between items-center pb-6 border-b border-gray-200">
+                        <div class="flex justify-between items-center pb-4 border-b border-gray-200">
                             <span class="text-emerald-600">BHYT chi trả:</span>
                             <span id="cd-insurance" class="font-bold text-emerald-600">- 0đ</span>
                         </div>
-                        <div class="flex justify-between items-center pt-4">
-                            <span class="text-2xl font-bold text-gray-900">CẦN THANH TOÁN:</span>
-                            <span id="cd-remaining" class="text-5xl font-black text-red-600">0đ</span>
+                        <div class="flex justify-between items-center pt-2">
+                            <span class="text-xl font-bold text-gray-900">CẦN THANH TOÁN:</span>
+                            <span id="cd-remaining" class="text-3xl font-black text-red-600">0đ</span>
                         </div>
                     </div>
 
-                    <div id="cd-overpaid-alert" class="hidden mt-10 bg-amber-100 border border-amber-300 text-amber-800 p-6 rounded-2xl flex items-center shadow-sm">
-                        <i class="fa-solid fa-hand-holding-dollar text-5xl mr-6"></i>
+                    <div id="cd-overpaid-alert" class="hidden mt-6 bg-amber-100 border border-amber-300 text-amber-800 p-4 rounded-xl flex items-center shadow-sm">
+                        <i class="fa-solid fa-hand-holding-dollar text-3xl mr-4"></i>
                         <div>
-                            <div class="font-bold text-2xl">Quý khách đã chuyển dư tiền!</div>
-                            <div class="text-lg mt-2">Lễ tân sẽ hoàn trả lại phần tiền thừa là <b id="cd-overpaid-amount" class="text-2xl text-amber-900"></b>. Xin cảm ơn!</div>
+                            <div class="font-bold text-lg">Quý khách đã chuyển dư tiền!</div>
+                            <div class="text-sm mt-1">Lễ tân sẽ hoàn trả lại phần tiền thừa là <b id="cd-overpaid-amount" class="text-lg text-amber-900"></b>. Xin cảm ơn!</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Right: QR Code -->
-                <div class="bg-white rounded-3xl border-2 border-blue-100 p-10 text-center shadow-xl relative overflow-hidden flex flex-col justify-center items-center min-h-[450px]">
-                    <div class="absolute top-0 inset-x-0 h-3 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+                <!-- Bottom: QR Code or Success -->
+                <div class="bg-white rounded-2xl border border-blue-100 p-6 text-center shadow-md relative overflow-hidden flex flex-col justify-center items-center min-h-[350px]">
+                    <div class="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
                     
-                    <div id="cd-qr-area" class="w-full flex flex-col items-center justify-center">
-                        <div class="flex items-center justify-center gap-3 mb-8 opacity-60">
-                            <i class="fa-solid fa-bolt text-blue-600 text-3xl"></i>
-                            <span class="font-black tracking-widest text-2xl text-blue-600 uppercase">SePay</span>
+                    <div id="cd-qr-area" class="w-full flex flex-col items-center justify-center pt-2">
+                        <div class="flex items-center justify-center gap-2 mb-4 opacity-60">
+                            <i class="fa-solid fa-bolt text-blue-600 text-2xl"></i>
+                            <span class="font-black tracking-widest text-xl text-blue-600 uppercase">SePay</span>
                         </div>
-                        <p class="text-gray-600 mb-8 text-xl font-medium">Quét mã QR bằng App Ngân hàng để thanh toán</p>
+                        <p class="text-gray-600 mb-4 text-base font-medium">Quét mã QR bằng App Ngân hàng để thanh toán</p>
                         
-                        <div id="cd-qr-wrapper" class="bg-gray-50 p-6 rounded-3xl inline-block border border-gray-200 shadow-inner mb-8 relative overflow-hidden">
-                            <div class="absolute inset-0 border-4 border-blue-400 rounded-3xl opacity-20 pointer-events-none animate-pulse"></div>
-                            <img id="cd-qr-image" src="" alt="QR Code" class="w-80 h-80 mx-auto rounded-2xl object-contain bg-white transition-all duration-300">
+                        <div id="cd-qr-wrapper" class="bg-gray-50 p-4 rounded-2xl inline-block border border-gray-200 shadow-inner mb-6 relative overflow-hidden">
+                            <div class="absolute inset-0 border-4 border-blue-400 rounded-2xl opacity-20 pointer-events-none animate-pulse"></div>
+                            <img id="cd-qr-image" src="" alt="QR Code" class="w-64 h-64 mx-auto rounded-xl object-contain bg-white transition-all duration-300">
                             
                             <!-- Overlay Hết hạn -->
-                            <div id="cd-qr-expired-overlay" class="hidden absolute inset-0 bg-white/90 backdrop-blur-sm rounded-3xl flex flex-col items-center justify-center">
-                                <i class="fa-solid fa-clock-rotate-left text-5xl text-gray-400 mb-4"></i>
-                                <p class="font-bold text-gray-800 text-2xl mb-2">Mã QR hết hạn</p>
-                                <p class="text-gray-500 text-lg">Vui lòng chờ Lễ tân tạo lại mã</p>
+                            <div id="cd-qr-expired-overlay" class="hidden absolute inset-0 bg-white/90 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center">
+                                <i class="fa-solid fa-clock-rotate-left text-4xl text-gray-400 mb-3"></i>
+                                <p class="font-bold text-gray-800 text-xl mb-1">Mã QR hết hạn</p>
+                                <p class="text-gray-500 text-sm">Vui lòng chờ Lễ tân tạo lại mã</p>
                             </div>
                         </div>
                         
-                        <div id="cd-payment-status-banner" class="bg-blue-50 text-blue-800 p-5 rounded-2xl flex items-center justify-between font-bold text-xl w-full border border-blue-100 transition-colors">
+                        <div id="cd-payment-status-banner" class="bg-blue-50 text-blue-800 p-4 rounded-xl flex items-center justify-between font-bold text-base w-full border border-blue-100 transition-colors">
                             <div class="flex items-center">
-                                <i class="fa-solid fa-circle-notch fa-spin mr-3 text-blue-600 text-2xl" id="cd-payment-spinner"></i> 
+                                <i class="fa-solid fa-circle-notch fa-spin mr-2 text-blue-600 text-xl" id="cd-payment-spinner"></i> 
                                 <span id="cd-payment-status-text">Đang chờ thanh toán...</span>
                             </div>
-                            <div class="text-blue-700 font-mono bg-blue-100 px-3 py-1 rounded-lg" id="cd-qr-countdown">05:00</div>
+                            <div class="text-blue-700 font-mono bg-blue-100 px-2 py-1 rounded text-sm" id="cd-qr-countdown">05:00</div>
                         </div>
                     </div>
 
-                    <div id="cd-success-area" class="hidden w-full py-12 flex flex-col items-center justify-center">
-                        <div class="w-32 h-32 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-8 text-6xl shadow-inner">
+                    <div id="cd-success-area" class="hidden w-full py-8 flex flex-col items-center justify-center">
+                        <div class="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 text-5xl shadow-inner">
                             <i class="fa-solid fa-check-double"></i>
                         </div>
-                        <h3 class="text-4xl font-black text-gray-900 mb-4">Thanh toán Thành công!</h3>
-                        <p class="text-gray-500 text-xl">Cảm ơn Quý khách. Chúc Quý khách nhiều sức khỏe.</p>
+                        <h3 class="text-2xl font-black text-gray-900 mb-2">Thanh toán Thành công!</h3>
+                        <p class="text-gray-500 text-base">Cảm ơn Quý khách. Chúc Quý khách nhiều sức khỏe.</p>
                     </div>
-
                 </div>
             </div>
         </div>
