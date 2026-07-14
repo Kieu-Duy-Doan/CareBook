@@ -119,12 +119,12 @@ class PaymentController extends Controller
         $appointment = Appointment::with([
             'patientProfile',
             'payments.collectedBy',
-            'clinicalVisits' => function ($q) {
-                $q->where('payment_status', '!=', 'pending');
-            }
+            'clinicalVisits'
         ])->findOrFail($id);
 
-        return view('receptionist.payments.show', compact('appointment'));
+        $summary = $this->paymentService->calculateSummary($appointment);
+
+        return view('receptionist.payments.show', compact('appointment', 'summary'));
     }
 
     /**
@@ -205,5 +205,62 @@ class PaymentController extends Controller
 
         return redirect()->route('receptionist.payments.index')
             ->with('success', 'Đã ghi nhận thanh toán tiền mặt thành công.');
+    }
+
+    /**
+     * Xác nhận đã thối tiền thừa cho bệnh nhân
+     */
+    public function confirmRefund(Request $request, string $id)
+    {
+        $appointment = Appointment::findOrFail($id);
+        $summary = $this->paymentService->calculateSummary($appointment);
+
+        if ($summary['overpaid_amount'] > 0) {
+            Payment::create([
+                'appointment_id' => $appointment->id,
+                'transaction_code' => 'RFD' . time() . \Illuminate\Support\Str::random(4),
+                'amount' => -$summary['overpaid_amount'],
+                'method' => 'cash',
+                'status' => 'refunded',
+                'collected_by' => Auth::id(),
+                'paid_at' => now(),
+                'note' => 'Đã thối tiền mặt ' . number_format($summary['overpaid_amount'], 0, ',', '.') . 'đ cho bệnh nhân',
+            ]);
+
+            return redirect()->back()->with('success', 'Đã ghi nhận hoàn tiền thừa thành công.');
+        }
+
+        return redirect()->back()->with('error', 'Không có khoản tiền thừa nào cần hoàn trả.');
+    }
+
+    /**
+     * In Hóa đơn VAT
+     */
+    public function printVat(string $id)
+    {
+        $appointment = Appointment::with([
+            'patientProfile',
+            'payments.collectedBy',
+            'clinicalVisits'
+        ])->findOrFail($id);
+
+        $summary = $this->paymentService->calculateSummary($appointment);
+
+        return view('receptionist.payments.invoice-vat', compact('appointment', 'summary'));
+    }
+
+    /**
+     * In Phiếu Tạm Ứng
+     */
+    public function printDeposit(string $id)
+    {
+        $appointment = Appointment::with([
+            'patientProfile',
+            'payments.collectedBy'
+        ])->findOrFail($id);
+
+        $summary = $this->paymentService->calculateSummary($appointment);
+
+        return view('receptionist.payments.invoice-deposit', compact('appointment', 'summary'));
     }
 }
