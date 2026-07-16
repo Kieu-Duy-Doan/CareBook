@@ -9,6 +9,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     {!! $styles ?? '' !!}
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
     @stack('styles')
 </head>
 
@@ -27,9 +30,9 @@
         <!-- Nvigation -->
         <div class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
             <a href="{{ route('admin.dashboard') }}"
-                class="{{ request()->routeIs('admin.dashboard') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                class="{{ request()->routeIs('admin.dashboard', 'admin.payments.dashboard') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                 <i
-                    class="fa-solid fa-house w-6 text-center mr-2 {{ request()->routeIs('admin.dashboard') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
+                    class="fa-solid fa-house w-6 text-center mr-2 {{ request()->routeIs('admin.dashboard', 'admin.payments.dashboard') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
                 Dashboard
             </a>
             <!-- Quản lý tài khoản -->
@@ -45,7 +48,7 @@
                     <i class="fa-solid fa-chevron-down text-xs transition-transform"
                         :class="openUsers ? 'rotate-180' : ''"></i>
                 </button>
-                <div x-show="openUsers" x-transition class="pl-8 mt-1 space-y-1">
+                <div x-show="openUsers" {!! request()->routeIs('admin.users.*', 'admin.doctors.*', 'admin.receptionists.*', 'admin.patients.*', 'admin.customers.*') ? '' : 'style="display: none;"' !!} x-transition class="pl-8 mt-1 space-y-1">
                     <a href="{{ route('admin.users.index') }}"
                         class="flex items-center px-3 py-2 rounded-md text-sm {{ request()->routeIs('admin.users.*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}"><i
                             class="fa-solid fa-list-ul w-4 mr-2 text-gray-400"></i> Tất cả tài khoản</a>
@@ -96,11 +99,43 @@
                 Giám sát khám lâm sàng
             </a>
             <a href="{{ Route::has('admin.appointment-logs.index') ? route('admin.appointment-logs.index') : '#' }}"
-                class="{{ request()->routeIs('admin.appointment-logs.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
+                class="mt-1 group flex items-center px-3 py-2 text-sm font-medium rounded-md {{ request()->routeIs('admin.appointment-logs.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }}">
                 <i
                     class="fa-solid fa-clock-rotate-left w-5 text-center mr-3 {{ request()->routeIs('admin.appointment-logs.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
-                Nhật ký lịch hẹn
+                Nhật ký hẹn
             </a>
+            <!-- QUẢN LÝ THANH TOÁN -->
+            <div x-data="{ openPayments: {{ request()->routeIs('admin.payments.*', 'admin.sepay-transactions.*') ? 'true' : 'false' }} }">
+                <button @click="openPayments = !openPayments"
+                    class="w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium mt-1
+                               {{ request()->routeIs('admin.payments.*', 'admin.sepay-transactions.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                    <span class="flex items-center">
+                        <i
+                            class="fa-solid fa-money-bill-transfer w-5 text-center mr-3 {{ request()->routeIs('admin.payments.*', 'admin.sepay-transactions.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
+                        Quản lý thanh toán
+                    </span>
+                    <i class="fa-solid fa-chevron-down text-xs transition-transform"
+                        :class="openPayments ? 'rotate-180' : ''"></i>
+                </button>
+
+                <div x-show="openPayments" {!! request()->routeIs('admin.payments.*', 'admin.sepay-transactions.*') ? '' : 'style="display: none;"' !!} x-transition class="pl-8 mt-1 space-y-1">
+                    <a href="{{ route('admin.payments.needs-review') }}"
+                        class="flex items-center px-3 py-2 rounded-md text-sm
+                              {{ request()->routeIs('admin.payments.needs-review') ? 'bg-blue-50/50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
+                        Cần xử lý
+                    </a>
+                    <a href="{{ route('admin.sepay-transactions.index') }}"
+                        class="flex items-center px-3 py-2 rounded-md text-sm
+                              {{ request()->routeIs('admin.sepay-transactions.*') ? 'bg-blue-50/50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
+                        Đối soát SePay
+                    </a>
+                    <a href="{{ route('admin.payments.refunds') }}"
+                        class="flex items-center px-3 py-2 rounded-md text-sm
+                              {{ request()->routeIs('admin.payments.refunds') ? 'bg-blue-50/50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
+                        Yêu cầu hoàn tiền
+                    </a>
+                </div>
+            </div>
 
 
             <a href="{{ route('admin.posts.index') }}"
@@ -128,7 +163,7 @@
                         :class="openChatbot ? 'rotate-180' : ''"></i>
                 </button>
 
-                <div x-show="openChatbot" x-transition class="pl-8 mt-1 space-y-1">
+                <div x-show="openChatbot" {!! request()->routeIs('admin.chatbot.*', 'admin.faqs.*') ? '' : 'style="display: none;"' !!} x-transition class="pl-8 mt-1 space-y-1">
                     <a href="{{ route('admin.chatbot.intents.index') }}"
                         class="flex items-center px-3 py-2 rounded-md text-sm
                               {{ request()->routeIs('admin.chatbot.intents.*') ? 'bg-blue-50/50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
