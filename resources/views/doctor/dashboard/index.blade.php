@@ -13,7 +13,7 @@
                 <i class="fa-solid fa-calendar-day text-blue-600 text-xl w-6 h-6 flex items-center justify-center"></i>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-500">Lịch hẹn hôm nay</p>
+                <p class="text-sm font-medium text-gray-500">Lịch hẹn ngày hôm nay</p>
                 <p class="text-2xl font-bold text-gray-900">{{ $todayAppointmentsCount }}</p>
             </div>
         </div>
