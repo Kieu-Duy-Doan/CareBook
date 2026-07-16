@@ -41,6 +41,13 @@ class Payment extends Model
                     ->withTimestamps();
     }
 
+    public function prescriptions(): BelongsToMany
+    {
+        return $this->belongsToMany(Prescription::class, 'payment_prescription')
+                    ->withPivot('amount_allocated')
+                    ->withTimestamps();
+    }
+
     public function collectedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'collected_by');
