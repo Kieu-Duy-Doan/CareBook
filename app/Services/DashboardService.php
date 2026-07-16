@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use App\Models\Appointment;
 use App\Models\PatientProfile;
+use App\Models\Payment;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -49,9 +50,24 @@ class DashboardService
         $completedToday = Appointment::whereDate('appointment_date', $today)->where('status', 'completed')->count();
         $completionRate = $todayApptCount > 0 ? round(($completedToday / $todayApptCount) * 100) : 0;
 
+        // 4. Doanh thu (Hôm nay & Tháng này)
+        $revenueToday = Payment::whereDate('paid_at', $today)
+            ->where('status', 'completed')
+            ->sum('amount');
+            
+        $revenueThisMonth = Payment::where('paid_at', '>=', $startOfMonth)
+            ->where('status', 'completed')
+            ->sum('amount');
+            
+        // 5. Số lịch khám bị hủy (Hôm nay)
+        $canceledToday = Appointment::whereDate('appointment_date', $today)
+            ->where('status', 'cancelled')
+            ->count();
+
         return compact(
             'todayApptCount', 'apptGrowth', 'totalPatients', 'newPatientsThisMonth', 
-            'patientGrowth', 'activeDoctorsCount', 'completedToday', 'completionRate'
+            'patientGrowth', 'activeDoctorsCount', 'completedToday', 'completionRate',
+            'revenueToday', 'revenueThisMonth', 'canceledToday'
         );
     }
 
