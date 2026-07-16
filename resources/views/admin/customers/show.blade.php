@@ -13,6 +13,19 @@
                 <a href="{{ route('admin.customers.index') }}" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition flex items-center gap-2">
                     <i class="fa-solid fa-arrow-left"></i> Quay lại
                 </a>
+                <form action="{{ route('admin.customers.toggle-active', $customer->id) }}" method="POST" onsubmit="return confirm('Hành động này sẽ thay đổi trạng thái của Tài khoản khách hàng ({{ $customer->full_name }}). Bạn có chắc chắn không?');">
+                    @csrf
+                    @method('PATCH')
+                    @if ($customer->is_active)
+                        <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition flex items-center gap-2">
+                            <i class="fa-solid fa-lock"></i> Khoá tài khoản
+                        </button>
+                    @else
+                        <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition flex items-center gap-2">
+                            <i class="fa-solid fa-lock-open"></i> Mở khoá
+                        </button>
+                    @endif
+                </form>
                 <a href="{{ route('admin.customers.edit', $customer->id) }}" class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition flex items-center gap-2">
                     <i class="fa-solid fa-pen"></i> Chỉnh sửa
                 </a>
@@ -37,6 +50,11 @@
                                 <span class="inline-flex items-center gap-1 mt-1 px-2.5 py-1 rounded-md text-xs font-medium bg-red-100 text-red-700 border border-red-200">
                                     <i class="fa-solid fa-circle-xmark"></i> Đã khoá
                                 </span>
+                                @if($customer->locked_reason === 'spam_cancellation')
+                                <span class="inline-flex items-center gap-1 mt-1 px-2.5 py-1 rounded-md text-xs font-medium bg-red-100 text-red-700 border border-red-200">
+                                    Khoá do huỷ lịch quá nhiều
+                                </span>
+                                @endif
                             @endif
                         </div>
                     </div>

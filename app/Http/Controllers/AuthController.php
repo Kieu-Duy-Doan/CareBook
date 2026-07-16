@@ -44,7 +44,11 @@ class AuthController extends Controller
         $user = User::where('phone', $request->phone)->first();
 
         if ($user && !$user->is_active) {
-            return back()->withInput()->with('error', 'Tài khoản đã bị khoá. Liên hệ quản trị viên.');
+            $errorMsg = 'Tài khoản đã bị khoá. Liên hệ quản trị viên.';
+            if ($user->locked_reason === 'spam_cancellation') {
+                $errorMsg = 'Tài khoản của bạn đã bị khóa do hủy lịch khám quá nhiều lần. Vui lòng liên hệ Hotline: ' . config('booking.admin_phone') . ' hoặc Lễ tân để được hỗ trợ mở khóa.';
+            }
+            return back()->withInput()->with('error', $errorMsg);
         }
 
         if (Auth::attempt(['phone' => $request->phone, 'password' => $request->password], $request->boolean('remember'))) {
@@ -58,9 +62,12 @@ class AuthController extends Controller
                 return back()->withInput()->with('error', 'Tài khoản này không phải là bệnh nhân.');
             }
             
-            // Nếu đăng nhập từ trang admin/nhân viên nhưng tài khoản lại là bệnh nhân
-            if ($loginType === 'admin' && $user->role === 'patient') {
+            // Cổng quản trị (/login) chỉ dành cho admin và doctor
+            if ($loginType === 'admin' && ! in_array($user->role, ['admin', 'doctor'], true)) {
                 Auth::logout();
+                if ($user->role === 'receptionist') {
+                    return back()->withInput()->with('error', 'Lễ tân vui lòng đăng nhập qua cổng Lễ tân (/receptionist/login).');
+                }
                 return back()->withInput()->with('error', 'Bạn không có quyền đăng nhập vào cổng quản trị.');
             }
 
@@ -91,11 +98,10 @@ class AuthController extends Controller
     {
         $role = Auth::user()->role;
         return match ($role) {
-            'admin' => redirect()->route('admin.dashboard'),
-            'doctor' => redirect()->route('doctor.dashboard'),
-            'receptionist' => redirect()->route('receptionist.dashboard'),
-            'patient' => redirect()->route('patient.dashboard'),
-            default => redirect('/'),
+            'admin', 'doctor' => redirect()->route('admin.dashboard'),
+            'receptionist'    => redirect()->route('receptionist.dashboard'),
+            'patient'         => redirect()->route('patient.dashboard'),
+            default           => redirect('/'),
         };
     }
 

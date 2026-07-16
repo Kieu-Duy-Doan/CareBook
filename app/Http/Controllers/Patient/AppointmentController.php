@@ -55,8 +55,34 @@ class AppointmentController extends Controller
 
         $appointment->update(['status' => 'cancelled']);
 
-        // Dispatch cancellation notification
-        \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'cancellation');
+        // Check for spam cancellations today
+        $threshold = config('booking.spam_threshold', 3);
+        $today = \Carbon\Carbon::today();
+        
+        $cancellationsToday = Appointment::where('booked_by_user_id', auth()->id())
+            ->where('status', 'cancelled')
+            // Apply only to appointments booked by the patient themselves, usually source = web
+            ->where('source', 'web')
+            ->whereDate('updated_at', $today)
+            ->count();
+
+        if ($cancellationsToday > $threshold) {
+            $user = auth()->user();
+            $user->update([
+                'is_active' => false,
+                'locked_reason' => 'spam_cancellation'
+            ]);
+            
+            \Illuminate\Support\Facades\Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('patient.login')
+                ->with('error', 'Tài khoản của bạn đã bị khóa do hủy lịch khám quá nhiều lần trong ngày. Vui lòng liên hệ Hotline: ' . config('booking.admin_phone') . ' hoặc Lễ tân để được hỗ trợ mở khóa.');
+        }
+
+        // Dispatch cancellation notification (by patient, no suggestions needed)
+        \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'patient_cancel', 'patient');
 
         return redirect()->route('patient.appointments.index')
             ->with('success', 'Huỷ lịch hẹn thành công.');

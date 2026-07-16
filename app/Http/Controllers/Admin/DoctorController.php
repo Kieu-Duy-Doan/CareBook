@@ -102,8 +102,9 @@ class DoctorController extends Controller
             'email' => 'nullable|email|max:150|unique:users,email',
             'password' => ['required', 'string', Password::min(8)->letters()->mixedCase()->numbers()->symbols(), 'confirmed'],
             // Hồ sơ chuyên môn
-            'academic_title' => 'nullable|string|max:100',
-            'level' => 'required|in:BS,BSCK1,BSCK2,ThS,TS,PGS,GS',
+            'academic_rank' => 'required|in:none,PGS,GS',
+            'degree' => 'required|in:BS,ThS,TS,BSCK1,BSCK2,BSNT',
+            'current_position' => 'required|in:INTERN,ATTENDING,CONSULTANT,DEPARTMENT_HEAD,EXPERT',
             'expertise' => 'nullable|string|max:2000',
             'experience_years' => 'nullable|integer|min:0|max:60',
             'license_number' => 'required|string|max:50|unique:doctor_profiles,license_number',
@@ -156,12 +157,21 @@ class DoctorController extends Controller
 
             $doctorCode = $this->_generateDoctorCode($validated['full_name']);
 
+            $level = $validated['degree'];
+            if (in_array($validated['academic_rank'], ['GS', 'PGS'])) {
+                $level = $validated['academic_rank'];
+            } elseif ($level === 'BSNT') {
+                $level = 'BS';
+            }
+
             // Tạo DoctorProfile
             $doctor = DoctorProfile::create([
                 'user_id' => $user->id,
                 'doctor_code' => $doctorCode,
-                'academic_title' => $validated['academic_title'] ?? null,
-                'level' => $validated['level'],
+                'academic_rank' => $validated['academic_rank'],
+                'degree' => $validated['degree'],
+                'current_position' => $validated['current_position'],
+                'level' => $level,
                 'expertise' => $validated['expertise'] ?? null,
                 'experience_years' => $validated['experience_years'] ?? null,
                 'license_number' => $validated['license_number'] ?? null,
@@ -284,8 +294,9 @@ class DoctorController extends Controller
             'username'        => "required|string|max:50|unique:users,username,{$doctor->user_id}",
             'email'           => "nullable|email|unique:users,email,{$doctor->user_id}",
             'doctor_code'     => "required|string|max:20|unique:doctor_profiles,doctor_code,$id",
-            'academic_title'  => 'nullable|string|max:100',
-            'level'           => 'required|in:BS,BSCK1,BSCK2,ThS,TS,PGS,GS',
+            'academic_rank'   => 'required|in:none,PGS,GS',
+            'degree'          => 'required|in:BS,ThS,TS,BSCK1,BSCK2,BSNT',
+            'current_position'=> 'required|in:INTERN,ATTENDING,CONSULTANT,DEPARTMENT_HEAD,EXPERT',
             'expertise'       => 'nullable|string',
             'experience_years'=> 'nullable|integer|min:0|max:60',
             'license_number'  => "nullable|string|max:50|unique:doctor_profiles,license_number,$id",
@@ -325,11 +336,20 @@ class DoctorController extends Controller
             ];
             $doctor->user->update($userData);
 
+            $level = $validated['degree'];
+            if (in_array($validated['academic_rank'], ['GS', 'PGS'])) {
+                $level = $validated['academic_rank'];
+            } elseif ($level === 'BSNT') {
+                $level = 'BS';
+            }
+
             // Update DoctorProfile
             $doctor->update([
                 'doctor_code'      => $validated['doctor_code'],
-                'academic_title'   => $validated['academic_title'] ?? null,
-                'level'            => $validated['level'],
+                'academic_rank'    => $validated['academic_rank'],
+                'degree'           => $validated['degree'],
+                'current_position' => $validated['current_position'],
+                'level'            => $level,
                 'expertise'        => $validated['expertise'] ?? null,
                 'experience_years' => $validated['experience_years'] ?? null,
                 'license_number'   => $validated['license_number'] ?? null,

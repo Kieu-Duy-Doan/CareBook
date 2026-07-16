@@ -16,14 +16,16 @@ class CancellationMail extends Mailable
 
     public Appointment $appointment;
     public Collection $alternativeDoctors;
+    public string $actor;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(Appointment $appointment, Collection $alternativeDoctors)
+    public function __construct(Appointment $appointment, Collection $alternativeDoctors, string $actor = 'system')
     {
         $this->appointment = $appointment;
         $this->alternativeDoctors = $alternativeDoctors;
+        $this->actor = $actor;
     }
 
     /**
@@ -31,8 +33,12 @@ class CancellationMail extends Mailable
      */
     public function envelope(): Envelope
     {
+        $subject = $this->actor === 'patient' 
+            ? 'Bạn đã huỷ lịch khám thành công - CareBook'
+            : 'Thông Báo Huỷ Lịch Khám - CareBook';
+
         return new Envelope(
-            subject: 'Thông Báo Huỷ Lịch Khám - CareBook',
+            subject: $subject,
         );
     }
 

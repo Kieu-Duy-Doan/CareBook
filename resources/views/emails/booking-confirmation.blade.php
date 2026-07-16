@@ -3,7 +3,11 @@
 @section('content')
     <p>Xin chào <span class="highlight">{{ $appointment->patientProfile->full_name ?? 'quý khách' }}</span>,</p>
     
-    <p>Cảm ơn bạn đã tin tưởng và đặt lịch khám tại Phòng khám CareBook.</p>
+    @if($actor === 'patient')
+        <p>Cảm ơn bạn đã tin tưởng và tự đặt lịch khám thành công tại Phòng khám CareBook.</p>
+    @else
+        <p>Phòng khám CareBook đã đặt lịch hẹn thành công cho bạn trên hệ thống.</p>
+    @endif
     
     <div class="box">
         <p style="margin-top: 0;"><strong>Thông tin lịch hẹn:</strong></p>

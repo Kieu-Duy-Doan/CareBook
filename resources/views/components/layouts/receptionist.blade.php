@@ -18,7 +18,7 @@
         @click="sidebarOpen = false" style="display: none;"></div>
     <!-- Sidebar -->
     <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-        class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transition-transform duration-300 lg:translate-x-0 flex flex-col">
+        class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transition-transform duration-300 -translate-x-full lg:translate-x-0 flex flex-col">
         <!-- Logo -->
         <div class="flex items-center gap-2 px-6 py-5 border-b border-gray-200 text-emerald-600">
             <i class="fa-solid fa-hospital-user text-2xl"></i>
@@ -50,7 +50,7 @@
                     <i class="fa-solid fa-chevron-down text-xs transition-transform"
                         :class="openUsers ? 'rotate-180' : ''"></i>
                 </button>
-                <div x-show="openUsers" x-transition class="pl-8 mt-1 space-y-1">
+                <div x-show="openUsers" x-transition class="pl-8 mt-1 space-y-1" {!! request()->routeIs('receptionist.patients.*', 'receptionist.customers.*') ? '' : 'style="display: none;"' !!}>
                     <a href="{{ route('receptionist.patients.index') }}"
                         class="flex items-center px-3 py-2 rounded-md text-sm {{ request()->routeIs('receptionist.patients.*') ? 'bg-emerald-50 text-emerald-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
                         <i class="fa-solid fa-bed-pulse w-4 mr-2 text-gray-400"></i> Bệnh nhân
@@ -71,9 +71,9 @@
             <a href="{{ route('receptionist.payments.index') }}"
                 class="{{ request()->routeIs('receptionist.payments.*') ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
                 <i class="fa-solid fa-file-invoice-dollar w-5 text-center mr-3 {{ request()->routeIs('receptionist.payments.*') ? 'text-emerald-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
-                Lịch sử thanh toán
+                Thanh toán
             </a>
-            
+
             <a href="{{ route('receptionist.profile.index') }}"
                 class="{{ request()->routeIs('receptionist.profile.*') ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
                 <i class="fa-solid fa-user-circle w-5 text-center mr-3 {{ request()->routeIs('receptionist.profile.*') ? 'text-emerald-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
@@ -113,6 +113,11 @@
             </div>
 
             <div class="flex items-center gap-4">
+                <a href="{{ route('receptionist.customer-display.index') }}" target="_blank"
+                    class="hidden md:flex items-center gap-2 bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg text-sm font-semibold border border-blue-200 transition-colors">
+                    <i class="fa-solid fa-display"></i> Mở Màn hình Phụ
+                </a>
+
                 <div x-data="{ userMenuOpen: false }" class="relative">
                     <button @click="userMenuOpen = !userMenuOpen" @click.outside="userMenuOpen = false"
                         class="flex items-center gap-2 text-sm text-gray-700 hover:text-gray-900 focus:outline-none">
@@ -138,35 +143,35 @@
                 </div>
             </div>
         </header>
-        
+
         <!-- Content -->
         <main class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
             @if (session('success'))
-                <div class="bg-green-50 border-l-4 border-green-500 p-4 mb-6 rounded-md">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <i class="fa-solid fa-check-circle text-green-500"></i>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-green-700">{{ session('success') }}</p>
-                        </div>
+            <div class="bg-green-50 border-l-4 border-green-500 p-4 mb-6 rounded-md">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fa-solid fa-check-circle text-green-500"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-green-700">{{ session('success') }}</p>
                     </div>
                 </div>
+            </div>
             @endif
 
             @if (session('error'))
-                <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-md">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <i class="fa-solid fa-exclamation-circle text-red-500"></i>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-red-700">{{ session('error') }}</p>
-                        </div>
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-md">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fa-solid fa-exclamation-circle text-red-500"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-red-700">{{ session('error') }}</p>
                     </div>
                 </div>
+            </div>
             @endif
-            
+
             {{ $slot }}
         </main>
     </div>

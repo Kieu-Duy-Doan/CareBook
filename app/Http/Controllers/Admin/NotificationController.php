@@ -5,24 +5,24 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
-use App\Services\NotificationService;
+use App\Services\CampaignService;
 use App\Http\Requests\Admin\StoreNotificationRequest;
 use App\Http\Requests\Admin\CampaignNotificationRequest;
 
 class NotificationController extends Controller
 {
-    protected $notificationService;
+    protected $campaignService;
 
-    public function __construct(NotificationService $notificationService)
+    public function __construct(CampaignService $campaignService)
     {
-        $this->notificationService = $notificationService;
+        $this->campaignService = $campaignService;
     }
 
     // Hàm hiển thị danh sách các chiến dịch thông báo đã gửi
     public function index(Request $request)
     {
         // Nhóm các thông báo gửi cùng lúc lại thành 1 "chiến dịch" để dễ nhìn
-        $campaigns = $this->notificationService->getCampaigns($request->all());
+        $campaigns = $this->campaignService->getCampaigns($request->all());
 
         return view('admin.notifications.index', compact('campaigns'));
     }
@@ -71,7 +71,7 @@ class NotificationController extends Controller
     public function store(StoreNotificationRequest $request)
     {
         // Validation đã được xử lý tự động trong StoreNotificationRequest
-        $this->notificationService->createCampaign($request->validated());
+        $this->campaignService->createCampaign($request->validated());
 
         return redirect()->route('admin.notifications.index')->with('success', 'Đã tạo và đưa vào hàng đợi thông báo thành công.');
     }
@@ -79,8 +79,8 @@ class NotificationController extends Controller
     // Hàm xóa cả một cụm thông báo đã gửi
     public function destroy(CampaignNotificationRequest $request)
     {
-        // Logic xóa được xử lý ở NotificationService
-        $this->notificationService->deleteCampaign($request->title, $request->created_at_minute);
+        // Logic xóa được xử lý ở CampaignService
+        $this->campaignService->deleteCampaign($request->batch_id);
             
         return back()->with('success', 'Đã xoá chiến dịch thông báo.');
     }
@@ -89,7 +89,7 @@ class NotificationController extends Controller
     public function resend(CampaignNotificationRequest $request)
     {
         // Đặt lại trạng thái trong Service
-        $this->notificationService->resendCampaign($request->title, $request->created_at_minute);
+        $this->campaignService->resendCampaign($request->batch_id);
 
         return back()->with('success', 'Đã đặt lại trạng thái để gửi lại thông báo qua Email.');
     }

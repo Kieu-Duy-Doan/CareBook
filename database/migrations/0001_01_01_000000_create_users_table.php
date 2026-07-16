@@ -22,6 +22,7 @@ return new class extends Migration
             $table->enum('role', ['patient', 'doctor', 'receptionist', 'admin'])->default('patient');
             $table->string('avatar_url', 500)->nullable();
             $table->boolean('is_active')->default(true);
+            $table->string('locked_reason')->nullable();
             $table->timestamp('last_login_at')->nullable();
             $table->rememberToken();
             $table->timestamps();

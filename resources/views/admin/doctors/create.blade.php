@@ -142,29 +142,44 @@
                                        class="w-full border border-gray-300 rounded-lg px-4 py-2 font-mono bg-gray-100 text-gray-500 cursor-not-allowed opacity-70">
                             </div>
 
-                            <!-- Cấp độ -->
+                            <!-- Học hàm -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Cấp độ chuyên môn <span class="text-red-500">*</span></label>
-                                <select name="level" required class="w-full border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 px-4 py-2 @error('level') border-red-500 @enderror">
-                                    <option value="">-- Chọn cấp độ --</option>
-                                    <option value="BS" {{ old('level') == 'BS' ? 'selected' : '' }}>Bác sĩ</option>
-                                    <option value="BSCK1" {{ old('level') == 'BSCK1' ? 'selected' : '' }}>Bác sĩ Chuyên khoa 1</option>
-                                    <option value="BSCK2" {{ old('level') == 'BSCK2' ? 'selected' : '' }}>Bác sĩ Chuyên khoa 2</option>
-                                    <option value="ThS" {{ old('level') == 'ThS' ? 'selected' : '' }}>Thạc sĩ</option>
-                                    <option value="TS" {{ old('level') == 'TS' ? 'selected' : '' }}>Tiến sĩ</option>
-                                    <option value="PGS" {{ old('level') == 'PGS' ? 'selected' : '' }}>Phó Giáo sư</option>
-                                    <option value="GS" {{ old('level') == 'GS' ? 'selected' : '' }}>Giáo sư</option>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Học hàm <span class="text-red-500">*</span></label>
+                                <select name="academic_rank" required class="w-full border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 px-4 py-2 @error('academic_rank') border-red-500 @enderror">
+                                    <option value="none" {{ old('academic_rank') == 'none' ? 'selected' : '' }}>Không có</option>
+                                    <option value="PGS" {{ old('academic_rank') == 'PGS' ? 'selected' : '' }}>Phó Giáo sư</option>
+                                    <option value="GS" {{ old('academic_rank') == 'GS' ? 'selected' : '' }}>Giáo sư</option>
                                 </select>
-                                @error('level') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                @error('academic_rank') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
-                            <!-- Học hàm/Học vị -->
+                            <!-- Học vị -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Học hàm học vị</label>
-                                <input type="text" name="academic_title" value="{{ old('academic_title') }}"
-                                       class="w-full border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 px-4 py-2 @error('academic_title') border-red-500 @enderror"
-                                       placeholder="VD: ThS. BS. Nội trú">
-                                @error('academic_title') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Học vị <span class="text-red-500">*</span></label>
+                                <select name="degree" required class="w-full border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 px-4 py-2 @error('degree') border-red-500 @enderror">
+                                    <option value="">-- Chọn học vị --</option>
+                                    <option value="BS" {{ old('degree') == 'BS' ? 'selected' : '' }}>Bác sĩ</option>
+                                    <option value="ThS" {{ old('degree') == 'ThS' ? 'selected' : '' }}>Thạc sĩ</option>
+                                    <option value="TS" {{ old('degree') == 'TS' ? 'selected' : '' }}>Tiến sĩ</option>
+                                    <option value="BSCK1" {{ old('degree') == 'BSCK1' ? 'selected' : '' }}>Bác sĩ Chuyên khoa 1</option>
+                                    <option value="BSCK2" {{ old('degree') == 'BSCK2' ? 'selected' : '' }}>Bác sĩ Chuyên khoa 2</option>
+                                    <option value="BSNT" {{ old('degree') == 'BSNT' ? 'selected' : '' }}>Bác sĩ Nội trú</option>
+                                </select>
+                                @error('degree') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </div>
+
+                            <!-- Cấp độ / Chức vụ Lâm sàng -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Chức vụ lâm sàng <span class="text-red-500">*</span></label>
+                                <select name="current_position" required class="w-full border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 px-4 py-2 @error('current_position') border-red-500 @enderror">
+                                    <option value="">-- Chọn chức vụ lâm sàng --</option>
+                                    <option value="INTERN" {{ old('current_position') == 'INTERN' ? 'selected' : '' }}>Bác sĩ Nội trú / Thực hành</option>
+                                    <option value="ATTENDING" {{ old('current_position') == 'ATTENDING' ? 'selected' : '' }}>Bác sĩ Điều trị</option>
+                                    <option value="CONSULTANT" {{ old('current_position') == 'CONSULTANT' ? 'selected' : '' }}>Bác sĩ Hội chẩn / Ca trưởng</option>
+                                    <option value="DEPARTMENT_HEAD" {{ old('current_position') == 'DEPARTMENT_HEAD' ? 'selected' : '' }}>Phó khoa / Trưởng khoa Lâm sàng</option>
+                                    <option value="EXPERT" {{ old('current_position') == 'EXPERT' ? 'selected' : '' }}>Giám đốc Chuyên môn / Chuyên gia</option>
+                                </select>
+                                @error('current_position') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
                             <!-- Số năm kinh nghiệm -->

@@ -20,6 +20,7 @@ class Appointment extends Model
         'status',
         'source',
         'booking_method',
+        'total_fee',
         'receptionist_note',
         'vital_pulse',
         'vital_systolic_bp',
@@ -92,6 +93,11 @@ class Appointment extends Model
     public function clinicalVisits()
     {
         return $this->hasMany(ClinicalVisit::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
     }
 
     public function medicalRecord()

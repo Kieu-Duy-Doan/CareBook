@@ -1,6 +1,6 @@
 <x-layouts.patient-dashboard :title="$title ?? 'Hồ sơ bệnh nhân'" :activeMenu="$activeMenu ?? 'profiles'">
     <div>
-        <div class="flex items-center justify-between mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
                 <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">{{ $title ?? 'Hồ sơ bệnh nhân' }}</h1>
                 <p class="text-slate-500 mt-2 text-sm md:text-base">
@@ -8,7 +8,7 @@
                 </p>
             </div>
             <a href="{{ route('patient.profiles.create') }}"
-                class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary text-white font-semibold rounded-2xl transition-colors hover:bg-primary-dark active:scale-95">
+                class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary text-white font-semibold rounded-2xl transition-colors hover:bg-primary-dark active:scale-95 shrink-0 self-start sm:self-auto whitespace-nowrap">
                 <div
                     class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out">
                 </div>
