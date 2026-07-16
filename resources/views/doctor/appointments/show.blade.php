@@ -151,7 +151,7 @@
                                             <h5 class="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
                                                 <i class="fa-solid fa-pills text-purple-500"></i> Đơn thuốc
                                             </h5>
-                                            @if($pastApt->medicalRecord->prescription && $pastApt->medicalRecord->prescription->details->count() > 0)
+                                            @if($pastApt->medicalRecord->prescription && is_array($pastApt->medicalRecord->prescription->items) && count($pastApt->medicalRecord->prescription->items) > 0)
                                                 <div class="border border-gray-200 rounded-lg overflow-hidden">
                                                     <table class="min-w-full divide-y divide-gray-200 text-sm">
                                                         <thead class="bg-gray-50">
@@ -162,11 +162,11 @@
                                                             </tr>
                                                         </thead>
                                                         <tbody class="divide-y divide-gray-200 bg-white">
-                                                            @foreach($pastApt->medicalRecord->prescription->details as $detail)
+                                                            @foreach($pastApt->medicalRecord->prescription->items as $detail)
                                                                 <tr>
-                                                                    <td class="px-3 py-2 text-gray-900 font-medium">{{ $detail->medication->name ?? $detail->medication_name }}</td>
-                                                                    <td class="px-3 py-2 text-gray-700">{{ $detail->quantity }}</td>
-                                                                    <td class="px-3 py-2 text-gray-500 text-xs">{{ $detail->dosage }}</td>
+                                                                    <td class="px-3 py-2 text-gray-900 font-medium">{{ $detail['medication_name'] ?? ($detail['name'] ?? '—') }}</td>
+                                                                    <td class="px-3 py-2 text-gray-700">{{ $detail['quantity'] ?? '—' }}</td>
+                                                                    <td class="px-3 py-2 text-gray-500 text-xs">{{ $detail['dosage'] ?? '—' }}</td>
                                                                 </tr>
                                                             @endforeach
                                                         </tbody>
@@ -200,10 +200,10 @@
             @endif
         </div>
 
-        <!-- Cập nhật trạng thái -->
+        <!-- Panel hành động theo trạng thái -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h3 class="text-lg font-bold text-gray-900 border-b border-gray-100 pb-4 mb-4">Trạng thái lịch hẹn</h3>
-            
+
             <div class="mb-4">
                 <span class="block text-sm text-gray-500 mb-1">Trạng thái hiện tại:</span>
                 @php $color = $appointment->status_color; @endphp
@@ -212,26 +212,147 @@
                 </span>
             </div>
 
-            <form action="{{ route('doctor.appointments.update-status', $appointment->id) }}" method="POST">
-                @csrf
-                <div class="mb-4">
-                    <label class="block text-sm text-gray-500 mb-1">Cập nhật thành:</label>
-                    <select name="status" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none">
-                        <option value="pending" {{ $appointment->status === 'pending' ? 'selected' : '' }}>Đã tiếp nhận</option>
-                        <option value="checked_in" {{ $appointment->status === 'checked_in' ? 'selected' : '' }}>Đã check-in</option>
-                        <option value="examining" {{ $appointment->status === 'examining' ? 'selected' : '' }}>Đang khám</option>
-                        <option value="completed" {{ $appointment->status === 'completed' ? 'selected' : '' }}>Hoàn thành</option>
-                        <option value="absent" {{ $appointment->status === 'absent' ? 'selected' : '' }}>Vắng mặt</option>
-                    </select>
+            {{-- ===== LUỒNG HÀNH ĐỘNG THEO TRẠNG THÁI ===== --}}
+
+            @if ($appointment->status === 'checked_in')
+                {{-- Bệnh nhân đã check-in → Bác sĩ bắt đầu khám --}}
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                    <p class="text-sm text-blue-700 mb-3"><i class="fa-solid fa-circle-info mr-1"></i> Bệnh nhân đã check-in và đang chờ khám.</p>
+                    <form action="{{ route('doctor.appointments.update-status', $appointment->id) }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="status" value="examining">
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-stethoscope"></i> Bắt đầu khám
+                        </button>
+                    </form>
                 </div>
-                <div class="mb-4">
-                    <label class="block text-sm text-gray-500 mb-1">Ghi chú (Tuỳ chọn):</label>
-                    <textarea name="reason" rows="2" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none"></textarea>
+
+            @elseif ($appointment->status === 'examining')
+                {{-- Đang khám → 2 nút: Giám sát CLS + Ghi kết luận --}}
+                @php
+                    $clinicalVisits    = $appointment->clinicalVisits ?? collect();
+                    $subVisits         = $clinicalVisits->where('is_origin', false);
+                    $totalSubs         = $subVisits->count();
+                    $completedSubs     = $subVisits->whereIn('status', ['completed', 'refused'])->count();
+                    $allSubsDone       = $totalSubs > 0 && $completedSubs === $totalSubs;
+                    $hasRecord         = $appointment->medicalRecord !== null;
+                    $hasPrescription   = $hasRecord && $appointment->medicalRecord->prescription !== null;
+                    $canComplete       = $hasRecord && ($totalSubs === 0 || $allSubsDone);
+                @endphp
+
+                {{-- Tiến trình phòng cận lâm sàng (nếu có chỉ định) --}}
+                @if ($totalSubs > 0)
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-semibold text-gray-700">Tiến trình cận lâm sàng</span>
+                            <span class="text-xs font-bold {{ $allSubsDone ? 'text-green-600' : 'text-amber-600' }}">
+                                {{ $completedSubs }}/{{ $totalSubs }} phòng hoàn thành
+                            </span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mb-3">
+                            <div class="h-2 rounded-full {{ $allSubsDone ? 'bg-green-500' : 'bg-blue-500' }} transition-all"
+                                 style="width: {{ $totalSubs > 0 ? round(($completedSubs / $totalSubs) * 100) : 0 }}%"></div>
+                        </div>
+                        @if ($allSubsDone)
+                            <p class="text-xs text-green-700 font-medium"><i class="fa-solid fa-circle-check mr-1"></i>Tất cả phòng khám đã hoàn tất. Sẵn sàng kết luận!</p>
+                        @else
+                            <p class="text-xs text-amber-700"><i class="fa-solid fa-clock mr-1"></i>Đang chờ kết quả từ các phòng cận lâm sàng...</p>
+                        @endif
+                    </div>
+                @endif
+
+                <div class="space-y-2">
+                    <a href="{{ route('doctor.clinical-visits.show', $appointment->id) }}"
+                       class="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-lg text-sm font-semibold transition-colors">
+                        <i class="fa-solid fa-microscope"></i> Giám sát lâm sàng & Chỉ định
+                    </a>
+
+                    @if ($hasRecord)
+                        <a href="{{ route('doctor.medical-records.show', $appointment->medicalRecord->id) }}"
+                           class="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-lg text-sm font-semibold transition-colors">
+                            <i class="fa-solid fa-file-medical"></i> Xem / Sửa hồ sơ bệnh án
+                        </a>
+                    @else
+                        <a href="{{ route('doctor.medical-records.create', $appointment->id) }}"
+                           class="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-lg text-sm font-semibold transition-colors">
+                            <i class="fa-solid fa-file-circle-plus"></i> Ghi kết luận bệnh án
+                        </a>
+                    @endif
+
+                    @if ($canComplete)
+                        <form action="{{ route('doctor.appointments.update-status', $appointment->id) }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="status" value="completed">
+                            <button type="submit"
+                                onclick="return confirm('Bạn xác nhận hoàn thành buổi khám này?')"
+                                class="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-lg text-sm font-semibold transition-colors">
+                                <i class="fa-solid fa-circle-check"></i> Hoàn thành khám
+                            </button>
+                        </form>
+                    @else
+                        <div class="text-xs text-center text-gray-400 italic pt-1">
+                            @if (!$hasRecord)
+                                Cần ghi kết luận bệnh án trước khi hoàn thành.
+                            @elseif (!$allSubsDone && $totalSubs > 0)
+                                Còn {{ $totalSubs - $completedSubs }} phòng cận lâm sàng chưa xong.
+                            @endif
+                        </div>
+                    @endif
                 </div>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium transition-colors">
-                    Lưu trạng thái
-                </button>
-            </form>
+
+                {{-- Huỷ/Vắng --}}
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <form action="{{ route('doctor.appointments.update-status', $appointment->id) }}" method="POST" class="flex gap-2">
+                        @csrf
+                        <select name="status" class="flex-1 text-xs border border-gray-300 rounded-lg px-2 py-1.5 outline-none bg-white">
+                            <option value="cancelled">Huỷ lịch hẹn</option>
+                            <option value="absent">Vắng mặt</option>
+                        </select>
+                        <textarea name="reason" rows="1" placeholder="Lý do..." class="flex-1 text-xs border border-gray-300 rounded-lg px-2 py-1.5 outline-none resize-none"></textarea>
+                        <button type="submit" class="text-xs bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1.5 rounded-lg transition-colors">Xác nhận</button>
+                    </form>
+                </div>
+
+            @elseif ($appointment->status === 'completed')
+                {{-- Đã hoàn thành → Xem kết quả --}}
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                    <p class="text-sm text-green-700 font-medium"><i class="fa-solid fa-circle-check mr-1"></i>Buổi khám đã hoàn thành.</p>
+                </div>
+                <div class="space-y-2">
+                    <a href="{{ route('doctor.clinical-visits.show', $appointment->id) }}"
+                       class="w-full flex items-center justify-center gap-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 py-2 rounded-lg text-sm font-medium transition-colors">
+                        <i class="fa-solid fa-microscope"></i> Xem giám sát lâm sàng
+                    </a>
+                    @if ($appointment->medicalRecord)
+                        <a href="{{ route('doctor.medical-records.show', $appointment->medicalRecord->id) }}"
+                           class="w-full flex items-center justify-center gap-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 py-2 rounded-lg text-sm font-medium transition-colors">
+                            <i class="fa-solid fa-file-medical"></i> Xem hồ sơ bệnh án
+                        </a>
+                    @endif
+                </div>
+
+            @else
+                {{-- Trạng thái pending / cancelled / absent → dropdown generic --}}
+                <form action="{{ route('doctor.appointments.update-status', $appointment->id) }}" method="POST">
+                    @csrf
+                    <div class="mb-4">
+                        <label class="block text-sm text-gray-500 mb-1">Cập nhật thành:</label>
+                        <select name="status" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none">
+                            <option value="pending" {{ $appointment->status === 'pending' ? 'selected' : '' }}>Đã tiếp nhận</option>
+                            <option value="checked_in" {{ $appointment->status === 'checked_in' ? 'selected' : '' }}>Đã check-in</option>
+                            <option value="cancelled" {{ $appointment->status === 'cancelled' ? 'selected' : '' }}>Đã huỷ</option>
+                            <option value="absent" {{ $appointment->status === 'absent' ? 'selected' : '' }}>Vắng mặt</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm text-gray-500 mb-1">Ghi chú (Tuỳ chọn):</label>
+                        <textarea name="reason" rows="2" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none"></textarea>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium transition-colors">
+                        Lưu trạng thái
+                    </button>
+                </form>
+            @endif
         </div>
     </div>
 

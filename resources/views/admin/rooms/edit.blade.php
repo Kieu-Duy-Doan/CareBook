@@ -13,7 +13,7 @@
             @method('PUT')
 
             <div class="px-6 py-6 space-y-6">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6" x-data="{ roomType: '{{ old('room_type', $room->room_type) }}' }">
                     <div class="sm:col-span-2">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Tên phòng <span class="text-red-500">*</span></label>
                         <input type="text" name="name" value="{{ old('name', $room->name) }}" required
@@ -30,14 +30,22 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Loại phòng <span class="text-red-500">*</span></label>
-                        <select name="room_type" required class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
+                        <select name="room_type" x-model="roomType" required class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
                             <option value="">-- Chọn loại phòng --</option>
-                            <option value="examination" {{ old('room_type', $room->room_type) == 'examination' ? 'selected' : '' }}>Phòng khám</option>
-                            <option value="diagnostic" {{ old('room_type', $room->room_type) == 'diagnostic' ? 'selected' : '' }}>Cận lâm sàng</option>
-                            <option value="surgery" {{ old('room_type', $room->room_type) == 'surgery' ? 'selected' : '' }}>Phẫu thuật</option>
-                            <option value="other" {{ old('room_type', $room->room_type) == 'other' ? 'selected' : '' }}>Khác</option>
+                            <option value="examination">Phòng khám</option>
+                            <option value="diagnostic">Cận lâm sàng</option>
+                            <option value="surgery">Phẫu thuật</option>
+                            <option value="other">Khác</option>
                         </select>
                         @error('room_type') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <!-- Ô nhập giá tiền (chỉ hiện khi room_type là diagnostic) -->
+                    <div x-show="roomType === 'diagnostic'" style="display: none;">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Giá tiền dịch vụ (VNĐ) <span class="text-red-500">*</span></label>
+                        <input type="number" name="price" value="{{ old('price', $room->price) }}" min="0" :required="roomType === 'diagnostic'"
+                            class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none" placeholder="VD: 200000">
+                        @error('price') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     <div>

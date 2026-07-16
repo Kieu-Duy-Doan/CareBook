@@ -105,6 +105,7 @@ class BookingService
             $query->where('doctor_profile_id', $doctorId);
         } elseif ($specialtyId) {
             $query->whereHas('doctorProfile', function ($q) use ($specialtyId, $level) {
+                $q->where('doctor_type', 'clinical');
                 $q->whereHas('specialties', function ($sq) use ($specialtyId) {
                     $sq->where('specialties.id', $specialtyId);
                 });
@@ -451,10 +452,11 @@ class BookingService
         if ($doctorId) {
             $query->where('doctor_profile_id', $doctorId);
         } elseif ($specialtyId) {
-            $ids = DoctorProfile::whereHas(
-                'specialties',
-                fn($q) => $q->where('specialties.id', $specialtyId)
-            );
+            $ids = DoctorProfile::where('doctor_type', 'clinical')
+                ->whereHas(
+                    'specialties',
+                    fn($q) => $q->where('specialties.id', $specialtyId)
+                );
             if ($level) {
                 $ids->where('level', $level);
             }

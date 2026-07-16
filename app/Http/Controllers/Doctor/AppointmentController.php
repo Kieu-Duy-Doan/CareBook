@@ -21,26 +21,35 @@ class AppointmentController extends Controller
         }
 
         $query = Appointment::with(['patientProfile', 'specialty', 'room', 'bookedByUser'])
-            ->where('doctor_profile_id', $doctorProfile->id)
-            ->latest('appointment_date')
-            ->latest('appointment_time');
+            ->where('doctor_profile_id', $doctorProfile->id);
 
-        if ($request->filled('date_from')) {
-            $query->whereDate('appointment_date', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->whereDate('appointment_date', '<=', $request->date_to);
-        }
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-        if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('appointment_code', 'like', '%' . $request->search . '%')
-                    ->orWhereHas('patientProfile', function($pq) use ($request) {
-                        $pq->where('full_name', 'like', '%' . $request->search . '%');
-                    });
-            });
+        // Nếu không có bất kỳ tham số lọc nào trên URL (vào trang lần đầu hoặc bấm Đặt lại)
+        if (!$request->hasAny(['date_from', 'date_to', 'status', 'search'])) {
+            $query->whereDate('appointment_date', today())
+                  ->where('status', '!=', 'pending')
+                  ->orderByRaw("CASE WHEN status = 'checked_in' THEN 1 ELSE 2 END ASC")
+                  ->orderBy('appointment_time', 'asc');
+        } else {
+            if ($request->filled('date_from')) {
+                $query->whereDate('appointment_date', '>=', $request->date_from);
+            }
+            if ($request->filled('date_to')) {
+                $query->whereDate('appointment_date', '<=', $request->date_to);
+            }
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+            if ($request->filled('search')) {
+                $query->where(function ($q) use ($request) {
+                    $q->where('appointment_code', 'like', '%' . $request->search . '%')
+                        ->orWhereHas('patientProfile', function($pq) use ($request) {
+                            $pq->where('full_name', 'like', '%' . $request->search . '%');
+                        });
+                });
+            }
+            // Sắp xếp mặc định khi có tìm kiếm/lọc
+            $query->latest('appointment_date')
+                  ->latest('appointment_time');
         }
 
         $appointments = $query->paginate(15)->withQueryString();
@@ -90,10 +99,29 @@ class AppointmentController extends Controller
         $user = Auth::user();
         $doctorProfile = $user->doctorProfile;
 
-        $appointment = Appointment::where('doctor_profile_id', $doctorProfile->id)->findOrFail($id);
+        $appointment = Appointment::where('doctor_profile_id', $doctorProfile->id)
+            ->with(['clinicalVisits', 'medicalRecord.prescription'])
+            ->findOrFail($id);
         
         $oldStatus = $appointment->status;
         $newStatus = $request->status;
+
+        // Guard: kiểm tra điều kiện hoàn thành
+        if ($newStatus === 'completed') {
+            // Phải có MedicalRecord
+            if (!$appointment->medicalRecord) {
+                return back()->with('error', 'Vui lòng ghi kết luận bệnh án trước khi hoàn thành.');
+            }
+
+            // Tất cả ClinicalVisit phải đã hoàn thành
+            $pendingVisits = $appointment->clinicalVisits
+                ->whereNotIn('status', ['completed', 'refused'])
+                ->count();
+
+            if ($pendingVisits > 0) {
+                return back()->with('error', "Còn {$pendingVisits} phòng khám chưa hoàn thành. Vui lòng đợi kết quả từ tất cả phòng được chỉ định.");
+            }
+        }
 
         if ($oldStatus !== $newStatus) {
             $appointment->status = $newStatus;
@@ -109,6 +137,14 @@ class AppointmentController extends Controller
 
             if (in_array($newStatus, ['checked_in', 'examining'])) {
                 $this->createClinicalVisitIfNotExists($appointment);
+            }
+
+            // Cập nhật started_at cho ClinicalVisit gốc khi bắt đầu khám
+            if ($newStatus === 'examining') {
+                ClinicalVisit::where('appointment_id', $appointment->id)
+                    ->where('is_origin', true)
+                    ->whereNull('started_at')
+                    ->update(['started_at' => now(), 'status' => 'in_progress']);
             }
 
             AppointmentLog::create([
