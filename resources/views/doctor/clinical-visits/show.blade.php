@@ -166,26 +166,17 @@
                 </div>
 
                 @if ($unpaidAmount > 0)
-                    <form action="{{ route('doctor.clinical-visits.payment', $appointment->id) }}" method="POST">
-                        @csrf
-                        <input type="hidden" name="amount" value="{{ $unpaidAmount }}">
-                        <div class="mb-4">
-                            <label class="block text-sm text-gray-500 mb-1">Phương thức thanh toán</label>
-                            <select name="payment_method" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white" required>
-                                <option value="cash">Tiền mặt</option>
-                                <option value="qr">Chuyển khoản / QR</option>
-                                <option value="insurance">Bảo hiểm chi trả</option>
-                                <option value="waived">Miễn phí / Khác</option>
-                            </select>
-                        </div>
-                        <div class="mb-4">
-                            <label class="block text-sm text-gray-500 mb-1">Ghi chú (Tuỳ chọn)</label>
-                            <input type="text" name="notes" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
-                        </div>
-                        <button type="submit" onclick="return confirm('Xác nhận thanh toán số tiền {{ number_format($unpaidAmount) }} VNĐ?')" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-sm font-medium transition-colors">
-                            Xác nhận thanh toán
-                        </button>
-                    </form>
+                    <div class="bg-amber-50 p-3 rounded-lg mb-4 text-amber-800 text-sm border border-amber-200">
+                        <i class="fa-solid fa-circle-exclamation mr-1"></i> Bệnh nhân cần thanh toán khoản phí này để tiếp tục khám các phòng ban khác.
+                    </div>
+                    
+                    <a href="{{ route('doctor.payments.checkout', $appointment->id) }}" class="w-full inline-flex justify-center items-center bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg text-sm font-medium transition-colors shadow-sm mb-3">
+                        <i class="fa-solid fa-qrcode mr-2 text-lg"></i> Tạo mã QR Thanh toán
+                    </a>
+                    
+                    <div class="text-center text-sm text-gray-500">
+                        hoặc <span class="font-semibold text-gray-700">hướng dẫn bệnh nhân ra quầy lễ tân</span> để thanh toán bằng tiền mặt.
+                    </div>
                 @else
                     <div class="bg-green-50 text-green-700 p-3 rounded-lg text-center font-medium border border-green-200">
                         <i class="fa-solid fa-check-circle mr-1"></i> Đã thanh toán đầy đủ
