@@ -40,6 +40,7 @@ return [
         'bank_name' => env('SEPAY_BANK_NAME'),
         'template' => env('SEPAY_TEMPLATE', 'compact'),
         'webhook_secret' => env('SEPAY_WEBHOOK_SECRET'),
+        'api_token' => env('SEPAY_API_TOKEN'),
     ],
 
 ];

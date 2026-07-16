@@ -208,7 +208,7 @@ class PaymentController extends Controller
     }
 
     /**
-     * Xác nhận đã thối tiền thừa cho bệnh nhân
+     * Tạo yêu cầu hoàn tiền thừa cho bệnh nhân
      */
     public function confirmRefund(Request $request, string $id)
     {
@@ -216,18 +216,33 @@ class PaymentController extends Controller
         $summary = $this->paymentService->calculateSummary($appointment);
 
         if ($summary['overpaid_amount'] > 0) {
-            Payment::create([
+            $lastPayment = Payment::where('appointment_id', $appointment->id)
+                ->where('status', 'completed')
+                ->latest('paid_at')
+                ->first();
+
+            if (!$lastPayment) {
+                return redirect()->back()->with('error', 'Không tìm thấy giao dịch gốc để hoàn tiền.');
+            }
+
+            \App\Models\RefundRequest::create([
                 'appointment_id' => $appointment->id,
-                'transaction_code' => 'RFD' . time() . \Illuminate\Support\Str::random(4),
-                'amount' => -$summary['overpaid_amount'],
-                'method' => 'cash',
-                'status' => 'refunded',
-                'collected_by' => Auth::id(),
-                'paid_at' => now(),
-                'note' => 'Đã thối tiền mặt ' . number_format($summary['overpaid_amount'], 0, ',', '.') . 'đ cho bệnh nhân',
+                'payment_id' => $lastPayment->id,
+                'amount' => $summary['overpaid_amount'],
+                'reason' => 'Hoàn tiền thừa ' . number_format($summary['overpaid_amount'], 0, ',', '.') . 'đ cho bệnh nhân',
+                'status' => 'pending',
+                'refund_method' => 'cash',
+                'requested_by' => Auth::id(),
             ]);
 
-            return redirect()->back()->with('success', 'Đã ghi nhận hoàn tiền thừa thành công.');
+            \App\Models\PaymentLog::record(
+                'refund_requested',
+                "Lễ tân yêu cầu hoàn tiền thừa " . number_format($summary['overpaid_amount']) . "đ cho bệnh nhân",
+                'info',
+                ['appointment_id' => $appointment->id]
+            );
+
+            return redirect()->back()->with('success', 'Đã tạo yêu cầu hoàn tiền thừa thành công. Vui lòng báo quản lý duyệt.');
         }
 
         return redirect()->back()->with('error', 'Không có khoản tiền thừa nào cần hoàn trả.');

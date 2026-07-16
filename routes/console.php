@@ -12,3 +12,4 @@ use Illuminate\Support\Facades\Schedule;
 Schedule::command('notifications:process')->everyMinute();
 Schedule::command('notifications:process-scheduled')->everyMinute();
 Schedule::command('appointments:remind')->everyFiveMinutes();
+Schedule::command('sepay:sync')->everyFiveMinutes();

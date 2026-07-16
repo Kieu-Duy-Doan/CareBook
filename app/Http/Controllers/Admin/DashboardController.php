@@ -28,7 +28,7 @@ class DashboardController extends Controller
     /**
      * Hiển thị giao diện Bảng điều khiển (Dashboard)
      * 
-     * @param Request $request Chứa các tham số query (ví dụ: trend=day|month|year)
+     * @param Request $request
      */
     public function index(Request $request)
     {
@@ -37,32 +37,38 @@ class DashboardController extends Controller
         $startOfMonth = Carbon::now()->startOfMonth();
 
         // 1. Dữ liệu thẻ thông tin (KPI Cards)
-        // Gọi service tính toán: Số lịch khám, tăng trưởng, bệnh nhân mới, tỷ lệ hoàn thành...
         $kpiData = $this->dashboardService->getKpiData($today, $startOfMonth);
 
-        // 2. Dữ liệu biểu đồ xu hướng (Trend Chart)
-        // Mặc định là tháng hiện tại và năm hiện tại
-        $targetMonth = $request->query('target_month', Carbon::now()->month);
-        $targetYear = $request->query('target_year', Carbon::now()->year);
-        
-        // Nếu chọn "Cả năm" (all) thì xem theo tháng, ngược lại xem theo ngày trong tháng đó
-        $trendFilter = $targetMonth === 'all' ? 'year_months' : 'month_days';
-        
-        $trendData = $this->dashboardService->getTrendData($trendFilter, $targetMonth, $targetYear);
-
-        // 3. Phân bổ chuyên khoa (Pie Chart)
-        // Gọi service để đếm số lịch khám chia theo từng khoa trong tháng
-        $specialtyData = $this->dashboardService->getSpecialtyPieData($startOfMonth);
-
-        // 4. Danh sách Top Bác sĩ & Lịch khám hôm nay
-        // Gọi service lấy top 5 bác sĩ bận rộn nhất và 10 lịch khám tiếp theo trong ngày
+        // 2. Danh sách Top Bác sĩ & Lịch khám hôm nay
         $topDoctors = $this->dashboardService->getTopDoctors($startOfMonth);
         $todayAppointments = $this->dashboardService->getTodayAppointments($today);
 
-        // Gộp tất cả data (mảng) lại và đẩy ra view hiển thị
-        return view('admin.dashboard', array_merge($kpiData, $trendData, $specialtyData, [
+        // Đẩy data ra view hiển thị (Chưa kèm Data biểu đồ vì sẽ fetch qua AJAX)
+        return view('admin.dashboard', array_merge($kpiData, [
             'topDoctors' => $topDoctors,
             'todayAppointments' => $todayAppointments,
         ]));
+    }
+
+    /**
+     * API trả về dữ liệu biểu đồ cho AJAX
+     */
+    public function data(Request $request)
+    {
+        $startOfMonth = Carbon::now()->startOfMonth();
+
+        // Lấy query từ Request
+        $targetMonth = $request->query('target_month', Carbon::now()->month);
+        $targetYear = $request->query('target_year', Carbon::now()->year);
+        
+        $trendFilter = $targetMonth === 'all' ? 'year_months' : 'month_days';
+        
+        $trendData = $this->dashboardService->getTrendData($trendFilter, $targetMonth, $targetYear);
+        $specialtyData = $this->dashboardService->getSpecialtyPieData($startOfMonth);
+
+        return response()->json([
+            'trend' => $trendData,
+            'specialty' => $specialtyData
+        ]);
     }
 }

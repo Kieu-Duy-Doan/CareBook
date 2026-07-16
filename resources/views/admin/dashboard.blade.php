@@ -1,24 +1,39 @@
 <x-layouts.admin title="Bảng điều khiển">
-    <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-            <h2 class="text-2xl font-bold text-gray-900">Bảng điều khiển</h2>
-            <p class="text-gray-500 mt-1">Tổng quan tình hình hoạt động của phòng khám CareBook</p>
+    <div class="mb-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Bảng điều khiển</h2>
+                <p class="text-gray-500 mt-1">Tổng quan tình hình hoạt động của phòng khám CareBook</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-sm text-gray-500">Cập nhật lúc: <span
+                        class="font-medium text-gray-900">{{ now()->format('H:i d/m/Y') }}</span></span>
+                <button onclick="window.location.reload()"
+                    class="p-2 text-gray-500 hover:text-blue-600 bg-white rounded-lg border border-gray-200 shadow-sm transition-colors"
+                    title="Làm mới dữ liệu">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
         </div>
-        <div class="flex items-center gap-2">
-            <span class="text-sm text-gray-500">Cập nhật lúc: <span
-                    class="font-medium text-gray-900">{{ now()->format('H:i d/m/Y') }}</span></span>
-            <button onclick="window.location.reload()"
-                class="p-2 text-gray-500 hover:text-blue-600 bg-white rounded-lg border border-gray-200 shadow-sm transition-colors"
-                title="Làm mới dữ liệu">
-                <i class="fa-solid fa-rotate-right"></i>
-            </button>
+
+        <div class="mt-6 border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8">
+                <a href="{{ route('admin.dashboard') }}"
+                   class="{{ request()->routeIs('admin.dashboard') ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm">
+                    <i class="fa-solid fa-chart-pie mr-2"></i> Tổng quan
+                </a>
+                <a href="{{ route('admin.payments.dashboard') }}"
+                   class="{{ request()->routeIs('admin.payments.dashboard') ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm">
+                    <i class="fa-solid fa-money-bill-wave mr-2"></i> Tài chính & Thanh toán
+                </a>
+            </nav>
         </div>
     </div>
 
     <!-- Hàng 1: KPI Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 mb-8">
         <!-- Card 1: Lịch khám hôm nay -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 relative overflow-hidden group">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 relative overflow-hidden group hover:shadow-md transition-shadow">
             <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                 <i class="fa-regular fa-calendar-check text-6xl text-blue-600"></i>
             </div>
@@ -32,22 +47,89 @@
                 </div>
             </div>
             <div class="flex items-center text-sm relative z-10">
-                @if ($apptGrowth > 0)
-                    <span class="text-green-600 font-medium flex items-center bg-green-50 px-2 py-0.5 rounded-full"><i
-                            class="fa-solid fa-arrow-trend-up mr-1 text-xs"></i> +{{ round($apptGrowth, 1) }}%</span>
-                @elseif($apptGrowth < 0)
-                    <span class="text-red-600 font-medium flex items-center bg-red-50 px-2 py-0.5 rounded-full"><i
-                            class="fa-solid fa-arrow-trend-down mr-1 text-xs"></i> {{ round($apptGrowth, 1) }}%</span>
-                @else
-                    <span class="text-gray-500 font-medium flex items-center bg-gray-50 px-2 py-0.5 rounded-full"><i
-                            class="fa-solid fa-minus mr-1 text-xs"></i> 0%</span>
-                @endif
-                <span class="text-gray-400 ml-2">so với hôm qua</span>
+                <span class="text-gray-500 font-medium text-xs">Ca khám mới</span>
             </div>
         </div>
 
-        <!-- Card 2: Bệnh nhân mới -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 relative overflow-hidden group">
+        <!-- Card 2: Lịch bị hủy hôm nay -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 relative overflow-hidden group hover:shadow-md transition-shadow">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <i class="fa-solid fa-calendar-xmark text-6xl text-red-600"></i>
+            </div>
+            <div class="flex justify-between items-start mb-4 relative z-10">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Bị hủy hôm nay</p>
+                    <h3 class="text-3xl font-bold text-gray-900 mt-1">{{ number_format($canceledToday ?? 0) }}</h3>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-600">
+                    <i class="fa-solid fa-ban"></i>
+                </div>
+            </div>
+            <div class="flex items-center text-sm relative z-10">
+                <span class="text-gray-500 font-medium text-xs">Ca bị hủy/từ chối</span>
+            </div>
+        </div>
+
+        <!-- Card 3: Tỷ lệ hoàn thành khám -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 relative overflow-hidden group hover:shadow-md transition-shadow">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <i class="fa-solid fa-check-double text-6xl text-emerald-600"></i>
+            </div>
+            <div class="flex justify-between items-start mb-4 relative z-10">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Tỷ lệ hoàn thành (Hôm nay)</p>
+                    <h3 class="text-3xl font-bold text-gray-900 mt-1">{{ $completionRate }}%</h3>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
+                    <i class="fa-solid fa-check-to-slot"></i>
+                </div>
+            </div>
+            <div class="w-full bg-gray-100 rounded-full h-1.5 mt-2 relative z-10">
+                <div class="bg-emerald-500 h-1.5 rounded-full" style="width: {{ $completionRate }}%"></div>
+            </div>
+            <p class="text-xs text-gray-400 mt-2 relative z-10">{{ $completedToday }} / {{ $todayApptCount }} ca đã khám</p>
+        </div>
+
+        <!-- Card 4: Doanh thu hôm nay -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 relative overflow-hidden group hover:shadow-md transition-shadow">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <i class="fa-solid fa-hand-holding-dollar text-6xl text-amber-600"></i>
+            </div>
+            <div class="flex justify-between items-start mb-4 relative z-10">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Doanh thu hôm nay</p>
+                    <h3 class="text-3xl font-bold text-gray-900 mt-1">{{ number_format($revenueToday ?? 0) }}đ</h3>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
+                    <i class="fa-solid fa-coins"></i>
+                </div>
+            </div>
+            <div class="flex items-center text-sm relative z-10">
+                <span class="text-gray-500 font-medium">Tổng thu trong ngày</span>
+            </div>
+        </div>
+
+        <!-- Card 5: Doanh thu tháng này -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 relative overflow-hidden group hover:shadow-md transition-shadow">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <i class="fa-solid fa-vault text-6xl text-indigo-600"></i>
+            </div>
+            <div class="flex justify-between items-start mb-4 relative z-10">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Doanh thu tháng này</p>
+                    <h3 class="text-3xl font-bold text-gray-900 mt-1">{{ number_format($revenueThisMonth ?? 0) }}đ</h3>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
+                    <i class="fa-solid fa-sack-dollar"></i>
+                </div>
+            </div>
+            <div class="flex items-center text-sm relative z-10">
+                <span class="text-gray-500 font-medium">Tổng thu trong tháng</span>
+            </div>
+        </div>
+
+        <!-- Card 6: Bệnh nhân mới -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 relative overflow-hidden group hover:shadow-md transition-shadow">
             <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                 <i class="fa-solid fa-users text-6xl text-teal-600"></i>
             </div>
@@ -75,46 +157,6 @@
                 <span class="text-gray-400 ml-2">so với tháng trước</span>
             </div>
         </div>
-
-        <!-- Card 3: Tỷ lệ hoàn thành khám -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 relative overflow-hidden group">
-            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <i class="fa-solid fa-check-double text-6xl text-emerald-600"></i>
-            </div>
-            <div class="flex justify-between items-start mb-4 relative z-10">
-                <div>
-                    <p class="text-sm font-medium text-gray-500">Tỷ lệ hoàn thành hôm nay</p>
-                    <h3 class="text-3xl font-bold text-gray-900 mt-1">{{ $completionRate }}%</h3>
-                </div>
-                <div class="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
-                    <i class="fa-solid fa-check-to-slot"></i>
-                </div>
-            </div>
-            <div class="w-full bg-gray-100 rounded-full h-1.5 mt-2">
-                <div class="bg-emerald-500 h-1.5 rounded-full" style="width: {{ $completionRate }}%"></div>
-            </div>
-            <p class="text-xs text-gray-400 mt-2">{{ $completedToday }} / {{ $todayApptCount }} ca đã khám</p>
-        </div>
-
-        <!-- Card 4: Bác sĩ trực -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 relative overflow-hidden group">
-            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <i class="fa-solid fa-user-doctor text-6xl text-indigo-600"></i>
-            </div>
-            <div class="flex justify-between items-start mb-4 relative z-10">
-                <div>
-                    <p class="text-sm font-medium text-gray-500">Bác sĩ đang hoạt động</p>
-                    <h3 class="text-3xl font-bold text-gray-900 mt-1">{{ number_format($activeDoctorsCount) }}</h3>
-                </div>
-                <div class="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
-                    <i class="fa-solid fa-stethoscope"></i>
-                </div>
-            </div>
-            <div class="flex items-center text-sm relative z-10">
-                <span class="text-indigo-600 font-medium flex items-center bg-indigo-50 px-2 py-0.5 rounded-full"><i
-                        class="fa-solid fa-circle text-[8px] mr-1.5 text-indigo-500"></i> Sẵn sàng phục vụ</span>
-            </div>
-        </div>
     </div>
 
     <!-- Hàng 2: Biểu đồ thống kê (Pure JS) -->
@@ -126,53 +168,43 @@
 
                 <!-- Filter Buttons -->
                 <div class="flex items-center gap-2">
-                    <form method="GET" action="{{ route('admin.dashboard') }}" class="flex items-center border border-gray-200 bg-white rounded-lg overflow-hidden transition-colors shadow-sm">
+                    <form id="chartFilterForm" class="flex items-center border border-gray-200 bg-white rounded-lg overflow-hidden transition-colors shadow-sm">
                         
                         <!-- Chọn Tháng -->
-                        <select name="target_month" class="px-3 py-1.5 text-sm border-0 focus:ring-0 text-gray-700 bg-transparent w-[110px] cursor-pointer border-r border-gray-200" onchange="this.form.submit()">
-                            <option value="all" {{ ($targetMonth ?? request('target_month')) === 'all' ? 'selected' : '' }}>Cả năm</option>
+                        <select name="target_month" id="targetMonth" class="px-3 py-1.5 text-sm border-0 focus:ring-0 text-gray-700 bg-transparent w-[110px] cursor-pointer border-r border-gray-200">
+                            <option value="all" {{ request('target_month') === 'all' ? 'selected' : '' }}>Cả năm</option>
                             @for($i = 1; $i <= 12; $i++)
-                                <option value="{{ $i }}" {{ ($targetMonth ?? request('target_month', now()->month)) == $i ? 'selected' : '' }}>Tháng {{ $i }}</option>
+                                <option value="{{ $i }}" {{ request('target_month', now()->month) == $i ? 'selected' : '' }}>Tháng {{ $i }}</option>
                             @endfor
                         </select>
                         
                         <!-- Chọn Năm -->
-                        <select name="target_year" class="px-3 py-1.5 text-sm border-0 focus:ring-0 text-gray-700 bg-transparent w-[90px] cursor-pointer" onchange="this.form.submit()">
+                        <select name="target_year" id="targetYear" class="px-3 py-1.5 text-sm border-0 focus:ring-0 text-gray-700 bg-transparent w-[90px] cursor-pointer">
                             @php $currentYear = date('Y'); @endphp
                             @for($i = $currentYear; $i >= $currentYear - 5; $i--)
-                                <option value="{{ $i }}" {{ ($targetYear ?? request('target_year', $currentYear)) == $i ? 'selected' : '' }}>{{ $i }}</option>
+                                <option value="{{ $i }}" {{ request('target_year', $currentYear) == $i ? 'selected' : '' }}>{{ $i }}</option>
                             @endfor
                         </select>
                     </form>
                 </div>
             </div>
             <div class="flex-1 min-h-[300px] w-full relative">
+                <div id="trendLoading" class="absolute inset-0 flex items-center justify-center bg-white/80 z-10 rounded-xl transition-opacity duration-300">
+                    <i class="fa-solid fa-circle-notch fa-spin text-3xl text-blue-600"></i>
+                </div>
                 <canvas id="trendChart" class="absolute inset-0 w-full h-full"></canvas>
             </div>
         </div>
 
         <!-- Donut Chart -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col relative overflow-hidden">
             <h3 class="text-lg font-bold text-gray-900 mb-6">Cơ cấu Chuyên khoa</h3>
+            <div id="specialtyLoading" class="absolute inset-0 flex items-center justify-center bg-white/80 z-10 transition-opacity duration-300">
+                <i class="fa-solid fa-circle-notch fa-spin text-3xl text-blue-600"></i>
+            </div>
             <div class="flex-1 flex flex-col items-center justify-center min-h-[300px]">
-                <div class="relative w-48 h-48 mb-6">
+                <div class="relative w-full h-full max-h-[300px]">
                     <canvas id="specialtyChart" class="w-full h-full"></canvas>
-                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span class="text-3xl font-bold text-gray-900">{{ array_sum($pieData) }}</span>
-                        <span class="text-xs text-gray-500">Lịch tháng này</span>
-                    </div>
-                </div>
-
-                <!-- Legend -->
-                <div class="w-full grid grid-cols-2 gap-2 mt-auto">
-                    @foreach ($pieLabels as $index => $label)
-                        <div class="flex items-center text-xs text-gray-600">
-                            <span class="w-3 h-3 rounded-full mr-2 flex-shrink-0"
-                                id="legend-color-{{ $index }}"></span>
-                            <span class="truncate" title="{{ $label }}">{{ $label }}</span>
-                            <span class="ml-auto font-medium text-gray-900">{{ $pieData[$index] }}</span>
-                        </div>
-                    @endforeach
                 </div>
             </div>
         </div>
@@ -287,14 +319,182 @@
 
     </div>
 
-    <!-- Pass data to JS -->
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        window.DashboardData = {
-            trendLabels: @json($trendLabels),
-            trendData: @json($trendData),
-            pieLabels: @json($pieLabels),
-            pieData: @json($pieData)
-        };
+        document.addEventListener('DOMContentLoaded', function() {
+            const monthSelect = document.getElementById('targetMonth');
+            const yearSelect = document.getElementById('targetYear');
+            
+            let trendChartInstance = null;
+            let specialtyChartInstance = null;
+
+            const brandColors = [
+                '#0ea5e9', '#14b8a6', '#6366f1', '#f59e0b', 
+                '#ec4899', '#8b5cf6', '#10b981', '#f43f5e'
+            ];
+
+            function fetchChartData() {
+                document.getElementById('trendLoading').style.opacity = '1';
+                document.getElementById('trendLoading').style.visibility = 'visible';
+                document.getElementById('specialtyLoading').style.opacity = '1';
+                document.getElementById('specialtyLoading').style.visibility = 'visible';
+
+                const url = new URL("{{ route('admin.dashboard.data') }}", window.location.origin);
+                url.searchParams.append('target_month', monthSelect.value);
+                url.searchParams.append('target_year', yearSelect.value);
+
+                fetch(url.toString(), {
+                    headers: { 'Accept': 'application/json' }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    renderTrendChart(data.trend);
+                    renderSpecialtyChart(data.specialty);
+                })
+                .finally(() => {
+                    setTimeout(() => {
+                        document.getElementById('trendLoading').style.opacity = '0';
+                        document.getElementById('trendLoading').style.visibility = 'hidden';
+                        document.getElementById('specialtyLoading').style.opacity = '0';
+                        document.getElementById('specialtyLoading').style.visibility = 'hidden';
+                    }, 300);
+                });
+            }
+
+            function renderTrendChart(data) {
+                const ctx = document.getElementById('trendChart').getContext('2d');
+                if (trendChartInstance) {
+                    trendChartInstance.destroy();
+                }
+
+                // Create gradient
+                const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+                gradient.addColorStop(0, 'rgba(14, 165, 233, 0.3)');
+                gradient.addColorStop(1, 'rgba(14, 165, 233, 0.0)');
+
+                trendChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.trendLabels,
+                        datasets: [{
+                            label: 'Lịch khám',
+                            data: data.trendData,
+                            borderColor: '#0ea5e9',
+                            backgroundColor: gradient,
+                            borderWidth: 3,
+                            pointBackgroundColor: '#ffffff',
+                            pointBorderColor: '#0ea5e9',
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                padding: 12,
+                                backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                                titleFont: { size: 13 },
+                                bodyFont: { size: 14, weight: 'bold' },
+                                displayColors: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                border: { display: false },
+                                grid: { color: '#f3f4f6', drawBorder: false },
+                                ticks: { stepSize: 1, color: '#9ca3af', padding: 10 }
+                            },
+                            x: {
+                                border: { display: false },
+                                grid: { display: false },
+                                ticks: { color: '#6b7280', padding: 10 }
+                            }
+                        },
+                        interaction: {
+                            mode: 'nearest',
+                            axis: 'x',
+                            intersect: false
+                        }
+                    }
+                });
+            }
+
+            function renderSpecialtyChart(data) {
+                const ctx = document.getElementById('specialtyChart').getContext('2d');
+                if (specialtyChartInstance) {
+                    specialtyChartInstance.destroy();
+                }
+
+                let labels = data.pieLabels;
+                let values = data.pieData;
+                
+                if (values.reduce((a, b) => a + b, 0) === 0) {
+                    labels = ['Chưa có dữ liệu'];
+                    values = [1];
+                }
+
+                specialtyChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: values,
+                            backgroundColor: brandColors,
+                            borderWidth: 0,
+                            hoverOffset: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '75%',
+                        layout: {
+                            padding: 20
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 20,
+                                    font: { size: 12, family: "'Inter', sans-serif" }
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                                padding: 12,
+                                bodyFont: { size: 14 },
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label !== 'Chưa có dữ liệu') {
+                                            label += ': ' + context.raw + ' ca';
+                                        }
+                                        return ' ' + label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Init
+            fetchChartData();
+
+            // Lắng nghe sự kiện change
+            monthSelect.addEventListener('change', fetchChartData);
+            yearSelect.addEventListener('change', fetchChartData);
+        });
     </script>
-    <script src="{{ asset('js/admin-dashboard.js') }}"></script>
 </x-layouts.admin>
