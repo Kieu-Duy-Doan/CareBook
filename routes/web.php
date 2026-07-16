@@ -38,6 +38,7 @@ Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout'])->nam
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,doctor'])->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/data', [AdminDashboardController::class, 'data'])->name('dashboard.data');
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/ajax-search', [\App\Http\Controllers\Admin\UserController::class, 'ajaxSearch'])->name('ajax-search');
         Route::get('/', [\App\Http\Controllers\Admin\UserController::class, 'index'])->name('index');
@@ -234,7 +235,31 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,doctor']
         Route::get('/', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('index');
         Route::put('/', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('update');
     });
+
+    // SePay Transactions
+    Route::prefix('sepay-transactions')->name('sepay-transactions.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\SePayTransactionController::class, 'index'])->name('index');
+        Route::post('/sync', [\App\Http\Controllers\Admin\SePayTransactionController::class, 'sync'])->name('sync');
+        Route::post('/reconcile', [\App\Http\Controllers\Admin\SePayTransactionController::class, 'reconcile'])->name('reconcile');
+        Route::post('/{transaction}/manual-match', [\App\Http\Controllers\Admin\SePayTransactionController::class, 'manualMatch'])->name('manual-match');
+    });
+
+    // Quản lý Thanh toán Admin
+    Route::prefix('payments')->name('payments.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\PaymentDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/export-csv', [\App\Http\Controllers\Admin\PaymentDashboardController::class, 'exportCsv'])->name('export-csv');
+        Route::get('/print-report', [\App\Http\Controllers\Admin\PaymentDashboardController::class, 'printReport'])->name('print-report');
+
+        // Needs Review
+        Route::get('/needs-review', [\App\Http\Controllers\Admin\PaymentDashboardController::class, 'needsReview'])->name('needs-review');
+        Route::post('/needs-review/{payment}/resolve', [\App\Http\Controllers\Admin\PaymentDashboardController::class, 'resolveReview'])->name('resolve-review');
+
+        // Hoàn tiền
+        Route::get('/refunds', [\App\Http\Controllers\Admin\PaymentDashboardController::class, 'refunds'])->name('refunds');
+        Route::post('/refunds/{refund}/review', [\App\Http\Controllers\Admin\PaymentDashboardController::class, 'reviewRefund'])->name('refunds.review');
+    });
 });
+
 
 
 // API routes (normally in routes/api.php, placing here for convenience)
