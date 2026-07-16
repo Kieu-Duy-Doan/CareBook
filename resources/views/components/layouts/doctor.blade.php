@@ -96,6 +96,11 @@
             </div>
 
             <div class="flex items-center gap-4">
+                <a href="{{ route('doctor.customer-display.index') }}" target="_blank"
+                    class="hidden md:flex items-center gap-2 bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg text-sm font-semibold border border-blue-200 transition-colors">
+                    <i class="fa-solid fa-display"></i> Mở Màn hình Phụ
+                </a>
+
                 <div x-data="{ userMenuOpen: false }" class="relative">
                     <button @click="userMenuOpen = !userMenuOpen" @click.outside="userMenuOpen = false"
                         class="flex items-center gap-2 text-sm text-gray-700 hover:text-gray-900 focus:outline-none">
