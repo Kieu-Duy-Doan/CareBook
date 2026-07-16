@@ -30,6 +30,13 @@ Route::prefix('doctor')->name('doctor.')->group(function () {
         Route::delete('clinical-visits/{visit}', [\App\Http\Controllers\Doctor\ClinicalVisitController::class, 'destroyVisit'])->name('clinical-visits.destroy-visit');
         Route::post('clinical-visits/{appointment}/payment', [\App\Http\Controllers\Doctor\ClinicalVisitController::class, 'processPayment'])->name('clinical-visits.payment');
 
+        // Payments
+        Route::get('payments/{appointment}/checkout', [\App\Http\Controllers\Doctor\PaymentController::class, 'checkout'])->name('payments.checkout');
+
+        // Customer Display (Màn hình phụ)
+        Route::get('/customer-display', [\App\Http\Controllers\Doctor\CustomerDisplayController::class, 'index'])->name('customer-display.index');
+        Route::get('/customer-display/status', [\App\Http\Controllers\Doctor\CustomerDisplayController::class, 'status'])->name('customer-display.status');
+
         // Patient History
         Route::get('patient-history', [\App\Http\Controllers\Doctor\PatientHistoryController::class, 'index'])->name('patient-history.index');
         Route::get('patient-history/{patient}', [\App\Http\Controllers\Doctor\PatientHistoryController::class, 'show'])->name('patient-history.show');

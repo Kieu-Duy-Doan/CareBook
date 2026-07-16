@@ -67,10 +67,14 @@ class MedicalRecordController extends Controller
                          ->with('success', 'Tạo hồ sơ bệnh án thành công.');
     }
 
-    public function show(MedicalRecord $medical_record)
+    public function show(MedicalRecord $medical_record, \App\Services\PaymentService $paymentService)
     {
         $medical_record->load(['appointment.patientProfile', 'prescription']);
-        return view('doctor.medical-records.show', compact('medical_record'));
+        
+        $summary = $paymentService->calculateSummary($medical_record->appointment);
+        $unpaidAmount = $summary['remaining_to_pay'];
+        
+        return view('doctor.medical-records.show', compact('medical_record', 'summary', 'unpaidAmount'));
     }
 
     public function edit(MedicalRecord $medical_record)
