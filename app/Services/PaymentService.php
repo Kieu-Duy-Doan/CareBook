@@ -102,6 +102,13 @@ class PaymentService
                 ]);
             }
 
+            \App\Models\PaymentLog::record(
+                'cash_payment_created',
+                "Thu tiền mặt " . number_format($amountToPay) . "đ cho lịch hẹn {$appointment->appointment_code}",
+                'success',
+                ['appointment_id' => $appointment->id, 'payment_id' => $payment->id]
+            );
+
             return $payment;
         });
     }
@@ -139,6 +146,13 @@ class PaymentService
                 ]);
             }
 
+            \App\Models\PaymentLog::record(
+                'insurance_payment_created',
+                "Xác nhận BHYT 0đ cho lịch hẹn {$appointment->appointment_code}",
+                'success',
+                ['appointment_id' => $appointment->id, 'payment_id' => $payment->id]
+            );
+
             return $payment;
         });
     }
@@ -152,6 +166,13 @@ class PaymentService
         $transferAmount = $payload['transferAmount'] ?? 0;
         $transferContent = $payload['content'] ?? '';
         $transactionDate = $payload['transactionDate'] ?? now();
+
+        \App\Models\PaymentLog::record(
+            'sepay_webhook_received',
+            "Nhận webhook từ SePay — Mã GD: " . ($payload['referenceCode'] ?? 'N/A') . " — " . number_format($payload['transferAmount'] ?? 0) . "đ",
+            'info',
+            ['payload' => $payload]
+        );
 
         if (!$transactionCode) {
             return;
