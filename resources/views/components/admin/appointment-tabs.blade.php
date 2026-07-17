@@ -11,7 +11,7 @@
             Lịch hẹn
         </a>
 
-        <!-- Giám sát Khám LS -->
+        <!-- Khám lâm sàng -->
         <a href="{{ route('admin.clinical-visits.index') }}"
             class="{{ request()->routeIs('admin.clinical-visits.*')
                 ? 'border-blue-500 text-blue-600'
@@ -19,10 +19,10 @@
                   whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
             <i
                 class="fa-solid fa-microscope mr-2 {{ request()->routeIs('admin.clinical-visits.*') ? 'text-blue-500' : 'text-gray-400' }}"></i>
-            Giám sát Khám LS
+            Khám lâm sàng
         </a>
 
-        <!-- Nhật ký Đối soát -->
+        <!-- Nhật kí lịch hẹn -->
         <a href="{{ route('admin.appointment-logs.index') }}"
             class="{{ request()->routeIs('admin.appointment-logs.*')
                 ? 'border-blue-500 text-blue-600'
@@ -30,7 +30,7 @@
                   whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
             <i
                 class="fa-solid fa-clock-rotate-left mr-2 {{ request()->routeIs('admin.appointment-logs.*') ? 'text-blue-500' : 'text-gray-400' }}"></i>
-            Nhật ký Đối soát
+            Nhật kí lịch hẹn
         </a>
     </nav>
 </div>

@@ -126,11 +126,11 @@ class AppointmentController extends Controller
         // Get appointments for the calendar (usually current month)
         $query = Appointment::with(['patientProfile', 'doctor.user'])
             ->whereNotIn('status', ['cancelled']);
-            
+
         if (Auth::user()->isDoctor() && Auth::user()->doctorProfile) {
             $query->where('doctor_profile_id', Auth::user()->doctorProfile->id);
         }
-            
+
         $appointments = $query->get();
 
         // Format data for FullCalendar
@@ -173,7 +173,7 @@ class AppointmentController extends Controller
             'specialty',
             'room',
             'bookedByUser',
-            'clinicalVisits.doctor.user',
+            'clinicalVisits.doctorProfile.user',
             'clinicalVisits.room',
             'medicalRecord.prescription',
             'logs.changedBy',
