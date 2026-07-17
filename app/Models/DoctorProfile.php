@@ -12,6 +12,7 @@ class DoctorProfile extends Model
     protected $fillable = [
         'user_id',
         'doctor_code',
+        'doctor_type',
         'academic_rank',
         'degree',
         'current_position',
@@ -95,5 +96,14 @@ class DoctorProfile extends Model
     public function getPrimarySpecialtyAttribute(): ?Specialty
     {
         return $this->specialties->where('pivot.is_primary', 1)->first();
+    }
+
+    public function getTypeLabelAttribute(): string
+    {
+        return match($this->doctor_type) {
+            'clinical' => 'Lâm sàng',
+            'paraclinical' => 'Cận lâm sàng',
+            default => 'Lâm sàng',
+        };
     }
 }

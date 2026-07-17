@@ -47,6 +47,7 @@ class RoomController extends Controller
             'building' => 'nullable|string|max:50',
             'floor' => 'nullable|string|max:10',
             'room_type' => 'required|in:examination,diagnostic,surgery,other',
+            'price' => 'nullable|integer|min:0',
             'capacity' => 'nullable|integer|min:1|max:200',
             'is_active' => 'boolean',
             'specialty_ids' => 'nullable|array',
@@ -66,6 +67,7 @@ class RoomController extends Controller
                 'building' => $request->building,
                 'floor' => $request->floor,
                 'room_type' => $request->room_type,
+                'price' => $request->room_type === 'diagnostic' ? $request->price : null,
                 'capacity' => $request->capacity,
                 'is_active' => $request->has('is_active'),
             ]);
@@ -108,6 +110,7 @@ class RoomController extends Controller
             'building' => 'nullable|string|max:50',
             'floor' => 'nullable|string|max:10',
             'room_type' => 'required|in:examination,diagnostic,surgery,other',
+            'price' => 'nullable|integer|min:0',
             'capacity' => 'nullable|integer|min:1|max:200',
             'is_active' => 'boolean',
             'specialty_ids' => 'nullable|array',
@@ -121,6 +124,7 @@ class RoomController extends Controller
                 'building' => $request->building,
                 'floor' => $request->floor,
                 'room_type' => $request->room_type,
+                'price' => $request->room_type === 'diagnostic' ? $request->price : null,
                 'capacity' => $request->capacity,
                 'is_active' => $request->has('is_active'),
             ]);

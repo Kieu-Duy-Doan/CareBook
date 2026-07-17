@@ -69,6 +69,7 @@ class BookingController extends Controller
 
         $specialties = Specialty::where('is_active', true)->orderBy('display_order')->get();
         $doctors = DoctorProfile::with(['user:id,full_name', 'specialties:id,name'])
+            ->where('doctor_type', 'clinical')
             ->whereHas('workSchedules', fn($q) => $q->where('is_active', true))
             ->get();
             

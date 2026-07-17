@@ -182,6 +182,16 @@
                                 @error('current_position') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
+                            <!-- Loại Bác sĩ -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Loại bác sĩ <span class="text-red-500">*</span></label>
+                                <select name="doctor_type" required class="w-full border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 px-4 py-2 @error('doctor_type') border-red-500 @enderror">
+                                    <option value="clinical" {{ old('doctor_type', 'clinical') == 'clinical' ? 'selected' : '' }}>Lâm sàng (Nhận lịch từ khách)</option>
+                                    <option value="paraclinical" {{ old('doctor_type') == 'paraclinical' ? 'selected' : '' }}>Cận lâm sàng (Siêu âm/Xét nghiệm...)</option>
+                                </select>
+                                @error('doctor_type') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </div>
+
                             <!-- Số năm kinh nghiệm -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Số năm kinh nghiệm</label>
