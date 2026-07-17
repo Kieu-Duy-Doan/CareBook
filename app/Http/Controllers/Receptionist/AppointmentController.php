@@ -19,13 +19,20 @@ class AppointmentController extends Controller
 {
     public function index(Request $request)
     {
+        if (!$request->has('date_from') && !$request->has('date_to') && !$request->has('search') && !$request->has('status')) {
+            $request->merge([
+                'date_from' => now()->toDateString(),
+                'date_to' => now()->toDateString(),
+            ]);
+        }
+
         $query = Appointment::with([
             'patientProfile',
             'doctor.user',
             'specialty',
             'room',
             'bookedByUser'
-        ])->latest('appointment_date')->latest('appointment_time');
+        ])->orderBy('appointment_date', 'asc')->orderBy('appointment_time', 'asc');
 
         // Filter theo ngày từ
         if ($request->filled('date_from')) {
@@ -787,8 +794,15 @@ class AppointmentController extends Controller
 
     public function exportCsv(Request $request)
     {
+        if (!$request->has('date_from') && !$request->has('date_to') && !$request->has('search') && !$request->has('status')) {
+            $request->merge([
+                'date_from' => now()->toDateString(),
+                'date_to' => now()->toDateString(),
+            ]);
+        }
+
         // Áp dụng cùng filter như index nhưng không paginate
-        $query = Appointment::with(['patientProfile', 'doctor.user', 'specialty', 'room'])->latest('appointment_date')->latest('appointment_time');
+        $query = Appointment::with(['patientProfile', 'doctor.user', 'specialty', 'room'])->orderBy('appointment_date', 'asc')->orderBy('appointment_time', 'asc');
 
         if ($request->filled('date_from')) {
             $query->whereDate('appointment_date', '>=', $request->date_from);

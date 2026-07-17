@@ -349,12 +349,12 @@
                                                     <div class="text-xs text-gray-500 mb-2"><i class="fa-solid fa-paperclip mr-1"></i> File đính kèm kết quả</div>
                                                     <div class="flex flex-wrap gap-2">
                                                         @foreach($apt->medicalRecord->result_files as $file)
-                                                            <a href="{{ Storage::url($file['url']) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-green-200 rounded text-xs font-medium text-green-700 hover:bg-green-50 transition">
-                                                                @if(Str::endsWith($file['url'], ['.pdf']))
+                                                            <a href="{{ Storage::url($file['path']) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-green-200 rounded text-xs font-medium text-green-700 hover:bg-green-50 transition">
+                                                                @if(Str::endsWith($file['path'], ['.pdf']))
                                                                     <i class="fa-solid fa-file-pdf text-red-500"></i>
-                                                                @elseif(Str::endsWith($file['url'], ['.doc', '.docx']))
+                                                                @elseif(Str::endsWith($file['path'], ['.doc', '.docx']))
                                                                     <i class="fa-solid fa-file-word text-blue-600"></i>
-                                                                @elseif(Str::endsWith($file['url'], ['.png', '.jpg', '.jpeg']))
+                                                                @elseif(Str::endsWith($file['path'], ['.png', '.jpg', '.jpeg']))
                                                                     <i class="fa-regular fa-image text-green-500"></i>
                                                                 @else
                                                                     <i class="fa-solid fa-file text-gray-400"></i>
@@ -380,6 +380,7 @@
                                                         <thead class="bg-blue-50 text-blue-800 text-xs uppercase">
                                                             <tr>
                                                                 <th class="px-4 py-2">Tên thuốc</th>
+                                                                <th class="px-4 py-2 text-center">Liều lượng</th>
                                                                 <th class="px-4 py-2 text-center">Số lượng</th>
                                                                 <th class="px-4 py-2">Cách dùng</th>
                                                             </tr>
@@ -387,9 +388,10 @@
                                                         <tbody class="divide-y divide-gray-100">
                                                             @foreach($apt->medicalRecord->prescription->items as $item)
                                                                 <tr>
-                                                                    <td class="px-4 py-2 font-medium text-gray-800">{{ $item['name'] ?? '—' }}</td>
-                                                                    <td class="px-4 py-2 text-center">{{ $item['quantity'] ?? '—' }} {{ $item['unit'] ?? '' }}</td>
-                                                                    <td class="px-4 py-2 text-gray-600">{{ $item['usage'] ?? '—' }}</td>
+                                                                    <td class="px-4 py-2 font-medium text-gray-800">{{ $item['medicine_name'] ?? '—' }}</td>
+                                                                    <td class="px-4 py-2 text-center">{{ $item['dosage'] ?? '—' }}</td>
+                                                                    <td class="px-4 py-2 text-center">{{ $item['quantity'] ?? '—' }}</td>
+                                                                    <td class="px-4 py-2 text-gray-600">{{ $item['instructions'] ?? '—' }}</td>
                                                                 </tr>
                                                             @endforeach
                                                         </tbody>

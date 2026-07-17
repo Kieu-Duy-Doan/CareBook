@@ -20,9 +20,9 @@ class RoomSeeder extends Seeder
             ['name' => 'Khám Mắt', 'room_number' => 'P203', 'building' => 'K2'],
             ['name' => 'Khám Tai Mũi Họng', 'room_number' => 'P204', 'building' => 'K2'],
 
-            ['name' => 'XQuang', 'room_number' => 'P301', 'building' => 'K3', 'room_type' => 'diagnostic'],
-            ['name' => 'Xét nghiệm', 'room_number' => 'P302', 'building' => 'K3', 'room_type' => 'diagnostic'],
-            ['name' => 'Siêu âm', 'room_number' => 'P303', 'building' => 'K3', 'room_type' => 'diagnostic'],
+            ['name' => 'XQuang', 'room_number' => 'P301', 'building' => 'K3', 'room_type' => 'diagnostic', 'price' => '20000'],
+            ['name' => 'Xét nghiệm', 'room_number' => 'P302', 'building' => 'K3', 'room_type' => 'diagnostic', 'price' => '10000'],
+            ['name' => 'Siêu âm', 'room_number' => 'P303', 'building' => 'K3', 'room_type' => 'diagnostic', 'price' => '30000'],
             ['name' => 'Khám Cơ xương khớp', 'room_number' => 'P304', 'building' => 'K3'],
         ];
 

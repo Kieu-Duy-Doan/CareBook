@@ -1048,7 +1048,7 @@ class AppointmentSeeder extends Seeder
                     'treatment_result' => 'outpatient',
                     'result_files' => [
                         [
-                            'url' => 'https://res.cloudinary.com/dr4oef3ds/image/upload/v1751398321/xch039fwr8j6lq1c5f21.pdf',
+                            'path' => 'https://res.cloudinary.com/dr4oef3ds/image/upload/v1751398321/xch039fwr8j6lq1c5f21.pdf',
                         ],
                     ],
                 ]);
@@ -1059,22 +1059,22 @@ class AppointmentSeeder extends Seeder
                     'diagnosis_note' => 'Viêm họng cấp tính',
                     'items' => [
                         [
-                            'name' => 'Paracetamol 500mg',
+                            'medicine_name' => 'Paracetamol 500mg',
                             'quantity' => 10,
-                            'unit' => 'Viên',
-                            'usage' => 'Ngày uống 2 lần, mỗi lần 1 viên sau ăn'
+                            'dosage' => '1 Viên',
+                            'instructions' => 'Ngày uống 2 lần, mỗi lần 1 viên sau ăn'
                         ],
                         [
-                            'name' => 'Amoxicillin 500mg',
+                            'medicine_name' => 'Amoxicillin 500mg',
                             'quantity' => 15,
-                            'unit' => 'Viên',
-                            'usage' => 'Ngày uống 3 lần, mỗi lần 1 viên sau ăn'
+                            'dosage' => '1 Viên',
+                            'instructions' => 'Ngày uống 3 lần, mỗi lần 1 viên sau ăn'
                         ],
                         [
-                            'name' => 'Vitamin C 1000mg',
+                            'medicine_name' => 'Vitamin C 1000mg',
                             'quantity' => 10,
-                            'unit' => 'Viên sủi',
-                            'usage' => 'Ngày uống 1 lần, mỗi lần 1 viên hòa tan trong nước'
+                            'dosage' => '1 Viên sủi',
+                            'instructions' => 'Ngày uống 1 lần, mỗi lần 1 viên hòa tan trong nước'
                         ]
                     ],
                     'general_note' => 'Tái khám sau 5 ngày nếu triệu chứng không thuyên giảm.',
@@ -1090,7 +1090,7 @@ class AppointmentSeeder extends Seeder
                     'findings' => 'Bệnh nhân có biểu hiện sốt, ho nhiều. Đã khám sơ bộ, yêu cầu xét nghiệm máu.',
                     'result_files' => [
                         [
-                            'url' => 'https://res.cloudinary.com/dr4oef3ds/image/upload/v1751398321/xch039fwr8j6lq1c5f21.pdf',
+                            'path' => 'https://res.cloudinary.com/dr4oef3ds/image/upload/v1751398321/xch039fwr8j6lq1c5f21.pdf',
                         ],
                     ],
                     'status' => 'completed',
