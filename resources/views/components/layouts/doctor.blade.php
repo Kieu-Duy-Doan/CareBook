@@ -45,6 +45,12 @@
                 Giám sát lâm sàng
             </a>
 
+            <a href="{{ route('doctor.payments.index') }}"
+                class="{{ request()->routeIs('doctor.payments.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
+                <i class="fa-solid fa-file-invoice-dollar w-5 text-center mr-3 {{ request()->routeIs('doctor.payments.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
+                Thanh toán
+            </a>
+
             <a href="{{ route('doctor.work-schedules.index') }}"
                 class="{{ request()->routeIs('doctor.work-schedules.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
                 <i class="fa-solid fa-calendar-days w-5 text-center mr-3 {{ request()->routeIs('doctor.work-schedules.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
@@ -96,6 +102,11 @@
             </div>
 
             <div class="flex items-center gap-4">
+                <a href="{{ route('doctor.customer-display.index') }}" target="_blank"
+                    class="hidden md:flex items-center gap-2 bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg text-sm font-semibold border border-blue-200 transition-colors">
+                    <i class="fa-solid fa-display"></i> Mở Màn hình Phụ
+                </a>
+
                 <div x-data="{ userMenuOpen: false }" class="relative">
                     <button @click="userMenuOpen = !userMenuOpen" @click.outside="userMenuOpen = false"
                         class="flex items-center gap-2 text-sm text-gray-700 hover:text-gray-900 focus:outline-none">

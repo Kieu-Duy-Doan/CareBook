@@ -26,15 +26,15 @@ class ClinicalVisitController extends Controller
         }
 
         $query = Appointment::with([
-                'patientProfile',
-                'clinicalVisits' => function($q) use ($doctorProfile) {
-                    $q->where('doctor_profile_id', $doctorProfile->id)->orderBy('visit_order');
-                },
-                'clinicalVisits.room',
-                'payments',
-                'medicalRecord',
-            ])
-            ->whereHas('clinicalVisits', function($q) use ($doctorProfile) {
+            'patientProfile',
+            'clinicalVisits' => function ($q) use ($doctorProfile) {
+                $q->where('doctor_profile_id', $doctorProfile->id)->orderBy('visit_order');
+            },
+            'clinicalVisits.room',
+            'payments',
+            'medicalRecord',
+        ])
+            ->whereHas('clinicalVisits', function ($q) use ($doctorProfile) {
                 $q->where('doctor_profile_id', $doctorProfile->id);
             })
             ->latest('appointment_date')
@@ -43,9 +43,9 @@ class ClinicalVisitController extends Controller
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('appointment_code', 'like', '%' . $request->search . '%')
-                  ->orWhereHas('patientProfile', function($pq) use ($request) {
-                      $pq->where('full_name', 'like', '%' . $request->search . '%');
-                  });
+                    ->orWhereHas('patientProfile', function ($pq) use ($request) {
+                        $pq->where('full_name', 'like', '%' . $request->search . '%');
+                    });
             });
         }
 
@@ -61,7 +61,7 @@ class ClinicalVisitController extends Controller
     /**
      * Chi tiết lịch hẹn: load TOÀN BỘ visits (của mọi bác sĩ) để xem toàn luồng.
      */
-    public function show($appointment_id)
+    public function show($appointment_id, \App\Services\PaymentService $paymentService)
     {
         $user = Auth::user();
         $doctorProfile = $user->doctorProfile;
@@ -70,7 +70,7 @@ class ClinicalVisitController extends Controller
             'patientProfile',
             'specialty',
             'room',
-            'clinicalVisits' => function($q) {
+            'clinicalVisits' => function ($q) {
                 $q->orderBy('is_origin', 'desc')->orderBy('visit_order');
             },
             'clinicalVisits.room',
@@ -78,10 +78,10 @@ class ClinicalVisitController extends Controller
             'medicalRecord.prescription',
             'payments',
         ])
-        ->whereHas('clinicalVisits', function($q) use ($doctorProfile) {
-            $q->where('doctor_profile_id', $doctorProfile->id);
-        })
-        ->findOrFail($appointment_id);
+            ->whereHas('clinicalVisits', function ($q) use ($doctorProfile) {
+                $q->where('doctor_profile_id', $doctorProfile->id);
+            })
+            ->findOrFail($appointment_id);
 
         $allVisits       = $appointment->clinicalVisits;
         $originVisit     = $allVisits->firstWhere('is_origin', true);
@@ -90,9 +90,10 @@ class ClinicalVisitController extends Controller
         $completedVisits = $subVisits->whereIn('status', ['completed', 'refused'])->count();
         $allSubCompleted = $totalVisits > 0 && $completedVisits === $totalVisits;
 
-        $totalAmount  = $allVisits->sum('payment_amount');
-        $paidAmount   = $appointment->payments->sum('amount');
-        $unpaidAmount = max(0, $totalAmount - $paidAmount);
+        $summary = $paymentService->calculateSummary($appointment);
+        $totalAmount  = $summary['total_amount'] ?? $allVisits->sum('payment_amount'); // Hiển thị nguyên giá
+        $paidAmount   = $summary['amount_paid'] ?? 0;
+        $unpaidAmount = $summary['remaining_to_pay'] ?? 0;
 
         // Bác sĩ hiện tại có phải bác sĩ gốc không?
         $isOriginDoctor = $originVisit && $originVisit->doctor_profile_id === $doctorProfile->id;
@@ -102,10 +103,17 @@ class ClinicalVisitController extends Controller
             ->get();
 
         return view('doctor.clinical-visits.show', compact(
-            'appointment', 'originVisit', 'subVisits',
-            'totalVisits', 'completedVisits', 'allSubCompleted',
-            'totalAmount', 'paidAmount', 'unpaidAmount',
-            'rooms', 'isOriginDoctor'
+            'appointment',
+            'originVisit',
+            'subVisits',
+            'totalVisits',
+            'completedVisits',
+            'allSubCompleted',
+            'totalAmount',
+            'paidAmount',
+            'unpaidAmount',
+            'rooms',
+            'isOriginDoctor'
         ));
     }
 
@@ -125,7 +133,7 @@ class ClinicalVisitController extends Controller
         $doctorProfile = $user->doctorProfile;
 
         // Chỉ bác sĩ có visit gốc mới được chỉ định phòng
-        $appointment = Appointment::whereHas('clinicalVisits', function($q) use ($doctorProfile) {
+        $appointment = Appointment::whereHas('clinicalVisits', function ($q) use ($doctorProfile) {
             $q->where('doctor_profile_id', $doctorProfile->id)->where('is_origin', true);
         })->findOrFail($appointment_id);
 
@@ -193,7 +201,7 @@ class ClinicalVisitController extends Controller
 
         $visit = ClinicalVisit::where('is_origin', false)
             ->where('status', 'waiting')
-            ->whereHas('appointment.clinicalVisits', function($q) use ($doctorProfile) {
+            ->whereHas('appointment.clinicalVisits', function ($q) use ($doctorProfile) {
                 $q->where('doctor_profile_id', $doctorProfile->id)->where('is_origin', true);
             })
             ->findOrFail($visit_id);
@@ -253,51 +261,5 @@ class ClinicalVisitController extends Controller
         $visit->save();
 
         return back()->with('success', 'Đã cập nhật kết quả khám lâm sàng.');
-    }
-
-    public function processPayment(Request $request, $appointment_id)
-    {
-        $request->validate([
-            'payment_method' => 'required|in:cash,qr,insurance,waived',
-            'amount' => 'required|numeric|min:1',
-            'notes' => 'nullable|string'
-        ]);
-
-        $user = Auth::user();
-        $doctorProfile = $user->doctorProfile;
-
-        $appointment = Appointment::whereHas('clinicalVisits', function($q) use ($doctorProfile) {
-            $q->where('doctor_profile_id', $doctorProfile->id);
-        })->findOrFail($appointment_id);
-
-        DB::beginTransaction();
-        try {
-            // Cập nhật payment_status của các clinical_visits
-            ClinicalVisit::where('appointment_id', $appointment->id)
-                ->where('payment_status', 'pending')
-                ->update([
-                    'payment_status' => 'paid',
-                    'paid_at' => now(),
-                    'collected_by' => $user->id,
-                    'payment_method' => $request->payment_method
-                ]);
-
-            // Tạo bản ghi Payment
-            Payment::create([
-                'appointment_id' => $appointment->id,
-                'amount' => $request->amount,
-                'payment_method' => $request->payment_method,
-                'collected_by' => $user->id,
-                'paid_at' => now(),
-                'notes' => $request->notes,
-                'transaction_id' => 'TXN' . strtoupper(uniqid())
-            ]);
-
-            DB::commit();
-            return back()->with('success', 'Đã thanh toán thành công ' . number_format($request->amount) . ' VNĐ.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Có lỗi xảy ra khi thanh toán: ' . $e->getMessage());
-        }
     }
 }

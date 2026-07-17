@@ -28,7 +28,18 @@ Route::prefix('doctor')->name('doctor.')->group(function () {
         Route::put('clinical-visits/{visit}', [\App\Http\Controllers\Doctor\ClinicalVisitController::class, 'updateVisit'])->name('clinical-visits.update');
         Route::post('clinical-visits/{appointment}/store-visit', [\App\Http\Controllers\Doctor\ClinicalVisitController::class, 'storeVisit'])->name('clinical-visits.store-visit');
         Route::delete('clinical-visits/{visit}', [\App\Http\Controllers\Doctor\ClinicalVisitController::class, 'destroyVisit'])->name('clinical-visits.destroy-visit');
-        Route::post('clinical-visits/{appointment}/payment', [\App\Http\Controllers\Doctor\ClinicalVisitController::class, 'processPayment'])->name('clinical-visits.payment');
+
+
+        // Payments
+        Route::get('payments', [\App\Http\Controllers\Doctor\PaymentController::class, 'index'])->name('payments.index');
+        Route::get('payments/{appointment}/checkout', [\App\Http\Controllers\Doctor\PaymentController::class, 'checkout'])->name('payments.checkout');
+        Route::get('payments/{appointment}', [\App\Http\Controllers\Doctor\PaymentController::class, 'show'])->name('payments.show');
+        Route::get('payments/{appointment}/print-referral', [\App\Http\Controllers\Doctor\PaymentController::class, 'printReferralSlip'])->name('payments.print-referral');
+        Route::get('payments/{appointment}/print-prescription', [\App\Http\Controllers\Doctor\PaymentController::class, 'printPrescription'])->name('payments.print-prescription');
+
+        // Customer Display (Màn hình phụ)
+        Route::get('/customer-display', [\App\Http\Controllers\Doctor\CustomerDisplayController::class, 'index'])->name('customer-display.index');
+        Route::get('/customer-display/status', [\App\Http\Controllers\Doctor\CustomerDisplayController::class, 'status'])->name('customer-display.status');
 
         // Patient History
         Route::get('patient-history', [\App\Http\Controllers\Doctor\PatientHistoryController::class, 'index'])->name('patient-history.index');

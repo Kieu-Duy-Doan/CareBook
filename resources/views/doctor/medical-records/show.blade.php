@@ -177,6 +177,29 @@
                     @endif
                 </div>
             </div>
+            
+            @if(isset($unpaidAmount) && $unpaidAmount > 0)
+            <!-- Nút Thanh Toán -->
+            <div class="bg-amber-50 rounded-xl shadow-sm border border-amber-200 overflow-hidden mt-6">
+                <div class="p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <i class="fa-solid fa-money-bill-wave text-amber-500 text-2xl"></i>
+                        <div>
+                            <h3 class="font-bold text-amber-800">Cần thanh toán phí dịch vụ / Thuốc</h3>
+                            <p class="text-amber-700 text-sm">Còn nợ: <strong class="text-red-600 text-lg">{{ number_format($unpaidAmount, 0, ',', '.') }}đ</strong></p>
+                        </div>
+                    </div>
+                    
+                    <a href="{{ route('doctor.payments.checkout', $medical_record->appointment_id) }}" class="w-full inline-flex justify-center items-center bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg text-sm font-medium transition-colors shadow-sm mb-3">
+                        <i class="fa-solid fa-qrcode mr-2 text-lg"></i> Tiến hành Thanh toán QR
+                    </a>
+                    
+                    <div class="text-center text-sm text-amber-700">
+                        hoặc <span class="font-semibold">hướng dẫn bệnh nhân ra quầy lễ tân</span> để thanh toán bằng tiền mặt.
+                    </div>
+                </div>
+            </div>
+            @endif
         </div>
 
         <div class="space-y-6">

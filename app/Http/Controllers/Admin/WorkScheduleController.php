@@ -169,22 +169,14 @@ class WorkScheduleController extends Controller
     {
         $schedule = WorkSchedule::with(['doctor.user', 'room'])->findOrFail($id);
 
-        // dd($schedule->toArray());
-
         $today = Carbon::today();
-        // $today = Carbon::parse('2026-06-22');
 
         $weekStart = $today->copy()->startOfWeek(Carbon::MONDAY);
         $weekEnd = $today->copy()->endOfWeek(Carbon::SUNDAY);
 
-        // dd($weekStart->toDateString(), $weekEnd->toDateString());
-
         $overrides = ScheduleOverride::with('room')->where('doctor_profile_id', $schedule->doctor_profile_id)
             ->whereBetween('override_date', [$weekStart, $weekEnd])
             ->get();
-
-
-        // dd($overrides->toArray());
 
         $targetIsoDay = $schedule->day_of_week - 1;
         if ($targetIsoDay == 0) {
@@ -209,8 +201,6 @@ class WorkScheduleController extends Controller
             ->get()
             ->groupBy('day_of_week');
 
-        // dd($weeklySchedules->toArray());
-
         if (!empty($overrides)) {
             foreach ($overrides as $override) {
                 $dayOfWeek = Carbon::parse($override['override_date'])->dayOfWeekIso + 1;
@@ -218,7 +208,6 @@ class WorkScheduleController extends Controller
                 if ($dayOfWeek == 8) {
                     $dayOfWeek = 1;
                 }
-                // dd($override->toArray(), $dayOfWeek);
 
                 if (!isset($weeklySchedules[$dayOfWeek])) {
                     $weeklySchedules[$dayOfWeek] = [
@@ -241,12 +230,6 @@ class WorkScheduleController extends Controller
                 }
 
                 foreach ($weeklySchedules[$dayOfWeek] as $key => $schedule) {
-                    // // dd($override->toArray());
-                    // dd([
-                    //     'override' => $override->start_time,
-                    //     'schedule' => $schedule->start_time,
-                    //     'equal' => $override->start_time == $schedule->start_time,
-                    // ]);
 
                     if (
                         $override->type == 'close' &&
@@ -275,13 +258,6 @@ class WorkScheduleController extends Controller
             }
         }
 
-        // dd($weeklySchedules->toArray());
-
-        // dd($schedule->toArray());
-
-        // dd((int)date('H', strtotime($schedule->start_time)));
-
-        // dd(get_debug_type($minute));
         // Tạo mảng slot giờ khám để hiển thị (tùy chọn)
         $startMin = (int)date('H', strtotime($schedule->start_time)) * 60 + (int)date('i', strtotime($schedule->start_time));
         $endMin = (int)date('H', strtotime($schedule->end_time)) * 60 + (int)date('i', strtotime($schedule->end_time));

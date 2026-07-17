@@ -45,6 +45,10 @@ class PaymentService
 
         $calc = $this->healthInsuranceService->calculate($patient, $allVisits);
 
+        $calc['pending_visits'] = $allVisits->filter(function ($visit) {
+            return $visit->payment_status === 'pending';
+        })->values();
+
         $payments = collect();
         foreach ($allVisits as $visit) {
             foreach ($visit->payments as $payment) {
@@ -57,9 +61,24 @@ class PaymentService
 
         $calc['amount_paid'] = $amountPaid;
         $calc['remaining_to_pay'] = max(0, $calc['patient_pays'] - $amountPaid);
+
+        // --- Include Prescriptions ---
+        $prescription = $appointment->medicalRecord?->prescription;
+        if ($prescription) {
+            $prescriptionAmount = $prescription->payment_amount ?? 0;
+            $calc['total_amount'] += $prescriptionAmount;
+            $calc['patient_pays'] += $prescriptionAmount; // Giả sử thuốc không áp dụng BHYT
+            
+            $calc['remaining_to_pay'] += max(0, $prescriptionAmount - $prescription->payments()->sum('payment_prescription.amount_allocated'));
+            
+            if ($prescription->payment_status === 'pending') {
+                $calc['pending_visits']->push($prescription); // Gộp chung vào pending để dễ xử lý vòng lặp thu tiền
+            }
+        }
+
         $calc['overpaid_amount'] = max(0, $amountPaid - $calc['patient_pays']);
         $calc['all_visits'] = $allVisits;
-        $calc['pending_visits'] = $allVisits->where('payment_status', 'pending')->values();
+        $calc['pending_visits'] = $calc['pending_visits']->values();
 
         return $calc;
     }
@@ -87,12 +106,17 @@ class PaymentService
             ]);
 
             foreach ($pendingVisits as $visit) {
-                // Phân bổ theo số tiền sau BHYT
-                $visitPatientPays = round($visit->payment_amount * (1 - $insuranceRate));
-
-                $payment->clinicalVisits()->attach($visit->id, [
-                    'amount_allocated' => $visitPatientPays
-                ]);
+                if (isset($visit->items)) { // Phân biệt Prescription
+                    $visitPatientPays = $visit->payment_amount;
+                    $payment->prescriptions()->attach($visit->id, [
+                        'amount_allocated' => $visitPatientPays
+                    ]);
+                } else {
+                    $visitPatientPays = round($visit->payment_amount * (1 - $insuranceRate));
+                    $payment->clinicalVisits()->attach($visit->id, [
+                        'amount_allocated' => $visitPatientPays
+                    ]);
+                }
 
                 $visit->update([
                     'payment_status' => 'paid',
@@ -134,9 +158,15 @@ class PaymentService
             ]);
 
             foreach ($pendingVisits as $visit) {
-                $payment->clinicalVisits()->attach($visit->id, [
-                    'amount_allocated' => 0
-                ]);
+                if (isset($visit->items)) { // Phân biệt Prescription
+                    $payment->prescriptions()->attach($visit->id, [
+                        'amount_allocated' => 0
+                    ]);
+                } else {
+                    $payment->clinicalVisits()->attach($visit->id, [
+                        'amount_allocated' => 0
+                    ]);
+                }
 
                 $visit->update([
                     'payment_status' => 'paid',
@@ -232,7 +262,7 @@ class PaymentService
 
             $summary = $this->calculateSummary($appointment);
             $requiredAmount = $summary['remaining_to_pay'];
-            $pendingVisits = $appointment->clinicalVisits()->where('payment_status', 'pending')->get();
+            $pendingVisits = $summary['pending_visits']; // Use from summary to include prescriptions
             $insuranceRate = $summary['insurance_rate'];
             $patientName = $appointment->patientProfile->full_name ?? 'N/A';
 
@@ -296,9 +326,15 @@ class PaymentService
             foreach ($sortedVisits as $visit) {
                 if ($remainingAmount <= 0) break;
 
-                // Số tiền bệnh nhân cần trả cho visit này (đã trừ BHYT)
-                $visitPatientPays = round($visit->payment_amount * (1 - $insuranceRate));
-                $alreadyPaid = $visit->payments()->sum('payment_clinical_visit.amount_allocated');
+                // Số tiền bệnh nhân cần trả cho visit này
+                $visitPatientPays = isset($visit->items) 
+                    ? $visit->payment_amount 
+                    : round($visit->payment_amount * (1 - $insuranceRate));
+                
+                $alreadyPaid = isset($visit->items)
+                    ? $visit->payments()->sum('payment_prescription.amount_allocated')
+                    : $visit->payments()->sum('payment_clinical_visit.amount_allocated');
+                
                 $visitRemaining = max(0, $visitPatientPays - $alreadyPaid);
 
                 if ($visitRemaining <= 0) continue;
@@ -306,9 +342,15 @@ class PaymentService
                 $allocated = min($visitRemaining, $remainingAmount);
                 $remainingAmount -= $allocated;
 
-                $payment->clinicalVisits()->attach($visit->id, [
-                    'amount_allocated' => $allocated
-                ]);
+                if (isset($visit->items)) {
+                    $payment->prescriptions()->attach($visit->id, [
+                        'amount_allocated' => $allocated
+                    ]);
+                } else {
+                    $payment->clinicalVisits()->attach($visit->id, [
+                        'amount_allocated' => $allocated
+                    ]);
+                }
 
                 // Nếu phân bổ đủ tiền cho visit này
                 if ($allocated >= $visitRemaining) {
