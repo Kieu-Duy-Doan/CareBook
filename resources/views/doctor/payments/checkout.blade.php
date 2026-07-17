@@ -215,9 +215,9 @@
                             statusBanner.innerHTML = '<i class="fa-solid fa-circle-check mr-2 text-emerald-600"></i> Thanh toán thành công!';
                         }
 
-                        // Redirect bình thường sau 1.5 giây để tiếp tục khám
+                        // Redirect về trang chi tiết thanh toán để in phiếu
                         setTimeout(function() {
-                            window.location.href = "{{ route('doctor.appointments.show', $appointment->id) }}";
+                            window.location.href = "{{ route('doctor.payments.show', $appointment->id) }}";
                         }, 1500);
                     } else if (data.paid_amount > currentPaidAmount) {
                         // Khách chuyển khoản nhưng thiếu tiền -> reload trang để cập nhật số tiền còn lại
