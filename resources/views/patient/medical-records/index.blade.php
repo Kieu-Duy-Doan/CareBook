@@ -57,12 +57,12 @@
                                             <div class="text-xs uppercase tracking-[0.2em] text-slate-500 mb-3">File đính kèm kết quả</div>
                                             <div class="flex flex-wrap gap-2">
                                                 @foreach ($appointment->medicalRecord->result_files as $file)
-                                                    <a href="{{ Storage::url($file['url']) }}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition">
-                                                        @if(Str::endsWith($file['url'], ['.pdf']))
+                                                    <a href="{{ Storage::url($file['path']) }}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition">
+                                                        @if(Str::endsWith($file['path'], ['.pdf']))
                                                             <i class="fa-solid fa-file-pdf text-red-500"></i>
-                                                        @elseif(Str::endsWith($file['url'], ['.doc', '.docx']))
+                                                        @elseif(Str::endsWith($file['path'], ['.doc', '.docx']))
                                                             <i class="fa-solid fa-file-word text-blue-600"></i>
-                                                        @elseif(Str::endsWith($file['url'], ['.png', '.jpg', '.jpeg']))
+                                                        @elseif(Str::endsWith($file['path'], ['.png', '.jpg', '.jpeg']))
                                                             <i class="fa-regular fa-image text-slate-500"></i>
                                                         @else
                                                             <i class="fa-solid fa-file text-slate-400"></i>
@@ -92,6 +92,7 @@
                                                     <thead class="bg-slate-100 text-xs uppercase tracking-[0.2em] text-slate-500">
                                                         <tr>
                                                             <th class="px-4 py-3">Thuốc</th>
+                                                            <th class="px-4 py-3 text-center">Liều lượng</th>
                                                             <th class="px-4 py-3 text-center">Số lượng</th>
                                                             <th class="px-4 py-3">Cách dùng</th>
                                                         </tr>
@@ -99,9 +100,10 @@
                                                     <tbody class="divide-y divide-slate-200">
                                                         @foreach ($appointment->medicalRecord->prescription->items as $item)
                                                             <tr>
-                                                                <td class="px-4 py-3 font-semibold text-slate-800">{{ $item['name'] ?? '—' }}</td>
-                                                                <td class="px-4 py-3 text-center">{{ $item['quantity'] ?? '—' }} {{ $item['unit'] ?? '' }}</td>
-                                                                <td class="px-4 py-3">{{ $item['usage'] ?? '—' }}</td>
+                                                                <td class="px-4 py-3 font-semibold text-slate-800">{{ $item['medicine_name'] ?? '—' }}</td>
+                                                                <td class="px-4 py-3 text-center">{{ $item['dosage'] ?? '—' }}</td>
+                                                                <td class="px-4 py-3 text-center">{{ $item['quantity'] ?? '—' }}</td>
+                                                                <td class="px-4 py-3">{{ $item['instructions'] ?? '—' }}</td>
                                                             </tr>
                                                         @endforeach
                                                     </tbody>
@@ -135,8 +137,3 @@
         @endif
     </div>
 </x-layouts.patient-dashboard>
-'''
-with open(p, 'w', encoding='utf-8') as f:
-    f.write(content)
-print('wrote', p.exists(), p.stat().st_size)
-PY
