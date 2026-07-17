@@ -3,12 +3,12 @@
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('doctor')->name('doctor.')->group(function () {
-    // Guest routes
-    Route::middleware('guest')->group(function () {
-        Route::get('/login', [\App\Http\Controllers\Doctor\AuthController::class, 'showLogin'])->name('login');
-        Route::post('/login', [\App\Http\Controllers\Doctor\AuthController::class, 'login'])->name('login.post');
-        Route::get('/quen-mat-khau', [\App\Http\Controllers\Doctor\AuthController::class, 'showForgotPassword'])->name('password.request');
-    });
+    // Guest routes (Đã chuyển sang form chung ở /login)
+    // Route::middleware('guest')->group(function () {
+    //     Route::get('/login', [\App\Http\Controllers\Doctor\AuthController::class, 'showLogin'])->name('login');
+    //     Route::post('/login', [\App\Http\Controllers\Doctor\AuthController::class, 'login'])->name('login.post');
+    //     Route::get('/quen-mat-khau', [\App\Http\Controllers\Doctor\AuthController::class, 'showForgotPassword'])->name('password.request');
+    // });
 
     // Authenticated Doctor routes
     Route::middleware(['auth', 'role:doctor'])->group(function () {

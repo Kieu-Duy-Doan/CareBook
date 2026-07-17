@@ -366,12 +366,12 @@ Route::post('/dat-lich', [\App\Http\Controllers\Patient\BookingController::class
 
 // Route lễ tân
 Route::prefix('receptionist')->name('receptionist.')->group(function () {
-    // Guest routes
-    Route::middleware('guest')->group(function () {
-        Route::get('/login', [\App\Http\Controllers\Receptionist\AuthController::class, 'showLogin'])->name('login');
-        Route::post('/login', [\App\Http\Controllers\Receptionist\AuthController::class, 'login'])->name('login.post');
-        Route::get('/quen-mat-khau', [\App\Http\Controllers\Receptionist\AuthController::class, 'showForgotPassword'])->name('password.request');
-    });
+    // Guest routes (Đã chuyển sang dùng form login chung ở /login)
+    // Route::middleware('guest')->group(function () {
+    //     Route::get('/login', [\App\Http\Controllers\Receptionist\AuthController::class, 'showLogin'])->name('login');
+    //     Route::post('/login', [\App\Http\Controllers\Receptionist\AuthController::class, 'login'])->name('login.post');
+    //     Route::get('/quen-mat-khau', [\App\Http\Controllers\Receptionist\AuthController::class, 'showForgotPassword'])->name('password.request');
+    // });
 
     // Authenticated Receptionist routes
     Route::middleware(['auth', 'role:receptionist'])->group(function () {

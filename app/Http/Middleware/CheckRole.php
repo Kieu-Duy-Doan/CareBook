@@ -33,11 +33,9 @@ class CheckRole
     {
         // Not authenticated at all
         if (! Auth::check()) {
-            if ($request->is('receptionist/*') || $request->is('receptionist')) {
-                return redirect()->route('receptionist.login');
-            }
-
-            if ($request->is('admin/*') || $request->is('admin')) {
+            if ($request->is('receptionist/*') || $request->is('receptionist') || 
+                $request->is('admin/*') || $request->is('admin') ||
+                $request->is('doctor/*') || $request->is('doctor')) {
                 return redirect()->route('login');
             }
 

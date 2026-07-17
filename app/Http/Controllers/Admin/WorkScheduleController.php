@@ -427,14 +427,34 @@ class WorkScheduleController extends Controller
             return back()->with('error', 'Thời gian ca trực chỉ được phép là Sáng (07:00 - 11:00) hoặc Chiều (13:00 - 17:00).')->withInput();
         }
 
-        $exists = WorkSchedule::where('doctor_profile_id', $request->doctor_profile_id)
-            ->where('room_id', $request->room_id)
+        // Kiểm tra bác sĩ được chọn đã có ca làm việc trùng thời gian vào thứ đã chọn chưa
+        $existsTime = WorkSchedule::where('doctor_profile_id', $request->doctor_profile_id)
             ->where('day_of_week', $request->day_of_week)
+            ->where('is_active', true)
             ->where('id', '!=', $id)
+            ->where(function ($query) use ($request) {
+                $query->where('start_time', '<', $request->end_time)
+                    ->where('end_time', '>', $request->start_time);
+            })
             ->exists();
 
-        if ($exists) {
-            return back()->with('error', 'Bác sĩ này đã có lịch tại phòng này vào thứ đã chọn.');
+        if ($existsTime) {
+            return back()->with('error', 'Bác sĩ đã có lịch làm việc trùng thời gian.');
+        }
+
+        // Kiểm tra lịch đăng ký có trùng với lịch hay phòng bác sĩ khác không
+        $existsTimeAndRoomWithOthers = WorkSchedule::where('day_of_week', $request->day_of_week)
+            ->where('is_active', true)
+            ->where('room_id', $request->room_id)
+            ->where('id', '!=', $id)
+            ->where(function ($query) use ($request) {
+                $query->where('start_time', '<', $request->end_time)
+                    ->where('end_time', '>', $request->start_time);
+            })
+            ->exists();
+
+        if ($existsTimeAndRoomWithOthers) {
+            return back()->with('error', 'Lịch này đã có bác sĩ khác làm việc.');
         }
 
         $schedule->update([

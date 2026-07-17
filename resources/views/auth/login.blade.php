@@ -61,8 +61,8 @@
                 </div>
 
                 <div class="mb-8">
-                    <h2 class="text-2xl font-bold text-gray-900">Đăng nhập</h2>
-                    <p class="text-gray-500 mt-2">Vui lòng đăng nhập để tiếp tục</p>
+                    <h2 class="text-2xl font-bold text-gray-900">Đăng nhập nội bộ</h2>
+                    <p class="text-gray-500 mt-2">Dành cho Quản trị, Bác sĩ & Lễ tân</p>
                 </div>
 
                 @if (session('error'))
