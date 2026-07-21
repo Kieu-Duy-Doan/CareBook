@@ -19,11 +19,11 @@
         <div class="mt-6 border-b border-gray-200">
             <nav class="-mb-px flex space-x-8">
                 <a href="{{ route('admin.dashboard') }}"
-                   class="{{ request()->routeIs('admin.dashboard') ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm">
+                    class="{{ request()->routeIs('admin.dashboard') ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm">
                     <i class="fa-solid fa-chart-pie mr-2"></i> Tổng quan
                 </a>
                 <a href="{{ route('admin.payments.dashboard') }}"
-                   class="{{ request()->routeIs('admin.payments.dashboard') ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm">
+                    class="{{ request()->routeIs('admin.payments.dashboard') ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm">
                     <i class="fa-solid fa-money-bill-wave mr-2"></i> Tài chính & Thanh toán
                 </a>
             </nav>
@@ -144,17 +144,17 @@
             </div>
             <div class="flex items-center text-sm relative z-10">
                 @if ($patientGrowth > 0)
-                    <span class="text-green-600 font-medium flex items-center bg-green-50 px-2 py-0.5 rounded-full"><i
-                            class="fa-solid fa-arrow-trend-up mr-1 text-xs"></i> +{{ round($patientGrowth, 1) }}%</span>
+                <span class="text-green-600 font-medium flex items-center bg-green-50 px-2 py-0.5 rounded-full"><i
+                        class="fa-solid fa-arrow-trend-up mr-1 text-xs"></i> +{{ round($patientGrowth, 1) }}%</span>
                 @elseif($patientGrowth < 0)
                     <span class="text-red-600 font-medium flex items-center bg-red-50 px-2 py-0.5 rounded-full"><i
-                            class="fa-solid fa-arrow-trend-down mr-1 text-xs"></i>
-                        {{ round($patientGrowth, 1) }}%</span>
-                @else
+                        class="fa-solid fa-arrow-trend-down mr-1 text-xs"></i>
+                    {{ round($patientGrowth, 1) }}%</span>
+                    @else
                     <span class="text-gray-500 font-medium flex items-center bg-gray-50 px-2 py-0.5 rounded-full"><i
                             class="fa-solid fa-minus mr-1 text-xs"></i> 0%</span>
-                @endif
-                <span class="text-gray-400 ml-2">so với tháng trước</span>
+                    @endif
+                    <span class="text-gray-400 ml-2">so với tháng trước</span>
             </div>
         </div>
     </div>
@@ -169,20 +169,20 @@
                 <!-- Filter Buttons -->
                 <div class="flex items-center gap-2">
                     <form id="chartFilterForm" class="flex items-center border border-gray-200 bg-white rounded-lg overflow-hidden transition-colors shadow-sm">
-                        
+
                         <!-- Chọn Tháng -->
                         <select name="target_month" id="targetMonth" class="px-3 py-1.5 text-sm border-0 focus:ring-0 text-gray-700 bg-transparent w-[110px] cursor-pointer border-r border-gray-200">
                             <option value="all" {{ request('target_month') === 'all' ? 'selected' : '' }}>Cả năm</option>
                             @for($i = 1; $i <= 12; $i++)
                                 <option value="{{ $i }}" {{ request('target_month', now()->month) == $i ? 'selected' : '' }}>Tháng {{ $i }}</option>
-                            @endfor
+                                @endfor
                         </select>
-                        
+
                         <!-- Chọn Năm -->
                         <select name="target_year" id="targetYear" class="px-3 py-1.5 text-sm border-0 focus:ring-0 text-gray-700 bg-transparent w-[90px] cursor-pointer">
                             @php $currentYear = date('Y'); @endphp
                             @for($i = $currentYear; $i >= $currentYear - 5; $i--)
-                                <option value="{{ $i }}" {{ request('target_year', $currentYear) == $i ? 'selected' : '' }}>{{ $i }}</option>
+                            <option value="{{ $i }}" {{ request('target_year', $currentYear) == $i ? 'selected' : '' }}>{{ $i }}</option>
                             @endfor
                         </select>
                     </form>
@@ -205,6 +205,33 @@
             <div class="flex-1 flex flex-col items-center justify-center min-h-[300px]">
                 <div class="relative w-full h-full max-h-[300px]">
                     <canvas id="specialtyChart" class="w-full h-full"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hàng 3: Biểu đồ bổ sung -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Peak Hours Bar Chart -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col relative overflow-hidden">
+            <h3 class="text-lg font-bold text-gray-900 mb-6">Giờ cao điểm (Tháng)</h3>
+            <div id="peakHoursLoading" class="absolute inset-0 flex items-center justify-center bg-white/80 z-10 transition-opacity duration-300">
+                <i class="fa-solid fa-circle-notch fa-spin text-3xl text-blue-600"></i>
+            </div>
+            <div class="flex-1 min-h-[300px] w-full relative">
+                <canvas id="peakHoursChart" class="absolute inset-0 w-full h-full"></canvas>
+            </div>
+        </div>
+
+        <!-- Revenue Method Donut Chart -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col relative overflow-hidden">
+            <h3 class="text-lg font-bold text-gray-900 mb-6">Doanh thu theo Phương thức</h3>
+            <div id="revenueMethodLoading" class="absolute inset-0 flex items-center justify-center bg-white/80 z-10 transition-opacity duration-300">
+                <i class="fa-solid fa-circle-notch fa-spin text-3xl text-blue-600"></i>
+            </div>
+            <div class="flex-1 flex flex-col items-center justify-center min-h-[300px]">
+                <div class="relative w-full h-full max-h-[300px]">
+                    <canvas id="revenueMethodChart" class="w-full h-full"></canvas>
                 </div>
             </div>
         </div>
@@ -233,52 +260,53 @@
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @forelse($todayAppointments as $appt)
-                            <tr class="hover:bg-gray-50 transition-colors cursor-pointer"
-                                onclick="window.location='{{ route('admin.appointments.show', $appt->id) }}'">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span
-                                        class="font-bold text-gray-900">{{ \Carbon\Carbon::parse($appt->appointment_time)->format('H:i') }}</span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="font-medium text-gray-900">
-                                        {{ $appt->patientProfile->full_name ?? 'Khách lẻ' }}</div>
-                                    <div class="text-xs text-gray-500 mt-0.5">{{ $appt->appointment_code }}</div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center gap-2">
-                                        <div
-                                            class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">
-                                            {{ substr($appt->doctorProfile->user->name ?? 'BS', 0, 1) }}
-                                        </div>
-                                        <span
-                                            class="text-sm text-gray-700 font-medium">{{ $appt->doctorProfile->user->name ?? 'N/A' }}</span>
+                        <tr class="hover:bg-gray-50 transition-colors cursor-pointer"
+                            onclick="window.location='{{ route('admin.appointments.show', $appt->id) }}'">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span
+                                    class="font-bold text-gray-900">{{ \Carbon\Carbon::parse($appt->appointment_time)->format('H:i') }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="font-medium text-gray-900">
+                                    {{ $appt->patientProfile->full_name ?? 'Khách lẻ' }}
+                                </div>
+                                <div class="text-xs text-gray-500 mt-0.5">{{ $appt->appointment_code }}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <div
+                                        class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">
+                                        {{ substr($appt->doctorProfile->user->name ?? 'BS', 0, 1) }}
                                     </div>
-                                </td>
-                                <td class="px-6 py-4 text-center whitespace-nowrap">
-                                    @if ($appt->status === 'pending')
-                                        <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">Đang
-                                            chờ</span>
-                                    @elseif($appt->status === 'confirmed')
-                                        <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Đã
-                                            xác nhận</span>
-                                    @elseif($appt->status === 'completed')
-                                        <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Đã
-                                            khám xong</span>
-                                    @else
-                                        <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Đã
-                                            hủy</span>
-                                    @endif
-                                </td>
-                            </tr>
+                                    <span
+                                        class="text-sm text-gray-700 font-medium">{{ $appt->doctorProfile->user->name ?? 'N/A' }}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-center whitespace-nowrap">
+                                @if ($appt->status === 'pending')
+                                <span
+                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">Đang
+                                    chờ</span>
+                                @elseif($appt->status === 'confirmed')
+                                <span
+                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Đã
+                                    xác nhận</span>
+                                @elseif($appt->status === 'completed')
+                                <span
+                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Đã
+                                    khám xong</span>
+                                @else
+                                <span
+                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Đã
+                                    hủy</span>
+                                @endif
+                            </td>
+                        </tr>
                         @empty
-                            <tr>
-                                <td colspan="4" class="px-6 py-8 text-center text-gray-500 text-sm">Không có lịch
-                                    khám nào trong hôm nay.</td>
-                            </tr>
+                        <tr>
+                            <td colspan="4" class="px-6 py-8 text-center text-gray-500 text-sm">Không có lịch
+                                khám nào trong hôm nay.</td>
+                        </tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -294,24 +322,26 @@
             <div class="p-0 flex-1">
                 <ul class="divide-y divide-gray-100">
                     @forelse($topDoctors as $index => $item)
-                        <li class="p-4 hover:bg-gray-50 transition-colors flex items-center gap-4">
-                            <div
-                                class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center font-bold {{ $index == 0 ? 'text-yellow-500 bg-yellow-50' : ($index == 1 ? 'text-gray-400 bg-gray-50' : ($index == 2 ? 'text-amber-700 bg-amber-50' : 'text-gray-400')) }}">
-                                #{{ $index + 1 }}
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm font-medium text-gray-900 truncate">
-                                    {{ $item->doctorProfile->user->name ?? 'Unknown' }}</p>
-                                <p class="text-xs text-gray-500 truncate">
-                                    {{ $item->doctorProfile->specialty->name ?? 'Khoa khám bệnh' }}</p>
-                            </div>
-                            <div class="text-right">
-                                <span class="block text-sm font-bold text-blue-600">{{ $item->total }}</span>
-                                <span class="block text-[10px] text-gray-400 uppercase">Ca khám</span>
-                            </div>
-                        </li>
+                    <li class="p-4 hover:bg-gray-50 transition-colors flex items-center gap-4">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center font-bold {{ $index == 0 ? 'text-yellow-500 bg-yellow-50' : ($index == 1 ? 'text-gray-400 bg-gray-50' : ($index == 2 ? 'text-amber-700 bg-amber-50' : 'text-gray-400')) }}">
+                            #{{ $index + 1 }}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate">
+                                {{ $item->doctorProfile->user->name ?? 'Unknown' }}
+                            </p>
+                            <p class="text-xs text-gray-500 truncate">
+                                {{ $item->doctorProfile->specialty->name ?? 'Khoa khám bệnh' }}
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <span class="block text-sm font-bold text-blue-600">{{ $item->total }}</span>
+                            <span class="block text-[10px] text-gray-400 uppercase">Ca khám</span>
+                        </div>
+                    </li>
                     @empty
-                        <li class="p-6 text-center text-gray-500 text-sm">Chưa có dữ liệu bác sĩ tháng này.</li>
+                    <li class="p-6 text-center text-gray-500 text-sm">Chưa có dữ liệu bác sĩ tháng này.</li>
                     @endforelse
                 </ul>
             </div>
@@ -325,41 +355,56 @@
         document.addEventListener('DOMContentLoaded', function() {
             const monthSelect = document.getElementById('targetMonth');
             const yearSelect = document.getElementById('targetYear');
-            
+
             let trendChartInstance = null;
             let specialtyChartInstance = null;
+            let peakHoursChartInstance = null;
+            let revenueMethodChartInstance = null;
 
             const brandColors = [
-                '#0ea5e9', '#14b8a6', '#6366f1', '#f59e0b', 
+                '#0ea5e9', '#14b8a6', '#6366f1', '#f59e0b',
                 '#ec4899', '#8b5cf6', '#10b981', '#f43f5e'
             ];
+            const methodColors = ['#10b981', '#3b82f6', '#8b5cf6'];
 
             function fetchChartData() {
                 document.getElementById('trendLoading').style.opacity = '1';
                 document.getElementById('trendLoading').style.visibility = 'visible';
                 document.getElementById('specialtyLoading').style.opacity = '1';
                 document.getElementById('specialtyLoading').style.visibility = 'visible';
+                document.getElementById('peakHoursLoading').style.opacity = '1';
+                document.getElementById('peakHoursLoading').style.visibility = 'visible';
+                document.getElementById('revenueMethodLoading').style.opacity = '1';
+                document.getElementById('revenueMethodLoading').style.visibility = 'visible';
 
                 const url = new URL("{{ route('admin.dashboard.data') }}", window.location.origin);
                 url.searchParams.append('target_month', monthSelect.value);
                 url.searchParams.append('target_year', yearSelect.value);
 
                 fetch(url.toString(), {
-                    headers: { 'Accept': 'application/json' }
-                })
-                .then(res => res.json())
-                .then(data => {
-                    renderTrendChart(data.trend);
-                    renderSpecialtyChart(data.specialty);
-                })
-                .finally(() => {
-                    setTimeout(() => {
-                        document.getElementById('trendLoading').style.opacity = '0';
-                        document.getElementById('trendLoading').style.visibility = 'hidden';
-                        document.getElementById('specialtyLoading').style.opacity = '0';
-                        document.getElementById('specialtyLoading').style.visibility = 'hidden';
-                    }, 300);
-                });
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        renderTrendChart(data.trend);
+                        renderSpecialtyChart(data.specialty);
+                        renderPeakHoursChart(data.peak_hours);
+                        renderRevenueMethodChart(data.revenue_method);
+                    })
+                    .finally(() => {
+                        setTimeout(() => {
+                            document.getElementById('trendLoading').style.opacity = '0';
+                            document.getElementById('trendLoading').style.visibility = 'hidden';
+                            document.getElementById('specialtyLoading').style.opacity = '0';
+                            document.getElementById('specialtyLoading').style.visibility = 'hidden';
+                            document.getElementById('peakHoursLoading').style.opacity = '0';
+                            document.getElementById('peakHoursLoading').style.visibility = 'hidden';
+                            document.getElementById('revenueMethodLoading').style.opacity = '0';
+                            document.getElementById('revenueMethodLoading').style.visibility = 'hidden';
+                        }, 300);
+                    });
             }
 
             function renderTrendChart(data) {
@@ -396,28 +441,51 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: { display: false },
+                            legend: {
+                                display: false
+                            },
                             tooltip: {
                                 mode: 'index',
                                 intersect: false,
                                 padding: 12,
                                 backgroundColor: 'rgba(17, 24, 39, 0.9)',
-                                titleFont: { size: 13 },
-                                bodyFont: { size: 14, weight: 'bold' },
+                                titleFont: {
+                                    size: 13
+                                },
+                                bodyFont: {
+                                    size: 14,
+                                    weight: 'bold'
+                                },
                                 displayColors: false
                             }
                         },
                         scales: {
                             y: {
                                 beginAtZero: true,
-                                border: { display: false },
-                                grid: { color: '#f3f4f6', drawBorder: false },
-                                ticks: { stepSize: 1, color: '#9ca3af', padding: 10 }
+                                border: {
+                                    display: false
+                                },
+                                grid: {
+                                    color: '#f3f4f6',
+                                    drawBorder: false
+                                },
+                                ticks: {
+                                    stepSize: 1,
+                                    color: '#9ca3af',
+                                    padding: 10
+                                }
                             },
                             x: {
-                                border: { display: false },
-                                grid: { display: false },
-                                ticks: { color: '#6b7280', padding: 10 }
+                                border: {
+                                    display: false
+                                },
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    color: '#6b7280',
+                                    padding: 10
+                                }
                             }
                         },
                         interaction: {
@@ -437,7 +505,7 @@
 
                 let labels = data.pieLabels;
                 let values = data.pieData;
-                
+
                 if (values.reduce((a, b) => a + b, 0) === 0) {
                     labels = ['Chưa có dữ liệu'];
                     values = [1];
@@ -467,18 +535,146 @@
                                 labels: {
                                     usePointStyle: true,
                                     padding: 20,
-                                    font: { size: 12, family: "'Inter', sans-serif" }
+                                    font: {
+                                        size: 12,
+                                        family: "'Inter', sans-serif"
+                                    }
                                 }
                             },
                             tooltip: {
                                 backgroundColor: 'rgba(17, 24, 39, 0.9)',
                                 padding: 12,
-                                bodyFont: { size: 14 },
+                                bodyFont: {
+                                    size: 14
+                                },
                                 callbacks: {
                                     label: function(context) {
                                         let label = context.label || '';
                                         if (label !== 'Chưa có dữ liệu') {
                                             label += ': ' + context.raw + ' ca';
+                                        }
+                                        return ' ' + label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function renderPeakHoursChart(data) {
+                const ctx = document.getElementById('peakHoursChart').getContext('2d');
+                if (peakHoursChartInstance) {
+                    peakHoursChartInstance.destroy();
+                }
+
+                peakHoursChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.peakLabels,
+                        datasets: [{
+                            label: 'Số ca khám',
+                            data: data.peakData,
+                            backgroundColor: '#f59e0b',
+                            borderRadius: 6,
+                            barThickness: 'flex'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                                padding: 12,
+                                bodyFont: {
+                                    size: 14
+                                },
+                                callbacks: {
+                                    title: function(context) {
+                                        return 'Khung giờ ' + context[0].label;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: '#f3f4f6',
+                                    drawBorder: false
+                                },
+                                ticks: {
+                                    stepSize: 1,
+                                    color: '#9ca3af'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    color: '#6b7280'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function renderRevenueMethodChart(data) {
+                const ctx = document.getElementById('revenueMethodChart').getContext('2d');
+                if (revenueMethodChartInstance) {
+                    revenueMethodChartInstance.destroy();
+                }
+
+                let labels = data.revenueMethodLabels;
+                let values = data.revenueMethodData;
+
+                revenueMethodChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: values,
+                            backgroundColor: methodColors,
+                            borderWidth: 0,
+                            hoverOffset: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '70%',
+                        layout: {
+                            padding: 20
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 20,
+                                    font: {
+                                        size: 12,
+                                        family: "'Inter', sans-serif"
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                                padding: 12,
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label !== 'Chưa có dữ liệu') {
+                                            label += ': ' + new Intl.NumberFormat('vi-VN', {
+                                                style: 'currency',
+                                                currency: 'VND'
+                                            }).format(context.raw);
                                         }
                                         return ' ' + label;
                                     }

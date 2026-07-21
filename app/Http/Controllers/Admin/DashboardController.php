@@ -60,15 +60,20 @@ class DashboardController extends Controller
         // Lấy query từ Request
         $targetMonth = $request->query('target_month', Carbon::now()->month);
         $targetYear = $request->query('target_year', Carbon::now()->year);
-        
+
         $trendFilter = $targetMonth === 'all' ? 'year_months' : 'month_days';
-        
+
         $trendData = $this->dashboardService->getTrendData($trendFilter, $targetMonth, $targetYear);
         $specialtyData = $this->dashboardService->getSpecialtyPieData($startOfMonth);
 
+        $peakHoursData = $this->dashboardService->getPeakHoursData($startOfMonth);
+        $revenueMethodData = $this->dashboardService->getRevenueByMethodData($startOfMonth);
+
         return response()->json([
             'trend' => $trendData,
-            'specialty' => $specialtyData
+            'specialty' => $specialtyData,
+            'peak_hours' => $peakHoursData,
+            'revenue_method' => $revenueMethodData
         ]);
     }
 }

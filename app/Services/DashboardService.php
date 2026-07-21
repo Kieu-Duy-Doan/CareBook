@@ -45,7 +45,7 @@ class DashboardService
         // 3. Tỷ lệ hoạt động & Mức độ hoàn thành công việc
         // Chỉ đếm các bác sĩ có quyền 'doctor' và đang ở trạng thái kích hoạt (is_active = true)
         $activeDoctorsCount = User::where('role', 'doctor')->where('is_active', true)->count();
-        
+
         // Đếm số ca đã khám xong (status = completed) trong ngày hôm nay
         $completedToday = Appointment::whereDate('appointment_date', $today)->where('status', 'completed')->count();
         $completionRate = $todayApptCount > 0 ? round(($completedToday / $todayApptCount) * 100) : 0;
@@ -54,20 +54,28 @@ class DashboardService
         $revenueToday = Payment::whereDate('paid_at', $today)
             ->where('status', 'completed')
             ->sum('amount');
-            
+
         $revenueThisMonth = Payment::where('paid_at', '>=', $startOfMonth)
             ->where('status', 'completed')
             ->sum('amount');
-            
+
         // 5. Số lịch khám bị hủy (Hôm nay)
         $canceledToday = Appointment::whereDate('appointment_date', $today)
             ->where('status', 'cancelled')
             ->count();
 
         return compact(
-            'todayApptCount', 'apptGrowth', 'totalPatients', 'newPatientsThisMonth', 
-            'patientGrowth', 'activeDoctorsCount', 'completedToday', 'completionRate',
-            'revenueToday', 'revenueThisMonth', 'canceledToday'
+            'todayApptCount',
+            'apptGrowth',
+            'totalPatients',
+            'newPatientsThisMonth',
+            'patientGrowth',
+            'activeDoctorsCount',
+            'completedToday',
+            'completionRate',
+            'revenueToday',
+            'revenueThisMonth',
+            'canceledToday'
         );
     }
 
@@ -195,5 +203,61 @@ class DashboardService
             ->orderBy('appointment_time') // Sắp xếp lịch khám theo thứ tự thời gian (từ sáng đến chiều)
             ->take(10) // Tối đa hiển thị 10 ca
             ->get();
+    }
+
+    /**
+     * Lấy dữ liệu Giờ cao điểm trong tháng hiện tại
+     * Phân bổ số lượng ca khám theo từng khung giờ (7h - 19h)
+     */
+    public function getPeakHoursData(Carbon $startOfMonth): array
+    {
+        $appointments = Appointment::select(DB::raw('HOUR(appointment_time) as hour'), DB::raw('count(*) as count'))
+            ->where('appointment_date', '>=', $startOfMonth)
+            ->whereNotNull('appointment_time')
+            ->groupBy('hour')
+            ->pluck('count', 'hour')->toArray();
+
+        $peakLabels = [];
+        $peakData = [];
+        for ($i = 7; $i <= 19; $i++) {
+            $peakLabels[] = $i . ':00';
+            $peakData[] = $appointments[$i] ?? 0;
+        }
+
+        return compact('peakLabels', 'peakData');
+    }
+
+    /**
+     * Lấy dữ liệu Doanh thu theo phương thức thanh toán trong tháng
+     */
+    public function getRevenueByMethodData(Carbon $startOfMonth): array
+    {
+        $payments = Payment::select('payment_method', DB::raw('sum(amount) as total'))
+            ->where('paid_at', '>=', $startOfMonth)
+            ->where('status', 'completed')
+            ->groupBy('payment_method')
+            ->pluck('total', 'payment_method')->toArray();
+
+        $methodNames = [
+            'cash' => 'Tiền mặt',
+            'transfer' => 'Chuyển khoản (QR)',
+            'card' => 'Quẹt thẻ'
+        ];
+
+        $revenueMethodLabels = [];
+        $revenueMethodData = [];
+
+        foreach ($methodNames as $key => $name) {
+            $revenueMethodLabels[] = $name;
+            $revenueMethodData[] = $payments[$key] ?? 0;
+        }
+
+        // Nếu chưa có doanh thu
+        if (empty(array_filter($revenueMethodData))) {
+            $revenueMethodLabels = ['Chưa có dữ liệu'];
+            $revenueMethodData = [1];
+        }
+
+        return compact('revenueMethodLabels', 'revenueMethodData');
     }
 }
