@@ -133,7 +133,7 @@ class AppointmentController extends Controller
             ]);
         } else {
             $query->whereMonth('appointment_date', now()->month)
-                  ->whereYear('appointment_date', now()->year);
+                ->whereYear('appointment_date', now()->year);
         }
 
         $appointments = $query->get();
@@ -788,6 +788,14 @@ class AppointmentController extends Controller
             if ($newStatus === 'cancelled') {
                 \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'cancellation');
             }
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã cập nhật trạng thái lịch hẹn thành công.',
+                'new_status' => $newStatus,
+            ]);
         }
 
         return back()->with('success', 'Đã cập nhật trạng thái lịch hẹn thành công.');
