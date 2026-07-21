@@ -13,22 +13,73 @@
             <h2 class="text-2xl font-bold text-gray-900">Chi tiết lịch hẹn <span
                     class="text-blue-600">#{{ $appointment->appointment_code }}</span></h2>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
             <a href="{{ route('receptionist.appointments.index') }}"
-                class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                <i class="fa-solid fa-arrow-left"></i> Quay lại
+                class="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                <i class="fa-solid fa-arrow-left mr-1"></i> Quay lại
             </a>
+            
+            <!-- Quick Actions cho Lễ tân -->
+            @if ($appointment->status === 'pending')
+                <form action="{{ route('receptionist.appointments.update', $appointment->id) }}" method="POST" class="inline-block">
+                    @csrf
+                    @method('PATCH')
+                    <input type="hidden" name="status" value="checked_in">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        <i class="fa-solid fa-check mr-1"></i> Check-in
+                    </button>
+                </form>
+
+                @if(now() > \Carbon\Carbon::parse($appointment->appointment_date->format('Y-m-d') . ' ' . $appointment->appointment_time))
+                    <form action="{{ route('receptionist.appointments.update', $appointment->id) }}" method="POST" class="inline-block">
+                        @csrf
+                        @method('PATCH')
+                        <input type="hidden" name="status" value="late">
+                        <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                            <i class="fa-solid fa-clock mr-1"></i> Đi trễ
+                        </button>
+                    </form>
+                @endif
+
+                <form action="{{ route('receptionist.appointments.update', $appointment->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Đánh dấu vắng mặt đối với lịch hẹn này?');">
+                    @csrf
+                    @method('PATCH')
+                    <input type="hidden" name="status" value="absent">
+                    <button type="submit" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        <i class="fa-solid fa-user-xmark mr-1"></i> Vắng mặt
+                    </button>
+                </form>
+            @endif
+
+            @if (!in_array($appointment->status, ['completed', 'cancelled']))
+                <form action="{{ route('receptionist.appointments.update', $appointment->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Bạn có chắc chắn muốn huỷ lịch hẹn này?');">
+                    @csrf
+                    @method('PATCH')
+                    <input type="hidden" name="status" value="cancelled">
+                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        <i class="fa-solid fa-ban mr-1"></i> Huỷ lịch
+                    </button>
+                </form>
+            @endif
+            
+            @if ($appointment->payments->where('status', 'pending')->count() > 0)
+                <a href="{{ route('receptionist.payments.index') }}?search={{ $appointment->appointment_code }}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    <i class="fa-solid fa-money-bill mr-1"></i> Thanh toán
+                </a>
+            @endif
+            
             <a href="{{ route('receptionist.appointments.edit', $appointment->id) }}"
-                class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                <i class="fa-solid fa-pen"></i> Chỉnh sửa
+                class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                <i class="fa-solid fa-pen mr-1"></i> Chỉnh sửa
             </a>
             <form action="{{ route('receptionist.appointments.destroy', $appointment->id) }}" method="POST"
-                class="inline-block" onsubmit="return confirm('Bạn có chắc chắn muốn xoá lịch hẹn này?');">
+                class="inline-block"
+                onsubmit="return confirm('Bạn có chắc chắn muốn xoá lịch hẹn này? Hành động này không thể hoàn tác.');">
                 @csrf
                 @method('DELETE')
                 <button type="submit"
-                    class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                    <i class="fa-solid fa-trash"></i> Xoá
+                    class="bg-red-50 text-red-600 hover:bg-red-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    <i class="fa-solid fa-trash mr-1"></i> Xoá
                 </button>
             </form>
         </div>
@@ -772,7 +823,7 @@
                         <h3 class="text-base font-bold text-gray-900">Cập nhật trạng thái</h3>
                     </div>
                     <div class="p-6">
-                        <form action="{{ route('receptionist.appointments.update-status', $appointment->id) }}"
+                        <form action="{{ route('receptionist.appointments.update', $appointment->id) }}"
                             method="POST">
                             @csrf
                             @method('PATCH')
@@ -784,6 +835,8 @@
                                     class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
                                     <option value="pending"
                                         {{ $appointment->status === 'pending' ? 'selected' : '' }}>Đã tiếp nhận</option>
+                                    <option value="late"
+                                        {{ $appointment->status === 'late' ? 'selected' : '' }}>Đi trễ</option>
                                     <option value="checked_in"
                                         {{ $appointment->status === 'checked_in' ? 'selected' : '' }}>Đã checkin
                                     </option>

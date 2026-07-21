@@ -181,6 +181,7 @@ class AppointmentController extends Controller
             'clinicalVisits.doctor.user',
             'clinicalVisits.room',
             'medicalRecord.prescription',
+            'payments.collectedBy',
             'logs.changedBy',
         ])->findOrFail($id);
 

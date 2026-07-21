@@ -69,6 +69,7 @@ class AppointmentController extends Controller
             'bookedByUser',
             'clinicalVisits.room',
             'medicalRecord.prescription',
+            'payments.collectedBy',
             'logs.changedBy',
         ])
         ->where('doctor_profile_id', $doctorProfile->id)

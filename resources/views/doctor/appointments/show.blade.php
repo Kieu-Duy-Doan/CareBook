@@ -11,10 +11,37 @@
             </div>
             <h2 class="text-2xl font-bold text-gray-900">Chi tiết lịch hẹn <span class="text-blue-600">#{{ $appointment->appointment_code }}</span></h2>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
             <a href="{{ route('doctor.appointments.index') }}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
                 <i class="fa-solid fa-arrow-left"></i> Quay lại
             </a>
+            
+            <!-- Quick Actions cho Bác sĩ -->
+            @if ($appointment->status === 'checked_in')
+                <form action="{{ route('doctor.appointments.update-status', $appointment->id) }}" method="POST" class="inline-block">
+                    @csrf
+                    <input type="hidden" name="status" value="examining">
+                    <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                        <i class="fa-solid fa-stethoscope"></i> Bắt đầu khám
+                    </button>
+                </form>
+            @endif
+
+            @if ($appointment->status === 'examining')
+                <form action="{{ route('doctor.appointments.update-status', $appointment->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Xác nhận hoàn thành buổi khám?');">
+                    @csrf
+                    <input type="hidden" name="status" value="completed">
+                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                        <i class="fa-solid fa-check-double"></i> Hoàn thành khám
+                    </button>
+                </form>
+            @endif
+
+            @if (in_array($appointment->status, ['examining', 'completed']))
+                <a href="{{ route('doctor.clinical-visits.show', $appointment->id) }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-file-prescription"></i> Kê đơn / Dịch vụ
+                </a>
+            @endif
         </div>
     </div>
 
