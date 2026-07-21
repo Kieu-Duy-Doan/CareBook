@@ -18,12 +18,12 @@ class DatabaseSeeder extends Seeder
             SpecialtyRoomSeeder::class,
             DoctorSpecialtySeeder::class,
             WorkScheduleSeeder::class,
+            DoctorLevelFeeSeeder::class,
             AppointmentSeeder::class,
+            PaymentDemoSeeder::class,
             ChatbotSeeder::class,
             FaqSeeder::class,
             PostSeeder::class,
-            DoctorLevelFeeSeeder::class,
-            PaymentDemoSeeder::class,
         ]);
     }
 }

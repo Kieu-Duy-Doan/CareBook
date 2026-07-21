@@ -22,6 +22,10 @@ return new class extends Migration
             $table->string('reference_number')->nullable();
             $table->string('code')->nullable();
             $table->boolean('is_synced')->default(false); // Đã đối soát nội bộ chưa
+            $table->unsignedBigInteger('matched_payment_id')->nullable();
+            $table->enum('reconciliation_status', ['unmatched', 'matched', 'amount_mismatch', 'manual'])->default('unmatched');
+            $table->text('reconciliation_note')->nullable();
+            $table->foreign('matched_payment_id')->references('id')->on('payments')->nullOnDelete();
             $table->timestamps();
         });
     }

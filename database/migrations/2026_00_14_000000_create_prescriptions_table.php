@@ -15,6 +15,11 @@ return new class extends Migration
             $table->text('diagnosis_note')->nullable();
             $table->json('items');
             $table->text('general_note')->nullable();
+            $table->decimal('payment_amount', 12, 2)->default(0);
+            $table->enum('payment_status', ['pending', 'paid', 'waived'])->default('pending')->index();
+            $table->enum('payment_method', ['qr', 'cash', 'insurance', 'waived'])->nullable();
+            $table->foreignId('collected_by')->nullable()->constrained('users')->restrictOnDelete();
+            $table->timestamp('paid_at')->nullable();
             $table->timestamp('created_at')->useCurrent();
         });
     }

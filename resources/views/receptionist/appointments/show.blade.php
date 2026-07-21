@@ -1,5 +1,5 @@
 <x-layouts.receptionist title="Chi tiết lịch hẹn #{{ $appointment->appointment_code }}">
-    <div id="appointment-content" x-data="appointmentManager()">
+    <div id="appointment-content" x-data="{ activeTab: 'overview' }" @beforeprint.window="activeTab = 'prescription'">
         <!-- Breadcrumb & Actions -->
         <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -20,49 +20,43 @@
                     <i class="fa-solid fa-arrow-left mr-1"></i> Quay lại
                 </a>
 
-                <!-- Quick Actions cho Lễ tân -->
-                @if ($appointment->status === 'pending')
-                <button type="button" @click="updateStatus('checked_in')" :disabled="isLoading" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50">
-                    <i class="fa-solid fa-check mr-1"></i> Check-in
-                </button>
 
-                @if(now() > \Carbon\Carbon::parse($appointment->appointment_date->format('Y-m-d') . ' ' . $appointment->appointment_time))
-                <button type="button" @click="updateStatus('late')" :disabled="isLoading" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50">
-                    <i class="fa-solid fa-clock mr-1"></i> Đi trễ
-                </button>
+                @if (in_array($appointment->status, ['pending']))
+                    <form action="{{ route('receptionist.appointments.update-status', $appointment->id) }}" method="POST" class="inline-block">
+                        @csrf
+                        @method('PATCH')
+                        <input type="hidden" name="status" value="late">
+                        <button type="submit" class="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                            <i class="fa-solid fa-clock mr-1"></i> Đến muộn
+                        </button>
+                    </form>
                 @endif
 
-                <button type="button" @click="openModal('absent')" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                    <i class="fa-solid fa-user-xmark mr-1"></i> Vắng mặt
-                </button>
+                @if (in_array($appointment->status, ['pending', 'late']))
+                    <form action="{{ route('receptionist.appointments.update-status', $appointment->id) }}" method="POST" class="inline-block">
+                        @csrf
+                        @method('PATCH')
+                        <input type="hidden" name="status" value="checked_in">
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                            <i class="fa-solid fa-check-circle mr-1"></i> Check-in
+                        </button>
+                    </form>
                 @endif
 
-                @if (!in_array($appointment->status, ['completed', 'cancelled']))
-                <button type="button" @click="openModal('cancelled')" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                    <i class="fa-solid fa-ban mr-1"></i> Huỷ lịch
-                </button>
-                @endif
-
-                @if ($appointment->payments->where('status', 'pending')->count() > 0)
-                <a href="{{ route('receptionist.payments.index') }}?search={{ $appointment->appointment_code }}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                <button type="button" @click="activeTab = 'payments'" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                     <i class="fa-solid fa-money-bill mr-1"></i> Thanh toán
-                </a>
-                @endif
+                    @if ($appointment->payments->where('status', 'pending')->count() > 0)
+                        <span class="ml-1 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold text-green-600 bg-white rounded-full">
+                            {{ $appointment->payments->where('status', 'pending')->count() }}
+                        </span>
+                    @endif
+                </button>
 
                 <a href="{{ route('receptionist.appointments.edit', $appointment->id) }}"
                     class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                     <i class="fa-solid fa-pen mr-1"></i> Chỉnh sửa
                 </a>
-                <form action="{{ route('receptionist.appointments.destroy', $appointment->id) }}" method="POST"
-                    class="inline-block"
-                    onsubmit="return confirm('Bạn có chắc chắn muốn xoá lịch hẹn này? Hành động này không thể hoàn tác.');">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit"
-                        class="bg-red-50 text-red-600 hover:bg-red-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                        <i class="fa-solid fa-trash mr-1"></i> Xoá
-                    </button>
-                </form>
+
             </div>
         </div>
 
@@ -146,7 +140,7 @@
         <div class="flex flex-col lg:flex-row gap-6">
 
             <!-- CỘT TRÁI & GIỮA (2/3) -->
-            <div class="w-full lg:w-2/3" x-data="{ activeTab: 'overview' }" @beforeprint.window="activeTab = 'prescription'">
+            <div class="w-full lg:w-2/3">
 
                 <!-- Tabs Header -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 print:hidden">
@@ -777,12 +771,18 @@
                                 <i class="fa-solid fa-receipt text-green-500"></i>
                                 <h3 class="text-lg font-bold text-gray-900">Lịch sử thanh toán</h3>
                             </div>
-                            @if ($appointment->payments->where('status', 'paid')->count() > 0)
-                            <a href="{{ route('receptionist.payments.printVat', $appointment->id) }}" target="_blank"
-                                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                                <i class="fa-solid fa-print"></i> In hóa đơn
-                            </a>
-                            @endif
+                            <div class="flex items-center gap-2">
+                                @if ($appointment->payments->where('status', 'paid')->count() > 0)
+                                <a href="{{ route('receptionist.payments.printVat', $appointment->id) }}" target="_blank"
+                                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                                    <i class="fa-solid fa-print"></i> In hóa đơn
+                                </a>
+                                @endif
+                                <a href="{{ route('receptionist.payments.create', $appointment->id) }}"
+                                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                                    <i class="fa-solid fa-plus"></i> Tạo thanh toán
+                                </a>
+                            </div>
                         </div>
                         <div class="p-6">
                             @if ($appointment->payments->isEmpty())
@@ -925,7 +925,7 @@
                         <h3 class="text-base font-bold text-gray-900">Cập nhật trạng thái</h3>
                     </div>
                     <div class="p-6">
-                        <form action="{{ route('receptionist.appointments.update', $appointment->id) }}"
+                        <form action="{{ route('receptionist.appointments.update-status', $appointment->id) }}"
                             method="POST">
                             @csrf
                             @method('PATCH')
@@ -1031,145 +1031,6 @@
             </div>
         </div>
 
-        <!-- Modals -->
-        <div x-show="modalOpen" x-cloak style="display: none;" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                <div x-show="modalOpen" x-transition.opacity class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="closeModal()"></div>
-                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-                <div x-show="modalOpen" x-transition.scale class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                        <div class="sm:flex sm:items-start">
-                            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-                                <i class="fa-solid fa-circle-exclamation text-red-600"></i>
-                            </div>
-                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title" x-text="modalTitle"></h3>
-                                <div class="mt-2">
-                                    <p class="text-sm text-gray-500 mb-2" x-text="modalDesc"></p>
-                                    <textarea x-model="reason" rows="3" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Nhập lý do (không bắt buộc)..."></textarea>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                        <button type="button" @click="submitModal()" :disabled="isLoading" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50">
-                            Xác nhận
-                        </button>
-                        <button type="button" @click="closeModal()" :disabled="isLoading" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50">
-                            Huỷ bỏ
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Notification Toast -->
-        <div class="fixed bottom-4 right-4 z-50">
-            <div x-show="toastOpen" x-transition x-cloak style="display: none;" class="bg-white border-l-4 rounded shadow-lg p-4 mb-2 flex items-center" :class="toastType === 'success' ? 'border-green-500' : 'border-red-500'">
-                <i class="fa-solid mr-3 text-xl" :class="toastType === 'success' ? 'fa-circle-check text-green-500' : 'fa-circle-exclamation text-red-500'"></i>
-                <div>
-                    <h4 class="font-bold text-sm text-gray-900" x-text="toastType === 'success' ? 'Thành công' : 'Lỗi'"></h4>
-                    <p class="text-sm text-gray-600" x-text="toastMsg"></p>
-                </div>
-                <button @click="toastOpen = false" class="ml-auto pl-3 text-gray-400 hover:text-gray-600">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-        </div>
-
-        <script>
-            document.addEventListener('alpine:init', () => {
-                Alpine.data('appointmentManager', () => ({
-                    isLoading: false,
-                    modalOpen: false,
-                    modalAction: '',
-                    modalTitle: '',
-                    modalDesc: '',
-                    reason: '',
-                    toastOpen: false,
-                    toastMsg: '',
-                    toastType: 'success',
-
-                    showToast(msg, type = 'success') {
-                        this.toastMsg = msg;
-                        this.toastType = type;
-                        this.toastOpen = true;
-                        setTimeout(() => {
-                            this.toastOpen = false;
-                        }, 4000);
-                    },
-
-                    openModal(action) {
-                        this.modalAction = action;
-                        this.reason = '';
-                        if (action === 'cancelled') {
-                            this.modalTitle = 'Huỷ lịch hẹn';
-                            this.modalDesc = 'Bạn có chắc chắn muốn huỷ lịch hẹn này?';
-                        } else if (action === 'absent') {
-                            this.modalTitle = 'Đánh dấu Vắng mặt';
-                            this.modalDesc = 'Xác nhận bệnh nhân không đến khám?';
-                        }
-                        this.modalOpen = true;
-                    },
-
-                    closeModal() {
-                        this.modalOpen = false;
-                        this.reason = '';
-                    },
-
-                    submitModal() {
-                        this.updateStatus(this.modalAction, this.reason);
-                    },
-
-                    updateStatus(status, reason = null) {
-                        this.isLoading = true;
-                        fetch(`/receptionist/appointments/{{ $appointment->id }}/status`, {
-                                method: 'PATCH',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Accept': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                                },
-                                body: JSON.stringify({
-                                    status: status,
-                                    reason: reason
-                                })
-                            })
-                            .then(res => res.json())
-                            .then(data => {
-                                this.isLoading = false;
-                                this.closeModal();
-                                if (data.success) {
-                                    this.showToast(data.message, 'success');
-                                    // Refresh content via Fetch (PJAX style) to update stepper without page flash
-                                    this.refreshContent();
-                                } else {
-                                    this.showToast(data.message || 'Có lỗi xảy ra', 'error');
-                                }
-                            })
-                            .catch(err => {
-                                this.isLoading = false;
-                                this.closeModal();
-                                console.error(err);
-                                this.showToast('Lỗi mạng, vui lòng thử lại.', 'error');
-                            });
-                    },
-
-                    refreshContent() {
-                        fetch(window.location.href)
-                            .then(res => res.text())
-                            .then(html => {
-                                const parser = new DOMParser();
-                                const doc = parser.parseFromString(html, 'text/html');
-                                // Replace the entire wrapper content
-                                const newContent = doc.getElementById('appointment-content');
-                                if (newContent) {
-                                    document.getElementById('appointment-content').innerHTML = newContent.innerHTML;
-                                }
-                            });
-                    }
-                }));
-            });
-        </script>
     </div>
 </x-layouts.receptionist>

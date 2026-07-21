@@ -4,42 +4,49 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\DoctorProfile;
-use App\Models\Room;
 use App\Models\WorkSchedule;
+use Illuminate\Support\Facades\DB;
 
 class WorkScheduleSeeder extends Seeder
 {
     public function run(): void
     {
-        $doctors = DoctorProfile::all();
-        $rooms = Room::all();
+        $doctors = DoctorProfile::where('doctor_type', 'clinical')->get();
 
-        if ($doctors->isEmpty() || $rooms->isEmpty()) {
-            return;
-        }
+        foreach ($doctors as $doctor) {
+            // Lấy chuyên khoa chính
+            $specialtyId = DB::table('doctor_specialties')
+                ->where('doctor_profile_id', $doctor->id)
+                ->where('is_primary', true)
+                ->value('specialty_id');
 
-        // Để tránh trùng phòng (1 phòng chỉ được 1 bác sĩ trực cùng 1 thời điểm), 
-        // ta chỉ gán lịch cho số lượng bác sĩ bằng đúng số lượng phòng.
-        foreach ($doctors->take($rooms->count()) as $i => $doctor) {
-            $room = $rooms[$i];
+            if (!$specialtyId) continue;
 
-            // Phân lịch từ T2 đến T6 cho mỗi bác sĩ
-            foreach ([2, 3, 4, 5, 6] as $day) {
-                // Sáng
+            // Lấy phòng khám tương ứng
+            $roomId = DB::table('specialty_rooms')
+                ->where('specialty_id', $specialtyId)
+                ->where('is_primary', true)
+                ->value('room_id');
+
+            if (!$roomId) continue;
+
+            // Phân lịch từ T2 đến T7
+            foreach ([2, 3, 4, 5, 6, 7] as $day) {
+                // Sáng 7:30 - 11:30
                 WorkSchedule::create([
                     'doctor_profile_id' => $doctor->id,
-                    'room_id' => $room->id,
-                    'day_of_week' => $day, // 2=T2, 3=T3,..., 7=T7, 1=CN
-                    'start_time' => '07:00:00',
-                    'end_time' => '11:00:00',
-                ]);
-                // Chiều
-                WorkSchedule::create([
-                    'doctor_profile_id' => $doctor->id,
-                    'room_id' => $room->id,
+                    'room_id' => $roomId,
                     'day_of_week' => $day,
-                    'start_time' => '13:00:00',
-                    'end_time' => '17:00:00',
+                    'start_time' => '07:30:00',
+                    'end_time' => '11:30:00',
+                ]);
+                // Chiều 13:30 - 17:30
+                WorkSchedule::create([
+                    'doctor_profile_id' => $doctor->id,
+                    'room_id' => $roomId,
+                    'day_of_week' => $day,
+                    'start_time' => '13:30:00',
+                    'end_time' => '17:30:00',
                 ]);
             }
         }

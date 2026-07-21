@@ -107,19 +107,19 @@ Sau khi chạy lệnh `--seed` ở Bước 5, hệ thống sẽ cung cấp một
 
 - **Tài khoản Admin (Quản trị viên hệ thống):**
     - SĐT: `0900000001`
+    - Tên đăng nhập: `admin`
     - Mật khẩu: `Admin@123`
 
 - **Tài khoản Lễ tân:**
-    - SĐT: `0900000002` (hoặc `0900000003`)
+    - SĐT: `0900000002`
+    - Tên đăng nhập: `letan`
     - Mật khẩu: `Letan@123`
 
-- **Tài khoản Bác sĩ:**
-    - SĐT: `0900000010` (hoặc `0900000011`, `0900000012`)
-    - Mật khẩu: `Bacsi@123`
+- **Tài khoản Bác sĩ (10 tài khoản, mật khẩu chung `Bacsi@123`):**
+    - `0900000100` (`bs_an`), `0900000101` (`bs_bich`), `0900000102` (`bs_tuan`), ...
 
-- **Tài khoản Bệnh nhân:**
-    - SĐT: `0900000020`
-    - Mật khẩu: `Patient@123`
+- **Tài khoản Bệnh nhân (10 tài khoản, mật khẩu chung `Patient@123`):**
+    - `0900000200` (`bn_1`), `0900000201` (`bn_2`), `0900000202` (`bn_3`), ...
 
 ---
 

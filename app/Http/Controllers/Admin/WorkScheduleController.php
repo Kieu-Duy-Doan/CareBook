@@ -660,15 +660,25 @@ class WorkScheduleController extends Controller
                 }
 
                 // Chuyển lịch hẹn từ ngày hiện tại trở đi
-                \App\Models\Appointment::where('doctor_profile_id', $fromDoctorId)
+                $appointmentsToUpdate = \App\Models\Appointment::where('doctor_profile_id', $fromDoctorId)
                     ->where('appointment_date', '>=', now()->toDateString())
                     ->whereIn('status', ['pending', 'confirmed', 'checked_in'])
-                    ->update(['doctor_profile_id' => $toDoctorId]);
+                    ->get();
+
+                foreach ($appointmentsToUpdate as $appointment) {
+                    $appointment->doctor_profile_id = $toDoctorId;
+                    $appointment->save();
+                }
 
                 // Chuyển ngoại lệ lịch từ ngày hiện tại
-                ScheduleOverride::where('doctor_profile_id', $fromDoctorId)
+                $overridesToUpdate = ScheduleOverride::where('doctor_profile_id', $fromDoctorId)
                     ->where('override_date', '>=', now()->toDateString())
-                    ->update(['doctor_profile_id' => $toDoctorId]);
+                    ->get();
+
+                foreach ($overridesToUpdate as $override) {
+                    $override->doctor_profile_id = $toDoctorId;
+                    $override->save();
+                }
 
                 $logDesc = "Chuyển toàn bộ ca khám và lịch hẹn từ BS $fromDoctorId sang BS $toDoctorId";
             } else {
@@ -676,15 +686,25 @@ class WorkScheduleController extends Controller
                 $startDate = $request->start_date;
                 $endDate = $request->end_date;
 
-                \App\Models\Appointment::where('doctor_profile_id', $fromDoctorId)
+                $appointmentsToUpdate = \App\Models\Appointment::where('doctor_profile_id', $fromDoctorId)
                     ->whereBetween('appointment_date', [$startDate, $endDate])
                     ->whereIn('status', ['pending', 'confirmed', 'checked_in'])
-                    ->update(['doctor_profile_id' => $toDoctorId]);
+                    ->get();
+
+                foreach ($appointmentsToUpdate as $appointment) {
+                    $appointment->doctor_profile_id = $toDoctorId;
+                    $appointment->save();
+                }
 
                 // Chuyển ngoại lệ
-                ScheduleOverride::where('doctor_profile_id', $fromDoctorId)
+                $overridesToUpdate = ScheduleOverride::where('doctor_profile_id', $fromDoctorId)
                     ->whereBetween('override_date', [$startDate, $endDate])
-                    ->update(['doctor_profile_id' => $toDoctorId]);
+                    ->get();
+
+                foreach ($overridesToUpdate as $override) {
+                    $override->doctor_profile_id = $toDoctorId;
+                    $override->save();
+                }
 
                 $logDesc = "Chuyển ca khám từ BS $fromDoctorId sang BS $toDoctorId (Từ $startDate đến $endDate)";
             }

@@ -267,16 +267,6 @@
                                         title="Chỉnh sửa">
                                         <i class="fa-solid fa-pen"></i>
                                     </a>
-                                    <form action="{{ route('receptionist.appointments.destroy', $appt->id) }}"
-                                        method="POST" class="inline-block"
-                                        onsubmit="return confirm('Bạn có chắc chắn muốn xoá lịch hẹn này?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                            class="text-gray-400 hover:text-red-600 transition-colors" title="Xoá">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </button>
-                                    </form>
                                 </div>
                             </td>
                         </tr>

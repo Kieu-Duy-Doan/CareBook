@@ -522,7 +522,16 @@ class AppointmentController extends Controller
         if ($oldStatus !== $newStatus) {
             $appointment->status = $newStatus;
 
-            if ($newStatus === 'checked_in' && is_null($appointment->checked_in_at)) {
+            // Đảm bảo cập nhật lại phí khám chuẩn xác để tránh lỗi 0đ khi Check-in nhanh
+            $doctor = \App\Models\DoctorProfile::find($appointment->doctor_profile_id);
+            if ($doctor && $doctor->level) {
+                $fee = \App\Models\DoctorLevelFee::where('level', $doctor->level)->first();
+                if ($fee) {
+                    $appointment->total_fee = $fee->specific_price;
+                }
+            }
+
+            if (in_array($newStatus, ['checked_in', 'examining', 'completed']) && is_null($appointment->checked_in_at)) {
                 $appointment->checked_in_at = now();
             }
             if ($newStatus === 'completed' && is_null($appointment->completed_at)) {
@@ -645,7 +654,7 @@ class AppointmentController extends Controller
             'is_origin' => true,
             'status' => 'waiting',
             'payment_amount' => $appointment->total_fee ?? 0,
-            'payment_status' => ($appointment->total_fee ?? 0) > 0 ? 'pending' : 'paid',
+            'payment_status' => 'pending',
         ]);
     }
 }

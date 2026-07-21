@@ -68,7 +68,7 @@ class PostSeeder extends Seeder
                 'slug' => Str::slug($postData['title']),
                 'summary' => $postData['summary'],
                 'content' => $postData['content'],
-                'thumbnail_url' => 'https://ui-avatars.com/api/?name=Post+' . ($index + 1) . '&background=random&size=400',
+                'thumbnail_url' => 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&q=80&w=400&h=300',
                 'specialty_id' => $postData['specialty_id'],
                 'post_type' => $postData['post_type'],
                 'view_count' => rand(50, 1000),

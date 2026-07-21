@@ -12,6 +12,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('appointment_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('payment_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('ip_address', 45)->nullable();
             $table->string('action'); // webhook_received, payment_created, payment_failed, sync_sepay
             $table->text('payload')->nullable();
             $table->string('message')->nullable();

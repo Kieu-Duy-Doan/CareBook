@@ -384,6 +384,7 @@ Route::prefix('receptionist')->name('receptionist.')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\Receptionist\DashboardController::class, 'index'])->name('dashboard');
 
         // Appointments
+        Route::patch('appointments/{id}/status', [\App\Http\Controllers\Receptionist\AppointmentController::class, 'updateStatus'])->name('appointments.update-status');
         Route::resource('appointments', \App\Http\Controllers\Receptionist\AppointmentController::class);
 
         // Patients

@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('building', 50)->nullable();
             $table->string('floor', 10)->nullable();
             $table->enum('room_type', ['examination', 'diagnostic', 'surgery', 'other'])->default('examination');
+            $table->integer('price')->nullable()->comment('Giá tiền dịch vụ phòng (nếu là phòng diagnostic)');
             $table->tinyInteger('capacity')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();

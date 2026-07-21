@@ -20,6 +20,7 @@ class SpecialtyRoomSeeder extends Seeder
             'Nội tiêu hoá' => 'P202',
             'Mắt' => 'P203',
             'Tai Mũi Họng' => 'P204',
+            'Nội tiết' => 'P301',
             'Cơ xương khớp' => 'P304',
         ];
 
