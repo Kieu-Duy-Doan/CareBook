@@ -227,6 +227,65 @@
             @endif
         </div>
 
+        <!-- Lịch sử trạng thái (Activity Log) -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left text-gray-400"></i>
+                <h3 class="text-base font-bold text-gray-900">Lịch sử trạng thái</h3>
+            </div>
+            <div class="p-6">
+                @if ($appointment->logs->isEmpty())
+                    <div class="text-center text-sm text-gray-500 py-4 italic">Chưa có bản ghi lịch sử nào.</div>
+                @else
+                    <div class="relative border-l border-gray-200 ml-3">
+                        @foreach ($appointment->logs as $log)
+                            <div class="mb-6 ml-5">
+                                @php
+                                    $logColor = match ($log->new_status) {
+                                        'pending' => 'bg-yellow-500',
+                                        'checked_in' => 'bg-blue-500',
+                                        'examining' => 'bg-purple-500',
+                                        'completed' => 'bg-green-500',
+                                        'cancelled' => 'bg-red-500',
+                                        'absent' => 'bg-gray-500',
+                                        'late' => 'bg-orange-500',
+                                        default => 'bg-gray-400',
+                                    };
+                                @endphp
+                                <span
+                                    class="absolute -left-1.5 w-3 h-3 rounded-full {{ $logColor }} ring-4 ring-white mt-1.5"></span>
+                                <div class="text-xs text-gray-500 mb-1">
+                                    {{ $log->created_at->format('d/m/Y H:i') }}</div>
+                                <div class="text-sm font-medium text-gray-900">
+                                    Chuyển sang:
+                                    @php
+                                        $labelMap = [
+                                            'pending' => 'Đã tiếp nhận',
+                                            'checked_in' => 'Đã checkin',
+                                            'examining' => 'Đang khám',
+                                            'completed' => 'Hoàn thành',
+                                            'cancelled' => 'Đã huỷ',
+                                            'absent' => 'Vắng mặt',
+                                            'late' => 'Đến muộn',
+                                        ];
+                                    @endphp
+                                    {{ $labelMap[$log->new_status] ?? $log->new_status }}
+                                </div>
+                                <div class="text-xs text-gray-600 mt-1">Bởi: <span
+                                        class="font-medium">{{ $log->changedBy->full_name ?? 'Hệ thống' }}</span>
+                                </div>
+                                @if ($log->reason)
+                                    <div
+                                        class="text-xs text-gray-500 mt-1 bg-gray-50 p-2 rounded border border-gray-100 italic">
+                                        "{{ $log->reason }}"</div>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </div>
+
         <!-- Panel hành động theo trạng thái -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h3 class="text-lg font-bold text-gray-900 border-b border-gray-100 pb-4 mb-4">Trạng thái lịch hẹn</h3>

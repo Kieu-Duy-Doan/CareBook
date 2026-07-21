@@ -1007,6 +1007,7 @@
                                             'completed' => 'bg-green-500',
                                             'cancelled' => 'bg-red-500',
                                             'absent' => 'bg-gray-500',
+                                            'late' => 'bg-orange-500',
                                             default => 'bg-gray-400',
                                         };
                                     @endphp
@@ -1024,6 +1025,7 @@
                                                 'completed' => 'Hoàn thành',
                                                 'cancelled' => 'Đã huỷ',
                                                 'absent' => 'Vắng mặt',
+                                                'late' => 'Đến muộn',
                                             ];
                                         @endphp
                                         {{ $labelMap[$log->new_status] ?? $log->new_status }}

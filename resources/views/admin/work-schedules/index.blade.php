@@ -225,7 +225,10 @@
                                     {{ $schedule->day_name }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                    <i class="fa-regular fa-clock text-gray-400 mr-1"></i> {{ $schedule->time_range }}
+                                    <div class="flex flex-col gap-1">
+                                        <span><i class="fa-regular fa-clock text-gray-400 mr-1"></i> {{ $schedule->time_range }}</span>
+                                        <div>{!! $schedule->shift_badge !!}</div>
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-700">
                                     {{ $schedule->max_slots }} slot

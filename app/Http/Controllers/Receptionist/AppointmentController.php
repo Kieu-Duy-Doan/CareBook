@@ -208,7 +208,7 @@ class AppointmentController extends Controller
             'room_id'            => 'required|exists:rooms,id,is_active,1',
             'appointment_date'   => 'required|date|after_or_equal:today',
             'appointment_time'   => 'required',
-            'status'             => 'required|in:pending,checked_in,examining,completed,cancelled,absent',
+            'status'             => 'required|in:pending,checked_in,examining,completed,cancelled,absent,late',
             'source'             => 'required|in:web,counter,chatbot',
             'reason'             => 'required|string',
 
@@ -456,7 +456,7 @@ class AppointmentController extends Controller
         if ($isLocked) {
             // Lịch đang/đã khám: Lễ tân chỉ được cập nhật trạng thái và ghi chú
             $request->validate([
-                'status' => 'required|in:pending,checked_in,examining,completed,cancelled,absent',
+                'status' => 'required|in:pending,checked_in,examining,completed,cancelled,absent,late',
                 'receptionist_note' => 'nullable|string',
             ], $messages, $attributes);
 
@@ -523,7 +523,7 @@ class AppointmentController extends Controller
             'room_id'            => 'required|exists:rooms,id,is_active,1',
             'appointment_date'   => 'required|date',
             'appointment_time'   => 'required',
-            'status'             => 'required|in:pending,checked_in,examining,completed,cancelled,absent',
+            'status'             => 'required|in:pending,checked_in,examining,completed,cancelled,absent,late',
             'source'             => 'required|in:web,counter,chatbot',
             'reason'             => 'required|string',
             'receptionist_note'  => 'nullable|string',
@@ -729,7 +729,7 @@ class AppointmentController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:pending,checked_in,examining,completed,cancelled,absent',
+            'status' => 'required|in:pending,checked_in,examining,completed,cancelled,absent,late',
             'reason' => 'nullable|string|max:500'
         ], [
             'status.required' => 'Vui lòng chọn trạng thái.',
