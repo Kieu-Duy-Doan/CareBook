@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Appointment;
 use App\Models\PatientProfile;
 use App\Models\Payment;
+use App\Models\ClinicalVisit;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -232,16 +233,17 @@ class DashboardService
      */
     public function getRevenueByMethodData(Carbon $startOfMonth): array
     {
-        $payments = Payment::select('payment_method', DB::raw('sum(amount) as total'))
+        $payments = Payment::select('method', DB::raw('sum(amount) as total'))
             ->where('paid_at', '>=', $startOfMonth)
             ->where('status', 'completed')
-            ->groupBy('payment_method')
-            ->pluck('total', 'payment_method')->toArray();
+            ->groupBy('method')
+            ->pluck('total', 'method')->toArray();
 
         $methodNames = [
             'cash' => 'Tiền mặt',
-            'transfer' => 'Chuyển khoản (QR)',
-            'card' => 'Quẹt thẻ'
+            'qr' => 'Chuyển khoản (QR)',
+            'insurance' => 'Bảo hiểm Y tế',
+            'waived' => 'Miễn phí / Miễn giảm'
         ];
 
         $revenueMethodLabels = [];
@@ -259,5 +261,111 @@ class DashboardService
         }
 
         return compact('revenueMethodLabels', 'revenueMethodData');
+    }
+
+    /**
+     * Lấy dữ liệu thống kê cho Dashboard Lễ tân
+     */
+    public function getReceptionistDashboardData(Carbon $today): array
+    {
+        $stats = [
+            'total_appointments_today' => Appointment::whereDate('appointment_date', $today)->count(),
+            'pending_appointments' => Appointment::whereDate('appointment_date', $today)->where('status', 'pending')->count(),
+            'checked_in_today' => Appointment::whereDate('appointment_date', $today)->where('status', 'checked_in')->count(),
+            'late_today' => Appointment::whereDate('appointment_date', $today)->where('status', 'late')->count(),
+            'cancelled_today' => Appointment::whereDate('appointment_date', $today)->where('status', 'cancelled')->count(),
+            'visits_in_progress' => ClinicalVisit::whereDate('created_at', $today)->where('status', 'in_progress')->count(),
+            'visits_waiting' => ClinicalVisit::whereDate('created_at', $today)->where('status', 'waiting')->count(),
+            'pending_payments' => Payment::where('status', 'pending')->count(),
+        ];
+
+        $upcomingPatients = Appointment::with(['patientProfile', 'doctorProfile.user'])
+            ->whereDate('appointment_date', $today)
+            ->where('status', 'pending')
+            ->orderBy('appointment_time')
+            ->take(10)
+            ->get();
+
+        $hourlyDistribution = Appointment::select(DB::raw('HOUR(appointment_time) as hour'), DB::raw('count(*) as count'))
+            ->whereDate('appointment_date', $today)
+            ->groupBy('hour')
+            ->pluck('count', 'hour')->toArray();
+
+        $chartLabels = [];
+        $chartData = [];
+        for ($i = 7; $i <= 19; $i++) {
+            $chartLabels[] = $i . ':00';
+            $chartData[] = $hourlyDistribution[$i] ?? 0;
+        }
+
+        return compact('stats', 'upcomingPatients', 'chartLabels', 'chartData');
+    }
+
+    /**
+     * Lấy dữ liệu thống kê cho Dashboard Bác sĩ
+     */
+    public function getDoctorDashboardData(Carbon $today, Carbon $startOfMonth, $doctorProfileId): array
+    {
+        $todayAppointmentsCount = Appointment::where('doctor_profile_id', $doctorProfileId)
+            ->whereDate('appointment_date', $today)
+            ->count();
+
+        $completedTodayCount = Appointment::where('doctor_profile_id', $doctorProfileId)
+            ->whereDate('appointment_date', $today)
+            ->where('status', 'completed')
+            ->count();
+
+        $patientsWaitingOutside = Appointment::where('doctor_profile_id', $doctorProfileId)
+            ->whereDate('appointment_date', $today)
+            ->where('status', 'checked_in')
+            ->count();
+
+        $totalCompletedThisMonth = Appointment::where('doctor_profile_id', $doctorProfileId)
+            ->where('appointment_date', '>=', $startOfMonth)
+            ->where('status', 'completed')
+            ->count();
+
+        $revenueThisMonth = Payment::where('status', 'completed')
+            ->whereHas('appointment', function ($query) use ($doctorProfileId, $startOfMonth) {
+                $query->where('doctor_profile_id', $doctorProfileId)
+                    ->where('appointment_date', '>=', $startOfMonth);
+            })
+            ->sum('amount');
+
+        $upcomingAppointments = Appointment::with('patientProfile')
+            ->where('doctor_profile_id', $doctorProfileId)
+            ->whereDate('appointment_date', '>=', $today)
+            ->whereIn('status', ['pending', 'checked_in', 'examining'])
+            ->orderBy('appointment_date')
+            ->orderBy('appointment_time')
+            ->take(5)
+            ->get();
+
+        $sevenDaysAgo = Carbon::now()->subDays(6)->startOfDay();
+        $chartData = Appointment::select(DB::raw('DATE(appointment_date) as date'), DB::raw('count(*) as count'))
+            ->where('doctor_profile_id', $doctorProfileId)
+            ->where('appointment_date', '>=', $sevenDaysAgo)
+            ->where('appointment_date', '<=', $today)
+            ->groupBy('date')
+            ->pluck('count', 'date')->toArray();
+
+        $miniChartLabels = [];
+        $miniChartData = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $dateStr = Carbon::now()->subDays($i)->format('Y-m-d');
+            $miniChartLabels[] = Carbon::now()->subDays($i)->format('d/m');
+            $miniChartData[] = $chartData[$dateStr] ?? 0;
+        }
+
+        return compact(
+            'todayAppointmentsCount',
+            'completedTodayCount',
+            'patientsWaitingOutside',
+            'totalCompletedThisMonth',
+            'revenueThisMonth',
+            'upcomingAppointments',
+            'miniChartLabels',
+            'miniChartData'
+        );
     }
 }

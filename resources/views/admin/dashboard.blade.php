@@ -144,15 +144,17 @@
             </div>
             <div class="flex items-center text-sm relative z-10">
                 @if ($patientGrowth > 0)
-                <span class="text-green-600 font-medium flex items-center bg-green-50 px-2 py-0.5 rounded-full"><i
-                        class="fa-solid fa-arrow-trend-up mr-1 text-xs"></i> +{{ round($patientGrowth, 1) }}%</span>
+                <span class="text-green-600 font-medium flex items-center bg-green-50 px-2 py-0.5 rounded-full">
+                    <i class="fa-solid fa-arrow-trend-up mr-1 text-xs"></i> +{{ round($patientGrowth, 1) }}%
+                </span>
                 @elseif($patientGrowth < 0)
-                    <span class="text-red-600 font-medium flex items-center bg-red-50 px-2 py-0.5 rounded-full"><i
-                        class="fa-solid fa-arrow-trend-down mr-1 text-xs"></i>
-                    {{ round($patientGrowth, 1) }}%</span>
+                    <span class="text-red-600 font-medium flex items-center bg-red-50 px-2 py-0.5 rounded-full">
+                    <i class="fa-solid fa-arrow-trend-down mr-1 text-xs"></i> {{ round($patientGrowth, 1) }}%
+                    </span>
                     @else
-                    <span class="text-gray-500 font-medium flex items-center bg-gray-50 px-2 py-0.5 rounded-full"><i
-                            class="fa-solid fa-minus mr-1 text-xs"></i> 0%</span>
+                    <span class="text-gray-500 font-medium flex items-center bg-gray-50 px-2 py-0.5 rounded-full">
+                        <i class="fa-solid fa-minus mr-1 text-xs"></i> 0%
+                    </span>
                     @endif
                     <span class="text-gray-400 ml-2">so với tháng trước</span>
             </div>
