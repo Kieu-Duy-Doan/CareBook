@@ -412,6 +412,88 @@
     </div>
     @endif
     
+    <!-- Lịch sử Thanh toán -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
+            <i class="fa-solid fa-receipt text-green-500"></i>
+            <h3 class="text-lg font-bold text-gray-900">Lịch sử thanh toán</h3>
+        </div>
+        <div class="p-6">
+            @if ($appointment->payments->isEmpty())
+                <div class="text-center py-8 text-gray-500">
+                    <div class="mb-3"><i class="fa-solid fa-receipt text-4xl text-gray-300"></i></div>
+                    <p>Chưa có giao dịch thanh toán nào.</p>
+                </div>
+            @else
+                @php
+                    $totalPaid = $appointment->payments->where('status', 'paid')->sum('amount');
+                    $totalPending = $appointment->payments->where('status', 'pending')->sum('amount');
+                @endphp
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-green-50 rounded-lg p-4 text-center border border-green-100">
+                        <div class="text-xs text-green-600 font-medium uppercase mb-1">Đã thanh toán</div>
+                        <div class="text-lg font-bold text-green-700">{{ number_format($totalPaid, 0, ',', '.') }}đ</div>
+                    </div>
+                    <div class="bg-yellow-50 rounded-lg p-4 text-center border border-yellow-100">
+                        <div class="text-xs text-yellow-600 font-medium uppercase mb-1">Chờ thanh toán</div>
+                        <div class="text-lg font-bold text-yellow-700">{{ number_format($totalPending, 0, ',', '.') }}đ</div>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">Mã GD</th>
+                                <th class="px-4 py-3 text-right font-medium text-gray-500">Số tiền</th>
+                                <th class="px-4 py-3 text-center font-medium text-gray-500">Phương thức</th>
+                                <th class="px-4 py-3 text-center font-medium text-gray-500">Trạng thái</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">Thời gian</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @foreach ($appointment->payments->sortByDesc('created_at') as $payment)
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-4 py-3">
+                                        <span class="font-mono text-xs text-gray-700">{{ $payment->transaction_code ?? '—' }}</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-right font-bold text-gray-900">
+                                        {{ number_format($payment->amount, 0, ',', '.') }}đ
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        @php
+                                            $methodLabel = match($payment->method) {
+                                                'cash' => ['Tiền mặt', 'bg-emerald-100 text-emerald-700'],
+                                                'bank_transfer' => ['Chuyển khoản', 'bg-blue-100 text-blue-700'],
+                                                'qr_code' => ['QR Code', 'bg-purple-100 text-purple-700'],
+                                                default => [$payment->method, 'bg-gray-100 text-gray-700'],
+                                            };
+                                        @endphp
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $methodLabel[1] }}">{{ $methodLabel[0] }}</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        @php
+                                            $statusLabel = match($payment->status) {
+                                                'paid' => ['Đã thanh toán', 'bg-green-100 text-green-700'],
+                                                'pending' => ['Chờ thanh toán', 'bg-yellow-100 text-yellow-700'],
+                                                'refunded' => ['Hoàn tiền', 'bg-red-100 text-red-700'],
+                                                'failed' => ['Thất bại', 'bg-red-100 text-red-700'],
+                                                default => [$payment->status, 'bg-gray-100 text-gray-700'],
+                                            };
+                                        @endphp
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $statusLabel[1] }}">{{ $statusLabel[0] }}</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-gray-500 text-xs">
+                                        {{ $payment->paid_at ? $payment->paid_at->format('d/m/Y H:i') : ($payment->created_at ? $payment->created_at->format('d/m/Y H:i') : '—') }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        </div>
+    </div>
+    
     <div class="text-center flex justify-center gap-4 flex-wrap">
         @if ($appointment->status === 'examining' || $appointment->status === 'completed')
             <a href="{{ route('doctor.clinical-visits.show', $appointment->id) }}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-sm font-medium transition-colors shadow-sm">

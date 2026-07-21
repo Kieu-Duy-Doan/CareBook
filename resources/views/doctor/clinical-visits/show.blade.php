@@ -184,6 +184,15 @@
                 @endphp
 
                 @if ($canUpdateThisVisit && !in_array($visit->status, ['completed', 'refused']))
+
+                {{-- Cảnh báo chưa thanh toán --}}
+                @if ($visit->payment_status !== 'paid' && $visit->payment_amount > 0)
+                <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
+                    <span class="text-sm text-amber-700 font-medium">Bệnh nhân chưa thanh toán dịch vụ này. Không thể bắt đầu khám cho đến khi thanh toán hoàn tất.</span>
+                </div>
+                @endif
+
                 <form action="{{ route('doctor.clinical-visits.update', $visit->id) }}" method="POST" enctype="multipart/form-data" class="mt-3 pt-3 border-t border-gray-100">
                     @csrf
                     @method('PUT')

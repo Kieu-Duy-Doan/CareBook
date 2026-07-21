@@ -252,6 +252,10 @@ class ClinicalVisitController extends Controller
         }
 
         if ($request->status === 'in_progress' && is_null($visit->started_at)) {
+            // Guard: CLS phải thanh toán xong mới được bắt đầu
+            if ($visit->payment_status !== 'paid' && $visit->payment_amount > 0) {
+                return back()->with('error', 'Không thể bắt đầu: Bệnh nhân chưa thanh toán dịch vụ cận lâm sàng này. Vui lòng yêu cầu thanh toán trước.');
+            }
             $visit->started_at = now();
         }
         if (in_array($request->status, ['completed', 'refused']) && is_null($visit->completed_at)) {
