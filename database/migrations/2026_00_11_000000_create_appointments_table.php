@@ -20,7 +20,7 @@ return new class extends Migration
             $table->date('appointment_date')->index();
             $table->time('appointment_time');
             $table->text('reason');
-            $table->enum('status', ['pending', 'checked_in', 'examining', 'completed', 'cancelled', 'absent'])->default('pending')->index();
+            $table->enum('status', ['pending', 'checked_in', 'examining', 'completed', 'cancelled', 'absent', 'late'])->default('pending')->index();
             $table->decimal('total_fee', 15, 2)->nullable();
             $table->boolean('reminded_2h')->default(false);
             $table->boolean('reminded_30m')->default(false);

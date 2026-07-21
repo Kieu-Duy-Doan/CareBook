@@ -12,6 +12,7 @@ return new class extends Migration
             $table->integer('id')->autoIncrement();
             $table->foreignId('doctor_profile_id')->constrained('doctor_profiles')->restrictOnDelete();
             $table->integer('room_id');
+            $table->enum('shift_label', ['morning', 'afternoon', 'evening', 'full_day'])->default('morning');
             $table->tinyInteger('day_of_week');
             $table->time('start_time');
             $table->time('end_time');

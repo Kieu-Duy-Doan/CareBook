@@ -63,6 +63,7 @@ class AppointmentLog extends Model
             'completed'  => 'Hoàn thành',
             'cancelled'  => 'Đã huỷ',
             'absent'     => 'Vắng mặt',
+            'late'       => 'Đến muộn',
             default      => $status,
         };
     }

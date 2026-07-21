@@ -119,6 +119,7 @@ class Appointment extends Model
             'completed'  => 'Hoàn thành',
             'cancelled'  => 'Đã huỷ',
             'absent'     => 'Vắng mặt',
+            'late'       => 'Đến muộn',
             default      => 'Không xác định',
         };
     }
@@ -132,6 +133,7 @@ class Appointment extends Model
             'completed'  => 'green',
             'cancelled'  => 'red',
             'absent'     => 'gray',
+            'late'       => 'orange',
             default      => 'gray',
         };
     }
