@@ -12,6 +12,7 @@ use App\Models\SystemLog;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\DB;
 use App\Exports\WorkSchedulesExport;
 use App\Exports\WorkSchedulesTemplateExport;
 use App\Imports\WorkSchedulesImport;
@@ -610,5 +611,97 @@ class WorkScheduleController extends Controller
         $override->delete();
 
         return back()->with('success', 'Đã xoá ngoại lệ lịch thành công.');
+    }
+
+    public function transferDoctorSchedules(Request $request)
+    {
+        $request->validate([
+            'from_doctor_id' => 'required|exists:doctor_profiles,id',
+            'to_doctor_id' => 'required|exists:doctor_profiles,id|different:from_doctor_id',
+            'transfer_type' => 'required|in:all,date_range',
+            'start_date' => 'required_if:transfer_type,date_range|date|nullable',
+            'end_date' => 'required_if:transfer_type,date_range|date|after_or_equal:start_date|nullable',
+        ], [
+            'to_doctor_id.different' => 'Bác sĩ nguồn và bác sĩ đích phải khác nhau.',
+            'start_date.required_if' => 'Vui lòng chọn ngày bắt đầu.',
+            'end_date.required_if' => 'Vui lòng chọn ngày kết thúc.',
+            'end_date.after_or_equal' => 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.',
+        ]);
+
+        $fromDoctorId = $request->from_doctor_id;
+        $toDoctorId = $request->to_doctor_id;
+        $transferType = $request->transfer_type;
+
+        DB::beginTransaction();
+
+        try {
+            if ($transferType === 'all') {
+                // Lấy tất cả WorkSchedule của Bác sĩ A
+                $schedulesA = WorkSchedule::where('doctor_profile_id', $fromDoctorId)->get();
+
+                foreach ($schedulesA as $scheduleA) {
+                    // Kiểm tra trùng lịch với Bác sĩ B
+                    $existsTime = WorkSchedule::where('doctor_profile_id', $toDoctorId)
+                        ->where('day_of_week', $scheduleA->day_of_week)
+                        ->where('is_active', true)
+                        ->where(function ($query) use ($scheduleA) {
+                            $query->where('start_time', '<', $scheduleA->end_time)
+                                ->where('end_time', '>', $scheduleA->start_time);
+                        })
+                        ->exists();
+
+                    if ($existsTime) {
+                        DB::rollBack();
+                        return back()->with('error', 'Bác sĩ đích bị trùng lịch làm việc vào ' . $scheduleA->day_name . ' (' . substr($scheduleA->start_time, 0, 5) . ' - ' . substr($scheduleA->end_time, 0, 5) . '). Không thể chuyển.');
+                    }
+
+                    $scheduleA->doctor_profile_id = $toDoctorId;
+                    $scheduleA->save();
+                }
+
+                // Chuyển lịch hẹn từ ngày hiện tại trở đi
+                \App\Models\Appointment::where('doctor_profile_id', $fromDoctorId)
+                    ->where('appointment_date', '>=', now()->toDateString())
+                    ->whereIn('status', ['pending', 'confirmed', 'checked_in'])
+                    ->update(['doctor_profile_id' => $toDoctorId]);
+
+                // Chuyển ngoại lệ lịch từ ngày hiện tại
+                ScheduleOverride::where('doctor_profile_id', $fromDoctorId)
+                    ->where('override_date', '>=', now()->toDateString())
+                    ->update(['doctor_profile_id' => $toDoctorId]);
+
+                $logDesc = "Chuyển toàn bộ ca khám và lịch hẹn từ BS $fromDoctorId sang BS $toDoctorId";
+            } else {
+                // Chuyển lịch hẹn trong khoảng thời gian
+                $startDate = $request->start_date;
+                $endDate = $request->end_date;
+
+                \App\Models\Appointment::where('doctor_profile_id', $fromDoctorId)
+                    ->whereBetween('appointment_date', [$startDate, $endDate])
+                    ->whereIn('status', ['pending', 'confirmed', 'checked_in'])
+                    ->update(['doctor_profile_id' => $toDoctorId]);
+
+                // Chuyển ngoại lệ
+                ScheduleOverride::where('doctor_profile_id', $fromDoctorId)
+                    ->whereBetween('override_date', [$startDate, $endDate])
+                    ->update(['doctor_profile_id' => $toDoctorId]);
+
+                $logDesc = "Chuyển ca khám từ BS $fromDoctorId sang BS $toDoctorId (Từ $startDate đến $endDate)";
+            }
+
+            SystemLog::create([
+                'user_id' => Auth::id(),
+                'action' => 'WORK_SCHEDULE_TRANSFERRED',
+                'module' => 'work_schedule',
+                'description' => $logDesc,
+                'ip_address' => request()->ip()
+            ]);
+
+            DB::commit();
+            return back()->with('success', 'Chuyển đổi bác sĩ thành công.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
+        }
     }
 }

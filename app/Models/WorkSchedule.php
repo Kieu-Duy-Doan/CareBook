@@ -42,7 +42,7 @@ class WorkSchedule extends Model
 
     public function getDayNameAttribute(): string
     {
-        $days = [1=>'Chủ Nhật', 2=>'Thứ Hai', 3=>'Thứ Ba', 4=>'Thứ Tư', 5=>'Thứ Năm', 6=>'Thứ Sáu', 7=>'Thứ Bảy'];
+        $days = [1 => 'Chủ Nhật', 2 => 'Thứ Hai', 3 => 'Thứ Ba', 4 => 'Thứ Tư', 5 => 'Thứ Năm', 6 => 'Thứ Sáu', 7 => 'Thứ Bảy'];
         return $days[$this->day_of_week] ?? 'Không xác định';
     }
 
@@ -58,8 +58,8 @@ class WorkSchedule extends Model
             $hour = (int) substr($this->start_time, 0, 2);
             $label = $hour < 12 ? 'morning' : 'afternoon';
         }
-        
-        return match($label) {
+
+        return match ($label) {
             'morning' => '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">Ca Sáng</span>',
             'afternoon' => '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-50 text-orange-700 border border-orange-200">Ca Chiều</span>',
             'evening' => '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">Ca Tối</span>',

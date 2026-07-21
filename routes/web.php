@@ -144,6 +144,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,doctor']
         Route::post('/overrides', [\App\Http\Controllers\Admin\WorkScheduleController::class, 'storeOverride'])->name('overrides.store');
         Route::delete('/overrides/{id}', [\App\Http\Controllers\Admin\WorkScheduleController::class, 'destroyOverride'])->name('overrides.destroy');
         Route::get('/showoverrides/{id}', [\App\Http\Controllers\Admin\WorkScheduleController::class, 'showOverride'])->name('showOverride');
+
+        // Chuyển bác sĩ
+        Route::post('/transfer', [\App\Http\Controllers\Admin\WorkScheduleController::class, 'transferDoctorSchedules'])->name('transfer');
     });
 
     // Lịch hẹn

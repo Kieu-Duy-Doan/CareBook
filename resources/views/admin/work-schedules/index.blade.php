@@ -33,45 +33,47 @@
     
         openOverride: false,
         overrideType: 'close',
-        openImport: false
+        openImport: false,
+        openTransfer: false,
+        transferType: 'all'
     }">
 
         <!-- Session Alerts -->
         @if (session('success'))
-            <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)" style="display: none;"
-                class="bg-green-50 text-green-800 p-4 rounded-lg mb-6 flex items-center justify-between border border-green-200">
-                <div class="flex items-center gap-3">
-                    <i class="fa-solid fa-circle-check text-green-500"></i>
-                    {{ session('success') }}
-                </div>
-                <button @click="show=false" class="text-green-500 hover:text-green-700"><i
-                        class="fa-solid fa-xmark"></i></button>
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)" style="display: none;"
+            class="bg-green-50 text-green-800 p-4 rounded-lg mb-6 flex items-center justify-between border border-green-200">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-circle-check text-green-500"></i>
+                {{ session('success') }}
             </div>
+            <button @click="show=false" class="text-green-500 hover:text-green-700"><i
+                    class="fa-solid fa-xmark"></i></button>
+        </div>
         @endif
 
         @if (session('error'))
-            <div class="bg-red-50 text-red-800 p-4 rounded-lg mb-6 flex items-center gap-3 border border-red-200">
-                <i class="fa-solid fa-circle-exclamation text-red-500"></i>
-                {{ session('error') }}
-            </div>
+        <div class="bg-red-50 text-red-800 p-4 rounded-lg mb-6 flex items-center gap-3 border border-red-200">
+            <i class="fa-solid fa-circle-exclamation text-red-500"></i>
+            {{ session('error') }}
+        </div>
         @endif
 
         @if (session('warning'))
-            <div
-                class="bg-yellow-50 text-yellow-800 p-4 rounded-lg mb-6 flex items-center gap-3 border border-yellow-200">
-                <i class="fa-solid fa-triangle-exclamation text-yellow-500"></i>
-                {{ session('warning') }}
-            </div>
+        <div
+            class="bg-yellow-50 text-yellow-800 p-4 rounded-lg mb-6 flex items-center gap-3 border border-yellow-200">
+            <i class="fa-solid fa-triangle-exclamation text-yellow-500"></i>
+            {{ session('warning') }}
+        </div>
         @endif
 
         @if ($errors->any())
-            <div class="bg-red-50 text-red-700 p-4 rounded-lg mb-6 border border-red-200">
-                <ul class="list-disc pl-5 text-sm">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
+        <div class="bg-red-50 text-red-700 p-4 rounded-lg mb-6 border border-red-200">
+            <ul class="list-disc pl-5 text-sm">
+                @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
         @endif
 
         <!-- Header -->
@@ -93,6 +95,10 @@
                     class="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 border border-yellow-300 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
                     <i class="fa-solid fa-triangle-exclamation"></i> Thêm ngoại lệ
                 </button>
+                <button @click="openTransfer = true"
+                    class="bg-purple-100 hover:bg-purple-200 text-purple-800 border border-purple-300 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-people-arrows"></i> Chuyển đổi bác sĩ
+                </button>
                 <button @click="openSchedule = true; scheduleMode = 'create'; scheduleForm.id = null"
                     class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
                     <i class="fa-solid fa-plus"></i> Thêm ca trực
@@ -109,8 +115,8 @@
                         class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
                         <option value="">Tất cả bác sĩ</option>
                         @foreach ($doctors as $doc)
-                            <option value="{{ $doc->id }}"
-                                {{ request('doctor_id') == $doc->id ? 'selected' : '' }}>{{ $doc->full_title }}</option>
+                        <option value="{{ $doc->id }}"
+                            {{ request('doctor_id') == $doc->id ? 'selected' : '' }}>{{ $doc->full_title }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -119,9 +125,9 @@
                         class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
                         <option value="">Tất cả phòng</option>
                         @foreach ($rooms as $room)
-                            <option value="{{ $room->id }}" {{ request('room_id') == $room->id ? 'selected' : '' }}>
-                                {{ $room->name }} {{ $room->room_number ? '(' . $room->room_number . ')' : '' }}
-                            </option>
+                        <option value="{{ $room->id }}" {{ request('room_id') == $room->id ? 'selected' : '' }}>
+                            {{ $room->name }} {{ $room->room_number ? '(' . $room->room_number . ')' : '' }}
+                        </option>
                         @endforeach
                     </select>
                 </div>
@@ -197,68 +203,69 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         @forelse($schedules as $schedule)
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-8 w-8">
-                                            <div
-                                                class="h-8 w-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
-                                                {{ $schedule->doctor->user->avatar_initials }}
-                                            </div>
-                                        </div>
-                                        <div class="ml-3">
-                                            <div class="text-sm font-medium text-gray-900">
-                                                {{ $schedule->doctor->full_title }}</div>
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8">
+                                        <div
+                                            class="h-8 w-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
+                                            {{ $schedule->doctor->user->avatar_initials }}
                                         </div>
                                     </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900">{{ $schedule->room->name }}</div>
-                                    @if ($schedule->room->room_number)
-                                        <span
-                                            class="inline-flex mt-1 items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 border border-gray-200">
-                                            {{ $schedule->room->room_number }}
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap font-medium text-sm text-gray-900">
-                                    {{ $schedule->day_name }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                    <div class="flex flex-col gap-1">
-                                        <span><i class="fa-regular fa-clock text-gray-400 mr-1"></i> {{ $schedule->time_range }}</span>
-                                        <div>{!! $schedule->shift_badge !!}</div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">
+                                            {{ $schedule->doctor->full_title }}
+                                        </div>
                                     </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-700">
-                                    {{ $schedule->max_slots }} slot
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-700">
-                                    {{ $schedule->slot_duration_minutes }} phút
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-center">
-                                    @if ($schedule->is_active)
-                                        <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                                            Hoạt động
-                                        </span>
-                                    @else
-                                        <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
-                                            Tạm ngưng
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <div class="flex items-center justify-end gap-3">
-                                        <a href="{{ route('admin.work-schedules.show', $schedule->id) }}"
-                                            class="text-blue-600 hover:text-blue-900 transition-colors"
-                                            title="Xem chi tiết">
-                                            <i class="fa-solid fa-eye"></i>
-                                        </a>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ $schedule->room->name }}</div>
+                                @if ($schedule->room->room_number)
+                                <span
+                                    class="inline-flex mt-1 items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                                    {{ $schedule->room->room_number }}
+                                </span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap font-medium text-sm text-gray-900">
+                                {{ $schedule->day_name }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                <div class="flex flex-col gap-1">
+                                    <span><i class="fa-regular fa-clock text-gray-400 mr-1"></i> {{ $schedule->time_range }}</span>
+                                    <div>{!! $schedule->shift_badge !!}</div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-700">
+                                {{ $schedule->max_slots }} slot
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-700">
+                                {{ $schedule->slot_duration_minutes }} phút
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                @if ($schedule->is_active)
+                                <span
+                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                                    Hoạt động
+                                </span>
+                                @else
+                                <span
+                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                                    Tạm ngưng
+                                </span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div class="flex items-center justify-end gap-3">
+                                    <a href="{{ route('admin.work-schedules.show', $schedule->id) }}"
+                                        class="text-blue-600 hover:text-blue-900 transition-colors"
+                                        title="Xem chi tiết">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
 
-                                        <button
-                                            @click="fillSchedule({
+                                    <button
+                                        @click="fillSchedule({
                                         id: {{ $schedule->id }},
                                         doctor_profile_id: '{{ $schedule->doctor_profile_id }}',
                                         room_id: '{{ $schedule->room_id }}',
@@ -269,60 +276,60 @@
                                         max_slots: {{ $schedule->max_slots }},
                                         is_active: {{ $schedule->is_active ? 'true' : 'false' }}
                                     })"
-                                            class="text-blue-600 hover:text-blue-900 transition-colors"
-                                            title="Sửa">
-                                            <i class="fa-solid fa-pen"></i>
+                                        class="text-blue-600 hover:text-blue-900 transition-colors"
+                                        title="Sửa">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+
+                                    <form
+                                        action="{{ route('admin.work-schedules.toggle-active', $schedule->id) }}"
+                                        method="POST" class="inline-block">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit"
+                                            class="text-gray-500 hover:text-gray-800 transition-colors"
+                                            title="{{ $schedule->is_active ? 'Tạm ngưng' : 'Mở lại' }}">
+                                            <i
+                                                class="fa-solid {{ $schedule->is_active ? 'fa-toggle-on text-green-500' : 'fa-toggle-off' }} text-lg"></i>
                                         </button>
+                                    </form>
 
-                                        <form
-                                            action="{{ route('admin.work-schedules.toggle-active', $schedule->id) }}"
-                                            method="POST" class="inline-block">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit"
-                                                class="text-gray-500 hover:text-gray-800 transition-colors"
-                                                title="{{ $schedule->is_active ? 'Tạm ngưng' : 'Mở lại' }}">
-                                                <i
-                                                    class="fa-solid {{ $schedule->is_active ? 'fa-toggle-on text-green-500' : 'fa-toggle-off' }} text-lg"></i>
-                                            </button>
-                                        </form>
-
-                                        <form action="{{ route('admin.work-schedules.destroy', $schedule->id) }}"
-                                            method="POST" class="inline-block">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                onclick="return confirm('Bạn có chắc muốn xoá lịch này?')"
-                                                class="text-red-600 hover:text-red-900 transition-colors"
-                                                title="Xoá">
-                                                <i class="fa-solid fa-trash"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
+                                    <form action="{{ route('admin.work-schedules.destroy', $schedule->id) }}"
+                                        method="POST" class="inline-block">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                            onclick="return confirm('Bạn có chắc muốn xoá lịch này?')"
+                                            class="text-red-600 hover:text-red-900 transition-colors"
+                                            title="Xoá">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
                         @empty
-                            <tr>
-                                <td colspan="8" class="px-6 py-12 text-center text-gray-500">
-                                    <div class="flex flex-col items-center justify-center">
-                                        <div
-                                            class="h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                                            <i class="fa-solid fa-calendar-xmark text-2xl text-gray-400"></i>
-                                        </div>
-                                        <h3 class="text-lg font-medium text-gray-900">Chưa có lịch làm việc nào</h3>
-                                        <p class="text-sm mt-1 text-gray-500">Hãy thêm ca trực đầu tiên.</p>
+                        <tr>
+                            <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+                                <div class="flex flex-col items-center justify-center">
+                                    <div
+                                        class="h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                                        <i class="fa-solid fa-calendar-xmark text-2xl text-gray-400"></i>
                                     </div>
-                                </td>
-                            </tr>
+                                    <h3 class="text-lg font-medium text-gray-900">Chưa có lịch làm việc nào</h3>
+                                    <p class="text-sm mt-1 text-gray-500">Hãy thêm ca trực đầu tiên.</p>
+                                </div>
+                            </td>
+                        </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
 
             @if ($schedules->hasPages())
-                <div class="px-6 py-4 border-t border-gray-100 bg-white">
-                    {{ $schedules->links() }}
-                </div>
+            <div class="px-6 py-4 border-t border-gray-100 bg-white">
+                {{ $schedules->links() }}
+            </div>
             @endif
         </div>
 
@@ -363,64 +370,64 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         @forelse($overrides as $ov)
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap font-medium text-sm text-gray-900">
-                                    {{ $ov->override_date->format('d/m/Y') }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {{ $ov->doctor->full_title }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                    {{ $ov->room ? $ov->room->name : 'Tất cả phòng' }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-center">
-                                    @if ($ov->type === 'close')
-                                        <span
-                                            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 border border-red-200">
-                                            Nghỉ / Đóng ca
-                                        </span>
-                                    @else
-                                        <span
-                                            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                                            Thêm ca
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-700">
-                                    {{ $ov->type === 'extra' ? substr($ov->start_time, 0, 5) . ' - ' . substr($ov->end_time, 0, 5) : '—' }}
-                                </td>
-                                <td class="px-6 py-4 text-sm text-gray-700">
-                                    {{ $ov->reason ?? '—' }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ $ov->createdBy->full_name ?? '—' }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <form action="{{ route('admin.work-schedules.overrides.destroy', $ov->id) }}"
-                                        method="POST" class="inline-block">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                            onclick="return confirm('Bạn có chắc muốn xoá ngoại lệ này?')"
-                                            class="text-red-600 hover:text-red-900 transition-colors" title="Xoá">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap font-medium text-sm text-gray-900">
+                                {{ $ov->override_date->format('d/m/Y') }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ $ov->doctor->full_title }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                {{ $ov->room ? $ov->room->name : 'Tất cả phòng' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                @if ($ov->type === 'close')
+                                <span
+                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                                    Nghỉ / Đóng ca
+                                </span>
+                                @else
+                                <span
+                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                                    Thêm ca
+                                </span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-700">
+                                {{ $ov->type === 'extra' ? substr($ov->start_time, 0, 5) . ' - ' . substr($ov->end_time, 0, 5) : '—' }}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-700">
+                                {{ $ov->reason ?? '—' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ $ov->createdBy->full_name ?? '—' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <form action="{{ route('admin.work-schedules.overrides.destroy', $ov->id) }}"
+                                    method="POST" class="inline-block">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit"
+                                        onclick="return confirm('Bạn có chắc muốn xoá ngoại lệ này?')"
+                                        class="text-red-600 hover:text-red-900 transition-colors" title="Xoá">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
                         @empty
-                            <tr>
-                                <td colspan="8" class="px-6 py-12 text-center text-gray-500">
-                                    <div class="flex flex-col items-center justify-center">
-                                        <div
-                                            class="h-12 w-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                                            <i class="fa-solid fa-calendar-check text-xl text-gray-400"></i>
-                                        </div>
-                                        <p class="text-sm font-medium text-gray-500">Không có ngoại lệ nào trong tháng
-                                            này</p>
+                        <tr>
+                            <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+                                <div class="flex flex-col items-center justify-center">
+                                    <div
+                                        class="h-12 w-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                                        <i class="fa-solid fa-calendar-check text-xl text-gray-400"></i>
                                     </div>
-                                </td>
-                            </tr>
+                                    <p class="text-sm font-medium text-gray-500">Không có ngoại lệ nào trong tháng
+                                        này</p>
+                                </div>
+                            </td>
+                        </tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -470,7 +477,7 @@
                                         class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
                                         <option value="">-- Chọn bác sĩ --</option>
                                         @foreach ($doctors as $doc)
-                                            <option value="{{ $doc->id }}">{{ $doc->full_title }}</option>
+                                        <option value="{{ $doc->id }}">{{ $doc->full_title }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -481,8 +488,9 @@
                                         class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
                                         <option value="">-- Chọn phòng khám --</option>
                                         @foreach ($rooms as $room)
-                                            <option value="{{ $room->id }}">{{ $room->name }}
-                                                {{ $room->room_number ? '(' . $room->room_number . ')' : '' }}</option>
+                                        <option value="{{ $room->id }}">{{ $room->name }}
+                                            {{ $room->room_number ? '(' . $room->room_number . ')' : '' }}
+                                        </option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -614,7 +622,7 @@
                                     class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 text-sm outline-none bg-white">
                                     <option value="">-- Chọn bác sĩ --</option>
                                     @foreach ($doctors as $doc)
-                                        <option value="{{ $doc->id }}">{{ $doc->full_title }}</option>
+                                    <option value="{{ $doc->id }}">{{ $doc->full_title }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -625,8 +633,9 @@
                                     class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 text-sm outline-none bg-white">
                                     <option value="">--Vui lòng chọn phòng--</option>
                                     @foreach ($rooms as $room)
-                                        <option value="{{ $room->id }}">{{ $room->name }}
-                                            {{ $room->room_number ? '(' . $room->room_number . ')' : '' }}</option>
+                                    <option value="{{ $room->id }}">{{ $room->name }}
+                                        {{ $room->room_number ? '(' . $room->room_number . ')' : '' }}
+                                    </option>
                                     @endforeach
                                 </select>
                             </div>
@@ -743,6 +752,119 @@
                             <button type="submit"
                                 class="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors flex items-center gap-2">
                                 <i class="fa-solid fa-file-import mr-1"></i> Bắt đầu Nhập
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL CHUYỂN ĐỔI BÁC SĨ -->
+        <div x-show="openTransfer" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto"
+            aria-labelledby="modal-transfer-title" role="dialog" aria-modal="true">
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div x-show="openTransfer" x-transition.opacity
+                    class="fixed inset-0 bg-gray-900/50 transition-opacity" aria-hidden="true"
+                    @click="openTransfer = false"></div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                <div x-show="openTransfer" x-transition:enter="ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave="ease-in duration-200"
+                    x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    class="relative z-10 inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+
+                    <form action="{{ route('admin.work-schedules.transfer') }}" method="POST"
+                        x-data="{ loading: false }" @submit="loading = true">
+                        @csrf
+
+                        <div class="bg-white px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                            <h3 class="text-xl font-bold text-gray-900" id="modal-transfer-title">Chuyển đổi bác sĩ
+                            </h3>
+                            <button type="button" @click="openTransfer = false"
+                                class="text-gray-400 hover:text-gray-600 focus:outline-none">
+                                <i class="fa-solid fa-xmark text-xl"></i>
+                            </button>
+                        </div>
+
+                        <div class="px-6 py-5 space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Từ Bác sĩ (Nguồn) <span
+                                            class="text-red-500">*</span></label>
+                                    <select name="from_doctor_id" required
+                                        class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 text-sm outline-none bg-white">
+                                        <option value="">-- Chọn bác sĩ --</option>
+                                        @foreach ($doctors as $doc)
+                                        <option value="{{ $doc->id }}">{{ $doc->full_title }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Sang Bác sĩ (Đích) <span
+                                            class="text-red-500">*</span></label>
+                                    <select name="to_doctor_id" required
+                                        class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 text-sm outline-none bg-white">
+                                        <option value="">-- Chọn bác sĩ --</option>
+                                        @foreach ($doctors as $doc)
+                                        <option value="{{ $doc->id }}">{{ $doc->full_title }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Phạm vi chuyển đổi <span
+                                        class="text-red-500">*</span></label>
+                                <div class="flex gap-4">
+                                    <label class="inline-flex items-center cursor-pointer">
+                                        <input type="radio" name="transfer_type" value="all" x-model="transferType"
+                                            class="text-purple-600 focus:ring-purple-500 border-gray-300">
+                                        <span class="ml-2 text-sm text-gray-700">Toàn bộ (Lịch tuần & Lịch hẹn)</span>
+                                    </label>
+                                    <label class="inline-flex items-center cursor-pointer">
+                                        <input type="radio" name="transfer_type" value="date_range" x-model="transferType"
+                                            class="text-purple-600 focus:ring-purple-500 border-gray-300">
+                                        <span class="ml-2 text-sm text-gray-700">Theo khoảng thời gian</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div x-show="transferType === 'date_range'" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Từ ngày <span
+                                            class="text-red-500">*</span></label>
+                                    <input type="date" name="start_date" :required="transferType === 'date_range'"
+                                        class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 text-sm outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Đến ngày <span
+                                            class="text-red-500">*</span></label>
+                                    <input type="date" name="end_date" :required="transferType === 'date_range'"
+                                        class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 text-sm outline-none">
+                                </div>
+                            </div>
+
+                            <div class="bg-blue-50 text-blue-800 p-3 rounded-lg text-sm flex items-start gap-2">
+                                <i class="fa-solid fa-circle-info mt-0.5"></i>
+                                <div>
+                                    <p><strong>Lưu ý:</strong> Hành động này sẽ chuyển các lịch hẹn của Bác sĩ Nguồn sang Bác sĩ Đích.</p>
+                                    <p x-show="transferType === 'all'" class="mt-1">Ngoài ra, lịch làm việc định kỳ (theo thứ) cũng sẽ được chuyển hoàn toàn sang Bác sĩ Đích.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+                            <button type="button" @click="openTransfer = false"
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                                Huỷ
+                            </button>
+                            <button type="submit" :disabled="loading"
+                                class="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 transition-colors disabled:opacity-70 flex items-center gap-2">
+                                <span x-show="!loading"><i class="fa-solid fa-people-arrows mr-1"></i> Thực hiện chuyển</span>
+                                <span x-show="loading" style="display: none;"><i
+                                        class="fa-solid fa-spinner fa-spin mr-1"></i> Đang xử lý...</span>
                             </button>
                         </div>
                     </form>
