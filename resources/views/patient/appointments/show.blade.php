@@ -113,7 +113,7 @@
                                         <div class="text-xs uppercase tracking-[0.25em] text-slate-500 mb-2">Chi tiết dịch vụ</div>
                                         <ul class="text-sm text-slate-700 list-disc list-inside space-y-1">
                                             @foreach ($payment->clinicalVisits as $visit)
-                                                <li>{{ $visit->is_origin ? 'Phí Khám Bệnh' : 'Dịch vụ Cận lâm sàng / Khác' }}</li>
+                                                <li>{{ $visit->is_origin ? 'Phí Khám Bệnh' : ($visit->room ? 'Khám ' . $visit->room->name : 'Dịch vụ Cận lâm sàng / Khác') }}</li>
                                             @endforeach
                                             @foreach ($payment->prescriptions as $prescription)
                                                 <li>Phí thuốc theo đơn</li>

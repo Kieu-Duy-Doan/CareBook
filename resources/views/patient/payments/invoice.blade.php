@@ -69,7 +69,7 @@
                 @foreach($payment->clinicalVisits as $visit)
                 <tr>
                     <td class="text-center">{{ $stt++ }}</td>
-                    <td>{{ $visit->is_origin ? 'Phí Khám Bệnh' : 'Dịch vụ Cận lâm sàng / Khác' }} (Mã: #{{ $visit->id }})</td>
+                    <td>{{ $visit->is_origin ? 'Phí Khám Bệnh' : ($visit->room ? 'Khám ' . $visit->room->name : 'Dịch vụ Cận lâm sàng / Khác') }} (Mã: #{{ $visit->id }})</td>
                     <td class="text-right">{{ number_format($visit->pivot->amount_allocated, 0, ',', '.') }} đ</td>
                 </tr>
                 @endforeach
