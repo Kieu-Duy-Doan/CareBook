@@ -314,6 +314,7 @@ Route::middleware(['auth', 'role:patient'])->prefix('lich-hen')->name('patient.a
     Route::get('/', [\App\Http\Controllers\Patient\AppointmentController::class, 'index'])->name('index');
     Route::get('/{id}', [\App\Http\Controllers\Patient\AppointmentController::class, 'show'])->name('show');
     Route::post('/{id}/cancel', [\App\Http\Controllers\Patient\AppointmentController::class, 'cancel'])->name('cancel');
+    Route::get('/{appointment_id}/hoa-don/{payment_id}/in', [\App\Http\Controllers\Patient\PaymentController::class, 'print'])->name('payments.print');
 });
 
 // ──────────────────────────────────────────────────────────

@@ -35,6 +35,8 @@ class AppointmentController extends Controller
             'clinicalVisits.doctorProfile.user',
             'clinicalVisits.room',
             'clinicalVisits.collectedBy',
+            'payments.clinicalVisits',
+            'payments.prescriptions',
         ])
         ->where('booked_by_user_id', auth()->id())
         ->findOrFail($id);
