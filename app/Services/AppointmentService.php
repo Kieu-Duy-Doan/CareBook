@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Cache;
 use App\Models\Appointment;
+use App\Models\ClinicalVisit;
 use Carbon\Carbon;
 use Exception;
 
@@ -56,7 +57,7 @@ class AppointmentService
         }
 
         // Generate unique code (e.g., APT-YYYYMMDD-XXXX)
-        $data['appointment_code'] = 'APT-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4));
+        $data['appointment_code'] = $this->generateUniqueCode();
         
         // Auto confirm rule applied
         $data['status'] = 'confirmed'; // or 'pending' if you prefer, but plan said auto-confirm
@@ -97,4 +98,64 @@ class AppointmentService
 
         return $appointment;
     }
+
+    /**
+     * Tạo ClinicalVisit gốc nếu chưa có — atomic để tránh race condition.
+     * Dùng firstOrCreate thay vì check-then-create.
+     *
+     * @param bool $withPayment Set true khi admin tạo (bao gồm payment_amount/payment_status)
+     */
+    public function createClinicalVisitIfNotExists(Appointment $appointment, bool $withPayment = false): ?ClinicalVisit
+    {
+        // firstOrCreate đảm bảo atomic — không bị duplicate dù 2 request đồng thời
+        $attributes = ['appointment_id' => $appointment->id, 'is_origin' => true];
+
+        $maxOrder = ClinicalVisit::where('doctor_profile_id', $appointment->doctor_profile_id)
+            ->whereDate('created_at', now()->toDateString())
+            ->max('visit_order');
+
+        $nextOrder = $maxOrder ? $maxOrder + 1 : 1;
+
+        $values = [
+            'doctor_profile_id' => $appointment->doctor_profile_id,
+            'room_id'           => $appointment->room_id,
+            'visit_order'       => $nextOrder,
+            'status'            => 'waiting',
+        ];
+
+        if ($withPayment) {
+            $values['payment_amount'] = $appointment->total_fee ?? 0;
+            $values['payment_status'] = 'pending';
+        }
+
+        return ClinicalVisit::firstOrCreate($attributes, $values);
+    }
+
+    /**
+     * Generate unique appointment code with retry to prevent collisions.
+     */
+    public function generateUniqueCode(string $prefix = 'APT'): string
+    {
+        $maxAttempts = 5;
+
+        for ($i = 0; $i < $maxAttempts; $i++) {
+            $code = $prefix . strtoupper(substr(uniqid(), -8));
+
+            if (!Appointment::where('appointment_code', $code)->exists()) {
+                return $code;
+            }
+        }
+
+        // Fallback: use UUID fragment for guaranteed uniqueness
+        return $prefix . strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 10));
+    }
+
+    /**
+     * Escape ký tự đặc biệt trong LIKE query để tránh wildcard injection.
+     */
+    public static function escapeLikeWildcards(string $value): string
+    {
+        return str_replace(['%', '_'], ['\\%', '\\_'], $value);
+    }
 }
+

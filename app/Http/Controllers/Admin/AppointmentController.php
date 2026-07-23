@@ -12,11 +12,18 @@ use App\Models\Specialty;
 use App\Models\PatientProfile;
 use App\Models\Room;
 use App\Models\User;
+use App\Services\AppointmentService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class AppointmentController extends Controller
 {
+    protected AppointmentService $appointmentService;
+
+    public function __construct(AppointmentService $appointmentService)
+    {
+        $this->appointmentService = $appointmentService;
+    }
     public function index(Request $request)
     {
         $query = Appointment::with([
@@ -58,12 +65,13 @@ class AppointmentController extends Controller
         }
         // Search theo mã lịch hẹn hoặc tên bệnh nhân
         if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('appointment_code', 'like', '%' . $request->search . '%')
+            $search = AppointmentService::escapeLikeWildcards($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('appointment_code', 'like', '%' . $search . '%')
                     ->orWhereHas(
                         'patientProfile',
                         fn($pq) =>
-                        $pq->where('full_name', 'like', '%' . $request->search . '%')
+                        $pq->where('full_name', 'like', '%' . $search . '%')
                     );
             });
         }
@@ -82,14 +90,17 @@ class AppointmentController extends Controller
             ->when($request->filled('specialty_id'), fn($q) => $q->where('specialty_id', $request->specialty_id))
             ->when($request->filled('source'), fn($q) => $q->where('source', $request->source))
             ->when(Auth::user()->isDoctor() && Auth::user()->doctorProfile, fn($q) => $q->where('doctor_profile_id', Auth::user()->doctorProfile->id))
-            ->when($request->filled('search'), fn($q) => $q->where(function ($sq) use ($request) {
-                $sq->where('appointment_code', 'like', '%' . $request->search . '%')
-                    ->orWhereHas(
-                        'patientProfile',
-                        fn($pq) =>
-                        $pq->where('full_name', 'like', '%' . $request->search . '%')
-                    );
-            }))
+            ->when($request->filled('search'), function ($q) use ($request) {
+                $search = AppointmentService::escapeLikeWildcards($request->search);
+                $q->where(function ($sq) use ($search) {
+                    $sq->where('appointment_code', 'like', '%' . $search . '%')
+                        ->orWhereHas(
+                            'patientProfile',
+                            fn($pq) =>
+                            $pq->where('full_name', 'like', '%' . $search . '%')
+                        );
+                });
+            })
             ->count();
 
         // Aggregate counts by status based on the exact same filters
@@ -102,15 +113,18 @@ class AppointmentController extends Controller
             ->when($request->filled('specialty_id'), fn($q) => $q->where('specialty_id', $request->specialty_id))
             ->when($request->filled('source'), fn($q) => $q->where('source', $request->source))
             ->when(Auth::user()->isDoctor() && Auth::user()->doctorProfile, fn($q) => $q->where('doctor_profile_id', Auth::user()->doctorProfile->id))
-            ->when($request->filled('search'), fn($q) => $q->where(function ($sq) use ($request) {
-                $sq->where('appointment_code', 'like', '%' . $request->search . '%')
-                    ->orWhereExists(function ($pq) use ($request) {
-                        $pq->select(DB::raw(1))
-                            ->from('patient_profiles')
-                            ->whereColumn('patient_profiles.id', 'appointments.patient_profile_id')
-                            ->where('patient_profiles.full_name', 'like', '%' . $request->search . '%');
-                    });
-            }))
+            ->when($request->filled('search'), function ($q) use ($request) {
+                $search = AppointmentService::escapeLikeWildcards($request->search);
+                $q->where(function ($sq) use ($search) {
+                    $sq->where('appointment_code', 'like', '%' . $search . '%')
+                        ->orWhereExists(function ($pq) use ($search) {
+                            $pq->select(DB::raw(1))
+                                ->from('patient_profiles')
+                                ->whereColumn('patient_profiles.id', 'appointments.patient_profile_id')
+                                ->where('patient_profiles.full_name', 'like', '%' . $search . '%');
+                        });
+                });
+            })
             ->groupBy('status')
             ->pluck('count', 'status')
             ->toArray();
@@ -123,9 +137,17 @@ class AppointmentController extends Controller
         $doctors = DoctorProfile::with('user')->whereHas('user', fn($q) => $q->where('is_active', true))->get();
         $specialties = Specialty::where('is_active', true)->orderBy('name')->get();
 
-        // Get appointments for the calendar (usually current month)
+        // Get appointments for the calendar — limit to requested month for performance
         $query = Appointment::with(['patientProfile', 'doctor.user'])
             ->whereNotIn('status', ['cancelled']);
+
+        if ($request->filled('month')) {
+            $query->whereMonth('appointment_date', substr($request->month, 5, 2))
+                  ->whereYear('appointment_date', substr($request->month, 0, 4));
+        } else {
+            $query->whereMonth('appointment_date', now()->month)
+                  ->whereYear('appointment_date', now()->year);
+        }
 
         if (Auth::user()->isDoctor() && Auth::user()->doctorProfile) {
             $query->where('doctor_profile_id', Auth::user()->doctorProfile->id);
@@ -147,6 +169,7 @@ class AppointmentController extends Controller
                 'examining'  => '#a855f7', // purple-500
                 'completed'  => '#22c55e', // green-500
                 'absent'     => '#6b7280', // gray-500
+                'late'       => '#f97316', // orange-500
                 default      => '#9ca3af',
             };
 
@@ -195,67 +218,11 @@ class AppointmentController extends Controller
 
     public function store(Request $request)
     {
-        $rules = [
-            'patient_profile_id' => 'required|exists:patient_profiles,id',
-            'specialty_id'       => 'required|exists:specialties,id',
-            'doctor_profile_id'  => 'required|exists:doctor_profiles,id',
-            'room_id'            => 'required|exists:rooms,id',
-            'appointment_date'   => 'required|date|after_or_equal:today',
-            'appointment_time'   => 'required',
-            'status'             => 'required|in:pending,checked_in,examining,completed,cancelled,absent',
-            'source'             => 'required|in:web,counter,chatbot',
-            'reason'             => 'required|string',
-            'receptionist_note'  => 'nullable|string',
+        $rules = $this->validationRules(isCreate: true);
 
-            // Vitals
-            'vital_pulse'        => 'nullable|integer|min:0',
-            'vital_systolic_bp'  => 'nullable|integer|min:0',
-            'vital_diastolic_bp' => 'nullable|integer|min:0',
-            'vital_temperature'  => 'nullable|numeric|min:0',
-            'vital_respiratory'  => 'nullable|integer|min:0',
-            'vital_spo2'         => 'nullable|numeric|min:0',
-            'vital_weight_kg'    => 'nullable|numeric|min:0',
-            'vital_height_cm'    => 'nullable|numeric|min:0',
-            'vital_bmi'          => 'nullable|numeric|min:0',
-            'vital_note'         => 'nullable|string',
-            'measured_by'        => 'nullable|exists:users,id',
-        ];
+        $messages = $this->validationMessages();
 
-        $messages = [
-            'required' => 'Trường :attribute không được để trống.',
-            'exists' => 'Trường :attribute được chọn không hợp lệ hoặc đã bị vô hiệu hóa.',
-            'date' => 'Trường :attribute phải là định dạng ngày hợp lệ.',
-            'after_or_equal' => 'Trường :attribute phải là ngày hôm nay hoặc sau đó.',
-            'in' => 'Trường :attribute chọn giá trị không hợp lệ.',
-            'integer' => 'Trường :attribute phải là số nguyên.',
-            'numeric' => 'Trường :attribute phải là số.',
-            'min' => 'Trường :attribute không được nhỏ hơn :min.',
-            'string' => 'Trường :attribute phải là chuỗi ký tự.',
-        ];
-
-        $attributes = [
-            'patient_profile_id' => 'bệnh nhân',
-            'specialty_id' => 'chuyên khoa',
-            'doctor_profile_id' => 'bác sĩ',
-            'room_id' => 'phòng khám',
-            'appointment_date' => 'ngày khám',
-            'appointment_time' => 'giờ khám',
-            'status' => 'trạng thái',
-            'source' => 'nguồn đặt',
-            'reason' => 'lý do khám',
-            'receptionist_note' => 'ghi chú',
-            'vital_pulse' => 'mạch',
-            'vital_systolic_bp' => 'huyết áp tâm thu',
-            'vital_diastolic_bp' => 'huyết áp tâm trương',
-            'vital_temperature' => 'nhiệt độ',
-            'vital_respiratory' => 'nhịp thở',
-            'vital_spo2' => 'SpO2',
-            'vital_weight_kg' => 'cân nặng',
-            'vital_height_cm' => 'chiều cao',
-            'vital_bmi' => 'chỉ số BMI',
-            'vital_note' => 'ghi chú sinh hiệu',
-            'measured_by' => 'người đo',
-        ];
+        $attributes = $this->validationAttributes();
 
         $request->validate($rules, $messages, $attributes);
 
@@ -274,7 +241,7 @@ class AppointmentController extends Controller
         $patient = PatientProfile::findOrFail($request->patient_profile_id);
         $doctor = DoctorProfile::findOrFail($request->doctor_profile_id);
 
-        $appointmentCode = 'APT' . strtoupper(substr(uniqid(), -8));
+        $appointmentCode = $this->appointmentService->generateUniqueCode();
 
         $checkedInAt = in_array($request->status, ['checked_in', 'examining', 'completed']) ? now() : null;
         $completedAt = $request->status === 'completed' ? now() : null;
@@ -348,66 +315,11 @@ class AppointmentController extends Controller
     {
         $appointment = Appointment::findOrFail($id);
 
-        $rules = [
-            'patient_profile_id' => 'required|exists:patient_profiles,id',
-            'specialty_id'       => 'required|exists:specialties,id',
-            'doctor_profile_id'  => 'required|exists:doctor_profiles,id',
-            'room_id'            => 'required|exists:rooms,id',
-            'appointment_date'   => 'required|date',
-            'appointment_time'   => 'required',
-            'status'             => 'required|in:pending,checked_in,examining,completed,cancelled,absent',
-            'source'             => 'required|in:web,counter,chatbot',
-            'reason'             => 'required|string',
-            'receptionist_note'  => 'nullable|string',
+        $rules = $this->validationRules(isCreate: false);
 
-            // Vitals
-            'vital_pulse'        => 'nullable|integer|min:0',
-            'vital_systolic_bp'  => 'nullable|integer|min:0',
-            'vital_diastolic_bp' => 'nullable|integer|min:0',
-            'vital_temperature'  => 'nullable|numeric|min:0',
-            'vital_respiratory'  => 'nullable|integer|min:0',
-            'vital_spo2'         => 'nullable|numeric|min:0',
-            'vital_weight_kg'    => 'nullable|numeric|min:0',
-            'vital_height_cm'    => 'nullable|numeric|min:0',
-            'vital_bmi'          => 'nullable|numeric|min:0',
-            'vital_note'         => 'nullable|string',
-            'measured_by'        => 'nullable|exists:users,id',
-        ];
+        $messages = $this->validationMessages();
 
-        $messages = [
-            'required' => 'Trường :attribute không được để trống.',
-            'exists' => 'Trường :attribute được chọn không hợp lệ hoặc đã bị vô hiệu hóa.',
-            'date' => 'Trường :attribute phải là định dạng ngày hợp lệ.',
-            'in' => 'Trường :attribute chọn giá trị không hợp lệ.',
-            'integer' => 'Trường :attribute phải là số nguyên.',
-            'numeric' => 'Trường :attribute phải là số.',
-            'min' => 'Trường :attribute không được nhỏ hơn :min.',
-            'string' => 'Trường :attribute phải là chuỗi ký tự.',
-        ];
-
-        $attributes = [
-            'patient_profile_id' => 'bệnh nhân',
-            'specialty_id' => 'chuyên khoa',
-            'doctor_profile_id' => 'bác sĩ',
-            'room_id' => 'phòng khám',
-            'appointment_date' => 'ngày khám',
-            'appointment_time' => 'giờ khám',
-            'status' => 'trạng thái',
-            'source' => 'nguồn đặt',
-            'reason' => 'lý do khám',
-            'receptionist_note' => 'ghi chú',
-            'vital_pulse' => 'mạch',
-            'vital_systolic_bp' => 'huyết áp tâm thu',
-            'vital_diastolic_bp' => 'huyết áp tâm trương',
-            'vital_temperature' => 'nhiệt độ',
-            'vital_respiratory' => 'nhịp thở',
-            'vital_spo2' => 'SpO2',
-            'vital_weight_kg' => 'cân nặng',
-            'vital_height_cm' => 'chiều cao',
-            'vital_bmi' => 'chỉ số BMI',
-            'vital_note' => 'ghi chú sinh hiệu',
-            'measured_by' => 'người đo',
-        ];
+        $attributes = $this->validationAttributes();
 
         $request->validate($rules, $messages, $attributes);
 
@@ -430,58 +342,60 @@ class AppointmentController extends Controller
         $oldStatus = $appointment->status;
         $newStatus = $request->status;
 
-        $appointment->patient_profile_id = $request->patient_profile_id;
-        $appointment->booked_by_user_id = $patient->owner_id ?? Auth::id();
-        $appointment->specialty_id = $request->specialty_id;
-        $appointment->doctor_level = $doctor->level;
-        $appointment->room_id = $request->room_id;
-        $appointment->doctor_profile_id = $request->doctor_profile_id;
-        $appointment->appointment_date = $request->appointment_date;
-        $appointment->appointment_time = $request->appointment_time;
-        $appointment->reason = $request->reason;
-        $appointment->status = $request->status;
-        $appointment->source = $request->source;
-        $appointment->receptionist_note = $request->receptionist_note;
+        DB::transaction(function () use ($appointment, $request, $oldStatus, $newStatus, $patient, $doctor) {
+            $appointment->patient_profile_id = $request->patient_profile_id;
+            $appointment->booked_by_user_id = $patient->owner_id ?? Auth::id();
+            $appointment->specialty_id = $request->specialty_id;
+            $appointment->doctor_level = $doctor->level;
+            $appointment->room_id = $request->room_id;
+            $appointment->doctor_profile_id = $request->doctor_profile_id;
+            $appointment->appointment_date = $request->appointment_date;
+            $appointment->appointment_time = $request->appointment_time;
+            $appointment->reason = $request->reason;
+            $appointment->status = $request->status;
+            $appointment->source = $request->source;
+            $appointment->receptionist_note = $request->receptionist_note;
 
-        $appointment->vital_pulse = $request->vital_pulse;
-        $appointment->vital_systolic_bp = $request->vital_systolic_bp;
-        $appointment->vital_diastolic_bp = $request->vital_diastolic_bp;
-        $appointment->vital_temperature = $request->vital_temperature;
-        $appointment->vital_respiratory = $request->vital_respiratory;
-        $appointment->vital_spo2 = $request->vital_spo2;
-        $appointment->vital_weight_kg = $request->vital_weight_kg;
-        $appointment->vital_height_cm = $request->vital_height_cm;
-        $appointment->vital_bmi = $request->vital_bmi;
-        $appointment->vital_note = $request->vital_note;
-        $appointment->measured_by = $request->measured_by;
+            $appointment->vital_pulse = $request->vital_pulse;
+            $appointment->vital_systolic_bp = $request->vital_systolic_bp;
+            $appointment->vital_diastolic_bp = $request->vital_diastolic_bp;
+            $appointment->vital_temperature = $request->vital_temperature;
+            $appointment->vital_respiratory = $request->vital_respiratory;
+            $appointment->vital_spo2 = $request->vital_spo2;
+            $appointment->vital_weight_kg = $request->vital_weight_kg;
+            $appointment->vital_height_cm = $request->vital_height_cm;
+            $appointment->vital_bmi = $request->vital_bmi;
+            $appointment->vital_note = $request->vital_note;
+            $appointment->measured_by = $request->measured_by;
 
-        if (in_array($newStatus, ['checked_in', 'examining', 'completed']) && is_null($appointment->checked_in_at)) {
-            $appointment->checked_in_at = now();
-        }
-        if ($newStatus === 'completed' && is_null($appointment->completed_at)) {
-            $appointment->completed_at = now();
-        }
-
-        $appointment->save();
-
-        if (in_array($newStatus, ['checked_in', 'examining'])) {
-            $this->createClinicalVisitIfNotExists($appointment);
-        }
-
-        if ($oldStatus !== $newStatus) {
-            AppointmentLog::create([
-                'appointment_id' => $appointment->id,
-                'old_status'     => $oldStatus,
-                'new_status'     => $newStatus,
-                'action'         => 'ADMIN_UPDATE',
-                'changed_by'     => Auth::id(),
-                'reason'         => 'Cập nhật lịch hẹn và trạng thái bởi Quản trị viên',
-            ]);
-
-            if ($newStatus === 'cancelled') {
-                \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'admin_cancel');
+            if (in_array($newStatus, ['checked_in', 'examining', 'completed']) && is_null($appointment->checked_in_at)) {
+                $appointment->checked_in_at = now();
             }
-        }
+            if ($newStatus === 'completed' && is_null($appointment->completed_at)) {
+                $appointment->completed_at = now();
+            }
+
+            $appointment->save();
+
+            if (in_array($newStatus, ['checked_in', 'examining'])) {
+                $this->appointmentService->createClinicalVisitIfNotExists($appointment, withPayment: true);
+            }
+
+            if ($oldStatus !== $newStatus) {
+                AppointmentLog::create([
+                    'appointment_id' => $appointment->id,
+                    'old_status'     => $oldStatus,
+                    'new_status'     => $newStatus,
+                    'action'         => AppointmentLog::ACTION_ADMIN_UPDATE,
+                    'changed_by'     => Auth::id(),
+                    'reason'         => 'Cập nhật lịch hẹn và trạng thái bởi Quản trị viên',
+                ]);
+
+                if ($newStatus === 'cancelled') {
+                    \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'admin_cancel');
+                }
+            }
+        });
 
         return redirect()->route('admin.appointments.index')->with('success', 'Cập nhật lịch hẹn thành công.');
     }
@@ -491,9 +405,22 @@ class AppointmentController extends Controller
     {
         $appointment = Appointment::findOrFail($id);
 
+        // Guard: không cho xóa nếu có dữ liệu liên quan
+        if ($appointment->payments()->exists()) {
+            return redirect()->route('admin.appointments.index')
+                ->with('error', 'Không thể xoá lịch hẹn này vì đã có dữ liệu thanh toán. Vui lòng sử dụng SQL để xóa nếu cần.');
+        }
+        if ($appointment->clinicalVisits()->exists()) {
+            return redirect()->route('admin.appointments.index')
+                ->with('error', 'Không thể xoá lịch hẹn này vì đã có dữ liệu khám lâm sàng. Vui lòng sử dụng SQL để xóa nếu cần.');
+        }
+        if ($appointment->medicalRecord) {
+            return redirect()->route('admin.appointments.index')
+                ->with('error', 'Không thể xoá lịch hẹn này vì đã có hồ sơ bệnh án. Vui lòng sử dụng SQL để xóa nếu cần.');
+        }
+
         try {
             DB::transaction(function () use ($appointment) {
-                // Xoá logs liên quan trước (do có ràng buộc restrictOnDelete)
                 $appointment->logs()->delete();
                 $appointment->delete();
             });
@@ -507,7 +434,7 @@ class AppointmentController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:pending,checked_in,examining,completed,cancelled,absent',
+            'status' => 'required|in:pending,checked_in,examining,completed,cancelled,absent,late',
             'reason' => 'nullable|string|max:500'
         ], [
             'status.required' => 'Vui lòng chọn trạng thái.',
@@ -520,42 +447,44 @@ class AppointmentController extends Controller
         $newStatus = $request->status;
 
         if ($oldStatus !== $newStatus) {
-            $appointment->status = $newStatus;
+            DB::transaction(function () use ($appointment, $request, $oldStatus, $newStatus) {
+                $appointment->status = $newStatus;
 
-            // Đảm bảo cập nhật lại phí khám chuẩn xác để tránh lỗi 0đ khi Check-in nhanh
-            $doctor = \App\Models\DoctorProfile::find($appointment->doctor_profile_id);
-            if ($doctor && $doctor->level) {
-                $fee = \App\Models\DoctorLevelFee::where('level', $doctor->level)->first();
-                if ($fee) {
-                    $appointment->total_fee = $fee->specific_price;
+                // Đảm bảo cập nhật lại phí khám chuẩn xác để tránh lỗi 0đ khi Check-in nhanh
+                $doctor = DoctorProfile::find($appointment->doctor_profile_id);
+                if ($doctor && $doctor->level) {
+                    $fee = \App\Models\DoctorLevelFee::where('level', $doctor->level)->first();
+                    if ($fee) {
+                        $appointment->total_fee = $fee->specific_price;
+                    }
                 }
-            }
 
-            if (in_array($newStatus, ['checked_in', 'examining', 'completed']) && is_null($appointment->checked_in_at)) {
-                $appointment->checked_in_at = now();
-            }
-            if ($newStatus === 'completed' && is_null($appointment->completed_at)) {
-                $appointment->completed_at = now();
-            }
+                if (in_array($newStatus, ['checked_in', 'examining', 'completed']) && is_null($appointment->checked_in_at)) {
+                    $appointment->checked_in_at = now();
+                }
+                if ($newStatus === 'completed' && is_null($appointment->completed_at)) {
+                    $appointment->completed_at = now();
+                }
 
-            $appointment->save();
+                $appointment->save();
 
-            if (in_array($newStatus, ['checked_in', 'examining'])) {
-                $this->createClinicalVisitIfNotExists($appointment);
-            }
+                if (in_array($newStatus, ['checked_in', 'examining'])) {
+                    $this->appointmentService->createClinicalVisitIfNotExists($appointment, withPayment: true);
+                }
 
-            AppointmentLog::create([
-                'appointment_id' => $appointment->id,
-                'old_status' => $oldStatus,
-                'new_status' => $newStatus,
-                'action' => 'ADMIN_STATUS_CHANGE',
-                'changed_by' => Auth::id(),
-                'reason' => $request->reason,
-            ]);
+                AppointmentLog::create([
+                    'appointment_id' => $appointment->id,
+                    'old_status' => $oldStatus,
+                    'new_status' => $newStatus,
+                    'action' => AppointmentLog::ACTION_ADMIN_STATUS_CHANGE,
+                    'changed_by' => Auth::id(),
+                    'reason' => $request->reason,
+                ]);
 
-            if ($newStatus === 'cancelled') {
-                \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'admin_cancel');
-            }
+                if ($newStatus === 'cancelled') {
+                    \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'admin_cancel');
+                }
+            });
         }
 
         return back()->with('success', 'Đã cập nhật trạng thái lịch hẹn thành công.');
@@ -588,12 +517,13 @@ class AppointmentController extends Controller
             $query->where('source', $request->source);
         }
         if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('appointment_code', 'like', '%' . $request->search . '%')
+            $search = AppointmentService::escapeLikeWildcards($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('appointment_code', 'like', '%' . $search . '%')
                     ->orWhereHas(
                         'patientProfile',
                         fn($pq) =>
-                        $pq->where('full_name', 'like', '%' . $request->search . '%')
+                        $pq->where('full_name', 'like', '%' . $search . '%')
                     );
             });
         }
@@ -632,29 +562,75 @@ class AppointmentController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
-    private function createClinicalVisitIfNotExists(Appointment $appointment)
+    /**
+     * Extracted validation rules — shared between store() and update().
+     */
+    private function validationRules(bool $isCreate): array
     {
-        // Check if visit already exists
-        if (ClinicalVisit::where('appointment_id', $appointment->id)->exists()) {
-            return;
-        }
+        return [
+            'patient_profile_id' => 'required|exists:patient_profiles,id',
+            'specialty_id'       => 'required|exists:specialties,id',
+            'doctor_profile_id'  => 'required|exists:doctor_profiles,id',
+            'room_id'            => 'required|exists:rooms,id',
+            'appointment_date'   => $isCreate ? 'required|date|after_or_equal:today' : 'required|date',
+            'appointment_time'   => 'required',
+            'status'             => 'required|in:pending,checked_in,examining,completed,cancelled,absent,late',
+            'source'             => 'required|in:web,counter,chatbot',
+            'reason'             => 'required|string',
+            'receptionist_note'  => 'nullable|string',
+            'vital_pulse'        => 'nullable|integer|min:0',
+            'vital_systolic_bp'  => 'nullable|integer|min:0',
+            'vital_diastolic_bp' => 'nullable|integer|min:0',
+            'vital_temperature'  => 'nullable|numeric|min:0',
+            'vital_respiratory'  => 'nullable|integer|min:0',
+            'vital_spo2'         => 'nullable|numeric|min:0',
+            'vital_weight_kg'    => 'nullable|numeric|min:0',
+            'vital_height_cm'    => 'nullable|numeric|min:0',
+            'vital_bmi'          => 'nullable|numeric|min:0',
+            'vital_note'         => 'nullable|string',
+            'measured_by'        => 'nullable|exists:users,id',
+        ];
+    }
 
-        // Calculate visit order
-        $maxOrder = ClinicalVisit::where('doctor_profile_id', $appointment->doctor_profile_id)
-            ->whereDate('created_at', now()->toDateString())
-            ->max('visit_order');
+    private function validationMessages(): array
+    {
+        return [
+            'required' => 'Trường :attribute không được để trống.',
+            'exists' => 'Trường :attribute được chọn không hợp lệ hoặc đã bị vô hiệu hóa.',
+            'date' => 'Trường :attribute phải là định dạng ngày hợp lệ.',
+            'after_or_equal' => 'Trường :attribute phải là ngày hôm nay hoặc sau đó.',
+            'in' => 'Trường :attribute chọn giá trị không hợp lệ.',
+            'integer' => 'Trường :attribute phải là số nguyên.',
+            'numeric' => 'Trường :attribute phải là số.',
+            'min' => 'Trường :attribute không được nhỏ hơn :min.',
+            'string' => 'Trường :attribute phải là chuỗi ký tự.',
+        ];
+    }
 
-        $nextOrder = $maxOrder ? $maxOrder + 1 : 1;
-
-        ClinicalVisit::create([
-            'appointment_id' => $appointment->id,
-            'doctor_profile_id' => $appointment->doctor_profile_id,
-            'room_id' => $appointment->room_id,
-            'visit_order' => $nextOrder,
-            'is_origin' => true,
-            'status' => 'waiting',
-            'payment_amount' => $appointment->total_fee ?? 0,
-            'payment_status' => 'pending',
-        ]);
+    private function validationAttributes(): array
+    {
+        return [
+            'patient_profile_id' => 'bệnh nhân',
+            'specialty_id' => 'chuyên khoa',
+            'doctor_profile_id' => 'bác sĩ',
+            'room_id' => 'phòng khám',
+            'appointment_date' => 'ngày khám',
+            'appointment_time' => 'giờ khám',
+            'status' => 'trạng thái',
+            'source' => 'nguồn đặt',
+            'reason' => 'lý do khám',
+            'receptionist_note' => 'ghi chú',
+            'vital_pulse' => 'mạch',
+            'vital_systolic_bp' => 'huyết áp tâm thu',
+            'vital_diastolic_bp' => 'huyết áp tâm trương',
+            'vital_temperature' => 'nhiệt độ',
+            'vital_respiratory' => 'nhịp thở',
+            'vital_spo2' => 'SpO2',
+            'vital_weight_kg' => 'cân nặng',
+            'vital_height_cm' => 'chiều cao',
+            'vital_bmi' => 'chỉ số BMI',
+            'vital_note' => 'ghi chú sinh hiệu',
+            'measured_by' => 'người đo',
+        ];
     }
 }

@@ -7,10 +7,18 @@ use Illuminate\Http\Request;
 use App\Models\Appointment;
 use App\Models\AppointmentLog;
 use App\Models\ClinicalVisit;
+use App\Services\AppointmentService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class AppointmentController extends Controller
 {
+    protected AppointmentService $appointmentService;
+
+    public function __construct(AppointmentService $appointmentService)
+    {
+        $this->appointmentService = $appointmentService;
+    }
     public function index(Request $request)
     {
         $user = Auth::user();
@@ -40,10 +48,11 @@ class AppointmentController extends Controller
                 $query->where('status', $request->status);
             }
             if ($request->filled('search')) {
-                $query->where(function ($q) use ($request) {
-                    $q->where('appointment_code', 'like', '%' . $request->search . '%')
-                        ->orWhereHas('patientProfile', function($pq) use ($request) {
-                            $pq->where('full_name', 'like', '%' . $request->search . '%');
+                $search = AppointmentService::escapeLikeWildcards($request->search);
+                $query->where(function ($q) use ($search) {
+                    $q->where('appointment_code', 'like', '%' . $search . '%')
+                        ->orWhereHas('patientProfile', function($pq) use ($search) {
+                            $pq->where('full_name', 'like', '%' . $search . '%');
                         });
                 });
             }
@@ -85,7 +94,8 @@ class AppointmentController extends Controller
         ->where('id', '!=', $appointment->id)
         ->orderBy('appointment_date', 'desc')
         ->orderBy('appointment_time', 'desc')
-        ->get();
+        ->paginate(5)
+        ->appends(['tab' => 'history']);
 
         return view('doctor.appointments.show', compact('appointment', 'pastAppointments'));
     }
@@ -125,65 +135,47 @@ class AppointmentController extends Controller
         }
 
         if ($oldStatus !== $newStatus) {
-            $appointment->status = $newStatus;
+            DB::transaction(function () use ($appointment, $request, $oldStatus, $newStatus) {
+                $appointment->status = $newStatus;
 
-            if ($newStatus === 'checked_in' && is_null($appointment->checked_in_at)) {
-                $appointment->checked_in_at = now();
-            }
-            if ($newStatus === 'completed' && is_null($appointment->completed_at)) {
-                $appointment->completed_at = now();
-            }
+                if ($newStatus === 'checked_in' && is_null($appointment->checked_in_at)) {
+                    $appointment->checked_in_at = now();
+                }
+                if ($newStatus === 'completed' && is_null($appointment->completed_at)) {
+                    $appointment->completed_at = now();
+                }
 
-            $appointment->save();
+                $appointment->save();
 
-            if (in_array($newStatus, ['checked_in', 'examining'])) {
-                $this->createClinicalVisitIfNotExists($appointment);
-            }
+                if (in_array($newStatus, ['checked_in', 'examining'])) {
+                    $this->appointmentService->createClinicalVisitIfNotExists($appointment, withPayment: true);
+                }
 
-            // Cập nhật started_at cho ClinicalVisit gốc khi bắt đầu khám
-            if ($newStatus === 'examining') {
-                ClinicalVisit::where('appointment_id', $appointment->id)
-                    ->where('is_origin', true)
-                    ->whereNull('started_at')
-                    ->update(['started_at' => now(), 'status' => 'in_progress']);
-            }
+                // Cập nhật started_at cho ClinicalVisit gốc khi bắt đầu khám
+                if ($newStatus === 'examining') {
+                    ClinicalVisit::where('appointment_id', $appointment->id)
+                        ->where('is_origin', true)
+                        ->whereNull('started_at')
+                        ->update(['started_at' => now(), 'status' => 'in_progress']);
+                }
 
-            AppointmentLog::create([
-                'appointment_id' => $appointment->id,
-                'old_status' => $oldStatus,
-                'new_status' => $newStatus,
-                'action' => 'DOCTOR_STATUS_CHANGE',
-                'changed_by' => Auth::id(),
-                'reason' => $request->reason,
-            ]);
-            
-            if ($newStatus === 'cancelled') {
-                \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'cancellation');
-            }
+                AppointmentLog::create([
+                    'appointment_id' => $appointment->id,
+                    'old_status' => $oldStatus,
+                    'new_status' => $newStatus,
+                    'action' => AppointmentLog::ACTION_DOCTOR_STATUS_CHANGE,
+                    'changed_by' => Auth::id(),
+                    'reason' => $request->reason,
+                ]);
+                
+                if ($newStatus === 'cancelled') {
+                    \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'cancellation');
+                }
+            });
         }
 
         return back()->with('success', 'Cập nhật trạng thái lịch hẹn thành công.');
     }
 
-    private function createClinicalVisitIfNotExists(Appointment $appointment)
-    {
-        if (ClinicalVisit::where('appointment_id', $appointment->id)->exists()) {
-            return;
-        }
 
-        $maxOrder = ClinicalVisit::where('doctor_profile_id', $appointment->doctor_profile_id)
-            ->whereDate('created_at', now()->toDateString())
-            ->max('visit_order');
-
-        $nextOrder = $maxOrder ? $maxOrder + 1 : 1;
-
-        ClinicalVisit::create([
-            'appointment_id' => $appointment->id,
-            'doctor_profile_id' => $appointment->doctor_profile_id,
-            'room_id' => $appointment->room_id,
-            'visit_order' => $nextOrder,
-            'is_origin' => true,
-            'status' => 'waiting',
-        ]);
-    }
 }

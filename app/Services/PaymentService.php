@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Appointment;
 use App\Models\Payment;
+use App\Models\Prescription;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -106,7 +107,7 @@ class PaymentService
             ]);
 
             foreach ($pendingVisits as $visit) {
-                if (isset($visit->items)) { // Phân biệt Prescription
+                if ($visit instanceof Prescription) {
                     $visitPatientPays = $visit->payment_amount;
                     $payment->prescriptions()->attach($visit->id, [
                         'amount_allocated' => $visitPatientPays
@@ -133,6 +134,15 @@ class PaymentService
                 ['appointment_id' => $appointment->id, 'payment_id' => $payment->id]
             );
 
+            \App\Models\AppointmentLog::create([
+                'appointment_id' => $appointment->id,
+                'action'         => 'PAYMENT_COMPLETED',
+                'old_status'     => null,
+                'new_status'     => $appointment->status,
+                'changed_by'     => $receptionist->id,
+                'reason'         => "Bệnh nhân đã thanh toán tiền mặt " . number_format($amountToPay) . "đ tại quầy."
+            ]);
+
             return $payment;
         });
     }
@@ -158,7 +168,7 @@ class PaymentService
             ]);
 
             foreach ($pendingVisits as $visit) {
-                if (isset($visit->items)) { // Phân biệt Prescription
+                if ($visit instanceof Prescription) {
                     $payment->prescriptions()->attach($visit->id, [
                         'amount_allocated' => 0
                     ]);
@@ -182,6 +192,15 @@ class PaymentService
                 'success',
                 ['appointment_id' => $appointment->id, 'payment_id' => $payment->id]
             );
+
+            \App\Models\AppointmentLog::create([
+                'appointment_id' => $appointment->id,
+                'action'         => 'PAYMENT_COMPLETED',
+                'old_status'     => null,
+                'new_status'     => $appointment->status,
+                'changed_by'     => $receptionist->id,
+                'reason'         => "Hoàn tất xác nhận BHYT chi trả 100% / Miễn phí."
+            ]);
 
             return $payment;
         });
@@ -305,13 +324,15 @@ class PaymentService
                 $note = "Chuyển dư " . number_format($surplus) . "đ so với tổng phí " . number_format($requiredAmount) . "đ. Cần hoàn trả cho bệnh nhân.";
             }
 
+            $paymentStatus = $transferAmount < $requiredAmount ? 'needs_review' : 'completed';
+
             $payment = Payment::create([
                 'appointment_id' => $appointment->id,
                 'transaction_code' => $transactionCode,
                 'intent_code' => $rawCode,
                 'amount' => $transferAmount,
                 'method' => 'qr',
-                'status' => 'completed',
+                'status' => $paymentStatus,
                 'sepay_reference' => $transactionCode,
                 'paid_at' => $transactionDate,
                 'note' => $note,
@@ -327,11 +348,11 @@ class PaymentService
                 if ($remainingAmount <= 0) break;
 
                 // Số tiền bệnh nhân cần trả cho visit này
-                $visitPatientPays = isset($visit->items) 
+                $visitPatientPays = ($visit instanceof Prescription) 
                     ? $visit->payment_amount 
                     : round($visit->payment_amount * (1 - $insuranceRate));
                 
-                $alreadyPaid = isset($visit->items)
+                $alreadyPaid = ($visit instanceof Prescription)
                     ? $visit->payments()->sum('payment_prescription.amount_allocated')
                     : $visit->payments()->sum('payment_clinical_visit.amount_allocated');
                 
@@ -342,7 +363,7 @@ class PaymentService
                 $allocated = min($visitRemaining, $remainingAmount);
                 $remainingAmount -= $allocated;
 
-                if (isset($visit->items)) {
+                if ($visit instanceof Prescription) {
                     $payment->prescriptions()->attach($visit->id, [
                         'amount_allocated' => $allocated
                     ]);
@@ -361,6 +382,15 @@ class PaymentService
                     ]);
                 }
             }
+
+            \App\Models\AppointmentLog::create([
+                'appointment_id' => $appointment->id,
+                'action'         => 'PAYMENT_COMPLETED',
+                'old_status'     => null,
+                'new_status'     => $appointment->status,
+                'changed_by'     => null, // System
+                'reason'         => "Bệnh nhân đã thanh toán chuyển khoản tự động (Mã GD: $transactionCode - Số tiền: " . number_format($transferAmount) . "đ)."
+            ]);
 
             // Gửi notification cho lễ tân (Fix #7)
             $this->notifyReceptionists($appointment, $transferAmount, $requiredAmount, $patientName, false);
