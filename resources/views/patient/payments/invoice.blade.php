@@ -101,7 +101,7 @@
                 <strong>NGƯỜI LẬP PHIẾU</strong><br>
                 <i>(Ký, ghi rõ họ tên)</i>
                 <div class="signature"></div>
-                <span>{{ $payment->collectedBy ? $payment->collectedBy->name : 'Hệ thống tự động' }}</span>
+                <span>{{ $payment->collectedBy ? $payment->collectedBy->full_name : 'Hệ thống tự động' }}</span>
             </div>
         </div>
     </div>

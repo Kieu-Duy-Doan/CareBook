@@ -68,6 +68,38 @@
                         </div>
                     @endif
                 </section>
+
+                @if ($appointment->logs->isNotEmpty())
+                    <section class="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                        <h3 class="text-lg font-semibold text-slate-900 mb-6">Lịch sử thay đổi trạng thái</h3>
+                        <div class="relative border-l border-slate-200 ml-3 space-y-6">
+                            @foreach ($appointment->logs as $log)
+                            <div class="relative pl-6">
+                                <span class="absolute -left-[5px] top-1.5 h-2.5 w-2.5 rounded-full bg-slate-400 ring-4 ring-white"></span>
+                                <div class="text-sm font-semibold text-slate-900">{{ $log->action_label }}</div>
+                                @if($log->old_status && $log->new_status)
+                                    <div class="mt-1 text-sm text-slate-600">
+                                        Trạng thái: <span class="font-medium">{{ $log->old_status_label }}</span> &rarr; <span class="font-medium text-slate-900">{{ $log->new_status_label }}</span>
+                                    </div>
+                                @elseif($log->new_status)
+                                    <div class="mt-1 text-sm text-slate-600">
+                                        Trạng thái: <span class="font-medium text-slate-900">{{ $log->new_status_label }}</span>
+                                    </div>
+                                @endif
+                                @if($log->reason)
+                                    <div class="mt-1 text-sm text-slate-500 italic">{{ $log->reason }}</div>
+                                @endif
+                                <div class="mt-2 text-xs text-slate-400">
+                                    {{ $log->created_at->format('H:i d/m/Y') }} 
+                                    @if($log->changedBy)
+                                        • Bởi: {{ $log->changedBy->full_name }}
+                                    @endif
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+                    </section>
+                @endif
             </div>
 
             <aside class="space-y-6">
