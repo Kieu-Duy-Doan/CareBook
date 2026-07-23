@@ -1,5 +1,5 @@
 <x-layouts.receptionist title="Chi tiết lịch hẹn #{{ $appointment->appointment_code }}">
-    <div id="appointment-content" x-data="{ activeTab: 'overview' }" @beforeprint.window="activeTab = 'prescription'">
+    <div id="appointment-content" x-data="{ activeTab: '{{ session('active_tab', 'overview') }}' }" @beforeprint.window="activeTab = 'prescription'">
         <!-- Breadcrumb & Actions -->
         <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -22,33 +22,34 @@
 
 
                 @if (in_array($appointment->status, ['pending']))
-                    <form action="{{ route('receptionist.appointments.update-status', $appointment->id) }}" method="POST" class="inline-block">
-                        @csrf
-                        @method('PATCH')
-                        <input type="hidden" name="status" value="late">
-                        <button type="submit" class="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                            <i class="fa-solid fa-clock mr-1"></i> Đến muộn
-                        </button>
-                    </form>
+                <form action="{{ route('receptionist.appointments.update-status', $appointment->id) }}" method="POST" class="inline-block">
+                    @csrf
+                    @method('PATCH')
+                    <input type="hidden" name="status" value="late">
+                    <button type="submit" class="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        <i class="fa-solid fa-clock mr-1"></i> Đến muộn
+                    </button>
+                </form>
                 @endif
 
                 @if (in_array($appointment->status, ['pending', 'late']))
-                    <form action="{{ route('receptionist.appointments.update-status', $appointment->id) }}" method="POST" class="inline-block">
-                        @csrf
-                        @method('PATCH')
-                        <input type="hidden" name="status" value="checked_in">
-                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                            <i class="fa-solid fa-check-circle mr-1"></i> Check-in
-                        </button>
-                    </form>
+                <form action="{{ route('receptionist.appointments.update-status', $appointment->id) }}" method="POST" class="inline-block">
+                    @csrf
+                    @method('PATCH')
+                    <input type="hidden" name="status" value="checked_in">
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        <i class="fa-solid fa-check-circle mr-1"></i> Check-in
+                    </button>
+                </form>
                 @endif
 
-                <button type="button" @click="activeTab = 'payments'" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                @php $pendingVisitCount = $appointment->clinicalVisits->where('payment_status', 'pending')->count(); @endphp
+                <button type="button" @click="activeTab = 'payments'" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors relative">
                     <i class="fa-solid fa-money-bill mr-1"></i> Thanh toán
-                    @if ($appointment->payments->where('status', 'pending')->count() > 0)
-                        <span class="ml-1 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold text-green-600 bg-white rounded-full">
-                            {{ $appointment->payments->where('status', 'pending')->count() }}
-                        </span>
+                    @if ($pendingVisitCount > 0)
+                    <span class="ml-1 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold text-green-600 bg-white rounded-full">
+                        {{ $pendingVisitCount }}
+                    </span>
                     @endif
                 </button>
 
@@ -88,50 +89,44 @@
             ];
             $currentStep = $steps[$appointment->status] ?? 1;
             @endphp
-            <div class="relative max-w-4xl mx-auto">
-                <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-100">
-                    <div style="width: {{ ($currentStep - 1) * 33.33 }}%"
-                        class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500 transition-all duration-500">
+            <div class="relative max-w-3xl mx-auto px-8 py-2">
+                <div class="flex items-center justify-between relative z-0">
+                    <!-- Connecting Line -->
+                    <div class="absolute top-[14px] left-0 right-0 h-1 bg-gray-200 z-0">
+                        <div class="absolute top-0 left-0 h-full bg-blue-500 transition-all duration-500" style="width: {{ ($currentStep - 1) * 33.33 }}%"></div>
                     </div>
-                </div>
-                <div class="flex justify-between relative">
+
                     <!-- Step 1 -->
-                    <div class="text-center w-1/4">
-                        <div
-                            class="mx-auto flex items-center justify-center w-8 h-8 rounded-full border-2 {{ $currentStep >= 1 ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300 bg-white text-gray-400' }} -mt-[25px] mb-2 transition-colors duration-500">
+                    <div class="relative z-10 flex flex-col items-center">
+                        <div class="flex items-center justify-center w-8 h-8 rounded-full border-2 {{ $currentStep >= 1 ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300 bg-white text-gray-400' }} transition-colors duration-500 shadow-sm">
                             <i class="fa-solid {{ $currentStep > 1 ? 'fa-check text-xs' : 'fa-1 text-xs' }}"></i>
                         </div>
-                        <div class="text-xs font-medium {{ $currentStep >= 1 ? 'text-blue-600' : 'text-gray-500' }}">Đã
-                            đặt lịch</div>
+                        <div class="absolute top-10 text-xs font-medium whitespace-nowrap {{ $currentStep >= 1 ? 'text-blue-600' : 'text-gray-500' }}">Đã đặt lịch</div>
                     </div>
                     <!-- Step 2 -->
-                    <div class="text-center w-1/4">
-                        <div
-                            class="mx-auto flex items-center justify-center w-8 h-8 rounded-full border-2 {{ $currentStep >= 2 ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300 bg-white text-gray-400' }} -mt-[25px] mb-2 transition-colors duration-500">
+                    <div class="relative z-10 flex flex-col items-center">
+                        <div class="flex items-center justify-center w-8 h-8 rounded-full border-2 {{ $currentStep >= 2 ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300 bg-white text-gray-400' }} transition-colors duration-500 shadow-sm">
                             <i class="fa-solid {{ $currentStep > 2 ? 'fa-check text-xs' : 'fa-2 text-xs' }}"></i>
                         </div>
-                        <div class="text-xs font-medium {{ $currentStep >= 2 ? 'text-blue-600' : 'text-gray-500' }}">Đã
-                            tiếp nhận</div>
+                        <div class="absolute top-10 text-xs font-medium whitespace-nowrap {{ $currentStep >= 2 ? 'text-blue-600' : 'text-gray-500' }}">Đã tiếp nhận</div>
                     </div>
                     <!-- Step 3 -->
-                    <div class="text-center w-1/4">
-                        <div
-                            class="mx-auto flex items-center justify-center w-8 h-8 rounded-full border-2 {{ $currentStep >= 3 ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300 bg-white text-gray-400' }} -mt-[25px] mb-2 transition-colors duration-500">
+                    <div class="relative z-10 flex flex-col items-center">
+                        <div class="flex items-center justify-center w-8 h-8 rounded-full border-2 {{ $currentStep >= 3 ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300 bg-white text-gray-400' }} transition-colors duration-500 shadow-sm">
                             <i class="fa-solid {{ $currentStep > 3 ? 'fa-check text-xs' : 'fa-3 text-xs' }}"></i>
                         </div>
-                        <div class="text-xs font-medium {{ $currentStep >= 3 ? 'text-blue-600' : 'text-gray-500' }}">
-                            Đang khám</div>
+                        <div class="absolute top-10 text-xs font-medium whitespace-nowrap {{ $currentStep >= 3 ? 'text-blue-600' : 'text-gray-500' }}">Đang khám</div>
                     </div>
                     <!-- Step 4 -->
-                    <div class="text-center w-1/4">
-                        <div
-                            class="mx-auto flex items-center justify-center w-8 h-8 rounded-full border-2 {{ $currentStep >= 4 ? 'border-green-500 bg-green-500 text-white' : 'border-gray-300 bg-white text-gray-400' }} -mt-[25px] mb-2 transition-colors duration-500">
+                    <div class="relative z-10 flex flex-col items-center">
+                        <div class="flex items-center justify-center w-8 h-8 rounded-full border-2 {{ $currentStep >= 4 ? 'border-green-500 bg-green-500 text-white' : 'border-gray-300 bg-white text-gray-400' }} transition-colors duration-500 shadow-sm">
                             <i class="fa-solid fa-4 text-xs"></i>
                         </div>
-                        <div class="text-xs font-medium {{ $currentStep >= 4 ? 'text-green-600' : 'text-gray-500' }}">
-                            Hoàn thành</div>
+                        <div class="absolute top-10 text-xs font-medium whitespace-nowrap {{ $currentStep >= 4 ? 'text-green-600' : 'text-gray-500' }}">Hoàn thành</div>
                     </div>
                 </div>
+                <!-- Space for absolute labels -->
+                <div class="h-8"></div>
             </div>
             @endif
         </div>
@@ -169,6 +164,11 @@
                             @if ($appointment->payments->count() > 0)
                             <span class="absolute -top-1 -right-1 bg-blue-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{{ $appointment->payments->count() }}</span>
                             @endif
+                        </button>
+                        <button type="button" @click="activeTab = 'history'"
+                            :class="{ 'border-b-2 border-blue-500 text-blue-600 bg-blue-50': activeTab === 'history', 'text-gray-500 hover:text-gray-700 hover:bg-gray-50': activeTab !== 'history' }"
+                            class="flex-1 py-4 px-2 sm:px-4 text-sm font-bold transition-colors">
+                            <i class="fa-solid fa-clock-rotate-left mr-1 sm:mr-2"></i><span class="hidden sm:inline">Lịch sử</span>
                         </button>
                     </div>
                 </div>
@@ -279,7 +279,7 @@
                                     <i class="fa-solid fa-id-card w-5 text-center text-gray-400"></i>
                                     <span class="text-gray-500">CCCD:</span>
                                     <span
-                                        class="font-medium text-gray-900">{{ $appointment->patientProfile->identity_card ?? '—' }}</span>
+                                        class="font-medium text-gray-900">{{ $appointment->patientProfile->id_card ?? '—' }}</span>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <i class="fa-solid fa-phone w-5 text-center text-gray-400"></i>
@@ -454,23 +454,25 @@
                                                     {{ $visit->room->name ?? 'Phòng khám' }}
                                                 </h4>
                                                 <div class="text-sm text-gray-600 mt-0.5">Bác sĩ: <span
-                                                        class="font-medium text-gray-900">{{ $visit->doctor->full_title ?? '—' }}</span>
+                                                        class="font-medium text-gray-900">{{ $visit->doctorProfile->full_title ?? '—' }}</span>
                                                 </div>
                                             </div>
                                             <div>
                                                 @php
                                                 $visitColor = match ($visit->status) {
-                                                'pending' => 'yellow',
-                                                'examining' => 'purple',
+                                                'waiting' => 'yellow',
+                                                'in_progress' => 'purple',
                                                 'completed' => 'green',
-                                                'cancelled' => 'red',
+                                                'refused' => 'red',
+                                                'redirected' => 'orange',
                                                 default => 'gray',
                                                 };
                                                 $visitLabel = match ($visit->status) {
-                                                'pending' => 'Đã tiếp nhận',
-                                                'examining' => 'Đang khám',
+                                                'waiting' => 'Đã tiếp nhận',
+                                                'in_progress' => 'Đang khám',
                                                 'completed' => 'Hoàn thành',
-                                                'cancelled' => 'Đã huỷ',
+                                                'refused' => 'Từ chối khám',
+                                                'redirected' => 'Chuyển phòng',
                                                 default => 'Không xác định',
                                                 };
                                                 @endphp
@@ -518,12 +520,12 @@
 
                     <!-- Kết quả khám / Medical Record -->
                     @if ($appointment->medicalRecord)
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col max-h-[600px]">
+                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center gap-2 sticky top-0 z-10">
                             <i class="fa-solid fa-file-medical text-green-500"></i>
                             <h3 class="text-lg font-bold text-gray-900">Kết quả khám & Điều trị</h3>
                         </div>
-                        <div class="p-6 space-y-6">
+                        <div class="p-6 space-y-6 overflow-y-auto">
                             <!-- Chẩn đoán -->
                             <div>
                                 <h4
@@ -634,10 +636,10 @@
                 <div x-show="activeTab === 'prescription'" style="display: none;" class="space-y-6"
                     x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
                     x-transition:enter-end="opacity-100">
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col max-h-[600px]"
                         id="prescription-print-area">
                         <div
-                            class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between gap-2 print:hidden">
+                            class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between gap-2 print:hidden sticky top-0 z-10">
                             <div class="flex items-center gap-2">
                                 <i class="fa-solid fa-pills text-blue-500"></i>
                                 <h3 class="text-lg font-bold text-gray-900">Đơn thuốc điện tử</h3>
@@ -682,7 +684,7 @@
                             </div>
                         </div>
 
-                        <div class="p-6">
+                        <div class="p-6 overflow-y-auto">
                             @if (optional($appointment->medicalRecord)->prescription &&
                             !empty(optional($appointment->medicalRecord->prescription)->items))
                             <div>
@@ -762,122 +764,283 @@
                 </div> <!-- End Tab 3 -->
 
                 <!-- Tab 4: Thanh toán -->
-                <div x-show="activeTab === 'payments'" style="display: none;" class="space-y-6"
+                <div x-show="activeTab === 'payments'" style="display: none;" class="space-y-5"
                     x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
                     x-transition:enter-end="opacity-100">
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between gap-2">
+
+                    @php
+                    $pendingVisits = $summary['pending_visits'] ?? collect();
+                    $totalAmount = $summary['total_amount'] ?? 0;
+                    $insuranceRate = $summary['insurance_rate'] ?? 0;
+                    $insuranceCovers= $summary['insurance_covers']?? 0;
+                    $patientPays = $summary['patient_pays'] ?? 0;
+                    $amountPaid = $summary['amount_paid'] ?? 0;
+                    $remaining = $summary['remaining_to_pay']?? 0;
+                    $overpaid = $summary['overpaid_amount'] ?? 0;
+                    $isExpired = $summary['is_expired'] ?? false;
+                    $warningMsg = $summary['warning_message']?? null;
+                    $paidPayments = $appointment->payments->where('status', 'completed')->sortByDesc('paid_at');
+                    $needsReviewPayments = $appointment->payments->where('status', 'needs_review');
+                    @endphp
+
+                    {{-- Cảnh báo BHYT hết hạn --}}
+                    @if ($warningMsg)
+                    <div class="flex items-start gap-3 bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-800">
+                        <i class="fa-solid fa-triangle-exclamation mt-0.5 flex-shrink-0"></i>
+                        <span>{{ $warningMsg }}</span>
+                    </div>
+                    @endif
+
+                    {{-- ============================================================
+                         PHẦN 1: Hóa đơn chờ thanh toán
+                    ============================================================ --}}
+                    @if ($remaining > 0 || $pendingVisits->isNotEmpty())
+                    <div class="bg-white rounded-xl shadow-sm border border-orange-100 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-orange-100 bg-orange-50 flex items-center justify-between">
                             <div class="flex items-center gap-2">
-                                <i class="fa-solid fa-receipt text-green-500"></i>
-                                <h3 class="text-lg font-bold text-gray-900">Lịch sử thanh toán</h3>
+                                <i class="fa-solid fa-file-invoice-dollar text-orange-500"></i>
+                                <h3 class="text-base font-bold text-orange-800">Hóa đơn chờ thanh toán</h3>
                             </div>
-                            <div class="flex items-center gap-2">
-                                @if ($appointment->payments->where('status', 'paid')->count() > 0)
-                                <a href="{{ route('receptionist.payments.printVat', $appointment->id) }}" target="_blank"
-                                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                                    <i class="fa-solid fa-print"></i> In hóa đơn
-                                </a>
-                                @endif
+                            <span class="text-xs font-semibold bg-orange-100 text-orange-700 px-3 py-1 rounded-full">
+                                Còn lại: {{ number_format($remaining, 0, ',', '.') }}đ
+                            </span>
+                        </div>
+                        <div class="p-6 space-y-4">
+
+                            {{-- Tóm tắt chi phí --}}
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-sm">
+                                <div class="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                                    <div class="text-xs text-gray-500 mb-1">Tổng phí dịch vụ</div>
+                                    <div class="font-bold text-gray-800">{{ number_format($totalAmount, 0, ',', '.') }}đ</div>
+                                </div>
+                                <div class="bg-blue-50 rounded-lg p-3 border border-blue-100">
+                                    <div class="text-xs text-blue-600 mb-1">BHYT chi trả ({{ ($insuranceRate * 100) }}%)</div>
+                                    <div class="font-bold text-blue-700">{{ number_format($insuranceCovers, 0, ',', '.') }}đ</div>
+                                </div>
+                                <div class="bg-green-50 rounded-lg p-3 border border-green-100">
+                                    <div class="text-xs text-green-600 mb-1">Đã thu</div>
+                                    <div class="font-bold text-green-700">{{ number_format($amountPaid, 0, ',', '.') }}đ</div>
+                                </div>
+                                <div class="bg-orange-50 rounded-lg p-3 border border-orange-200">
+                                    <div class="text-xs text-orange-600 mb-1">Bệnh nhân cần nộp</div>
+                                    <div class="font-bold text-orange-700 text-base">{{ number_format($remaining, 0, ',', '.') }}đ</div>
+                                </div>
+                            </div>
+
+                            {{-- Danh sách visit/đơn chờ --}}
+                            @if ($pendingVisits->isNotEmpty())
+                            <div class="divide-y divide-gray-100 border border-gray-100 rounded-lg overflow-hidden">
+                                @foreach ($pendingVisits as $visit)
+                                <div class="flex items-center justify-between px-4 py-3 hover:bg-gray-50">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                            @if(isset($visit->items))
+                                            <i class="fa-solid fa-pills text-xs"></i>
+                                            @else
+                                            <i class="fa-solid fa-stethoscope text-xs"></i>
+                                            @endif
+                                        </div>
+                                        <div>
+                                            <div class="text-sm font-medium text-gray-800">
+                                                @if(isset($visit->items))
+                                                Đơn thuốc
+                                                @else
+                                                {{ $visit->room->name ?? 'Ca khám' }}
+                                                @if($visit->doctorProfile)
+                                                <span class="text-xs text-gray-500">— {{ $visit->doctorProfile->full_title ?? $visit->doctorProfile->user->full_name ?? '' }}</span>
+                                                @endif
+                                                @endif
+                                            </div>
+                                            <div class="text-xs text-gray-500">
+                                                {{ $visit->created_at?->format('d/m/Y H:i') }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-sm font-bold text-gray-900">{{ number_format($visit->payment_amount, 0, ',', '.') }}đ</div>
+                                        @if($insuranceRate > 0)
+                                        <div class="text-xs text-blue-500">BN trả: {{ number_format($visit->payment_amount * (1 - $insuranceRate), 0, ',', '.') }}đ</div>
+                                        @endif
+                                    </div>
+                                </div>
+                                @endforeach
+                            </div>
+                            @endif
+
+                            {{-- Nút hành động --}}
+                            <div class="flex flex-col sm:flex-row gap-3 pt-2">
                                 <a href="{{ route('receptionist.payments.create', $appointment->id) }}"
-                                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                                    <i class="fa-solid fa-plus"></i> Tạo thanh toán
+                                    class="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl text-sm font-bold text-center transition-colors flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-cash-register"></i>
+                                    Thu tiền — {{ number_format($remaining, 0, ',', '.') }}đ
                                 </a>
+                                @if($overpaid > 0)
+                                <form action="{{ route('receptionist.payments.refund', $appointment->id) }}" method="POST" class="flex-1">
+                                    @csrf
+                                    <button type="submit"
+                                        class="w-full bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 py-3 rounded-xl text-sm font-bold text-center transition-colors flex items-center justify-center gap-2">
+                                        <i class="fa-solid fa-rotate-left"></i>
+                                        Yêu cầu hoàn tiền thừa ({{ number_format($overpaid, 0, ',', '.') }}đ)
+                                    </button>
+                                </form>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    @elseif ($appointment->clinicalVisits->isNotEmpty() && $remaining <= 0 && $amountPaid> 0)
+                        {{-- Đã thanh toán đủ --}}
+                        <div class="bg-green-50 border border-green-200 rounded-xl p-5 flex items-center gap-4">
+                            <div class="w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid fa-check-double text-lg"></i>
+                            </div>
+                            <div>
+                                <div class="font-bold text-green-800">Đã thanh toán đầy đủ</div>
+                                <div class="text-sm text-green-700 mt-0.5">Tổng đã thu: <span class="font-bold">{{ number_format($amountPaid, 0, ',', '.') }}đ</span></div>
+                            </div>
+                        </div>
+                        @else
+                        {{-- Chưa có ca khám nào --}}
+                        <div class="bg-white rounded-xl border border-dashed border-gray-200 p-10 text-center text-gray-400">
+                            <i class="fa-solid fa-receipt text-4xl mb-3 text-gray-300"></i>
+                            <p class="text-sm">Bệnh nhân chưa được tiếp nhận khám.</p>
+                            <p class="text-xs mt-1">Hóa đơn sẽ xuất hiện sau khi Check-in và có ca khám.</p>
+                        </div>
+                        @endif
+
+                        {{-- ============================================================
+                         PHẦN 2: Lịch sử giao dịch đã thanh toán
+                    ============================================================ --}}
+                        @if ($paidPayments->isNotEmpty() || $needsReviewPayments->isNotEmpty())
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col max-h-[400px]">
+                            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between sticky top-0 z-10">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-clock-rotate-left text-gray-400"></i>
+                                    <h3 class="text-base font-bold text-gray-700">Lịch sử giao dịch</h3>
+                                </div>
+                                @if ($paidPayments->isNotEmpty())
+                                <div class="flex items-center gap-2">
+                                    <a href="{{ route('receptionist.payments.printVat', $appointment->id) }}" target="_blank"
+                                        class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1">
+                                        <i class="fa-solid fa-print"></i> In HĐ VAT
+                                    </a>
+                                    <a href="{{ route('receptionist.payments.printDeposit', $appointment->id) }}" target="_blank"
+                                        class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1">
+                                        <i class="fa-solid fa-file-lines"></i> Phiếu tạm ứng
+                                    </a>
+                                </div>
+                                @endif
+                            </div>
+                            <div class="divide-y divide-gray-50 overflow-y-auto">
+                                @foreach ($appointment->payments->sortByDesc('paid_at') as $payment)
+                                @php
+                                [$methodLabel, $methodClass] = match($payment->method) {
+                                'cash' => ['Tiền mặt', 'bg-emerald-100 text-emerald-700'],
+                                'qr' => ['QR/Chuyển khoản', 'bg-blue-100 text-blue-700'],
+                                'insurance' => ['BHYT', 'bg-indigo-100 text-indigo-700'],
+                                'waived' => ['Miễn phí', 'bg-gray-100 text-gray-600'],
+                                default => [$payment->method ?? '—', 'bg-gray-100 text-gray-600'],
+                                };
+                                [$statusLabel, $statusClass] = match($payment->status) {
+                                'completed' => ['Đã thu', 'bg-green-100 text-green-700'],
+                                'needs_review' => ['Cần xét duyệt', 'bg-yellow-100 text-yellow-700'],
+                                'refunded' => ['Đã hoàn', 'bg-red-100 text-red-700'],
+                                default => [$payment->status, 'bg-gray-100 text-gray-600'],
+                                };
+                                @endphp
+                                <div class="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0
+                                        {{ $payment->status === 'completed' ? 'bg-green-100 text-green-600' : ($payment->status === 'needs_review' ? 'bg-yellow-100 text-yellow-600' : 'bg-red-100 text-red-600') }}">
+                                            <i class="fa-solid {{ $payment->status === 'completed' ? 'fa-check' : ($payment->status === 'needs_review' ? 'fa-clock' : 'fa-rotate-left') }} text-xs"></i>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="text-sm font-medium text-gray-800 flex items-center gap-2 flex-wrap">
+                                                <span class="font-mono text-xs text-gray-500 truncate">{{ $payment->transaction_code ?? '—' }}</span>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $methodClass }}">{{ $methodLabel }}</span>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $statusClass }}">{{ $statusLabel }}</span>
+                                            </div>
+                                            <div class="text-xs text-gray-400 mt-0.5">
+                                                {{ $payment->paid_at?->format('d/m/Y H:i') ?? $payment->created_at?->format('d/m/Y H:i') ?? '—' }}
+                                                @if($payment->collectedBy) · {{ $payment->collectedBy->full_name }} @endif
+                                            </div>
+                                            @if($payment->note)
+                                            <div class="text-xs text-gray-400 italic mt-0.5">{{ $payment->note }}</div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <div class="text-right flex-shrink-0 ml-4">
+                                        <div class="text-base font-bold {{ $payment->amount < 0 ? 'text-red-600' : 'text-gray-900' }}">
+                                            {{ $payment->amount < 0 ? '-' : '' }}{{ number_format(abs($payment->amount), 0, ',', '.') }}đ
+                                        </div>
+                                    </div>
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endif
+
+                </div> <!-- End Tab 4 -->
+
+                <!-- Tab 5: Lịch sử hoạt động -->
+                <div x-show="activeTab === 'history'" class="space-y-6 print:hidden"
+                    x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
+                    x-transition:enter-end="opacity-100">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between sticky top-0 z-10">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-clock-rotate-left text-gray-400"></i>
+                                <h3 class="text-base font-bold text-gray-900">Lịch sử hoạt động</h3>
                             </div>
                         </div>
                         <div class="p-6">
-                            @if ($appointment->payments->isEmpty())
-                            <div class="text-center py-12 text-gray-500">
-                                <div class="mb-3"><i class="fa-solid fa-receipt text-4xl text-gray-300"></i></div>
-                                <p>Chưa có giao dịch thanh toán nào.</p>
-                            </div>
+                            @if ($appointment->logs->isEmpty())
+                            <div class="text-center text-sm text-gray-500 py-4 italic">Chưa có bản ghi lịch sử nào.</div>
                             @else
-                            <!-- Tổng kết thanh toán -->
-                            @php
-                            $totalPaid = $appointment->payments->where('status', 'paid')->sum('amount');
-                            $totalPending = $appointment->payments->where('status', 'pending')->sum('amount');
-                            $totalRefunded = $appointment->payments->where('status', 'refunded')->sum('amount');
-                            @endphp
-                            <div class="grid grid-cols-3 gap-4 mb-6">
-                                <div class="bg-green-50 rounded-lg p-4 text-center border border-green-100">
-                                    <div class="text-xs text-green-600 font-medium uppercase mb-1">Đã thanh toán</div>
-                                    <div class="text-lg font-bold text-green-700">{{ number_format($totalPaid, 0, ',', '.') }}đ</div>
-                                </div>
-                                <div class="bg-yellow-50 rounded-lg p-4 text-center border border-yellow-100">
-                                    <div class="text-xs text-yellow-600 font-medium uppercase mb-1">Chờ thanh toán</div>
-                                    <div class="text-lg font-bold text-yellow-700">{{ number_format($totalPending, 0, ',', '.') }}đ</div>
-                                </div>
-                                <div class="bg-red-50 rounded-lg p-4 text-center border border-red-100">
-                                    <div class="text-xs text-red-600 font-medium uppercase mb-1">Hoàn tiền</div>
-                                    <div class="text-lg font-bold text-red-700">{{ number_format($totalRefunded, 0, ',', '.') }}đ</div>
-                                </div>
-                            </div>
+                            <div class="relative border-l border-gray-200 ml-3">
+                                @foreach ($appointment->logs as $log)
+                                <div class="mb-6 ml-5 relative">
+                                    <span class="absolute -left-[27.5px] flex items-center justify-center w-6 h-6 bg-white rounded-full border border-gray-200 text-gray-500 shadow-sm mt-0.5">
+                                        <i class="fa-solid fa-circle-dot text-[10px] text-blue-500"></i>
+                                    </span>
+                                    <div class="bg-gray-50 border border-gray-100 rounded-lg p-3 hover:shadow-sm transition-shadow">
+                                        <div class="mb-2">
+                                            <h4 class="text-sm font-bold text-gray-900">
+                                                {{ $log->action_label ?? 'Cập nhật trạng thái' }}
+                                            </h4>
+                                            <div class="text-xs font-medium text-gray-500 mt-0.5">
+                                                <i class="fa-regular fa-clock mr-1"></i>
+                                                {{ $log->created_at->format('d/m/Y H:i:s') }}
+                                            </div>
+                                        </div>
 
-                            <!-- Bảng chi tiết -->
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-sm">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th class="px-4 py-3 text-left font-medium text-gray-500">Mã GD</th>
-                                            <th class="px-4 py-3 text-right font-medium text-gray-500">Số tiền</th>
-                                            <th class="px-4 py-3 text-center font-medium text-gray-500">Phương thức</th>
-                                            <th class="px-4 py-3 text-center font-medium text-gray-500">Trạng thái</th>
-                                            <th class="px-4 py-3 text-left font-medium text-gray-500">Người thu</th>
-                                            <th class="px-4 py-3 text-left font-medium text-gray-500">Thời gian</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-gray-100">
-                                        @foreach ($appointment->payments->sortByDesc('created_at') as $payment)
-                                        <tr class="hover:bg-gray-50">
-                                            <td class="px-4 py-3">
-                                                <span class="font-mono text-xs text-gray-700">{{ $payment->transaction_code ?? '—' }}</span>
-                                            </td>
-                                            <td class="px-4 py-3 text-right font-bold text-gray-900">
-                                                {{ number_format($payment->amount, 0, ',', '.') }}đ
-                                            </td>
-                                            <td class="px-4 py-3 text-center">
-                                                @php
-                                                $methodLabel = match($payment->method) {
-                                                'cash' => ['Tiền mặt', 'bg-emerald-100 text-emerald-700'],
-                                                'bank_transfer' => ['Chuyển khoản', 'bg-blue-100 text-blue-700'],
-                                                'qr_code' => ['QR Code', 'bg-purple-100 text-purple-700'],
-                                                default => [$payment->method, 'bg-gray-100 text-gray-700'],
-                                                };
-                                                @endphp
-                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $methodLabel[1] }}">{{ $methodLabel[0] }}</span>
-                                            </td>
-                                            <td class="px-4 py-3 text-center">
-                                                @php
-                                                $statusLabel = match($payment->status) {
-                                                'paid' => ['Đã thanh toán', 'bg-green-100 text-green-700'],
-                                                'pending' => ['Chờ thanh toán', 'bg-yellow-100 text-yellow-700'],
-                                                'refunded' => ['Hoàn tiền', 'bg-red-100 text-red-700'],
-                                                'failed' => ['Thất bại', 'bg-red-100 text-red-700'],
-                                                default => [$payment->status, 'bg-gray-100 text-gray-700'],
-                                                };
-                                                @endphp
-                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $statusLabel[1] }}">{{ $statusLabel[0] }}</span>
-                                            </td>
-                                            <td class="px-4 py-3 text-gray-700">
-                                                {{ $payment->collectedBy->full_name ?? '—' }}
-                                            </td>
-                                            <td class="px-4 py-3 text-gray-500 text-xs">
-                                                {{ $payment->paid_at ? $payment->paid_at->format('d/m/Y H:i') : ($payment->created_at ? $payment->created_at->format('d/m/Y H:i') : '—') }}
-                                            </td>
-                                        </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
+                                        <div class="mt-2 pt-2 border-t border-gray-100 flex flex-wrap gap-2 text-xs">
+                                            <div class="flex items-center gap-1.5 text-gray-600">
+                                                <i class="fa-solid fa-user-pen"></i>
+                                                <span class="font-medium">{{ $log->changedBy->full_name ?? 'Hệ thống' }}</span>
+                                            </div>
+                                            
+                                            @if($log->old_status && $log->new_status && $log->old_status !== $log->new_status)
+                                            <div class="flex items-center gap-1.5 bg-white px-2 py-0.5 rounded border border-gray-200">
+                                                <span class="text-gray-500">{{ $log->old_status_label ?? $log->old_status }}</span>
+                                                <i class="fa-solid fa-arrow-right text-gray-400 text-[10px]"></i>
+                                                <span class="font-bold text-blue-600">{{ $log->new_status_label ?? $log->new_status }}</span>
+                                            </div>
+                                            @endif
+                                        </div>
+                                        @if ($log->reason)
+                                        <div class="text-xs text-gray-500 mt-2 bg-white p-2 rounded border border-gray-100 italic">
+                                            "{{ $log->reason }}"
+                                        </div>
+                                        @endif
+                                    </div>
+                                </div>
+                                @endforeach
                             </div>
-
-                            @if ($payment->note ?? false)
-                            <div class="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-100 text-sm text-gray-600">
-                                <span class="font-medium">Ghi chú:</span> {{ $payment->note }}
-                            </div>
-                            @endif
                             @endif
                         </div>
                     </div>
-                </div> <!-- End Tab 4 -->
+                </div> <!-- End Tab 5 -->
+
             </div>
 
             <!-- CỘT PHẢI (1/3) -->
@@ -968,8 +1131,9 @@
                 </div>
                 @endif
 
-                <!-- Lịch sử thay đổi -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+
+                <!-- Lịch sử trạng thái (Activity Log) -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
                     <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
                         <i class="fa-solid fa-clock-rotate-left text-gray-400"></i>
                         <h3 class="text-base font-bold text-gray-900">Lịch sử trạng thái</h3>
@@ -993,8 +1157,7 @@
                                 default => 'bg-gray-400',
                                 };
                                 @endphp
-                                <span
-                                    class="absolute -left-1.5 w-3 h-3 rounded-full {{ $logColor }} ring-4 ring-white mt-1.5"></span>
+                                <span class="absolute -left-1.5 w-3 h-3 rounded-full {{ $logColor }} ring-4 ring-white mt-1.5"></span>
                                 <div class="text-xs text-gray-500 mb-1">
                                     {{ $log->created_at->format('d/m/Y H:i') }}
                                 </div>
@@ -1013,12 +1176,9 @@
                                     @endphp
                                     {{ $labelMap[$log->new_status] ?? $log->new_status }}
                                 </div>
-                                <div class="text-xs text-gray-600 mt-1">Bởi: <span
-                                        class="font-medium">{{ $log->changedBy->full_name ?? 'Hệ thống' }}</span>
-                                </div>
+                                <div class="text-xs text-gray-600 mt-1">Bởi: <span class="font-medium">{{ $log->changedBy->full_name ?? 'Hệ thống' }}</span></div>
                                 @if ($log->reason)
-                                <div
-                                    class="text-xs text-gray-500 mt-1 bg-gray-50 p-2 rounded border border-gray-100 italic">
+                                <div class="text-xs text-gray-500 mt-1 bg-gray-50 p-2 rounded border border-gray-100 italic">
                                     "{{ $log->reason }}"</div>
                                 @endif
                             </div>
@@ -1027,10 +1187,6 @@
                         @endif
                     </div>
                 </div>
-
-            </div>
-        </div>
-
 
     </div>
 </x-layouts.receptionist>

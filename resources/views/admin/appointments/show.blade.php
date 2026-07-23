@@ -79,50 +79,44 @@
         ];
         $currentStep = $steps[$appointment->status] ?? 1;
         @endphp
-        <div class="relative max-w-4xl mx-auto">
-            <!-- Đường Line Nền (Nối giữa các bước) -->
-            <div class="absolute top-4 left-[12.5%] right-[12.5%] h-1.5 bg-gray-200 rounded -translate-y-1/2 z-0">
-                <div class="absolute top-0 left-0 h-1.5 bg-blue-500 rounded transition-all duration-500" style="width: {{ ($currentStep - 1) * 33.33 }}%"></div>
-            </div>
+        <div class="relative max-w-3xl mx-auto px-8 py-2">
+            <div class="flex items-center justify-between relative z-0">
+                <!-- Connecting Line -->
+                <div class="absolute top-[14px] left-0 right-0 h-1 bg-gray-200 z-0">
+                    <div class="absolute top-0 left-0 h-full bg-blue-500 transition-all duration-500" style="width: {{ ($currentStep - 1) * 33.33 }}%"></div>
+                </div>
 
-            <div class="flex justify-between relative z-10">
                 <!-- Step 1 -->
-                <div class="text-center w-1/4">
-                    <div
-                        class="mx-auto flex items-center justify-center w-8 h-8 rounded-full border-2 {{ $currentStep >= 1 ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300 bg-white text-gray-400' }} mb-2 transition-colors duration-500 relative bg-white">
+                <div class="relative z-10 flex flex-col items-center">
+                    <div class="flex items-center justify-center w-8 h-8 rounded-full border-2 {{ $currentStep >= 1 ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300 bg-white text-gray-400' }} transition-colors duration-500 shadow-sm">
                         <i class="fa-solid {{ $currentStep > 1 ? 'fa-check text-xs' : 'fa-1 text-xs' }}"></i>
                     </div>
-                    <div class="text-xs font-medium {{ $currentStep >= 1 ? 'text-blue-600' : 'text-gray-500' }}">Đã
-                        đặt lịch</div>
+                    <div class="absolute top-10 text-xs font-medium whitespace-nowrap {{ $currentStep >= 1 ? 'text-blue-600' : 'text-gray-500' }}">Đã đặt lịch</div>
                 </div>
                 <!-- Step 2 -->
-                <div class="text-center w-1/4">
-                    <div
-                        class="mx-auto flex items-center justify-center w-8 h-8 rounded-full border-2 {{ $currentStep >= 2 ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300 bg-white text-gray-400' }} mb-2 transition-colors duration-500 relative bg-white">
+                <div class="relative z-10 flex flex-col items-center">
+                    <div class="flex items-center justify-center w-8 h-8 rounded-full border-2 {{ $currentStep >= 2 ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300 bg-white text-gray-400' }} transition-colors duration-500 shadow-sm">
                         <i class="fa-solid {{ $currentStep > 2 ? 'fa-check text-xs' : 'fa-2 text-xs' }}"></i>
                     </div>
-                    <div class="text-xs font-medium {{ $currentStep >= 2 ? 'text-blue-600' : 'text-gray-500' }}">Đã
-                        tiếp nhận</div>
+                    <div class="absolute top-10 text-xs font-medium whitespace-nowrap {{ $currentStep >= 2 ? 'text-blue-600' : 'text-gray-500' }}">Đã tiếp nhận</div>
                 </div>
                 <!-- Step 3 -->
-                <div class="text-center w-1/4">
-                    <div
-                        class="mx-auto flex items-center justify-center w-8 h-8 rounded-full border-2 {{ $currentStep >= 3 ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300 bg-white text-gray-400' }} mb-2 transition-colors duration-500 relative bg-white">
+                <div class="relative z-10 flex flex-col items-center">
+                    <div class="flex items-center justify-center w-8 h-8 rounded-full border-2 {{ $currentStep >= 3 ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300 bg-white text-gray-400' }} transition-colors duration-500 shadow-sm">
                         <i class="fa-solid {{ $currentStep > 3 ? 'fa-check text-xs' : 'fa-3 text-xs' }}"></i>
                     </div>
-                    <div class="text-xs font-medium {{ $currentStep >= 3 ? 'text-blue-600' : 'text-gray-500' }}">
-                        Đang khám</div>
+                    <div class="absolute top-10 text-xs font-medium whitespace-nowrap {{ $currentStep >= 3 ? 'text-blue-600' : 'text-gray-500' }}">Đang khám</div>
                 </div>
                 <!-- Step 4 -->
-                <div class="text-center w-1/4">
-                    <div
-                        class="mx-auto flex items-center justify-center w-8 h-8 rounded-full border-2 {{ $currentStep >= 4 ? 'border-green-500 bg-green-500 text-white' : 'border-gray-300 bg-white text-gray-400' }} mb-2 transition-colors duration-500 relative bg-white">
+                <div class="relative z-10 flex flex-col items-center">
+                    <div class="flex items-center justify-center w-8 h-8 rounded-full border-2 {{ $currentStep >= 4 ? 'border-green-500 bg-green-500 text-white' : 'border-gray-300 bg-white text-gray-400' }} transition-colors duration-500 shadow-sm">
                         <i class="fa-solid fa-4 text-xs"></i>
                     </div>
-                    <div class="text-xs font-medium {{ $currentStep >= 4 ? 'text-green-600' : 'text-gray-500' }}">
-                        Hoàn thành</div>
+                    <div class="absolute top-10 text-xs font-medium whitespace-nowrap {{ $currentStep >= 4 ? 'text-green-600' : 'text-gray-500' }}">Hoàn thành</div>
                 </div>
             </div>
+            <!-- Space for absolute labels -->
+            <div class="h-8"></div>
         </div>
         @endif
     </div>
@@ -152,6 +146,11 @@
                         :class="{ 'border-b-2 border-blue-500 text-blue-600 bg-blue-50': activeTab === 'prescription', 'text-gray-500 hover:text-gray-700 hover:bg-gray-50': activeTab !== 'prescription' }"
                         class="flex-1 py-4 px-2 sm:px-4 text-sm font-bold transition-colors">
                         <i class="fa-solid fa-pills mr-1 sm:mr-2"></i><span class="hidden sm:inline">Đơn thuốc</span>
+                    </button>
+                    <button type="button" @click="activeTab = 'history'"
+                        :class="{ 'border-b-2 border-blue-500 text-blue-600 bg-blue-50': activeTab === 'history', 'text-gray-500 hover:text-gray-700 hover:bg-gray-50': activeTab !== 'history' }"
+                        class="flex-1 py-4 px-2 sm:px-4 text-sm font-bold transition-colors">
+                        <i class="fa-solid fa-clock-rotate-left mr-1 sm:mr-2"></i><span class="hidden sm:inline">Lịch sử</span>
                     </button>
                 </div>
             </div>
@@ -262,7 +261,7 @@
                                 <i class="fa-solid fa-id-card w-5 text-center text-gray-400"></i>
                                 <span class="text-gray-500">CCCD:</span>
                                 <span
-                                    class="font-medium text-gray-900">{{ $appointment->patientProfile->identity_card ?? '—' }}</span>
+                                    class="font-medium text-gray-900">{{ $appointment->patientProfile->id_card ?? '—' }}</span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <i class="fa-solid fa-phone w-5 text-center text-gray-400"></i>
@@ -278,7 +277,7 @@
                             </div>
                         </div>
 
-                        @if ($appointment->patientProfile->health_insurance_number)
+                        @if ($appointment->patientProfile->insurance_code)
                         <div
                             class="bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-center justify-between mb-6">
                             <div class="flex items-center gap-3">
@@ -287,22 +286,22 @@
                                     <div class="text-xs text-blue-600 font-medium uppercase tracking-wider">Bảo
                                         hiểm y tế</div>
                                     <div class="font-mono font-bold text-gray-900">
-                                        {{ $appointment->patientProfile->health_insurance_number }}
+                                        {{ $appointment->patientProfile->insurance_code }}
                                     </div>
                                 </div>
                             </div>
                             <div class="text-right">
                                 <div class="text-xs text-gray-500 font-medium">Hạn sử dụng</div>
-                                @if ($appointment->patientProfile->health_insurance_expiry)
-                                @if (now()->startOfDay()->gt(\Carbon\Carbon::parse($appointment->patientProfile->health_insurance_expiry)))
+                                @if ($appointment->patientProfile->insurance_expiry)
+                                @if (now()->startOfDay()->gt(\Carbon\Carbon::parse($appointment->patientProfile->insurance_expiry)))
                                 <div
                                     class="text-sm font-bold text-red-600 border border-red-200 bg-red-50 px-2 py-0.5 rounded">
-                                    {{ \Carbon\Carbon::parse($appointment->patientProfile->health_insurance_expiry)->format('d/m/Y') }}
+                                    {{ \Carbon\Carbon::parse($appointment->patientProfile->insurance_expiry)->format('d/m/Y') }}
                                     (Hết hạn)
                                 </div>
                                 @else
                                 <div class="text-sm font-medium text-gray-900">
-                                    {{ \Carbon\Carbon::parse($appointment->patientProfile->health_insurance_expiry)->format('d/m/Y') }}
+                                    {{ \Carbon\Carbon::parse($appointment->patientProfile->insurance_expiry)->format('d/m/Y') }}
                                 </div>
                                 @endif
                                 @else
@@ -437,23 +436,25 @@
                                                 {{ $visit->room->name ?? 'Phòng khám' }}
                                             </h4>
                                             <div class="text-sm text-gray-600 mt-0.5">Bác sĩ: <span
-                                                    class="font-medium text-gray-900">{{ $visit->doctor->full_title ?? '—' }}</span>
+                                                    class="font-medium text-gray-900">{{ $visit->doctorProfile->full_title ?? '—' }}</span>
                                             </div>
                                         </div>
                                         <div>
                                             @php
                                             $visitColor = match ($visit->status) {
-                                            'pending' => 'yellow',
-                                            'examining' => 'purple',
+                                            'waiting' => 'yellow',
+                                            'in_progress' => 'purple',
                                             'completed' => 'green',
-                                            'cancelled' => 'red',
+                                            'refused' => 'red',
+                                            'redirected' => 'orange',
                                             default => 'gray',
                                             };
                                             $visitLabel = match ($visit->status) {
-                                            'pending' => 'Đã tiếp nhận',
-                                            'examining' => 'Đang khám',
+                                            'waiting' => 'Đang chờ',
+                                            'in_progress' => 'Đang thực hiện',
                                             'completed' => 'Hoàn thành',
-                                            'cancelled' => 'Đã huỷ',
+                                            'refused' => 'Từ chối',
+                                            'redirected' => 'Chuyển hướng',
                                             default => 'Không xác định',
                                             };
                                             @endphp
@@ -501,12 +502,12 @@
 
                 <!-- Kết quả khám / Medical Record -->
                 @if ($appointment->medicalRecord)
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col max-h-[600px]">
+                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center gap-2 sticky top-0 z-10">
                         <i class="fa-solid fa-file-medical text-green-500"></i>
                         <h3 class="text-lg font-bold text-gray-900">Kết quả khám & Điều trị</h3>
                     </div>
-                    <div class="p-6 space-y-6">
+                    <div class="p-6 space-y-6 overflow-y-auto">
                         <!-- Chẩn đoán -->
                         <div>
                             <h4
@@ -617,10 +618,10 @@
             <div x-show="activeTab === 'prescription'" style="display: none;" class="space-y-6"
                 x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
                 x-transition:enter-end="opacity-100">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col max-h-[600px]"
                     id="prescription-print-area">
                     <div
-                        class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between gap-2 print:hidden">
+                        class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between gap-2 print:hidden sticky top-0 z-10">
                         <div class="flex items-center gap-2">
                             <i class="fa-solid fa-pills text-blue-500"></i>
                             <h3 class="text-lg font-bold text-gray-900">Đơn thuốc điện tử</h3>
@@ -635,9 +636,9 @@
                     <div class="hidden print:block p-8 border-b-2 border-gray-800 mb-6">
                         <div class="flex justify-between items-start">
                             <div>
-                                <h1 class="text-2xl font-bold uppercase text-gray-900">BỆNH VIỆN ĐA KHOA CAREBOOK</h1>
-                                <p class="text-sm mt-1">123 Đường Sức Khoẻ, Quận Bình Thủy, TP. Cần Thơ</p>
-                                <p class="text-sm">Hotline: 1900 1234</p>
+                                <h1 class="text-2xl font-bold uppercase text-gray-900">{{ \App\Models\SystemSetting::where('key', 'clinic_name')->value('value') ?? 'BỆNH VIỆN ĐA KHOA CAREBOOK' }}</h1>
+                                <p class="text-sm mt-1">{{ \App\Models\SystemSetting::where('key', 'clinic_address')->value('value') ?? '123 Đường Sức Khoẻ, Quận Bình Thủy, TP. Cần Thơ' }}</p>
+                                <p class="text-sm">Hotline: {{ \App\Models\SystemSetting::where('key', 'clinic_phone')->value('value') ?? '1900 1234' }}</p>
                             </div>
                             <div class="text-right">
                                 <h2 class="text-xl font-bold uppercase mb-1">ĐƠN THUỐC</h2>
@@ -665,7 +666,7 @@
                         </div>
                     </div>
 
-                    <div class="p-6">
+                    <div class="p-6 overflow-y-auto">
                         @if (optional($appointment->medicalRecord)->prescription &&
                         !empty(optional($appointment->medicalRecord->prescription)->items))
                         <div>
@@ -743,6 +744,66 @@
                     </div>
                 </div> <!-- End Print Area -->
             </div> <!-- End Tab 3 -->
+
+            <!-- Tab 4: Lịch sử hoạt động -->
+            <div x-show="activeTab === 'history'" class="space-y-6 print:hidden"
+                x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between sticky top-0 z-10">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-clock-rotate-left text-gray-400"></i>
+                            <h3 class="text-base font-bold text-gray-900">Lịch sử hoạt động</h3>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        @if ($appointment->logs->isEmpty())
+                        <div class="text-center text-sm text-gray-500 py-4 italic">Chưa có bản ghi lịch sử nào.</div>
+                        @else
+                        <div class="relative border-l border-gray-200 ml-3">
+                            @foreach ($appointment->logs as $log)
+                            <div class="mb-6 ml-5 relative">
+                                <span class="absolute -left-[27.5px] flex items-center justify-center w-6 h-6 bg-white rounded-full border border-gray-200 text-gray-500 shadow-sm mt-0.5">
+                                    <i class="fa-solid fa-circle-dot text-[10px] text-blue-500"></i>
+                                </span>
+                                <div class="bg-gray-50 border border-gray-100 rounded-lg p-3 hover:shadow-sm transition-shadow">
+                                    <div class="mb-2">
+                                        <h4 class="text-sm font-bold text-gray-900">
+                                            {{ $log->action_label ?? 'Cập nhật trạng thái' }}
+                                        </h4>
+                                        <div class="text-xs font-medium text-gray-500 mt-0.5">
+                                            <i class="fa-regular fa-clock mr-1"></i>
+                                            {{ $log->created_at->format('d/m/Y H:i:s') }}
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-2 pt-2 border-t border-gray-100 flex flex-wrap gap-2 text-xs">
+                                        <div class="flex items-center gap-1.5 text-gray-600">
+                                            <i class="fa-solid fa-user-pen"></i>
+                                            <span class="font-medium">{{ $log->changedBy->full_name ?? 'Hệ thống' }}</span>
+                                        </div>
+                                        
+                                        @if($log->old_status && $log->new_status && $log->old_status !== $log->new_status)
+                                        <div class="flex items-center gap-1.5 bg-white px-2 py-0.5 rounded border border-gray-200">
+                                            <span class="text-gray-500">{{ $log->old_status_label ?? $log->old_status }}</span>
+                                            <i class="fa-solid fa-arrow-right text-gray-400 text-[10px]"></i>
+                                            <span class="font-bold text-blue-600">{{ $log->new_status_label ?? $log->new_status }}</span>
+                                        </div>
+                                        @endif
+                                    </div>
+                                    @if ($log->reason)
+                                    <div class="text-xs text-gray-500 mt-2 bg-white p-2 rounded border border-gray-100 italic">
+                                        "{{ $log->reason }}"
+                                    </div>
+                                    @endif
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+                        @endif
+                    </div>
+                </div>
+            </div> <!-- End Tab 4 -->
         </div>
 
         <!-- CỘT PHẢI (1/3) -->
@@ -814,6 +875,8 @@
                                     {{ $appointment->status === 'cancelled' ? 'selected' : '' }}>Đã huỷ</option>
                                 <option value="absent" {{ $appointment->status === 'absent' ? 'selected' : '' }}>
                                     Vắng mặt</option>
+                                <option value="late" {{ $appointment->status === 'late' ? 'selected' : '' }}>
+                                    Đến muộn</option>
                             </select>
                         </div>
                         <div class="mb-4">
@@ -831,8 +894,8 @@
             </div>
             @endif
 
-            <!-- Lịch sử thay đổi -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <!-- Lịch sử trạng thái (Activity Log) -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
                 <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
                     <i class="fa-solid fa-clock-rotate-left text-gray-400"></i>
                     <h3 class="text-base font-bold text-gray-900">Lịch sử trạng thái</h3>
@@ -852,11 +915,11 @@
                             'completed' => 'bg-green-500',
                             'cancelled' => 'bg-red-500',
                             'absent' => 'bg-gray-500',
+                            'late' => 'bg-orange-500',
                             default => 'bg-gray-400',
                             };
                             @endphp
-                            <span
-                                class="absolute -left-1.5 w-3 h-3 rounded-full {{ $logColor }} ring-4 ring-white mt-1.5"></span>
+                            <span class="absolute -left-1.5 w-3 h-3 rounded-full {{ $logColor }} ring-4 ring-white mt-1.5"></span>
                             <div class="text-xs text-gray-500 mb-1">
                                 {{ $log->created_at->format('d/m/Y H:i') }}
                             </div>
@@ -870,16 +933,14 @@
                                 'completed' => 'Hoàn thành',
                                 'cancelled' => 'Đã huỷ',
                                 'absent' => 'Vắng mặt',
+                                'late' => 'Đến muộn',
                                 ];
                                 @endphp
                                 {{ $labelMap[$log->new_status] ?? $log->new_status }}
                             </div>
-                            <div class="text-xs text-gray-600 mt-1">Bởi: <span
-                                    class="font-medium">{{ $log->changedBy->full_name ?? 'Hệ thống' }}</span>
-                            </div>
+                            <div class="text-xs text-gray-600 mt-1">Bởi: <span class="font-medium">{{ $log->changedBy->full_name ?? 'Hệ thống' }}</span></div>
                             @if ($log->reason)
-                            <div
-                                class="text-xs text-gray-500 mt-1 bg-gray-50 p-2 rounded border border-gray-100 italic">
+                            <div class="text-xs text-gray-500 mt-1 bg-gray-50 p-2 rounded border border-gray-100 italic">
                                 "{{ $log->reason }}"</div>
                             @endif
                         </div>
@@ -889,6 +950,5 @@
                 </div>
             </div>
 
-        </div>
     </div>
 </x-layouts.admin>
