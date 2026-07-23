@@ -331,6 +331,8 @@ Route::middleware(['auth', 'role:patient'])->prefix('trang-ca-nhan')->name('pati
     Route::get('/ket-qua-kham/{record}', [\App\Http\Controllers\Patient\MedicalRecordController::class, 'show'])->name('records.show');
     Route::get('/don-thuoc', [\App\Http\Controllers\Patient\PrescriptionController::class, 'index'])->name('prescriptions.index');
     Route::get('/don-thuoc/{prescription}', [\App\Http\Controllers\Patient\PrescriptionController::class, 'show'])->name('prescriptions.show');
+    Route::get('/tien-trinh-kham', [\App\Http\Controllers\Patient\ExaminationProgressController::class, 'index'])->name('progress.index');
+    Route::get('/tien-trinh-kham/{appointment}', [\App\Http\Controllers\Patient\ExaminationProgressController::class, 'show'])->name('progress.show');
 
     // Notifications API & Page
     Route::get('/thong-bao', [\App\Http\Controllers\Patient\NotificationController::class, 'page'])->name('notifications.page');

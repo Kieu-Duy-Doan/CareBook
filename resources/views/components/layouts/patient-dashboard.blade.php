@@ -54,6 +54,13 @@
                                 <span>Lịch sử đặt lịch</span>
                             </a>
 
+                            <a href="{{ route('patient.progress.index') }}"
+                                class="{{ $baseClass }} {{ $activeMenu === 'progress' ? $activeClass : $inactiveClass }}">
+                                <i
+                                    class="fa-solid fa-route w-6 text-center text-lg {{ $activeMenu === 'progress' ? 'text-primary' : 'text-slate-400 group-hover:text-primary/70' }}"></i>
+                                <span>Tiến trình khám</span>
+                            </a>
+
                             <a href="{{ route('patient.records.index') }}"
                                 class="{{ $baseClass }} {{ $activeMenu === 'records' ? $activeClass : $inactiveClass }}">
                                 <i
