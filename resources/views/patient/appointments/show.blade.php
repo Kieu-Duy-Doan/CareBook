@@ -7,6 +7,9 @@
             </div>
             <div class="flex flex-wrap items-center gap-3">
                 <a href="{{ route('patient.appointments.index') }}" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition"><i class="fa-solid fa-chevron-left"></i> Quay lại</a>
+                @if ($appointment->medicalRecord)
+                    <a href="{{ route('patient.records.show', $appointment->id) }}" class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-5 py-3 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition"><i class="fa-solid fa-file-medical"></i> Xem kết quả khám</a>
+                @endif
                 @if ($appointment->status === 'pending')
                     <form action="{{ route('patient.appointments.cancel', $appointment->id) }}" method="POST" class="inline-block">@csrf<button type="submit" class="inline-flex items-center gap-2 rounded-full bg-rose-600 px-5 py-3 text-sm font-semibold text-white hover:bg-rose-700 transition"><i class="fa-solid fa-xmark"></i> Huỷ lịch hẹn</button></form>
                 @endif

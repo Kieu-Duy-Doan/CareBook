@@ -8,18 +8,27 @@ use Illuminate\Http\Request;
 
 class AppointmentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $appointments = Appointment::with([
+        $query = Appointment::with([
             'patientProfile',
             'doctorProfile.user',
             'specialty',
             'room',
         ])
-        ->where('booked_by_user_id', auth()->id())
-        ->orderByDesc('appointment_date')
-        ->orderByDesc('appointment_time')
-        ->paginate(12);
+        ->where('booked_by_user_id', auth()->id());
+
+        if ($request->filled('appointment_code')) {
+            $query->where('appointment_code', 'like', '%' . $request->appointment_code . '%');
+        }
+
+        if ($request->filled('appointment_date')) {
+            $query->whereDate('appointment_date', $request->appointment_date);
+        }
+
+        $appointments = $query->orderByDesc('appointment_date')
+            ->orderByDesc('appointment_time')
+            ->paginate(12)->withQueryString();
 
         return view('patient.appointments.index', compact('appointments'));
     }

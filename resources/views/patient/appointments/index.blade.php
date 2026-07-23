@@ -10,6 +10,38 @@
             </a>
         </div>
 
+        <!-- Bộ lọc -->
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <form method="GET" action="{{ route('patient.appointments.index') }}" class="flex flex-col sm:flex-row gap-4 items-end">
+                <div class="flex-1 w-full sm:w-auto">
+                    <label for="appointment_code" class="block text-sm font-medium text-slate-700 mb-1.5">Mã lịch hẹn</label>
+                    <div class="relative">
+                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                            <i class="fa-solid fa-hashtag text-slate-400"></i>
+                        </div>
+                        <input type="text" name="appointment_code" id="appointment_code" value="{{ request('appointment_code') }}" class="block w-full rounded-xl border-0 py-2.5 pl-10 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6" placeholder="Nhập mã lịch hẹn...">
+                    </div>
+                </div>
+                <div class="flex-1 w-full sm:w-auto">
+                    <label for="appointment_date" class="block text-sm font-medium text-slate-700 mb-1.5">Ngày khám</label>
+                    <div class="relative">
+                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                            <i class="fa-regular fa-calendar text-slate-400"></i>
+                        </div>
+                        <input type="date" name="appointment_date" id="appointment_date" value="{{ request('appointment_date') }}" class="block w-full rounded-xl border-0 py-2.5 pl-10 pr-4 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+                    </div>
+                </div>
+                <div class="w-full sm:w-auto flex gap-2">
+                    <button type="submit" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition">
+                        <i class="fa-solid fa-magnifying-glass"></i> Tra cứu
+                    </button>
+                    <a href="{{ route('patient.appointments.index') }}" class="inline-flex items-center justify-center rounded-xl bg-slate-100 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-200 transition" title="Xóa bộ lọc">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+
         @if (session('success'))
             <div class="rounded-3xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-800 shadow-sm">
                 {{ session('success') }}
