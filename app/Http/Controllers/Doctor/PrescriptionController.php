@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MedicalRecord;
 use App\Models\Prescription;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PrescriptionController extends Controller
 {
@@ -43,6 +44,15 @@ class PrescriptionController extends Controller
             'general_note' => $validated['general_note'] ?? null,
         ]);
 
+        \App\Models\AppointmentLog::create([
+            'appointment_id' => $medical_record->appointment_id,
+            'action'         => 'PRESCRIPTION_CREATED_OR_UPDATED',
+            'old_status'     => null,
+            'new_status'     => $medical_record->appointment->status ?? null,
+            'changed_by'     => Auth::id(),
+            'reason'         => "Bác sĩ " . Auth::user()->full_name . " đã kê đơn thuốc mới (gồm " . count($validated['items']) . " loại thuốc)."
+        ]);
+
         return redirect()->route('doctor.medical-records.show', $medical_record->id)
                          ->with('success', 'Tạo đơn thuốc thành công.');
     }
@@ -71,6 +81,15 @@ class PrescriptionController extends Controller
             'general_note' => $validated['general_note'] ?? null,
         ]);
 
+        \App\Models\AppointmentLog::create([
+            'appointment_id' => $prescription->medicalRecord->appointment_id,
+            'action'         => 'PRESCRIPTION_CREATED_OR_UPDATED',
+            'old_status'     => null,
+            'new_status'     => $prescription->medicalRecord->appointment->status ?? null,
+            'changed_by'     => Auth::id(),
+            'reason'         => "Bác sĩ " . Auth::user()->full_name . " đã chỉnh sửa đơn thuốc (gồm " . count($validated['items']) . " loại thuốc)."
+        ]);
+
         return redirect()->route('doctor.medical-records.show', $prescription->medical_record_id)
                          ->with('success', 'Cập nhật đơn thuốc thành công.');
     }
@@ -78,7 +97,17 @@ class PrescriptionController extends Controller
     public function destroy(Prescription $prescription)
     {
         $medical_record_id = $prescription->medical_record_id;
+        $appointment_id = $prescription->medicalRecord->appointment_id;
         $prescription->delete();
+
+        \App\Models\AppointmentLog::create([
+            'appointment_id' => $appointment_id,
+            'action'         => 'PRESCRIPTION_CREATED_OR_UPDATED',
+            'old_status'     => null,
+            'new_status'     => null,
+            'changed_by'     => Auth::id(),
+            'reason'         => "Bác sĩ " . Auth::user()->full_name . " đã xóa đơn thuốc."
+        ]);
 
         return redirect()->route('doctor.medical-records.show', $medical_record_id)
                          ->with('success', 'Xóa đơn thuốc thành công.');

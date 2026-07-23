@@ -1,30 +1,111 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <title>Hóa Đơn Dịch Vụ - {{ $appointment->appointment_code }}</title>
     <style>
-        body { font-family: DejaVu Sans, sans-serif; font-size: 13px; line-height: 1.5; color: #333; }
-        .container { width: 100%; margin: 0 auto; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .header h1 { margin: 0; font-size: 20px; text-transform: uppercase; }
-        .header p { margin: 5px 0; }
-        .title { text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 20px; text-transform: uppercase; }
-        .info-table { width: 100%; margin-bottom: 20px; }
-        .info-table td { padding: 5px; }
-        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        .items-table th, .items-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        .items-table th { background-color: #f9f9f9; }
-        .items-table .text-right { text-align: right; }
-        .items-table .text-center { text-align: center; }
-        .summary-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-        .summary-table td { padding: 5px; }
-        .summary-table .text-right { text-align: right; font-weight: bold; }
-        .footer { width: 100%; display: table; }
-        .footer-col { display: table-cell; width: 50%; text-align: center; }
-        .signature { margin-top: 80px; }
+        body {
+            font-family: DejaVu Sans, sans-serif;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #333;
+        }
+
+        .container {
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 20px;
+            text-transform: uppercase;
+        }
+
+        .header p {
+            margin: 5px 0;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .info-table {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .info-table td {
+            padding: 5px;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .items-table th,
+        .items-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .items-table th {
+            background-color: #f9f9f9;
+        }
+
+        .items-table .text-right {
+            text-align: right;
+        }
+
+        .items-table .text-center {
+            text-align: center;
+        }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        .summary-table td {
+            padding: 5px;
+        }
+
+        .summary-table .text-right {
+            text-align: right;
+            font-weight: bold;
+        }
+
+        .footer {
+            width: 100%;
+            display: table;
+        }
+
+        .footer-col {
+            display: table-cell;
+            width: 50%;
+            text-align: center;
+        }
+
+        .signature {
+            margin-top: 80px;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
@@ -115,4 +196,5 @@
         }
     </script>
 </body>
+
 </html>

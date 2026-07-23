@@ -65,9 +65,8 @@ class PaymentController extends Controller
             }
         }
 
-        // Tìm kiếm
         if ($request->filled('search')) {
-            $search = $request->input('search');
+            $search = \App\Services\AppointmentService::escapeLikeWildcards($request->input('search'));
             $query->where(function ($q) use ($search) {
                 $q->where('appointment_code', 'like', "%{$search}%")
                     ->orWhereHas('patientProfile', function ($q2) use ($search) {
@@ -197,14 +196,16 @@ class PaymentController extends Controller
 
         if ($summary['patient_pays'] <= 0) {
             $this->paymentService->createZeroFeePayment($appointment, Auth::user());
-            return redirect()->route('receptionist.payments.index')
-                ->with('success', 'Đã ghi nhận thanh toán hoàn tất (BHYT chi trả 100% / Miễn phí).');
+            return redirect()->route('receptionist.appointments.show', $appointment->id)
+                ->with('success', 'Đã ghi nhận thanh toán hoàn tất (BHYT chi trả 100% / Miễn phí).')
+                ->with('active_tab', 'payments');
         }
 
         $this->paymentService->createCashPayment($appointment, Auth::user());
 
-        return redirect()->route('receptionist.payments.index')
-            ->with('success', 'Đã ghi nhận thanh toán tiền mặt thành công.');
+        return redirect()->route('receptionist.appointments.show', $appointment->id)
+            ->with('success', 'Đã ghi nhận thanh toán tiền mặt thành công.')
+            ->with('active_tab', 'payments');
     }
 
     /**
@@ -241,6 +242,15 @@ class PaymentController extends Controller
                 'info',
                 ['appointment_id' => $appointment->id]
             );
+
+            \App\Models\AppointmentLog::create([
+                'appointment_id' => $appointment->id,
+                'action'         => 'REFUND_REQUESTED',
+                'old_status'     => null,
+                'new_status'     => $appointment->status,
+                'changed_by'     => Auth::id(),
+                'reason'         => "Yêu cầu hoàn tiền thừa " . number_format($summary['overpaid_amount']) . "đ cho bệnh nhân."
+            ]);
 
             return redirect()->back()->with('success', 'Đã tạo yêu cầu hoàn tiền thừa thành công. Vui lòng báo quản lý duyệt.');
         }

@@ -7,6 +7,7 @@ use App\Models\Appointment;
 use App\Models\MedicalRecord;
 use App\Models\DoctorProfile;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class MedicalRecordController extends Controller
@@ -49,7 +50,7 @@ class MedicalRecordController extends Controller
             }
         }
 
-        $doctorProfile = DoctorProfile::where('user_id', auth()->id())->first();
+        $doctorProfile = DoctorProfile::where('user_id', Auth::id())->first();
 
         $medicalRecord = MedicalRecord::create([
             'appointment_id' => $appointment->id,
@@ -61,6 +62,15 @@ class MedicalRecordController extends Controller
             'followup_date' => $validated['followup_date'],
             'treatment_result' => $validated['treatment_result'],
             'result_files' => empty($resultFiles) ? null : $resultFiles,
+        ]);
+
+        \App\Models\AppointmentLog::create([
+            'appointment_id' => $appointment->id,
+            'action'         => 'MEDICAL_RECORD_CREATED_OR_UPDATED',
+            'old_status'     => null,
+            'new_status'     => $appointment->status,
+            'changed_by'     => Auth::id(),
+            'reason'         => "Bác sĩ " . Auth::user()->full_name . " đã khởi tạo bệnh án với chẩn đoán: " . $validated['diagnosis']
         ]);
 
         return redirect()->route('doctor.medical-records.show', $medicalRecord->id)
@@ -123,6 +133,15 @@ class MedicalRecordController extends Controller
         $validated['result_files'] = empty($resultFiles) ? null : $resultFiles;
 
         $medical_record->update($validated);
+
+        \App\Models\AppointmentLog::create([
+            'appointment_id' => $medical_record->appointment_id,
+            'action'         => 'MEDICAL_RECORD_CREATED_OR_UPDATED',
+            'old_status'     => null,
+            'new_status'     => $medical_record->appointment->status ?? null,
+            'changed_by'     => Auth::id(),
+            'reason'         => "Bác sĩ " . Auth::user()->full_name . " đã cập nhật kết luận khám bệnh."
+        ]);
 
         return redirect()->route('doctor.medical-records.show', $medical_record->id)
                          ->with('success', 'Cập nhật hồ sơ bệnh án thành công.');

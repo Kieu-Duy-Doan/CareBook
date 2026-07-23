@@ -1,23 +1,84 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <title>Phiếu Tạm Ứng - {{ $appointment->appointment_code }}</title>
     <style>
-        body { font-family: DejaVu Sans, sans-serif; font-size: 13px; line-height: 1.5; color: #333; }
-        .container { width: 100%; margin: 0 auto; max-width: 800px; }
-        .header { text-align: center; margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
-        .header h1 { margin: 0; font-size: 18px; text-transform: uppercase; }
-        .title { text-align: center; font-size: 16px; font-weight: bold; margin-bottom: 20px; text-transform: uppercase; }
-        .info-table { width: 100%; margin-bottom: 20px; }
-        .info-table td { padding: 5px; }
-        .amount-box { border: 1px solid #000; padding: 15px; text-align: center; margin-bottom: 20px; background-color: #f9f9f9; }
-        .amount-box .amount { font-size: 24px; font-weight: bold; }
-        .footer { width: 100%; display: table; margin-top: 30px; }
-        .footer-col { display: table-cell; width: 50%; text-align: center; }
-        .signature { margin-top: 60px; }
+        body {
+            font-family: DejaVu Sans, sans-serif;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #333;
+        }
+
+        .container {
+            width: 100%;
+            margin: 0 auto;
+            max-width: 800px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 18px;
+            text-transform: uppercase;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .info-table {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .info-table td {
+            padding: 5px;
+        }
+
+        .amount-box {
+            border: 1px solid #000;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+        }
+
+        .amount-box .amount {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .footer {
+            width: 100%;
+            display: table;
+            margin-top: 30px;
+        }
+
+        .footer-col {
+            display: table-cell;
+            width: 50%;
+            text-align: center;
+        }
+
+        .signature {
+            margin-top: 60px;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
@@ -71,4 +132,5 @@
         }
     </script>
 </body>
+
 </html>

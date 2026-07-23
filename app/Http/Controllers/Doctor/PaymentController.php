@@ -40,8 +40,11 @@ class PaymentController extends Controller
             'clinicalVisits',
             'payments',
             'medicalRecord.prescription',
-        ])->whereHas('clinicalVisits', function ($q) use ($doctorProfileId) {
-            $q->where('doctor_profile_id', $doctorProfileId);
+        ])->where(function ($query) use ($doctorProfileId) {
+            $query->where('doctor_profile_id', $doctorProfileId)
+                  ->orWhereHas('clinicalVisits', function ($q) use ($doctorProfileId) {
+                      $q->where('doctor_profile_id', $doctorProfileId);
+                  });
         });
 
         if ($tab === 'pending') {
@@ -93,8 +96,11 @@ class PaymentController extends Controller
             'clinicalVisits.doctorProfile.user',
             'payments.collectedBy',
             'medicalRecord.prescription',
-        ])->whereHas('clinicalVisits', function ($q) use ($doctorProfileId) {
-            $q->where('doctor_profile_id', $doctorProfileId);
+        ])->where(function ($query) use ($doctorProfileId) {
+            $query->where('doctor_profile_id', $doctorProfileId)
+                  ->orWhereHas('clinicalVisits', function ($q) use ($doctorProfileId) {
+                      $q->where('doctor_profile_id', $doctorProfileId);
+                  });
         })->findOrFail($id);
 
         $summary = $this->paymentService->calculateSummary($appointment);
@@ -114,7 +120,12 @@ class PaymentController extends Controller
             'medicalRecord.prescription'
         ])
         ->where('id', $id)
-        ->where('doctor_profile_id', $doctorProfileId)
+        ->where(function ($query) use ($doctorProfileId) {
+            $query->where('doctor_profile_id', $doctorProfileId)
+                  ->orWhereHas('clinicalVisits', function ($q) use ($doctorProfileId) {
+                      $q->where('doctor_profile_id', $doctorProfileId);
+                  });
+        })
         ->firstOrFail();
 
         $summary = $this->paymentService->calculateSummary($appointment);
@@ -179,8 +190,11 @@ class PaymentController extends Controller
             'clinicalVisits.room',
             'clinicalVisits.doctorProfile.user',
             'medicalRecord',
-        ])->whereHas('clinicalVisits', function ($q) use ($doctorProfileId) {
-            $q->where('doctor_profile_id', $doctorProfileId)->where('is_origin', true);
+        ])->where(function ($query) use ($doctorProfileId) {
+            $query->where('doctor_profile_id', $doctorProfileId)
+                  ->orWhereHas('clinicalVisits', function ($q) use ($doctorProfileId) {
+                      $q->where('doctor_profile_id', $doctorProfileId);
+                  });
         })->findOrFail($id);
 
         $summary = $this->paymentService->calculateSummary($appointment);
@@ -206,7 +220,12 @@ class PaymentController extends Controller
             'clinicalVisits.room',
             'medicalRecord.prescription',
             'payments',
-        ])->where('doctor_profile_id', $doctorProfileId)->findOrFail($id);
+        ])->where(function ($query) use ($doctorProfileId) {
+            $query->where('doctor_profile_id', $doctorProfileId)
+                  ->orWhereHas('clinicalVisits', function ($q) use ($doctorProfileId) {
+                      $q->where('doctor_profile_id', $doctorProfileId);
+                  });
+        })->findOrFail($id);
 
         $summary = $this->paymentService->calculateSummary($appointment);
         $prescription = $appointment->medicalRecord?->prescription;

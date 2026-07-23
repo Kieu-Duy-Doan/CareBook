@@ -8,6 +8,7 @@ use App\Models\ClinicalVisit;
 use App\Models\Appointment;
 use App\Models\Payment;
 use App\Models\WorkSchedule;
+use App\Services\AppointmentService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -41,10 +42,11 @@ class ClinicalVisitController extends Controller
             ->latest('appointment_time');
 
         if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('appointment_code', 'like', '%' . $request->search . '%')
-                    ->orWhereHas('patientProfile', function ($pq) use ($request) {
-                        $pq->where('full_name', 'like', '%' . $request->search . '%');
+            $search = AppointmentService::escapeLikeWildcards($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('appointment_code', 'like', '%' . $search . '%')
+                    ->orWhereHas('patientProfile', function ($pq) use ($search) {
+                        $pq->where('full_name', 'like', '%' . $search . '%');
                     });
             });
         }
@@ -175,7 +177,7 @@ class ClinicalVisitController extends Controller
         $maxOrder  = ClinicalVisit::where('appointment_id', $appointment->id)->max('visit_order');
         $nextOrder = $maxOrder ? $maxOrder + 1 : 2;
 
-        ClinicalVisit::create([
+        $visit = ClinicalVisit::create([
             'appointment_id'    => $appointment->id,
             'parent_visit_id'   => $originVisit->id,
             'doctor_profile_id' => $assignedDoctorProfileId,
@@ -186,6 +188,18 @@ class ClinicalVisitController extends Controller
             'payment_status'    => 'pending',
             'payment_amount'    => $request->payment_amount ?? 0,
             'findings'          => $request->findings,
+        ]);
+
+        $roomName = \App\Models\Room::find($request->room_id)?->name ?? 'Phòng không xác định';
+        $assignedDoctor = \App\Models\DoctorProfile::with('user')->find($assignedDoctorProfileId)?->user->full_name ?? 'Bác sĩ không xác định';
+
+        \App\Models\AppointmentLog::create([
+            'appointment_id' => $appointment->id,
+            'action'         => 'CLINICAL_VISIT_CREATED',
+            'old_status'     => null,
+            'new_status'     => $appointment->status,
+            'changed_by'     => Auth::id(),
+            'reason'         => "Chỉ định bệnh nhân thực hiện dịch vụ tại phòng $roomName do bác sĩ $assignedDoctor phụ trách."
         ]);
 
         return back()->with('success', 'Đã chỉ định bệnh nhân đến phòng khám chuyên sâu.');
@@ -206,7 +220,20 @@ class ClinicalVisitController extends Controller
             })
             ->findOrFail($visit_id);
 
+        $roomName = $visit->room->name ?? 'phòng không xác định';
+        $appointmentId = $visit->appointment_id;
+        $appointmentStatus = $visit->appointment->status;
+
         $visit->delete();
+
+        \App\Models\AppointmentLog::create([
+            'appointment_id' => $appointmentId,
+            'action'         => \App\Models\AppointmentLog::ACTION_CLINICAL_VISIT_DELETED,
+            'old_status'     => null,
+            'new_status'     => $appointmentStatus,
+            'changed_by'     => Auth::id(),
+            'reason'         => "Hủy chỉ định thực hiện dịch vụ tại $roomName."
+        ]);
 
         return back()->with('success', 'Đã xóa chỉ định khám.');
     }
@@ -265,6 +292,25 @@ class ClinicalVisitController extends Controller
         }
 
         $visit->save();
+
+        $roomName = $visit->room->name ?? 'phòng không xác định';
+        $reason = "Đã cập nhật trạng thái thực hiện dịch vụ tại $roomName.";
+        if ($request->status === 'in_progress') {
+            $reason = "Bệnh nhân bắt đầu thực hiện dịch vụ tại $roomName.";
+        } elseif ($request->status === 'completed') {
+            $reason = "Bệnh nhân đã thực hiện xong dịch vụ tại $roomName.";
+        } elseif ($request->status === 'refused') {
+            $reason = "Bệnh nhân từ chối thực hiện dịch vụ tại $roomName với lý do: " . ($request->refusal_reason ?? 'Không có');
+        }
+
+        \App\Models\AppointmentLog::create([
+            'appointment_id' => $visit->appointment_id,
+            'action'         => 'CLINICAL_VISIT_UPDATED',
+            'old_status'     => null,
+            'new_status'     => $visit->appointment->status,
+            'changed_by'     => Auth::id(),
+            'reason'         => $reason
+        ]);
 
         return back()->with('success', 'Đã cập nhật kết quả khám lâm sàng.');
     }

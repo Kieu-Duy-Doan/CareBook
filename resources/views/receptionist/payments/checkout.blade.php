@@ -131,20 +131,20 @@
                         </div>
                     </div>
 
-                        <div id="payment-status-banner" class="bg-blue-50 text-blue-800 text-sm p-3 rounded-lg flex items-center justify-between font-medium">
-                            <div class="flex items-center">
-                                <i class="fa-solid fa-circle-notch fa-spin mr-2 text-blue-600" id="payment-spinner"></i> <span id="payment-status-text">Đang chờ thanh toán...</span>
-                            </div>
-                            <div class="text-blue-700 font-mono font-bold bg-blue-100 px-2 py-0.5 rounded" id="qr-countdown">05:00</div>
+                    <div id="payment-status-banner" class="bg-blue-50 text-blue-800 text-sm p-3 rounded-lg flex items-center justify-between font-medium">
+                        <div class="flex items-center">
+                            <i class="fa-solid fa-circle-notch fa-spin mr-2 text-blue-600" id="payment-spinner"></i> <span id="payment-status-text">Đang chờ thanh toán...</span>
                         </div>
+                        <div class="text-blue-700 font-mono font-bold bg-blue-100 px-2 py-0.5 rounded" id="qr-countdown">05:00</div>
+                    </div>
 
-                        <div class="mt-4">
-                            <button onclick="window.location.href = '?renew=1'" class="w-full px-4 py-2 bg-white text-blue-600 hover:bg-blue-50 font-medium rounded-lg transition-colors border border-blue-200 text-sm shadow-sm flex items-center justify-center">
-                                <i class="fa-solid fa-arrows-rotate mr-2"></i> Làm mới mã QR
-                            </button>
-                        </div>
+                    <div class="mt-4">
+                        <button onclick="window.location.href = '?renew=1'" class="w-full px-4 py-2 bg-white text-blue-600 hover:bg-blue-50 font-medium rounded-lg transition-colors border border-blue-200 text-sm shadow-sm flex items-center justify-center">
+                            <i class="fa-solid fa-arrows-rotate mr-2"></i> Làm mới mã QR
+                        </button>
                     </div>
                 </div>
+            </div>
 
             <!-- Thanh toán Tiền mặt -->
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">

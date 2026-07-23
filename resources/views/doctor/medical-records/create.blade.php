@@ -56,7 +56,7 @@
                 <textarea name="advice" rows="2" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none">{{ old('advice') }}</textarea>
             </div>
 
-            <div>
+            <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Kết quả điều trị (Treatment Result) <span class="text-red-500">*</span></label>
                 <select name="treatment_result" required class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none">
                     <option value="outpatient" {{ old('treatment_result') === 'outpatient' ? 'selected' : '' }}>Điều trị ngoại trú (Outpatient)</option>
