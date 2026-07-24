@@ -5,15 +5,15 @@ namespace App\Services;
 use App\Models\Notification;
 use App\Models\Appointment;
 
-class PatientNotificationService
+class UserNotificationService
 {
     /**
      * Ghi thông báo In-Web cho người dùng liên quan đến lịch khám
      */
-    public function logWebNotification(Appointment $appointment, string $title, string $content, string $type = 'appointment', array $data = []): Notification
+    public function logWebNotification(Appointment $appointment, string $title, string $content, string $type = 'appointment', array $data = [], ?int $userId = null): Notification
     {
         $notification = Notification::create([
-            'user_id' => $appointment->booked_by_user_id,
+            'user_id' => $userId ?? $appointment->booked_by_user_id,
             'title' => $title,
             'content' => $content,
             'type' => $type,
@@ -87,16 +87,75 @@ class PatientNotificationService
             $title,
             $content,
             $type,
-            ['alternatives' => $alternatives] // Save suggested doctors
+            ['alternatives' => $alternatives]
         );
     }
 
     /**
-     * Get paginated notifications for a patient
+     * Thông báo cho bác sĩ khi có lịch hẹn mới
      */
-    public function getPatientNotificationsPaginated(int $userId, int $perPage = 15)
+    public function notifyDoctorNewAppointment(Appointment $appointment): ?Notification
+    {
+        $doctorUserId = $appointment->doctorProfile->user_id ?? null;
+        if (!$doctorUserId) {
+            return null;
+        }
+
+        $time = \Carbon\Carbon::parse($appointment->appointment_time)->format('H:i');
+        $date = $appointment->appointment_date->format('d/m/Y');
+        $patientName = $appointment->patientProfile->full_name ?? 'Chưa xác định';
+
+        return $this->logWebNotification(
+            $appointment,
+            'Bạn có lịch hẹn mới',
+            "Bệnh nhân {$patientName} đã đặt lịch khám lúc {$time} ngày {$date}. Mã lịch hẹn: {$appointment->appointment_code}.",
+            'appointment',
+            [],
+            $doctorUserId
+        );
+    }
+
+    /**
+     * Thông báo cho bác sĩ khi lịch hẹn bị huỷ
+     */
+    public function notifyDoctorCancellation(Appointment $appointment, string $actor = 'system'): ?Notification
+    {
+        $doctorUserId = $appointment->doctorProfile->user_id ?? null;
+        if (!$doctorUserId) {
+            return null;
+        }
+
+        $time = \Carbon\Carbon::parse($appointment->appointment_time)->format('H:i');
+        $date = $appointment->appointment_date->format('d/m/Y');
+        $patientName = $appointment->patientProfile->full_name ?? 'Chưa xác định';
+
+        $title = 'Lịch hẹn đã bị huỷ';
+        if ($actor === 'patient') {
+            $content = "Bệnh nhân {$patientName} đã huỷ lịch hẹn lúc {$time} ngày {$date}. Mã lịch hẹn: {$appointment->appointment_code}.";
+        } else {
+            $content = "Lịch hẹn lúc {$time} ngày {$date} với bệnh nhân {$patientName} đã bị huỷ bởi hệ thống. Mã lịch hẹn: {$appointment->appointment_code}.";
+        }
+
+        return $this->logWebNotification(
+            $appointment,
+            $title,
+            $content,
+            'system_cancellation',
+            [],
+            $doctorUserId
+        );
+    }
+
+    /**
+     * Get paginated notifications for a user
+     */
+    public function getNotificationsPaginated(int $userId, int $perPage = 15)
     {
         return Notification::where('user_id', $userId)
+            ->where(function ($q) {
+                $q->whereNull('scheduled_at')
+                    ->orWhere('scheduled_at', '<=', now());
+            })
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
     }
@@ -104,9 +163,13 @@ class PatientNotificationService
     /**
      * Get recent notifications for the dropdown
      */
-    public function getRecentPatientNotifications(int $userId, int $limit = 20)
+    public function getRecentNotifications(int $userId, int $limit = 20)
     {
         return Notification::where('user_id', $userId)
+            ->where(function ($q) {
+                $q->whereNull('scheduled_at')
+                    ->orWhere('scheduled_at', '<=', now());
+            })
             ->orderBy('created_at', 'desc')
             ->take($limit)
             ->get();
@@ -118,6 +181,10 @@ class PatientNotificationService
     public function getUnreadCount(int $userId): int
     {
         return Notification::where('user_id', $userId)
+            ->where(function ($q) {
+                $q->whereNull('scheduled_at')
+                    ->orWhere('scheduled_at', '<=', now());
+            })
             ->where('is_read', false)
             ->count();
     }
@@ -139,7 +206,7 @@ class PatientNotificationService
     /**
      * Delete a notification
      */
-    public function deletePatientNotification(int $userId, int $notificationId): void
+    public function deleteNotification(int $userId, int $notificationId): void
     {
         Notification::where('user_id', $userId)
             ->where('id', $notificationId)
@@ -147,12 +214,33 @@ class PatientNotificationService
     }
 
     /**
-     * Delete all read notifications for a patient
+     * Delete all read notifications for a user
      */
-    public function deleteReadPatientNotifications(int $userId): void
+    public function deleteReadNotifications(int $userId): void
     {
         Notification::where('user_id', $userId)
             ->where('is_read', true)
             ->delete();
+    }
+
+    // Aliases for backward compatibility (Patient controllers still work)
+    public function getPatientNotificationsPaginated(int $userId, int $perPage = 15)
+    {
+        return $this->getNotificationsPaginated($userId, $perPage);
+    }
+
+    public function getRecentPatientNotifications(int $userId, int $limit = 20)
+    {
+        return $this->getRecentNotifications($userId, $limit);
+    }
+
+    public function deletePatientNotification(int $userId, int $notificationId): void
+    {
+        $this->deleteNotification($userId, $notificationId);
+    }
+
+    public function deleteReadPatientNotifications(int $userId): void
+    {
+        $this->deleteReadNotifications($userId);
     }
 }

@@ -6,13 +6,13 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Appointment;
-use App\Services\PatientNotificationService;
+use App\Services\UserNotificationService;
 
 class NotificationController extends Controller
 {
-    protected PatientNotificationService $notificationService;
+    protected UserNotificationService $notificationService;
 
-    public function __construct(PatientNotificationService $notificationService)
+    public function __construct(UserNotificationService $notificationService)
     {
         $this->notificationService = $notificationService;
     }
@@ -23,7 +23,7 @@ class NotificationController extends Controller
     public function page()
     {
         $notifications = $this->notificationService->getPatientNotificationsPaginated(Auth::id(), 15);
-            
+
         return view('patient.notifications.index', compact('notifications'));
     }
 
@@ -33,7 +33,7 @@ class NotificationController extends Controller
     public function show($id)
     {
         $notification = \App\Models\Notification::where('user_id', Auth::id())->findOrFail($id);
-        
+
         // Mark as read
         if (!$notification->is_read) {
             $notification->is_read = true;
@@ -67,12 +67,12 @@ class NotificationController extends Controller
             ->unique();
 
         // Query 1 lần để lấy tất cả các Appointment cần thiết (Sửa N+1 Query)
-        $appointments = $appointmentIds->isNotEmpty() 
-            ? Appointment::whereIn('id', $appointmentIds)->get()->keyBy('id') 
+        $appointments = $appointmentIds->isNotEmpty()
+            ? Appointment::whereIn('id', $appointmentIds)->get()->keyBy('id')
             : collect();
 
         // Map and append appointment info
-        $notificationsData = $notifications->map(function($notif) use ($appointments) {
+        $notificationsData = $notifications->map(function ($notif) use ($appointments) {
             $data = $notif->toArray();
             if ($notif->type === 'cancellation' && $notif->ref_type === 'appointment' && $notif->ref_id) {
                 $appointment = $appointments->get($notif->ref_id);

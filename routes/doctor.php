@@ -66,5 +66,13 @@ Route::prefix('doctor')->name('doctor.')->group(function () {
         Route::get('prescriptions/{prescription}/edit', [\App\Http\Controllers\Doctor\PrescriptionController::class, 'edit'])->name('prescriptions.edit');
         Route::put('prescriptions/{prescription}', [\App\Http\Controllers\Doctor\PrescriptionController::class, 'update'])->name('prescriptions.update');
         Route::delete('prescriptions/{prescription}', [\App\Http\Controllers\Doctor\PrescriptionController::class, 'destroy'])->name('prescriptions.destroy');
+
+        // Notifications
+        Route::get('notifications', [\App\Http\Controllers\Doctor\NotificationController::class, 'page'])->name('notifications.page');
+        Route::delete('notifications/read', [\App\Http\Controllers\Doctor\NotificationController::class, 'destroyRead'])->name('notifications.destroy-read');
+        Route::post('notifications/mark-read', [\App\Http\Controllers\Doctor\NotificationController::class, 'markAsRead'])->name('notifications.read');
+        Route::get('notifications/{id}', [\App\Http\Controllers\Doctor\NotificationController::class, 'show'])->name('notifications.show');
+        Route::delete('notifications/{id}', [\App\Http\Controllers\Doctor\NotificationController::class, 'destroy'])->name('notifications.destroy');
+        Route::get('api/notifications', [\App\Http\Controllers\Doctor\NotificationController::class, 'index'])->name('notifications.index');
     });
 });
