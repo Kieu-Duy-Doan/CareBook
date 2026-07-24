@@ -228,12 +228,12 @@
                 <p class="text-xs text-green-600 mt-3 font-medium"><i class="fa-solid fa-circle-check mr-1"></i>Lượt khám này đã hoàn tất.</p>
                 @endif
 
-                {{-- Nút xóa (chỉ cho bác sĩ gốc khi visit chưa bắt đầu) --}}
-                @if ($isOriginDoctor && $visit->status === 'waiting')
+                {{-- Nút xóa: chỉ hiện khi bác sĩ gốc, visit chưa bắt đầu VÀ chưa thanh toán --}}
+                @if ($isOriginDoctor && $visit->status === 'waiting' && $visit->payment_status !== 'paid')
                 <form action="{{ route('doctor.clinical-visits.destroy-visit', $visit->id) }}" method="POST" class="absolute top-6 right-6" onsubmit="return confirm('Bạn có chắc muốn xóa chỉ định này?');">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 w-8 h-8 flex items-center justify-center rounded-full transition">
+                    <button type="submit" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 w-8 h-8 flex items-center justify-center rounded-full transition" title="Xóa chỉ định">
                         <i class="fa-solid fa-trash-can text-sm"></i>
                     </button>
                 </form>
@@ -246,7 +246,6 @@
             </div>
             @endforelse
 
-            {{-- Form Thêm chỉ định - chỉ cho bác sĩ gốc khi đang khám --}}
             @if ($isOriginDoctor && $appointment->status === 'examining')
             <div class="bg-blue-50 rounded-xl border border-blue-100 p-6 mt-6">
                 <h4 class="text-md font-bold text-blue-900 mb-4 flex items-center gap-2">
@@ -254,17 +253,30 @@
                 </h4>
                 <form action="{{ route('doctor.clinical-visits.store-visit', $appointment->id) }}" method="POST">
                     @csrf
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4" x-data="{ price: 0 }">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4" x-data="{ price: 0, selectedDisabled: false }">
                         <div>
                             <label class="block text-sm text-gray-700 mb-1">Chọn phòng / dịch vụ <span class="text-red-500">*</span></label>
                             <select name="room_id" required class="block w-full py-2 px-3 border border-gray-300 rounded-lg text-sm outline-none bg-white"
-                                x-on:change="price = $event.target.options[$event.target.selectedIndex].dataset.price || 0">
+                                x-on:change="
+                                    let opt = $event.target.options[$event.target.selectedIndex];
+                                    price = opt.dataset.price || 0;
+                                    selectedDisabled = opt.disabled;
+                                ">
                                 <option value="" data-price="0">-- Chọn phòng --</option>
                                 @foreach($rooms as $room)
-                                <option value="{{ $room->id }}" data-price="{{ $room->price ?? 0 }}">{{ $room->name }} ({{ $room->room_number ?? 'P.' . $room->id }})</option>
+                                @php $alreadyAssigned = in_array($room->id, $assignedRoomIds ?? []); @endphp
+                                <option value="{{ $room->id }}"
+                                    data-price="{{ $room->price ?? 0 }}"
+                                    {{ $alreadyAssigned ? 'disabled' : '' }}
+                                    class="{{ $alreadyAssigned ? 'text-gray-400' : '' }}">
+                                    {{ $room->name }} ({{ $room->room_number ?? 'P.' . $room->id }}){{ $alreadyAssigned ? ' — Đã chỉ định' : '' }}
+                                </option>
                                 @endforeach
                             </select>
                             <p class="text-xs text-gray-400 mt-1">Hệ thống sẽ tự động gán bác sĩ đang trực tại phòng này.</p>
+                            @if(!empty($assignedRoomIds))
+                            <p class="text-xs text-amber-600 mt-1"><i class="fa-solid fa-circle-info mr-1"></i>Các phòng ghi "Đã chỉ định" không thể chọn lại.</p>
+                            @endif
                         </div>
                         <div>
                             <label class="block text-sm text-gray-700 mb-1">Chi phí dự kiến (VNĐ)</label>
@@ -290,8 +302,40 @@
                 <h4 class="text-lg font-bold text-gray-900">{{ $appointment->patientProfile->full_name }}</h4>
                 <div class="text-sm text-gray-600 mt-2 space-y-1">
                     <p>SĐT: <span class="font-medium text-gray-900">{{ $appointment->patientProfile->phone ?? '—' }}</span></p>
-                    <p>BHYT: <span class="font-medium text-gray-900">{{ $appointment->patientProfile->health_insurance_number ?? '—' }}</span></p>
-                    <p>Lý do: <span class="font-medium text-gray-900">{{ $appointment->reason }}</span></p>
+                    @php
+                        $insuranceCode   = $appointment->patientProfile->insurance_code ?? null;
+                        $insuranceExpiry = $appointment->patientProfile->insurance_expiry ?? null;
+                        $insurancePlace  = $appointment->patientProfile->insurance_place ?? null;
+                    @endphp
+                    @if ($insuranceCode)
+                    <div class="mt-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 space-y-0.5">
+                        <p class="text-xs font-semibold text-blue-700 mb-1"><i class="fa-solid fa-id-card mr-1"></i>Bảo hiểm y tế</p>
+                        <p>Mã BHYT: <span class="font-medium text-blue-900 font-mono tracking-wide">{{ $insuranceCode }}</span></p>
+                        @if ($insurancePlace)
+                        <p>Nơi ĐK KCB: <span class="font-medium text-gray-800">{{ $insurancePlace }}</span></p>
+                        @endif
+                        @if ($insuranceExpiry)
+                        @php
+                            $expiryDate  = \Carbon\Carbon::parse($insuranceExpiry);
+                            $isExpired   = $expiryDate->isPast();
+                            $isNearExpiry = !$isExpired && $expiryDate->diffInDays(now()) <= 30;
+                        @endphp
+                        <p>Hạn thẻ:
+                            <span class="font-medium {{ $isExpired ? 'text-red-600' : ($isNearExpiry ? 'text-amber-600' : 'text-green-700') }}">
+                                {{ $expiryDate->format('d/m/Y') }}
+                                @if ($isExpired)
+                                    <span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full ml-1">Hết hạn</span>
+                                @elseif ($isNearExpiry)
+                                    <span class="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full ml-1">Sắp hết hạn</span>
+                                @endif
+                            </span>
+                        </p>
+                        @endif
+                    </div>
+                    @else
+                    <p>BHYT: <span class="text-gray-400 italic">Không có</span></p>
+                    @endif
+                    <p class="pt-1">Lý do khám: <span class="font-medium text-gray-900">{{ $appointment->reason }}</span></p>
                 </div>
             </div>
 

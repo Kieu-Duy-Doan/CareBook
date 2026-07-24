@@ -104,6 +104,14 @@ class ClinicalVisitController extends Controller
             ->where('room_type', 'diagnostic')
             ->get();
 
+        // Danh sách room_id đã được chỉ định (trừ visit bị từ chối) để vô hiệu hoá trong form
+        $assignedRoomIds = $subVisits
+            ->whereNotIn('status', ['refused', 'redirected'])
+            ->pluck('room_id')
+            ->unique()
+            ->values()
+            ->toArray();
+
         return view('doctor.clinical-visits.show', compact(
             'appointment',
             'originVisit',
@@ -115,7 +123,8 @@ class ClinicalVisitController extends Controller
             'paidAmount',
             'unpaidAmount',
             'rooms',
-            'isOriginDoctor'
+            'isOriginDoctor',
+            'assignedRoomIds'
         ));
     }
 
@@ -139,30 +148,55 @@ class ClinicalVisitController extends Controller
             $q->where('doctor_profile_id', $doctorProfile->id)->where('is_origin', true);
         })->findOrFail($appointment_id);
 
+        // Kiểm tra trùng phòng: không cho chỉ định phòng đã có visit đang hoạt động
+        $isDuplicate = ClinicalVisit::where('appointment_id', $appointment->id)
+            ->where('room_id', $request->room_id)
+            ->where('is_origin', false)
+            ->whereNotIn('status', ['refused', 'redirected'])
+            ->exists();
+
+        if ($isDuplicate) {
+            $roomName = \App\Models\Room::find($request->room_id)?->name ?? 'Phòng đã chọn';
+            return back()->with('error', "Bệnh nhân đã được chỉ định đến \"$roomName\" trước đó. Vui lòng chọn phòng khác hoặc xóa chỉ định cũ trước.");
+        }
+
         $originVisit = ClinicalVisit::where('appointment_id', $appointment->id)
             ->where('is_origin', true)
             ->firstOrFail();
 
-        // 1. Ưu tiên cao nhất: Tìm bác sĩ đang trực tại phòng được chỉ định (đúng giờ, đúng ngày)
-        $dayOfWeek   = now()->dayOfWeek;
-        $currentTime = now()->format('H:i:s');
+        // Xác định ngày & giờ theo LỊCH HẸN (appointment_time) — không dùng now()
+        // để gán đúng bác sĩ có ca trùng với khung giờ bệnh nhân đã đặt.
+        $appointmentDayOfWeek = \Carbon\Carbon::parse($appointment->appointment_date)->dayOfWeek;
+        $appointmentTime      = $appointment->appointment_time; // HH:MM:SS
 
+        // 1. Ưu tiên cao nhất: Bác sĩ có ca bao phủ giờ hẹn, đúng ngày trong tuần
         $assignedDoctorProfileId = WorkSchedule::where('room_id', $request->room_id)
-            ->where('day_of_week', $dayOfWeek)
-            ->where('start_time', '<=', $currentTime)
-            ->where('end_time', '>=', $currentTime)
+            ->where('day_of_week', $appointmentDayOfWeek)
+            ->where('start_time', '<=', $appointmentTime)
+            ->where('end_time',   '>=', $appointmentTime)
             ->where('is_active', true)
             ->value('doctor_profile_id');
 
-        // 2. Fallback 1: Nếu ngoài giờ, tìm bác sĩ có ca trực trong HÔM NAY tại phòng đó
+        // 2. Fallback 1: Nếu không khớp chính xác giờ, lấy bác sĩ có ca sáng/chiều
+        //    dựa vào giờ hẹn — sáng nếu < 12:00, chiều nếu >= 12:00
         if (!$assignedDoctorProfileId) {
+            $shiftLabel = \Carbon\Carbon::parse($appointmentTime)->hour < 12 ? 'morning' : 'afternoon';
             $assignedDoctorProfileId = WorkSchedule::where('room_id', $request->room_id)
-                ->where('day_of_week', $dayOfWeek)
+                ->where('day_of_week', $appointmentDayOfWeek)
+                ->where('shift_label', $shiftLabel)
                 ->where('is_active', true)
                 ->value('doctor_profile_id');
         }
 
-        // 3. Fallback 2: Nếu hôm nay không ai trực, tìm BẤT KỲ bác sĩ nào từng có lịch tại phòng đó
+        // 3. Fallback 2: Tìm bất kỳ bác sĩ nào có lịch tại phòng trong ngày đó
+        if (!$assignedDoctorProfileId) {
+            $assignedDoctorProfileId = WorkSchedule::where('room_id', $request->room_id)
+                ->where('day_of_week', $appointmentDayOfWeek)
+                ->where('is_active', true)
+                ->value('doctor_profile_id');
+        }
+
+        // 4. Fallback 3: Lấy bất kỳ bác sĩ nào từng được phân công tại phòng đó
         if (!$assignedDoctorProfileId) {
             $assignedDoctorProfileId = WorkSchedule::where('room_id', $request->room_id)
                 ->where('is_active', true)

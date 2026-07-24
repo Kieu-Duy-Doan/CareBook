@@ -115,11 +115,59 @@ Sau khi chạy lệnh `--seed` ở Bước 5, hệ thống sẽ cung cấp một
     - Tên đăng nhập: `letan`
     - Mật khẩu: `Letan@123`
 
-- **Tài khoản Bác sĩ (10 tài khoản, mật khẩu chung `Bacsi@123`):**
-    - `0900000100` (`bs_an`), `0900000101` (`bs_bich`), `0900000102` (`bs_tuan`), ...
+- **Tài khoản Bác sĩ Lâm sàng (10 tài khoản, mật khẩu chung `Bacsi@123`):**
+
+    | Mã BS | Tên bác sĩ | SĐT | Tên đăng nhập | Ca làm việc | Chuyên khoa |
+    |-------|-----------|-----|---------------|-------------|-------------|
+    | BS001 | Nguyễn Văn An | `0900000100` | `bs_an` | ☀️ Ca sáng (7:00–11:00) | Tim mạch |
+    | BS002 | Trần Thị Bích | `0900000101` | `bs_bich` | 🌤️ Ca chiều (13:00–17:00) | Răng Hàm Mặt |
+    | BS003 | Lê Minh Tuấn | `0900000102` | `bs_tuan` | ☀️ Ca sáng (7:00–11:00) | Nội tiêu hoá |
+    | BS004 | Hoàng Ngọc Hà | `0900000103` | `bs_ha` | 🌤️ Ca chiều (13:00–17:00) | Nhi khoa |
+    | BS005 | Phạm Đức Đam | `0900000104` | `bs_dam` | ☀️ Ca sáng (7:00–11:00) | Thần kinh |
+    | BS006 | Ngô Bảo Châu | `0900000105` | `bs_chau` | 🌤️ Ca chiều (13:00–17:00) | Cơ xương khớp |
+    | BS007 | Vũ Thu Thủy | `0900000106` | `bs_thuy` | ☀️ Ca sáng (7:00–11:00) | Da liễu |
+    | BS008 | Đinh Tuấn Anh | `0900000107` | `bs_tuananh` | 🌤️ Ca chiều (13:00–17:00) | Mắt |
+    | BS009 | Lý Thảo Tâm | `0900000108` | `bs_tam` | ☀️ Ca sáng (7:00–11:00) | Tai Mũi Họng |
+    | BS010 | Châu Kiều Oanh | `0900000109` | `bs_oanh` | 🌤️ Ca chiều (13:00–17:00) | Nội tiết |
+
+- **Tài khoản Bác sĩ Cận lâm sàng (6 tài khoản, mật khẩu chung `Bacsi@123`):**
+
+    **🔬 Phòng Siêu âm 4D (SA01)**
+
+    | Ca | Mã BS | Tên bác sĩ | SĐT | Tên đăng nhập |
+    |----|-------|-----------|-----|---------------|
+    | ☀️ Ca sáng (7:00–11:00) | BS011 | Trương Minh Quang | `0900000300` | `bs_sa_s` |
+    | 🌤️ Ca chiều (13:00–17:00) | BS012 | Nguyễn Thị Hồng | `0900000301` | `bs_sa_c` |
+
+    **🩸 Phòng Xét nghiệm Máu (XN01)**
+
+    | Ca | Mã BS | Tên bác sĩ | SĐT | Tên đăng nhập |
+    |----|-------|-----------|-----|---------------|
+    | ☀️ Ca sáng (7:00–11:00) | BS013 | Lê Thanh Sơn | `0900000302` | `bs_xn_s` |
+    | 🌤️ Ca chiều (13:00–17:00) | BS014 | Phan Thị Nga | `0900000303` | `bs_xn_c` |
+
+    **🩻 Phòng XQuang (XQ01)**
+
+    | Ca | Mã BS | Tên bác sĩ | SĐT | Tên đăng nhập |
+    |----|-------|-----------|-----|---------------|
+    | ☀️ Ca sáng (7:00–11:00) | BS015 | Đoàn Văn Khánh | `0900000304` | `bs_xq_s` |
+    | 🌤️ Ca chiều (13:00–17:00) | BS016 | Mai Phương Thảo | `0900000305` | `bs_xq_c` |
 
 - **Tài khoản Bệnh nhân (10 tài khoản, mật khẩu chung `Patient@123`):**
-    - `0900000200` (`bn_1`), `0900000201` (`bn_2`), `0900000202` (`bn_3`), ...
+
+    | SĐT | Tên đăng nhập | Họ tên |
+    |-----|---------------|--------|
+    | `0900000201` | `bn_mai` | Nguyễn Thị Mai |
+    | `0900000202` | `bn_hung` | Trần Văn Hùng |
+    | `0900000203` | `bn_ngoc` | Lê Bích Ngọc |
+    | `0900000204` | `bn_long` | Phạm Hoàng Long |
+    | `0900000205` | `bn_sau` | Võ Thị Sáu |
+    | `0900000206` | `bn_son` | Đặng Kim Sơn |
+    | `0900000207` | `bn_ha` | Bùi Thu Hà |
+    | `0900000208` | `bn_truong` | Đỗ Xuân Trường |
+    | `0900000209` | `bn_phuc` | Hoàng Phúc |
+    | `0900000210` | `bn_lan` | Ngô Phương Lan |
+
 
 ---
 
