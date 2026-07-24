@@ -74,6 +74,15 @@
                 Thanh toán
             </a>
 
+            <a href="{{ route('receptionist.notifications.page') }}"
+                class="{{ request()->routeIs('receptionist.notifications.*') ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
+                <i class="fa-solid fa-bell w-5 text-center mr-3 {{ request()->routeIs('receptionist.notifications.*') ? 'text-emerald-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
+                Thông báo
+                @if(isset($unreadCount) && $unreadCount > 0)
+                <span class="ml-auto inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full">{{ $unreadCount }}</span>
+                @endif
+            </a>
+
             <a href="{{ route('receptionist.profile.index') }}"
                 class="{{ request()->routeIs('receptionist.profile.*') ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
                 <i class="fa-solid fa-user-circle w-5 text-center mr-3 {{ request()->routeIs('receptionist.profile.*') ? 'text-emerald-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
@@ -117,6 +126,50 @@
                     class="hidden md:flex items-center gap-2 bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg text-sm font-semibold border border-blue-200 transition-colors">
                     <i class="fa-solid fa-display"></i> Mở Màn hình Phụ
                 </a>
+
+                {{-- Notification Bell Dropdown --}}
+                <div x-data="{ notifOpen: false }" class="relative">
+                    <button @click="notifOpen = !notifOpen" class="relative p-2 text-gray-400 hover:text-gray-600 transition-colors" title="Thông báo">
+                        <i class="fa-regular fa-bell text-xl"></i>
+                        @if(isset($unreadCount) && $unreadCount > 0)
+                        <span class="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-[9px] font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-red-500 rounded-full">{{ $unreadCount }}</span>
+                        @endif
+                    </button>
+
+                    <div x-show="notifOpen" @click.away="notifOpen = false" x-cloak style="display: none;" class="absolute right-0 top-full mt-2 w-[340px] max-w-[90vw] bg-white border border-gray-200 shadow-xl rounded-lg py-2 z-50 overflow-hidden flex flex-col max-h-[80vh]">
+                        <div class="px-4 py-2 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                            <h3 class="font-bold text-gray-800 text-sm">Thông báo</h3>
+                            @if(isset($unreadCount) && $unreadCount > 0)
+                            <form action="{{ route('receptionist.notifications.read') }}" method="POST" class="inline">
+                                @csrf
+                                <button type="submit" class="text-xs text-emerald-600 hover:text-emerald-800 font-semibold">Đánh dấu đã đọc</button>
+                            </form>
+                            @endif
+                        </div>
+                        <div class="overflow-y-auto flex-1 p-2 space-y-1">
+                            @if(isset($notifications) && count($notifications) == 0)
+                            <p class="text-center text-gray-500 py-4 text-xs italic">Chưa có thông báo nào</p>
+                            @endif
+                            @if(isset($notifications))
+                            @foreach($notifications as $notif)
+                            <a href="{{ route('receptionist.notifications.show', $notif->id) }}" class="block p-3 rounded-md hover:bg-gray-50 transition-colors cursor-pointer border border-transparent hover:border-gray-100 flex flex-col gap-1 {{ $notif->is_read ? 'opacity-70' : 'bg-emerald-50/50' }}">
+                                <div class="flex justify-between items-start">
+                                    <h4 class="font-bold text-sm {{ in_array($notif->type, ['cancellation', 'system_cancellation']) ? 'text-red-600' : 'text-gray-800' }}">{{ $notif->title }}</h4>
+                                    @if(!$notif->is_read)
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0 mt-1"></span>
+                                    @endif
+                                </div>
+                                <p class="text-xs text-gray-600 leading-relaxed line-clamp-2">{{ $notif->content }}</p>
+                                <span class="text-[10px] text-gray-400 mt-1">{{ $notif->created_at->diffForHumans() }}</span>
+                            </a>
+                            @endforeach
+                            @endif
+                        </div>
+                        <div class="px-4 py-2 border-t border-gray-100 bg-gray-50 text-center">
+                            <a href="{{ route('receptionist.notifications.page') }}" class="text-xs font-bold text-emerald-600 hover:underline">Xem tất cả thông báo</a>
+                        </div>
+                    </div>
+                </div>
 
                 <div x-data="{ userMenuOpen: false }" class="relative">
                     <button @click="userMenuOpen = !userMenuOpen" @click.outside="userMenuOpen = false"

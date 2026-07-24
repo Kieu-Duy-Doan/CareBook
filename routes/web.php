@@ -415,6 +415,14 @@ Route::prefix('receptionist')->name('receptionist.')->group(function () {
         // Payments history
         Route::resource('payments', \App\Http\Controllers\Receptionist\PaymentController::class)->only(['index', 'show']);
 
+        // Notifications
+        Route::get('notifications', [\App\Http\Controllers\Receptionist\NotificationController::class, 'page'])->name('notifications.page');
+        Route::delete('notifications/read', [\App\Http\Controllers\Receptionist\NotificationController::class, 'destroyRead'])->name('notifications.destroy-read');
+        Route::post('notifications/mark-read', [\App\Http\Controllers\Receptionist\NotificationController::class, 'markAsRead'])->name('notifications.read');
+        Route::get('notifications/{id}', [\App\Http\Controllers\Receptionist\NotificationController::class, 'show'])->name('notifications.show');
+        Route::delete('notifications/{id}', [\App\Http\Controllers\Receptionist\NotificationController::class, 'destroy'])->name('notifications.destroy');
+        Route::get('api/notifications', [\App\Http\Controllers\Receptionist\NotificationController::class, 'index'])->name('notifications.index');
+
         // Profile
         Route::get('/profile', [\App\Http\Controllers\Receptionist\ProfileController::class, 'index'])->name('profile.index');
         Route::put('/profile', [\App\Http\Controllers\Receptionist\ProfileController::class, 'update'])->name('profile.update');
