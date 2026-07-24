@@ -219,7 +219,7 @@
                 <div class="space-y-3 text-sm">
                     <div class="flex justify-between border-b border-gray-50 pb-2">
                         <span class="text-gray-500">Mã BN:</span>
-                        <span class="font-medium text-gray-900">{{ $patient->patient_code }}</span>
+                        <span class="font-medium text-gray-900">{{ $patient->patient_code ?? 'Chưa cập nhật' }}</span>
                     </div>
                     <div class="flex justify-between border-b border-gray-50 pb-2">
                         <span class="text-gray-500">Giới tính:</span>

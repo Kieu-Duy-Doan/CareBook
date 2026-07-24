@@ -67,6 +67,13 @@
                                     class="fa-solid fa-file-medical w-6 text-center text-lg {{ $activeMenu === 'records' ? 'text-primary' : 'text-slate-400 group-hover:text-primary/70' }}"></i>
                                 <span>Kết quả khám</span>
                             </a>
+
+                            <a href="{{ route('patient.notifications.page') }}"
+                                class="{{ $baseClass }} {{ $activeMenu === 'notifications' ? $activeClass : $inactiveClass }}">
+                                <i
+                                    class="fa-solid fa-bell w-6 text-center text-lg {{ $activeMenu === 'notifications' ? 'text-primary' : 'text-slate-400 group-hover:text-primary/70' }}"></i>
+                                <span>Thông báo</span>
+                            </a>
                         </nav>
                     </div>
                 </aside>

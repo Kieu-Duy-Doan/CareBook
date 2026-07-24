@@ -45,4 +45,18 @@ class PatientProfile extends Model
     {
         return $this->hasMany(Appointment::class);
     }
+
+    public function getGenderLabelAttribute(): string
+    {
+        return match($this->gender) {
+            'male' => 'Nam',
+            'female' => 'Nữ',
+            default => 'Chưa cập nhật',
+        };
+    }
+
+    public function getDobAttribute()
+    {
+        return $this->date_of_birth;
+    }
 }
