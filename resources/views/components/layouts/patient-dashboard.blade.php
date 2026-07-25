@@ -68,6 +68,13 @@
                                 <span>Kết quả khám</span>
                             </a>
 
+                            <a href="{{ route('patient.statistics.index') }}"
+                                class="{{ $baseClass }} {{ $activeMenu === 'statistics' ? $activeClass : $inactiveClass }}">
+                                <i
+                                    class="fa-solid fa-chart-line w-6 text-center text-lg {{ $activeMenu === 'statistics' ? 'text-primary' : 'text-slate-400 group-hover:text-primary/70' }}"></i>
+                                <span>Thống kê</span>
+                            </a>
+
                             <a href="{{ route('patient.notifications.page') }}"
                                 class="{{ $baseClass }} {{ $activeMenu === 'notifications' ? $activeClass : $inactiveClass }}">
                                 <i

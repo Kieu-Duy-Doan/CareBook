@@ -33,7 +33,7 @@ class AppointmentController extends Controller
         return view('patient.appointments.index', compact('appointments'));
     }
 
-    public function show($id)
+    public function show($id, \App\Services\PaymentService $paymentService)
     {
         $appointment = Appointment::with([
             'patientProfile',
@@ -52,8 +52,9 @@ class AppointmentController extends Controller
         ->findOrFail($id);
 
         $latestVisit = $appointment->clinicalVisits->sortByDesc('created_at')->first();
+        $paymentSummary = $paymentService->calculateSummary($appointment);
 
-        return view('patient.appointments.show', compact('appointment', 'latestVisit'));
+        return view('patient.appointments.show', compact('appointment', 'latestVisit', 'paymentSummary'));
     }
 
     public function cancel(Request $request, $id)

@@ -124,6 +124,82 @@
                         @endif
                     </div>
 
+                    @if(isset($paymentSummary) && $paymentSummary['total_amount'] > 0)
+                        <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-slate-600">Tổng phí dịch vụ:</span>
+                                <span class="font-semibold text-slate-900">{{ number_format($paymentSummary['total_amount'], 0, ',', '.') }}đ</span>
+                            </div>
+                            @if($paymentSummary['insurance_rate'] > 0)
+                            <div class="flex justify-between text-sm">
+                                <span class="text-slate-600">Bảo hiểm y tế chi trả ({{ $paymentSummary['insurance_rate'] * 100 }}%):</span>
+                                <span class="font-semibold text-emerald-600">-{{ number_format($paymentSummary['insurance_covers'], 0, ',', '.') }}đ</span>
+                            </div>
+                            @endif
+                            <div class="flex justify-between text-sm border-t border-slate-200 pt-3 mt-3">
+                                <span class="font-semibold text-slate-900">Người bệnh trả ({{ (1 - $paymentSummary['insurance_rate']) * 100 }}%):</span>
+                                <span class="font-bold text-rose-600">{{ number_format($paymentSummary['patient_pays'], 0, ',', '.') }}đ</span>
+                            </div>
+
+                            <div class="mt-4 space-y-3 border-t border-slate-200 pt-4">
+                                <h4 class="text-sm font-semibold text-slate-900">Chi tiết từng dịch vụ</h4>
+                                
+                                @foreach($paymentSummary['all_visits'] as $visit)
+                                    @php
+                                        $visitName = $visit->is_origin ? 'Phí Khám Bệnh' : ($visit->room ? 'Khám ' . $visit->room->name : 'Dịch vụ Cận lâm sàng / Khác');
+                                        $baseFee = $visit->payment_amount;
+                                        $insCovers = round($baseFee * $paymentSummary['insurance_rate']);
+                                        $patPays = $baseFee - $insCovers;
+                                    @endphp
+                                    <div class="rounded-xl bg-white p-3 border border-slate-100 shadow-sm text-sm">
+                                        <div class="font-semibold text-slate-800">{{ $visitName }}</div>
+                                        <div class="mt-2 space-y-1">
+                                            <div class="flex justify-between text-slate-600">
+                                                <span>Phí ban đầu:</span>
+                                                <span>{{ number_format($baseFee, 0, ',', '.') }}đ</span>
+                                            </div>
+                                            @if($paymentSummary['insurance_rate'] > 0)
+                                            <div class="flex justify-between text-slate-600">
+                                                <span>BHYT trả ({{ $paymentSummary['insurance_rate'] * 100 }}%):</span>
+                                                <span class="text-emerald-600">-{{ number_format($insCovers, 0, ',', '.') }}đ</span>
+                                            </div>
+                                            @endif
+                                            <div class="flex justify-between text-slate-700 font-medium border-t border-slate-100 pt-1 mt-1">
+                                                <span>Người bệnh trả ({{ (1 - $paymentSummary['insurance_rate']) * 100 }}%):</span>
+                                                <span class="text-rose-600">{{ number_format($patPays, 0, ',', '.') }}đ</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+
+                                @if($appointment->medicalRecord?->prescription)
+                                    @php
+                                        $rxFee = $appointment->medicalRecord->prescription->payment_amount ?? 0;
+                                    @endphp
+                                    @if($rxFee > 0)
+                                    <div class="rounded-xl bg-white p-3 border border-slate-100 shadow-sm text-sm">
+                                        <div class="font-semibold text-slate-800">Phí thuốc theo đơn</div>
+                                        <div class="mt-2 space-y-1">
+                                            <div class="flex justify-between text-slate-600">
+                                                <span>Phí ban đầu:</span>
+                                                <span>{{ number_format($rxFee, 0, ',', '.') }}đ</span>
+                                            </div>
+                                            <div class="flex justify-between text-slate-600">
+                                                <span>BHYT trả (0%):</span>
+                                                <span class="text-emerald-600">-0đ</span>
+                                            </div>
+                                            <div class="flex justify-between text-slate-700 font-medium border-t border-slate-100 pt-1 mt-1">
+                                                <span>Người bệnh trả (100%):</span>
+                                                <span class="text-rose-600">{{ number_format($rxFee, 0, ',', '.') }}đ</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endif
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+
                     @if ($appointment->payments->where('status', 'completed')->isNotEmpty())
                         <div class="mt-5 space-y-4">
                             @foreach ($appointment->payments->where('status', 'completed') as $payment)
