@@ -268,7 +268,7 @@
                                         <tbody class="divide-y divide-gray-200 bg-white">
                                             @foreach($pastApt->medicalRecord->prescription->items as $detail)
                                             <tr>
-                                                <td class="px-3 py-2 text-gray-900 font-medium">{{ $detail['medication_name'] ?? ($detail['name'] ?? '—') }}</td>
+                                                <td class="px-3 py-2 text-gray-900 font-medium">{{ $detail['medicine_name'] ?? ($detail['medication_name'] ?? ($detail['name'] ?? '—')) }}</td>
                                                 <td class="px-3 py-2 text-gray-700">{{ $detail['quantity'] ?? '—' }}</td>
                                                 <td class="px-3 py-2 text-gray-500 text-xs">{{ $detail['dosage'] ?? '—' }}</td>
                                             </tr>

@@ -157,8 +157,9 @@ class PaymentController extends Controller
             $intentCode = 'APT' . $appointment->id . strtoupper(\Illuminate\Support\Str::random(5));
             \Illuminate\Support\Facades\Cache::put($intentCacheKeySession, $intentCode, now()->addMinutes(60));
 
-            // Lưu vào global cache cho Webhook - TTL 10 phút để có buffer
+            // Lưu vào global cache cho Webhook - TTL 10 phút
             \Illuminate\Support\Facades\Cache::put('qr_intent_' . $intentCode, $appointment->id, now()->addMinutes(10));
+            \Illuminate\Support\Facades\Cache::put('qr_intent_' . $intentCode . '_user', Auth::id(), now()->addMinutes(10));
         } else {
             // Lấy lại mã intent đang dùng dở
             $intentCode = \Illuminate\Support\Facades\Cache::get($intentCacheKeySession);
@@ -170,8 +171,9 @@ class PaymentController extends Controller
             }
 
             // CRITICAL FIX: Luôn refresh TTL của qr_intent_ mỗi khi trang được load
-            // để đảm bảo cache không expire trước khi webhook kịp đến.
+            // để webhook không bị miss nếu bệnh nhân chuyển khoản trễ vài phút.
             \Illuminate\Support\Facades\Cache::put('qr_intent_' . $intentCode, $appointment->id, now()->addMinutes(10));
+            \Illuminate\Support\Facades\Cache::put('qr_intent_' . $intentCode . '_user', Auth::id(), now()->addMinutes(10));
         }
 
         $qrUrl = null;

@@ -296,6 +296,9 @@ class PaymentService
                 ]);
             }
 
+            // Lấy ID người tạo QR từ cache (nếu có)
+            $collectedBy = \Illuminate\Support\Facades\Cache::get('qr_intent_' . $normalizedCode . '_user');
+
             // --- XỬ LÝ QR HỢP LỆ ---
             if ($pendingVisits->isEmpty() || $requiredAmount <= 0) {
                 Log::info('SePay Webhook: Không có khoản phí chờ thu', ['code' => $appointment->appointment_code]);
@@ -309,6 +312,7 @@ class PaymentService
                     'sepay_reference' => $transactionCode,
                     'paid_at' => $transactionDate,
                     'note' => 'Không có khoản phí chờ thu, nhưng vẫn nhận được tiền.',
+                    'collected_by' => $collectedBy,
                 ]);
                 $this->notifyReceptionists($appointment, $transferAmount, $requiredAmount, $patientName, true, "Đã nhận {$transferAmount}đ nhưng lịch hẹn không có khoản phí chờ thu.");
                 return;
@@ -336,6 +340,7 @@ class PaymentService
                 'sepay_reference' => $transactionCode,
                 'paid_at' => $transactionDate,
                 'note' => $note,
+                'collected_by' => $collectedBy,
             ]);
 
             // Phân bổ tiền cho các clinical visits (dùng giá sau BHYT)

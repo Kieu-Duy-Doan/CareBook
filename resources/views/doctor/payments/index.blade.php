@@ -6,24 +6,43 @@
         <p class="text-gray-500 mt-1">Theo dõi các khoản phí từ bệnh nhân của bạn</p>
     </div>
 
+    @php
+        $periodLabel = match($dateRange) {
+            'today' => 'Hôm nay',
+            'this_month' => 'Tháng này',
+            'this_year' => 'Năm nay',
+            'custom' => 'Tùy chỉnh',
+            default => 'Hôm nay'
+        };
+    @endphp
+
     {{-- Thống kê nhanh --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
-            <div class="h-12 w-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-xl shrink-0">
-                <i class="fa-solid fa-qrcode"></i>
+            <div class="h-12 w-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-xl shrink-0">
+                <i class="fa-solid fa-money-bill-wave"></i>
             </div>
             <div>
-                <p class="text-xs text-gray-500 uppercase tracking-wider">Thu QR hôm nay</p>
-                <p class="text-2xl font-black text-blue-600">{{ number_format($qrCollectedToday, 0, ',', '.') }}đ</p>
+                <p class="text-xs text-gray-500 uppercase tracking-wider">Tổng thu ({{ $periodLabel }})</p>
+                <p class="text-2xl font-black text-emerald-600">{{ number_format($totalCollected, 0, ',', '.') }}đ</p>
             </div>
         </div>
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
-            <div class="h-12 w-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-xl shrink-0">
-                <i class="fa-solid fa-circle-check"></i>
+            <div class="h-12 w-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center text-xl shrink-0">
+                <i class="fa-solid fa-qrcode"></i>
             </div>
             <div>
-                <p class="text-xs text-gray-500 uppercase tracking-wider">Tổng thu hôm nay</p>
-                <p class="text-2xl font-black text-emerald-600">{{ number_format($totalCollectedToday, 0, ',', '.') }}đ</p>
+                <p class="text-xs text-gray-500 uppercase tracking-wider">Thu QR ({{ $periodLabel }})</p>
+                <p class="text-2xl font-black text-purple-600">{{ number_format($qrCollected, 0, ',', '.') }}đ</p>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
+            <div class="h-12 w-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-xl shrink-0">
+                <i class="fa-solid fa-shield-heart"></i>
+            </div>
+            <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wider">BHYT chi trả ({{ $periodLabel }})</p>
+                <p class="text-2xl font-black text-blue-600">{{ number_format($insuranceCovered, 0, ',', '.') }}đ</p>
             </div>
         </div>
     </div>
@@ -40,17 +59,35 @@
                 <i class="fa-solid fa-history mr-2"></i>Lịch sử
             </a>
 
-            {{-- Search --}}
-            <div class="ml-auto flex items-center gap-3 px-4">
+            {{-- Search & Filter --}}
+            <div class="ml-auto flex items-center gap-3 px-4" x-data="{ range: '{{ $dateRange }}' }">
                 <form method="GET" action="{{ route('doctor.payments.index') }}" class="flex items-center gap-2">
                     <input type="hidden" name="tab" value="{{ $tab }}">
+                    
+                    <select name="date_range" x-model="range" class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-400 bg-white">
+                        <option value="today">Hôm nay</option>
+                        <option value="this_month">Tháng này</option>
+                        <option value="this_year">Năm nay</option>
+                        <option value="custom">Tùy chỉnh...</option>
+                    </select>
+
+                    <div x-show="range === 'custom'" class="flex items-center gap-1" style="display: none;" x-cloak>
+                        <input type="date" name="from_date" value="{{ $fromDate }}"
+                               class="px-2 py-1.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-400 w-32">
+                        <span class="text-gray-400 text-xs">-</span>
+                        <input type="date" name="to_date" value="{{ $toDate }}"
+                               class="px-2 py-1.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-400 w-32">
+                    </div>
+
                     <input type="text" name="search" value="{{ request('search') }}" placeholder="Tìm mã LH, tên BN..."
-                           class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-400 w-52">
-                    <input type="date" name="date" value="{{ request('date') }}"
-                           class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-400">
+                           class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-400 w-48">
+                    
                     <button type="submit" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
                         <i class="fa-solid fa-magnifying-glass"></i>
                     </button>
+                    <a href="{{ route('doctor.payments.index', ['tab' => $tab]) }}" class="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors" title="Đặt lại">
+                        <i class="fa-solid fa-arrow-rotate-right"></i>
+                    </a>
                 </form>
             </div>
         </div>
@@ -63,8 +100,8 @@
                         <th class="py-3 px-5">Bệnh nhân</th>
                         <th class="py-3 px-5">Ngày khám</th>
                         <th class="py-3 px-5 text-right">Tổng tiền</th>
-                        <th class="py-3 px-5 text-right">Đã thu</th>
-                        <th class="py-3 px-5 text-right">Còn lại</th>
+                        <th class="py-3 px-5 text-right">Người bệnh chi trả</th>
+                        <th class="py-3 px-5 text-right">BHYT chi trả</th>
                         <th class="py-3 px-5 text-center">Trạng thái</th>
                         <th class="py-3 px-5 text-center">Hành động</th>
                     </tr>
@@ -72,10 +109,24 @@
                 <tbody class="divide-y divide-gray-50">
                     @forelse($appointments as $apt)
                     @php
-                        $totalAmt = $apt->clinicalVisits->sum('payment_amount');
-                        $paidAmt = $apt->payments->where('status', 'completed')->sum('amount');
-                        $remaining = max(0, $totalAmt - $paidAmt);
-                        $hasPending = $apt->clinicalVisits->where('payment_status', 'pending')->isNotEmpty();
+                        $paymentService = app(\App\Services\PaymentService::class);
+                        $summary = $paymentService->calculateSummary($apt);
+                        $rate = $summary['insurance_rate'];
+                        $userId = Auth::id();
+
+                        if ($tab === 'history') {
+                            $relevantVisits = $apt->clinicalVisits->filter(function($cv) use ($userId) {
+                                return $cv->payments->where('collected_by', $userId)->where('status', 'completed')->isNotEmpty();
+                            });
+                            $totalAmt = $relevantVisits->sum('payment_amount');
+                            $hasPending = false;
+                        } else {
+                            $totalAmt = $apt->clinicalVisits->sum('payment_amount');
+                            $hasPending = $apt->clinicalVisits->where('payment_status', 'pending')->isNotEmpty();
+                        }
+
+                        $insurancePaid = $totalAmt * $rate;
+                        $patientPays = $totalAmt - $insurancePaid;
                     @endphp
                     <tr class="hover:bg-gray-50/50 transition-colors">
                         <td class="py-3.5 px-5">
@@ -91,14 +142,18 @@
                         <td class="py-3.5 px-5 text-right font-bold text-gray-900">
                             {{ number_format($totalAmt, 0, ',', '.') }}đ
                         </td>
-                        <td class="py-3.5 px-5 text-right font-bold text-emerald-600">
-                            {{ number_format($paidAmt, 0, ',', '.') }}đ
+                        <td class="py-3.5 px-5 text-right">
+                            <span class="font-bold text-blue-600">{{ number_format($patientPays, 0, ',', '.') }}đ</span>
+                            <br>
+                            <span class="text-xs text-blue-500">({{ (1 - $rate) * 100 }}%)</span>
                         </td>
-                        <td class="py-3.5 px-5 text-right font-bold {{ $remaining > 0 ? 'text-red-600' : 'text-gray-400' }}">
-                            {{ number_format($remaining, 0, ',', '.') }}đ
+                        <td class="py-3.5 px-5 text-right">
+                            <span class="font-bold text-emerald-600">{{ number_format($insurancePaid, 0, ',', '.') }}đ</span>
+                            <br>
+                            <span class="text-xs text-emerald-500">({{ $rate * 100 }}%)</span>
                         </td>
                         <td class="py-3.5 px-5 text-center">
-                            @if($remaining <= 0)
+                            @if(!$hasPending && $totalAmt > 0)
                                 <span class="inline-flex items-center gap-1 text-xs font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
                                     <i class="fa-solid fa-check"></i> Đã thu
                                 </span>
@@ -114,7 +169,7 @@
                         </td>
                         <td class="py-3.5 px-5 text-center">
                             <div class="flex items-center justify-center gap-2">
-                                @if($remaining > 0)
+                                @if($hasPending && $patientPays > 0)
                                 <a href="{{ route('doctor.payments.checkout', $apt->id) }}"
                                    class="px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1">
                                     <i class="fa-solid fa-qrcode"></i> QR

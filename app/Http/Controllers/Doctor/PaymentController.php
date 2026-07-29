@@ -29,31 +29,127 @@ class PaymentController extends Controller
     public function index(Request $request)
     {
         $doctorProfileId = Auth::user()->doctorProfile->id ?? null;
+        $userId = Auth::id();
 
         // Xóa hiển thị màn hình phụ khi bác sĩ quay về danh sách
-        Cache::forget('doctor_active_checkout_appointment_' . Auth::id());
+        Cache::forget('doctor_active_checkout_appointment_' . $userId);
 
         $tab = $request->input('tab', 'pending');
+        
+        $dateRange = $request->input('date_range', 'today'); // 'today', 'this_month', 'this_year', 'custom'
+        $fromDate = $request->input('from_date');
+        $toDate = $request->input('to_date');
 
+        $queryStart = null;
+        $queryEnd = null;
+
+        if ($dateRange === 'today') {
+            $queryStart = Carbon::today();
+            $queryEnd = Carbon::today()->endOfDay();
+        } elseif ($dateRange === 'this_month') {
+            $queryStart = Carbon::now()->startOfMonth();
+            $queryEnd = Carbon::now()->endOfMonth();
+        } elseif ($dateRange === 'this_year') {
+            $queryStart = Carbon::now()->startOfYear();
+            $queryEnd = Carbon::now()->endOfYear();
+        } elseif ($dateRange === 'custom') {
+            if ($fromDate) {
+                $queryStart = Carbon::parse($fromDate)->startOfDay();
+            }
+            if ($toDate) {
+                $queryEnd = Carbon::parse($toDate)->endOfDay();
+            }
+        }
+
+        // --- STATS CALCULATION ---
+        $paymentQuery = Payment::where('status', 'completed')
+            ->where('collected_by', $userId);
+
+        if ($queryStart) {
+            $paymentQuery->where('paid_at', '>=', $queryStart);
+        }
+        if ($queryEnd) {
+            $paymentQuery->where('paid_at', '<=', $queryEnd);
+        }
+
+        $totalCollected = (clone $paymentQuery)->sum('amount');
+        $qrCollected = (clone $paymentQuery)->where('method', 'qr')->sum('amount');
+        
+        $clinicalVisitsQuery = \App\Models\ClinicalVisit::with(['appointment.patientProfile'])
+            ->whereHas('payments', function ($q) use ($userId, $queryStart, $queryEnd) {
+                $q->where('status', 'completed')
+                  ->where('collected_by', $userId);
+                  
+                if ($queryStart) {
+                    $q->where('paid_at', '>=', $queryStart);
+                }
+                if ($queryEnd) {
+                    $q->where('paid_at', '<=', $queryEnd);
+                }
+            });
+
+        $paidVisits = $clinicalVisitsQuery->get();
+        $insuranceCovered = 0;
+        
+        $appointmentsForStats = $paidVisits->pluck('appointment')->unique('id');
+        foreach ($appointmentsForStats as $apt) {
+            $summary = $this->paymentService->calculateSummary($apt);
+            $rate = $summary['insurance_rate'];
+            
+            $visitsOfApt = $paidVisits->where('appointment_id', $apt->id);
+            $totalAmt = $visitsOfApt->sum('payment_amount');
+            $insuranceCovered += $totalAmt * $rate;
+        }
+
+        // --- APPOINTMENTS QUERY ---
         $query = Appointment::with([
             'patientProfile',
             'clinicalVisits',
-            'payments',
-            'medicalRecord.prescription',
-        ])->where(function ($query) use ($doctorProfileId) {
-            $query->where('doctor_profile_id', $doctorProfileId)
-                  ->orWhereHas('clinicalVisits', function ($q) use ($doctorProfileId) {
-                      $q->where('doctor_profile_id', $doctorProfileId);
-                  });
-        });
+            'payments'
+        ]);
 
         if ($tab === 'pending') {
-            $query->whereHas('clinicalVisits', function ($q) use ($doctorProfileId) {
+            $query->where(function ($q) use ($doctorProfileId) {
+                // Ca khám do bác sĩ này chỉ định
                 $q->where('doctor_profile_id', $doctorProfileId)
-                  ->where('payment_status', 'pending');
+                  ->whereHas('clinicalVisits', function ($q2) {
+                      $q2->where('payment_status', 'pending');
+                  });
+            })->orWhere(function ($q) use ($doctorProfileId) {
+                // Hoặc ca khám do bác sĩ này thực hiện (cận lâm sàng)
+                $q->whereHas('clinicalVisits', function ($q2) use ($doctorProfileId) {
+                    $q2->where('doctor_profile_id', $doctorProfileId)
+                       ->where('payment_status', 'pending');
+                });
             });
+            
+            if ($queryStart) {
+                $query->where('appointment_date', '>=', $queryStart->toDateString());
+            }
+            if ($queryEnd) {
+                $query->where('appointment_date', '<=', $queryEnd->toDateString());
+            }
+
         } else {
-            $query->has('payments');
+            // Lịch sử (các lịch khám đã thanh toán hết)
+            $query->where(function ($q) use ($doctorProfileId) {
+                $q->where('doctor_profile_id', $doctorProfileId)
+                  ->orWhereHas('clinicalVisits', function ($q2) use ($doctorProfileId) {
+                      $q2->where('doctor_profile_id', $doctorProfileId);
+                  });
+            })->whereDoesntHave('clinicalVisits', function ($q2) {
+                $q2->where('payment_status', 'pending');
+            })->whereHas('payments', function ($q2) use ($userId) {
+                $q2->where('collected_by', $userId);
+            });
+            
+            if ($queryStart) {
+                // Dựa trên thời gian thanh toán của các clinical visits
+                $query->whereHas('clinicalVisits', function($q2) use ($queryStart, $queryEnd) {
+                    if ($queryStart) $q2->where('paid_at', '>=', $queryStart);
+                    if ($queryEnd) $q2->where('paid_at', '<=', $queryEnd);
+                });
+            }
         }
 
         if ($request->filled('search')) {
@@ -67,17 +163,12 @@ class PaymentController extends Controller
             });
         }
 
-        if ($request->filled('date')) {
-            $query->whereDate('appointment_date', $request->input('date'));
-        }
-
         $appointments = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
 
-        $today = Carbon::today();
-        $totalCollectedToday = Payment::whereDate('paid_at', $today)->where('status', 'completed')->sum('amount');
-        $qrCollectedToday = Payment::whereDate('paid_at', $today)->where('status', 'completed')->where('method', 'qr')->sum('amount');
-
-        return view('doctor.payments.index', compact('appointments', 'tab', 'totalCollectedToday', 'qrCollectedToday'));
+        return view('doctor.payments.index', compact(
+            'appointments', 'tab', 'totalCollected', 'qrCollected', 'insuranceCovered', 
+            'dateRange', 'fromDate', 'toDate'
+        ));
     }
 
     /**
@@ -151,6 +242,7 @@ class PaymentController extends Controller
 
             // Lưu vào global cache cho Webhook - TTL 10 phút
             Cache::put('qr_intent_' . $intentCode, $appointment->id, now()->addMinutes(10));
+            Cache::put('qr_intent_' . $intentCode . '_user', Auth::id(), now()->addMinutes(10));
         } else {
             // Lấy lại mã intent đang dùng dở
             $intentCode = Cache::get($intentCacheKeySession);
@@ -163,6 +255,7 @@ class PaymentController extends Controller
 
             // Refresh TTL
             Cache::put('qr_intent_' . $intentCode, $appointment->id, now()->addMinutes(10));
+            Cache::put('qr_intent_' . $intentCode . '_user', Auth::id(), now()->addMinutes(10));
         }
 
         $qrUrl = null;

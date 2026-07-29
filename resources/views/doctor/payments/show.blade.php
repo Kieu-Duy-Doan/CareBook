@@ -38,6 +38,21 @@
     </div>
     @endif
 
+    @php
+        $rate = $summary['insurance_rate'];
+        $totalAmt = $appointment->clinicalVisits->sum('payment_amount');
+        $insurancePaid = $totalAmt * $rate;
+        $patientPays = $totalAmt - $insurancePaid;
+        
+        $remaining = 0;
+        foreach($appointment->clinicalVisits as $cv) {
+            if ($cv->payment_status === 'pending') {
+                $remaining += ($cv->payment_amount * (1 - $rate));
+            }
+        }
+        $paidAmt = $patientPays - $remaining;
+    @endphp
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {{-- Chi tiết dịch vụ --}}
         <div class="space-y-6">
@@ -78,47 +93,28 @@
                                 <td class="py-2.5 px-3 text-right font-bold text-gray-900">{{ number_format($visit->payment_amount, 0, ',', '.') }}đ</td>
                             </tr>
                             @endforeach
-
-                            @if($appointment->medicalRecord?->prescription)
-                            <tr>
-                                <td class="py-2.5 px-3 font-medium text-gray-900">
-                                    Đơn Thuốc (Kê đơn)
-                                    <span class="text-xs text-gray-400 block font-normal">#{{ $appointment->medicalRecord->prescription->id }}</span>
-                                </td>
-                                <td class="py-2.5 px-3 text-center">
-                                    @if($appointment->medicalRecord->prescription->payment_status === 'paid')
-                                        <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">Đã thu</span>
-                                    @else
-                                        <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">Chờ thu</span>
-                                    @endif
-                                </td>
-                                <td class="py-2.5 px-3 text-right font-bold text-gray-900">
-                                    {{ number_format($appointment->medicalRecord->prescription->payment_amount ?? 0, 0, ',', '.') }}đ
-                                </td>
-                            </tr>
-                            @endif
                         </tbody>
                     </table>
 
                     <div class="mt-4 pt-4 border-t border-gray-100 space-y-2">
                         <div class="flex justify-between items-center text-sm">
                             <span class="text-gray-500">Tổng chi phí:</span>
-                            <span class="font-bold text-gray-900">{{ number_format($summary['total_amount'], 0, ',', '.') }}đ</span>
+                            <span class="font-bold text-gray-900">{{ number_format($totalAmt, 0, ',', '.') }}đ</span>
                         </div>
-                        @if($summary['insurance_covers'] > 0)
+                        @if($insurancePaid > 0)
                         <div class="flex justify-between items-center text-sm">
-                            <span class="text-gray-500">BHYT chi trả ({{ $summary['insurance_rate'] * 100 }}%):</span>
-                            <span class="font-bold text-blue-600">-{{ number_format($summary['insurance_covers'], 0, ',', '.') }}đ</span>
+                            <span class="text-gray-500">BHYT chi trả ({{ $rate * 100 }}%):</span>
+                            <span class="font-bold text-blue-600">-{{ number_format($insurancePaid, 0, ',', '.') }}đ</span>
                         </div>
                         @endif
                         <div class="flex justify-between items-center text-sm">
                             <span class="text-gray-500">Đã thanh toán:</span>
-                            <span class="font-bold text-emerald-600">{{ number_format($summary['amount_paid'], 0, ',', '.') }}đ</span>
+                            <span class="font-bold text-emerald-600">{{ number_format($paidAmt, 0, ',', '.') }}đ</span>
                         </div>
                         <div class="flex justify-between items-center text-base pt-2 border-t border-gray-100">
                             <span class="font-bold text-gray-900">Còn lại:</span>
-                            <span class="font-black text-xl {{ $summary['remaining_to_pay'] > 0 ? 'text-red-600' : 'text-emerald-600' }}">
-                                {{ number_format($summary['remaining_to_pay'], 0, ',', '.') }}đ
+                            <span class="font-black text-xl {{ $remaining > 0 ? 'text-red-600' : 'text-emerald-600' }}">
+                                {{ number_format($remaining, 0, ',', '.') }}đ
                             </span>
                         </div>
                     </div>
@@ -129,11 +125,11 @@
         {{-- Lịch sử giao dịch --}}
         <div class="space-y-6">
             {{-- Trạng thái tổng --}}
-            @if($summary['remaining_to_pay'] > 0)
+            @if($remaining > 0)
             <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 flex items-center justify-between">
                 <div>
                     <h3 class="font-bold text-amber-900 mb-1"><i class="fa-solid fa-circle-exclamation mr-2"></i>Chưa thanh toán đủ</h3>
-                    <p class="text-amber-700 text-sm">Còn <strong>{{ number_format($summary['remaining_to_pay'], 0, ',', '.') }}đ</strong> chưa thu.</p>
+                    <p class="text-amber-700 text-sm">Còn <strong>{{ number_format($remaining, 0, ',', '.') }}đ</strong> chưa thu.</p>
                 </div>
                 <a href="{{ route('doctor.payments.checkout', $appointment->id) }}"
                    class="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors text-sm flex items-center gap-2 shrink-0">

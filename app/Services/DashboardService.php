@@ -306,6 +306,9 @@ class DashboardService
      */
     public function getDoctorDashboardData(Carbon $today, Carbon $startOfMonth, $doctorProfileId): array
     {
+        $doctorProfile = \App\Models\DoctorProfile::find($doctorProfileId);
+        $doctorType = $doctorProfile ? $doctorProfile->doctor_type : 'clinical';
+
         $todayAppointmentsCount = Appointment::where('doctor_profile_id', $doctorProfileId)
             ->whereDate('appointment_date', $today)
             ->count();
@@ -332,14 +335,60 @@ class DashboardService
             })
             ->sum('amount');
 
-        $upcomingAppointments = Appointment::with('patientProfile')
-            ->where('doctor_profile_id', $doctorProfileId)
-            ->whereDate('appointment_date', '>=', $today)
-            ->whereIn('status', ['pending', 'checked_in', 'examining'])
-            ->orderBy('appointment_date')
-            ->orderBy('appointment_time')
-            ->take(5)
-            ->get();
+        $waitingListData = [];
+        
+        if ($doctorType === 'clinical') {
+            $waitingListData['checked_in'] = Appointment::with('patientProfile')
+                ->where('doctor_profile_id', $doctorProfileId)
+                ->whereDate('appointment_date', $today)
+                ->where('status', 'checked_in')
+                ->selectRaw('*, (checked_in_at > appointment_time) as is_late')
+                ->orderBy('is_late', 'asc')
+                ->orderBy('appointment_time', 'asc')
+                ->paginate(10, ['*'], 'checked_in_page');
+                
+            $waitingListData['examining'] = Appointment::with('patientProfile')
+                ->where('doctor_profile_id', $doctorProfileId)
+                ->whereDate('appointment_date', $today)
+                ->where('status', 'examining')
+                ->orderBy('appointment_time', 'asc')
+                ->paginate(10, ['*'], 'examining_page');
+                
+            $waitingListData['completed'] = Appointment::with('patientProfile')
+                ->where('doctor_profile_id', $doctorProfileId)
+                ->whereDate('appointment_date', $today)
+                ->where('status', 'completed')
+                ->orderBy('completed_at', 'desc')
+                ->paginate(10, ['*'], 'completed_page');
+                
+            $waitingListData['cancelled'] = Appointment::with('patientProfile')
+                ->where('doctor_profile_id', $doctorProfileId)
+                ->whereDate('appointment_date', $today)
+                ->where('status', 'cancelled')
+                ->orderBy('appointment_time', 'desc')
+                ->paginate(10, ['*'], 'cancelled_page');
+        } else {
+            $waitingListData['pending'] = ClinicalVisit::with(['appointment.patientProfile'])
+                ->where('doctor_profile_id', $doctorProfileId)
+                ->whereDate('created_at', $today)
+                ->where('status', 'waiting')
+                ->orderBy('created_at', 'asc')
+                ->paginate(10, ['*'], 'pending_page');
+                
+            $waitingListData['examining'] = ClinicalVisit::with(['appointment.patientProfile'])
+                ->where('doctor_profile_id', $doctorProfileId)
+                ->whereDate('created_at', $today)
+                ->where('status', 'in_progress')
+                ->orderBy('started_at', 'asc')
+                ->paginate(10, ['*'], 'examining_page');
+                
+            $waitingListData['completed'] = ClinicalVisit::with(['appointment.patientProfile'])
+                ->where('doctor_profile_id', $doctorProfileId)
+                ->whereDate('created_at', $today)
+                ->where('status', 'completed')
+                ->orderBy('completed_at', 'desc')
+                ->paginate(10, ['*'], 'completed_page');
+        }
 
         $sevenDaysAgo = Carbon::now()->subDays(6)->startOfDay();
         $chartData = Appointment::select(DB::raw('DATE(appointment_date) as date'), DB::raw('count(*) as count'))
@@ -363,7 +412,8 @@ class DashboardService
             'patientsWaitingOutside',
             'totalCompletedThisMonth',
             'revenueThisMonth',
-            'upcomingAppointments',
+            'waitingListData',
+            'doctorType',
             'miniChartLabels',
             'miniChartData'
         );
