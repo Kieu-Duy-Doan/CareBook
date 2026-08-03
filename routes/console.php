@@ -13,3 +13,4 @@ Schedule::command('notifications:process')->everyMinute();
 Schedule::command('notifications:process-scheduled')->everyMinute();
 Schedule::command('appointments:remind')->everyFiveMinutes();
 Schedule::command('sepay:sync')->everyFiveMinutes();
+Schedule::command('followups:remind')->dailyAt('08:00');

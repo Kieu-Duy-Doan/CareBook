@@ -143,9 +143,16 @@
 
                         <!-- Đơn thuốc -->
                         <div class="mt-6 pt-4 border-t border-gray-100">
-                            <h4 class="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                <i class="fa-solid fa-pills text-purple-500"></i> Đơn thuốc
-                            </h4>
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="text-base font-bold text-gray-900 flex items-center gap-2">
+                                    <i class="fa-solid fa-pills text-purple-500"></i> Đơn thuốc
+                                </h4>
+                                @if($appointment->medicalRecord->prescription)
+                                    <a href="{{ route('doctor.payments.print-prescription', $appointment->id) }}" target="_blank" class="text-gray-600 hover:text-gray-900 text-sm font-medium border border-gray-300 bg-white px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2 shadow-sm">
+                                        <i class="fa-solid fa-print"></i> In đơn thuốc
+                                    </a>
+                                @endif
+                            </div>
                             @if($appointment->medicalRecord->prescription && is_array($appointment->medicalRecord->prescription->items) && count($appointment->medicalRecord->prescription->items) > 0)
                             <div class="border border-gray-200 rounded-lg overflow-hidden">
                                 <table class="min-w-full divide-y divide-gray-200 text-sm">

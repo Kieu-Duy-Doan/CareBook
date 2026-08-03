@@ -17,7 +17,7 @@ class DashboardController extends Controller
         $this->dashboardService = $dashboardService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
         $doctorProfile = $user->doctorProfile;
@@ -26,13 +26,18 @@ class DashboardController extends Controller
             return redirect()->route('doctor.profile.index')->with('error', 'Vui lòng cập nhật hồ sơ bác sĩ của bạn.');
         }
 
-        $today = Carbon::today();
-        $startOfMonth = Carbon::now()->startOfMonth();
+        $fromDateStr = $request->input('from_date', Carbon::today()->format('Y-m-d'));
+        $toDateStr = $request->input('to_date', Carbon::today()->format('Y-m-d'));
 
-        $data = $this->dashboardService->getDoctorDashboardData($today, $startOfMonth, $doctorProfile->id);
+        $fromDate = Carbon::parse($fromDateStr)->startOfDay();
+        $toDate = Carbon::parse($toDateStr)->endOfDay();
+
+        $data = $this->dashboardService->getDoctorDashboardData($fromDate, $toDate, $doctorProfile->id);
 
         // Cần thêm doctorProfile vào data để view có thể hiển thị
         $data['doctorProfile'] = $doctorProfile;
+        $data['fromDate'] = $fromDateStr;
+        $data['toDate'] = $toDateStr;
 
         return view('doctor.dashboard.index', $data);
     }

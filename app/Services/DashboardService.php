@@ -304,43 +304,34 @@ class DashboardService
     /**
      * Lấy dữ liệu thống kê cho Dashboard Bác sĩ
      */
-    public function getDoctorDashboardData(Carbon $today, Carbon $startOfMonth, $doctorProfileId): array
+    public function getDoctorDashboardData(Carbon $fromDate, Carbon $toDate, $doctorProfileId): array
     {
         $doctorProfile = \App\Models\DoctorProfile::find($doctorProfileId);
         $doctorType = $doctorProfile ? $doctorProfile->doctor_type : 'clinical';
 
-        $todayAppointmentsCount = Appointment::where('doctor_profile_id', $doctorProfileId)
-            ->whereDate('appointment_date', $today)
+        $fromDateString = $fromDate->format('Y-m-d');
+        $toDateString = $toDate->format('Y-m-d');
+
+        $appointmentsCount = Appointment::where('doctor_profile_id', $doctorProfileId)
+            ->whereBetween('appointment_date', [$fromDateString, $toDateString])
             ->count();
 
-        $completedTodayCount = Appointment::where('doctor_profile_id', $doctorProfileId)
-            ->whereDate('appointment_date', $today)
+        $completedCount = Appointment::where('doctor_profile_id', $doctorProfileId)
+            ->whereBetween('appointment_date', [$fromDateString, $toDateString])
             ->where('status', 'completed')
             ->count();
 
         $patientsWaitingOutside = Appointment::where('doctor_profile_id', $doctorProfileId)
-            ->whereDate('appointment_date', $today)
+            ->whereBetween('appointment_date', [$fromDateString, $toDateString])
             ->where('status', 'checked_in')
             ->count();
-
-        $totalCompletedThisMonth = Appointment::where('doctor_profile_id', $doctorProfileId)
-            ->where('appointment_date', '>=', $startOfMonth)
-            ->where('status', 'completed')
-            ->count();
-
-        $revenueThisMonth = Payment::where('status', 'completed')
-            ->whereHas('appointment', function ($query) use ($doctorProfileId, $startOfMonth) {
-                $query->where('doctor_profile_id', $doctorProfileId)
-                    ->where('appointment_date', '>=', $startOfMonth);
-            })
-            ->sum('amount');
 
         $waitingListData = [];
         
         if ($doctorType === 'clinical') {
             $waitingListData['checked_in'] = Appointment::with('patientProfile')
                 ->where('doctor_profile_id', $doctorProfileId)
-                ->whereDate('appointment_date', $today)
+                ->whereBetween('appointment_date', [$fromDateString, $toDateString])
                 ->where('status', 'checked_in')
                 ->selectRaw('*, (checked_in_at > appointment_time) as is_late')
                 ->orderBy('is_late', 'asc')
@@ -349,42 +340,42 @@ class DashboardService
                 
             $waitingListData['examining'] = Appointment::with('patientProfile')
                 ->where('doctor_profile_id', $doctorProfileId)
-                ->whereDate('appointment_date', $today)
+                ->whereBetween('appointment_date', [$fromDateString, $toDateString])
                 ->where('status', 'examining')
                 ->orderBy('appointment_time', 'asc')
                 ->paginate(10, ['*'], 'examining_page');
                 
             $waitingListData['completed'] = Appointment::with('patientProfile')
                 ->where('doctor_profile_id', $doctorProfileId)
-                ->whereDate('appointment_date', $today)
+                ->whereBetween('appointment_date', [$fromDateString, $toDateString])
                 ->where('status', 'completed')
                 ->orderBy('completed_at', 'desc')
                 ->paginate(10, ['*'], 'completed_page');
                 
             $waitingListData['cancelled'] = Appointment::with('patientProfile')
                 ->where('doctor_profile_id', $doctorProfileId)
-                ->whereDate('appointment_date', $today)
+                ->whereBetween('appointment_date', [$fromDateString, $toDateString])
                 ->where('status', 'cancelled')
                 ->orderBy('appointment_time', 'desc')
                 ->paginate(10, ['*'], 'cancelled_page');
         } else {
             $waitingListData['pending'] = ClinicalVisit::with(['appointment.patientProfile'])
                 ->where('doctor_profile_id', $doctorProfileId)
-                ->whereDate('created_at', $today)
+                ->whereBetween('created_at', [$fromDate->startOfDay(), $toDate->endOfDay()])
                 ->where('status', 'waiting')
                 ->orderBy('created_at', 'asc')
                 ->paginate(10, ['*'], 'pending_page');
                 
             $waitingListData['examining'] = ClinicalVisit::with(['appointment.patientProfile'])
                 ->where('doctor_profile_id', $doctorProfileId)
-                ->whereDate('created_at', $today)
+                ->whereBetween('created_at', [$fromDate->startOfDay(), $toDate->endOfDay()])
                 ->where('status', 'in_progress')
                 ->orderBy('started_at', 'asc')
                 ->paginate(10, ['*'], 'examining_page');
                 
             $waitingListData['completed'] = ClinicalVisit::with(['appointment.patientProfile'])
                 ->where('doctor_profile_id', $doctorProfileId)
-                ->whereDate('created_at', $today)
+                ->whereBetween('created_at', [$fromDate->startOfDay(), $toDate->endOfDay()])
                 ->where('status', 'completed')
                 ->orderBy('completed_at', 'desc')
                 ->paginate(10, ['*'], 'completed_page');
@@ -394,7 +385,7 @@ class DashboardService
         $chartData = Appointment::select(DB::raw('DATE(appointment_date) as date'), DB::raw('count(*) as count'))
             ->where('doctor_profile_id', $doctorProfileId)
             ->where('appointment_date', '>=', $sevenDaysAgo)
-            ->where('appointment_date', '<=', $today)
+            ->where('appointment_date', '<=', Carbon::today())
             ->groupBy('date')
             ->pluck('count', 'date')->toArray();
 
@@ -407,11 +398,9 @@ class DashboardService
         }
 
         return compact(
-            'todayAppointmentsCount',
-            'completedTodayCount',
+            'appointmentsCount',
+            'completedCount',
             'patientsWaitingOutside',
-            'totalCompletedThisMonth',
-            'revenueThisMonth',
             'waitingListData',
             'doctorType',
             'miniChartLabels',

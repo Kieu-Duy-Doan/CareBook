@@ -14,6 +14,7 @@ class MedicalRecord extends Model
         'conclusion',
         'advice',
         'followup_date',
+        'followup_reminded',
         'treatment_result',
         'result_files',
     ];
@@ -21,8 +22,9 @@ class MedicalRecord extends Model
     protected function casts(): array
     {
         return [
-            'followup_date' => 'date',
-            'result_files' => 'array',
+            'followup_date'     => 'date',
+            'followup_reminded' => 'boolean',
+            'result_files'      => 'array',
         ];
     }
 

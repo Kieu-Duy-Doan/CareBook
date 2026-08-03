@@ -96,6 +96,8 @@ class ClinicalVisitController extends Controller
         $totalAmount  = $summary['total_amount'] ?? $allVisits->sum('payment_amount'); // Hiển thị nguyên giá
         $paidAmount   = $summary['amount_paid'] ?? 0;
         $unpaidAmount = $summary['remaining_to_pay'] ?? 0;
+        $insuranceCovers = $summary['insurance_covers'] ?? 0;
+        $patientPays  = $summary['patient_pays'] ?? $totalAmount;
 
         // Bác sĩ hiện tại có phải bác sĩ gốc không?
         $isOriginDoctor = $originVisit && $originVisit->doctor_profile_id === $doctorProfile->id;
@@ -122,6 +124,8 @@ class ClinicalVisitController extends Controller
             'totalAmount',
             'paidAmount',
             'unpaidAmount',
+            'insuranceCovers',
+            'patientPays',
             'rooms',
             'isOriginDoctor',
             'assignedRoomIds'

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Notification;
 use App\Models\Appointment;
+use App\Models\MedicalRecord;
 
 class UserNotificationService
 {
@@ -144,6 +145,30 @@ class UserNotificationService
             [],
             $doctorUserId
         );
+    }
+
+    /**
+     * Thông báo in-web nhắc bệnh nhân tái khám (trước 1 ngày)
+     */
+    public function notifyFollowupReminder(MedicalRecord $medicalRecord): Notification
+    {
+        $patientUserId = $medicalRecord->appointment->booked_by_user_id;
+        $followupDate  = $medicalRecord->followup_date->format('d/m/Y');
+        $doctorName    = $medicalRecord->appointment->doctorProfile->full_title ?? 'bác sĩ';
+
+        return Notification::create([
+            'user_id'      => $patientUserId,
+            'title'        => 'Nhắc nhở: Ngày mai là ngày tái khám',
+            'content'      => "Bạn có lịch tái khám vào ngày {$followupDate} với {$doctorName}. "
+                            . "Vui lòng đặt lịch hoặc đến khám đúng hẹn để đảm bảo sức khỏe.",
+            'type'         => 'reminder',
+            'channel'      => 'in_web',
+            'is_sent'      => true,
+            'is_read'      => false,
+            'ref_type'     => 'medical_record',
+            'ref_id'       => $medicalRecord->id,
+            'created_at'   => now(),
+        ]);
     }
 
     /**

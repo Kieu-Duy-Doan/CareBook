@@ -346,6 +346,18 @@
                     <span class="text-gray-600 text-sm">Tổng chi phí:</span>
                     <span class="font-bold text-gray-900">{{ number_format($totalAmount, 0, ',', '.') }} đ</span>
                 </div>
+                
+                @if($totalAmount > 0)
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-gray-600 text-sm">Bảo hiểm chi trả ({{ round(($insuranceCovers / $totalAmount) * 100) }}%):</span>
+                    <span class="font-bold text-blue-600">-{{ number_format($insuranceCovers, 0, ',', '.') }} đ</span>
+                </div>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-gray-600 text-sm">Người dùng phải trả ({{ round(($patientPays / $totalAmount) * 100) }}%):</span>
+                    <span class="font-bold text-gray-900">{{ number_format($patientPays, 0, ',', '.') }} đ</span>
+                </div>
+                @endif
+                
                 <div class="flex justify-between items-center mb-2">
                     <span class="text-gray-600 text-sm">Đã thanh toán:</span>
                     <span class="font-bold text-green-600">{{ number_format($paidAmount, 0, ',', '.') }} đ</span>

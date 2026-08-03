@@ -104,9 +104,14 @@
                 <div class="p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-gray-900">Đơn thuốc (Prescription)</h3>
                     @if($medical_record->prescription)
-                        <a href="{{ route('doctor.prescriptions.edit', $medical_record->prescription->id) }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                            <i class="fa-solid fa-pen"></i> Sửa đơn thuốc
-                        </a>
+                        <div class="flex items-center gap-3">
+                            <a href="{{ route('doctor.payments.print-prescription', $medical_record->appointment_id) }}" target="_blank" class="text-gray-600 hover:text-gray-900 text-sm font-medium border border-gray-300 bg-white px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2">
+                                <i class="fa-solid fa-print"></i> In đơn thuốc
+                            </a>
+                            <a href="{{ route('doctor.prescriptions.edit', $medical_record->prescription->id) }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium px-3 py-1.5 rounded-lg border border-transparent hover:bg-blue-50 transition-colors flex items-center gap-2">
+                                <i class="fa-solid fa-pen"></i> Sửa đơn thuốc
+                            </a>
+                        </div>
                     @else
                         <a href="{{ route('doctor.prescriptions.create', $medical_record->id) }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                             <i class="fa-solid fa-plus mr-1"></i> Kê đơn thuốc

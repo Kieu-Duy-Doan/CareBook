@@ -131,11 +131,9 @@
     <thead>
         <tr>
             <th style="width:5%">#</th>
-            <th style="width:35%">Tên thuốc</th>
-            <th style="width:20%">Liều dùng</th>
-            <th style="width:15%">Số lượng</th>
-            <th style="width:10%">Đơn vị</th>
-            <th style="width:15%">Đơn giá</th>
+            <th style="width:45%">Tên thuốc</th>
+            <th style="width:30%">Liều dùng / Hướng dẫn</th>
+            <th style="width:20%; text-align: center;">Số lượng</th>
         </tr>
     </thead>
     <tbody>
@@ -143,46 +141,21 @@
         <tr>
             <td class="number">{{ $index + 1 }}</td>
             <td>
-                <strong>{{ $item['name'] ?? '—' }}</strong>
-                @if(!empty($item['note']))
-                <br><span style="font-size:11px; color:#555; font-style:italic">{{ $item['note'] }}</span>
+                <strong>{{ $item['medicine_name'] ?? '—' }}</strong>
+            </td>
+            <td>
+                {{ $item['dosage'] ?? '—' }}
+                @if(!empty($item['instructions']))
+                <br><span style="font-size:11px; color:#555; font-style:italic">{{ $item['instructions'] }}</span>
                 @endif
             </td>
-            <td>{{ $item['dosage'] ?? '—' }}</td>
             <td class="number">{{ $item['quantity'] ?? '—' }}</td>
-            <td>{{ $item['unit'] ?? '—' }}</td>
-            <td class="amount">{{ !empty($item['price']) ? number_format($item['price'], 0, ',', '.') . 'đ' : '—' }}</td>
         </tr>
         @endforeach
     </tbody>
 </table>
 
-<div class="total-section">
-    <div class="total-box">
-        @if($summary['insurance_covers'] > 0)
-        <div class="row">
-            <span>Tổng tiền thuốc:</span>
-            <span>{{ number_format($prescription->payment_amount ?? 0, 0, ',', '.') }}đ</span>
-        </div>
-        <div class="row">
-            <span>BHYT chi trả ({{ $summary['insurance_rate'] * 100 }}%):</span>
-            <span>-{{ number_format($summary['insurance_covers'], 0, ',', '.') }}đ</span>
-        </div>
-        @endif
-        <div class="row grand">
-            <span>Bệnh nhân trả:</span>
-            <span>{{ number_format($prescription->payment_amount ?? 0, 0, ',', '.') }}đ</span>
-        </div>
-    </div>
-</div>
 
-<div class="payment-stamp">
-    @if(($prescription->payment_status ?? 'pending') === 'paid')
-        <span class="stamp paid">✓ Đã Thanh Toán</span>
-    @else
-        <span class="stamp unpaid">Chưa Thanh Toán</span>
-    @endif
-</div>
 
 @elseif($prescription)
 <div class="diagnosis-box" style="margin-top:12px">

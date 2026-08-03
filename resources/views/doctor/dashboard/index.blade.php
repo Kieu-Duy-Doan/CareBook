@@ -1,13 +1,28 @@
 <x-layouts.doctor>
     <x-slot name="title">Bảng điều khiển</x-slot>
 
-    <div class="mb-6">
-        <h2 class="text-2xl font-bold text-gray-900">Xin chào, Bác sĩ {{ Auth::user()->full_name }}!</h2>
-        <p class="text-gray-500">Dưới đây là tổng quan lịch làm việc của bạn.</p>
+    <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-900">Xin chào, Bác sĩ {{ Auth::user()->full_name }}!</h2>
+            <p class="text-gray-500">Dưới đây là tổng quan lịch làm việc của bạn.</p>
+        </div>
+        
+        <form method="GET" action="{{ route('doctor.dashboard') }}" class="flex items-center space-x-3 bg-white p-2 rounded-lg shadow-sm border border-gray-100">
+            <div>
+                <input type="date" name="from_date" value="{{ $fromDate }}" class="block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+            </div>
+            <span class="text-gray-500 font-medium">-</span>
+            <div>
+                <input type="date" name="to_date" value="{{ $toDate }}" class="block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+            </div>
+            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                Lọc
+            </button>
+        </form>
     </div>
 
     <!-- Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <!-- Đang chờ khám -->
         <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100 flex items-center">
             <div class="rounded-full bg-yellow-100 p-3 mr-4">
@@ -25,8 +40,8 @@
                 <i class="fa-solid fa-calendar-day text-blue-600 text-xl w-6 h-6 flex items-center justify-center"></i>
             </div>
             <div>
-                <p class="text-xs font-medium text-gray-500">Lịch hẹn hôm nay</p>
-                <p class="text-xl font-bold text-gray-900">{{ $todayAppointmentsCount }}</p>
+                <p class="text-xs font-medium text-gray-500">Tổng lịch hẹn</p>
+                <p class="text-xl font-bold text-gray-900">{{ $appointmentsCount }}</p>
             </div>
         </div>
 
@@ -36,19 +51,8 @@
                 <i class="fa-solid fa-check-double text-green-600 text-xl w-6 h-6 flex items-center justify-center"></i>
             </div>
             <div>
-                <p class="text-xs font-medium text-gray-500">Đã khám (Tháng này)</p>
-                <p class="text-xl font-bold text-gray-900">{{ $totalCompletedThisMonth }}</p>
-            </div>
-        </div>
-
-        <!-- Doanh thu cá nhân -->
-        <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100 flex items-center">
-            <div class="rounded-full bg-purple-100 p-3 mr-4">
-                <i class="fa-solid fa-sack-dollar text-purple-600 text-xl w-6 h-6 flex items-center justify-center"></i>
-            </div>
-            <div>
-                <p class="text-xs font-medium text-gray-500">Doanh thu (Tháng này)</p>
-                <p class="text-xl font-bold text-gray-900">{{ number_format($revenueThisMonth) }} đ</p>
+                <p class="text-xs font-medium text-gray-500">Đã hoàn thành</p>
+                <p class="text-xl font-bold text-gray-900">{{ $completedCount }}</p>
             </div>
         </div>
     </div>
