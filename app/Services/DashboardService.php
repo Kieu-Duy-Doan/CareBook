@@ -312,19 +312,45 @@ class DashboardService
         $fromDateString = $fromDate->format('Y-m-d');
         $toDateString = $toDate->format('Y-m-d');
 
-        $appointmentsCount = Appointment::where('doctor_profile_id', $doctorProfileId)
-            ->whereBetween('appointment_date', [$fromDateString, $toDateString])
-            ->count();
+        if ($doctorType === 'clinical') {
+            $appointmentsCount = Appointment::where('doctor_profile_id', $doctorProfileId)
+                ->whereBetween('appointment_date', [$fromDateString, $toDateString])
+                ->count();
 
-        $completedCount = Appointment::where('doctor_profile_id', $doctorProfileId)
-            ->whereBetween('appointment_date', [$fromDateString, $toDateString])
-            ->where('status', 'completed')
-            ->count();
+            $completedCount = Appointment::where('doctor_profile_id', $doctorProfileId)
+                ->whereBetween('appointment_date', [$fromDateString, $toDateString])
+                ->where('status', 'completed')
+                ->count();
 
-        $patientsWaitingOutside = Appointment::where('doctor_profile_id', $doctorProfileId)
-            ->whereBetween('appointment_date', [$fromDateString, $toDateString])
-            ->where('status', 'checked_in')
-            ->count();
+            $patientsWaitingOutside = Appointment::where('doctor_profile_id', $doctorProfileId)
+                ->whereBetween('appointment_date', [$fromDateString, $toDateString])
+                ->where('status', 'checked_in')
+                ->count();
+                
+            $examiningCount = Appointment::where('doctor_profile_id', $doctorProfileId)
+                ->whereBetween('appointment_date', [$fromDateString, $toDateString])
+                ->where('status', 'examining')
+                ->count();
+        } else {
+            $appointmentsCount = ClinicalVisit::where('doctor_profile_id', $doctorProfileId)
+                ->whereBetween('created_at', [$fromDate->startOfDay(), $toDate->endOfDay()])
+                ->count();
+
+            $completedCount = ClinicalVisit::where('doctor_profile_id', $doctorProfileId)
+                ->whereBetween('created_at', [$fromDate->startOfDay(), $toDate->endOfDay()])
+                ->where('status', 'completed')
+                ->count();
+
+            $patientsWaitingOutside = ClinicalVisit::where('doctor_profile_id', $doctorProfileId)
+                ->whereBetween('created_at', [$fromDate->startOfDay(), $toDate->endOfDay()])
+                ->where('status', 'waiting')
+                ->count();
+                
+            $examiningCount = ClinicalVisit::where('doctor_profile_id', $doctorProfileId)
+                ->whereBetween('created_at', [$fromDate->startOfDay(), $toDate->endOfDay()])
+                ->where('status', 'in_progress')
+                ->count();
+        }
 
         $waitingListData = [];
         
@@ -382,12 +408,21 @@ class DashboardService
         }
 
         $sevenDaysAgo = Carbon::now()->subDays(6)->startOfDay();
-        $chartData = Appointment::select(DB::raw('DATE(appointment_date) as date'), DB::raw('count(*) as count'))
-            ->where('doctor_profile_id', $doctorProfileId)
-            ->where('appointment_date', '>=', $sevenDaysAgo)
-            ->where('appointment_date', '<=', Carbon::today())
-            ->groupBy('date')
-            ->pluck('count', 'date')->toArray();
+        if ($doctorType === 'clinical') {
+            $chartData = Appointment::select(DB::raw('DATE(appointment_date) as date'), DB::raw('count(*) as count'))
+                ->where('doctor_profile_id', $doctorProfileId)
+                ->where('appointment_date', '>=', $sevenDaysAgo)
+                ->where('appointment_date', '<=', Carbon::today())
+                ->groupBy('date')
+                ->pluck('count', 'date')->toArray();
+        } else {
+            $chartData = ClinicalVisit::select(DB::raw('DATE(created_at) as date'), DB::raw('count(*) as count'))
+                ->where('doctor_profile_id', $doctorProfileId)
+                ->where('created_at', '>=', $sevenDaysAgo)
+                ->where('created_at', '<=', Carbon::today()->endOfDay())
+                ->groupBy('date')
+                ->pluck('count', 'date')->toArray();
+        }
 
         $miniChartLabels = [];
         $miniChartData = [];
@@ -401,6 +436,7 @@ class DashboardService
             'appointmentsCount',
             'completedCount',
             'patientsWaitingOutside',
+            'examiningCount',
             'waitingListData',
             'doctorType',
             'miniChartLabels',

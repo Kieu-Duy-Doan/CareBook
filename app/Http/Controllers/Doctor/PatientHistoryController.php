@@ -60,14 +60,10 @@ class PatientHistoryController extends Controller
                 });
             }
             if ($request->filled('date_from')) {
-                $query->whereHas('appointment', function($q) use ($request) {
-                    $q->whereDate('appointment_date', '>=', $request->date_from);
-                });
+                $query->whereDate('completed_at', '>=', $request->date_from);
             }
             if ($request->filled('date_to')) {
-                $query->whereHas('appointment', function($q) use ($request) {
-                    $q->whereDate('appointment_date', '<=', $request->date_to);
-                });
+                $query->whereDate('completed_at', '<=', $request->date_to);
             }
 
             $items = $query->orderByDesc('completed_at')->paginate(15)->withQueryString();

@@ -23,38 +23,73 @@
 
     <!-- Stats -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <!-- Đang chờ khám -->
-        <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100 flex items-center">
-            <div class="rounded-full bg-yellow-100 p-3 mr-4">
-                <i class="fa-solid fa-hourglass-half text-yellow-600 text-xl w-6 h-6 flex items-center justify-center"></i>
+        @if($doctorType === 'clinical')
+            <!-- Đang chờ khám -->
+            <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100 flex items-center">
+                <div class="rounded-full bg-yellow-100 p-3 mr-4">
+                    <i class="fa-solid fa-hourglass-half text-yellow-600 text-xl w-6 h-6 flex items-center justify-center"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-gray-500">Bệnh nhân đang chờ</p>
+                    <p class="text-xl font-bold text-gray-900">{{ $patientsWaitingOutside }}</p>
+                </div>
             </div>
-            <div>
-                <p class="text-xs font-medium text-gray-500">Bệnh nhân đang chờ</p>
-                <p class="text-xl font-bold text-gray-900">{{ $patientsWaitingOutside }}</p>
-            </div>
-        </div>
 
-        <!-- Hôm nay -->
-        <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100 flex items-center">
-            <div class="rounded-full bg-blue-100 p-3 mr-4">
-                <i class="fa-solid fa-calendar-day text-blue-600 text-xl w-6 h-6 flex items-center justify-center"></i>
+            <!-- Hôm nay -->
+            <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100 flex items-center">
+                <div class="rounded-full bg-blue-100 p-3 mr-4">
+                    <i class="fa-solid fa-calendar-day text-blue-600 text-xl w-6 h-6 flex items-center justify-center"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-gray-500">Tổng lịch hẹn</p>
+                    <p class="text-xl font-bold text-gray-900">{{ $appointmentsCount }}</p>
+                </div>
             </div>
-            <div>
-                <p class="text-xs font-medium text-gray-500">Tổng lịch hẹn</p>
-                <p class="text-xl font-bold text-gray-900">{{ $appointmentsCount }}</p>
-            </div>
-        </div>
 
-        <!-- Hoàn thành tháng này -->
-        <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100 flex items-center">
-            <div class="rounded-full bg-green-100 p-3 mr-4">
-                <i class="fa-solid fa-check-double text-green-600 text-xl w-6 h-6 flex items-center justify-center"></i>
+            <!-- Hoàn thành -->
+            <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100 flex items-center">
+                <div class="rounded-full bg-green-100 p-3 mr-4">
+                    <i class="fa-solid fa-check-double text-green-600 text-xl w-6 h-6 flex items-center justify-center"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-gray-500">Đã hoàn thành</p>
+                    <p class="text-xl font-bold text-gray-900">{{ $completedCount }}</p>
+                </div>
             </div>
-            <div>
-                <p class="text-xs font-medium text-gray-500">Đã hoàn thành</p>
-                <p class="text-xl font-bold text-gray-900">{{ $completedCount }}</p>
+        @else
+            <!-- Bệnh nhân đang chờ (Paraclinical) -->
+            <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100 flex items-center">
+                <div class="rounded-full bg-yellow-100 p-3 mr-4">
+                    <i class="fa-solid fa-hourglass-half text-yellow-600 text-xl w-6 h-6 flex items-center justify-center"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-gray-500">Tổng bệnh nhân đang chờ</p>
+                    <p class="text-xl font-bold text-gray-900">{{ $patientsWaitingOutside }}</p>
+                </div>
             </div>
-        </div>
+
+            <!-- Đang khám (Paraclinical) -->
+            <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100 flex items-center">
+                <div class="rounded-full bg-blue-100 p-3 mr-4">
+                    <i class="fa-solid fa-user-doctor text-blue-600 text-xl w-6 h-6 flex items-center justify-center"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-gray-500">Tổng bệnh nhân đang khám</p>
+                    <p class="text-xl font-bold text-gray-900">{{ $examiningCount }}</p>
+                </div>
+            </div>
+
+            <!-- Đã hoàn thành (Paraclinical) -->
+            <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100 flex items-center">
+                <div class="rounded-full bg-green-100 p-3 mr-4">
+                    <i class="fa-solid fa-check-double text-green-600 text-xl w-6 h-6 flex items-center justify-center"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-gray-500">Tổng bệnh nhân đã hoàn thành</p>
+                    <p class="text-xl font-bold text-gray-900">{{ $completedCount }}</p>
+                </div>
+            </div>
+        @endif
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">

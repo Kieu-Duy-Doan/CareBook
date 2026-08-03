@@ -112,7 +112,7 @@
     </div>
     <div class="row">
         <span class="label">BHYT:</span>
-        <span class="value">{{ $appointment->patientProfile->health_insurance_number ?? 'Không có' }}</span>
+        <span class="value">{{ $appointment->patientProfile->insurance_code ?? 'Không có' }}</span>
     </div>
 </div>
 

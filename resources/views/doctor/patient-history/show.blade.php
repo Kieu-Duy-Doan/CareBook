@@ -38,7 +38,7 @@
                 </div>
                 <div>
                     <div class="text-xs text-gray-500 font-medium mb-1">BHYT</div>
-                    <div class="font-medium text-blue-600">{{ $patient->health_insurance_number ?? '—' }}</div>
+                    <div class="font-medium text-blue-600">{{ $patient->insurance_code ?? '—' }}</div>
                 </div>
             </div>
         </div>
