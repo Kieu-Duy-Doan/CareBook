@@ -95,6 +95,11 @@
                                 <span class="font-medium text-gray-500 block mb-1">Chẩn đoán (ICD-10: {{ $appointment->medicalRecord->icd10_code ?? '—' }}):</span>
                                 <p class="text-gray-900 font-medium">{{ $appointment->medicalRecord->diagnosis ?? '—' }}</p>
                             </div>
+                            @if($appointment->medicalRecord->assistant)
+                            <div class="md:col-span-2 mt-2 p-2 bg-gray-50 rounded text-sm text-gray-600">
+                                <span class="font-medium">Người hỗ trợ gõ máy:</span> {{ $appointment->medicalRecord->assistant->full_name }} ({{ $appointment->medicalRecord->assistant->display_role }})
+                            </div>
+                            @endif
                             <div>
                                 <span class="font-medium text-gray-500 block mb-1">Hướng điều trị:</span>
                                 <p class="text-gray-900 font-medium">

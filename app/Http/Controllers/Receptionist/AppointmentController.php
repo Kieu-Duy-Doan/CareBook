@@ -492,6 +492,14 @@ class AppointmentController extends Controller
 
                 if (in_array($newStatus, ['checked_in', 'examining', 'completed']) && is_null($appointment->checked_in_at)) {
                     $appointment->checked_in_at = now();
+                    
+                    // Tính toán đến muộn (>30 phút)
+                    $appointmentDatetime = \Carbon\Carbon::parse($appointment->appointment_date->format('Y-m-d') . ' ' . $appointment->appointment_time);
+                    if (now()->isAfter($appointmentDatetime->copy()->addMinutes(30))) {
+                        $appointment->is_late = true;
+                    } else {
+                        $appointment->is_late = false;
+                    }
                 }
                 if ($newStatus === 'completed' && is_null($appointment->completed_at)) {
                     $appointment->completed_at = now();
@@ -784,6 +792,14 @@ class AppointmentController extends Controller
 
                 if (in_array($newStatus, ['checked_in', 'examining', 'completed']) && is_null($appointment->checked_in_at)) {
                     $appointment->checked_in_at = now();
+
+                    // Tính toán đến muộn (>30 phút)
+                    $appointmentDatetime = \Carbon\Carbon::parse($appointment->appointment_date->format('Y-m-d') . ' ' . $appointment->appointment_time);
+                    if (now()->isAfter($appointmentDatetime->copy()->addMinutes(30))) {
+                        $appointment->is_late = true;
+                    } else {
+                        $appointment->is_late = false;
+                    }
                 }
                 if ($newStatus === 'completed' && is_null($appointment->completed_at)) {
                     $appointment->completed_at = now();

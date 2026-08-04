@@ -19,7 +19,9 @@ class MedicalRecordController extends Controller
             return redirect()->route('doctor.medical-records.show', $appointment->medicalRecord->id);
         }
 
-        return view('doctor.medical-records.create', compact('appointment'));
+        $assistants = \App\Models\User::where('role', '!=', 'patient')->get();
+
+        return view('doctor.medical-records.create', compact('appointment', 'assistants'));
     }
 
     public function store(Request $request, Appointment $appointment)
@@ -37,6 +39,7 @@ class MedicalRecordController extends Controller
             'followup_date' => 'nullable|date',
             'treatment_result' => 'required|in:outpatient,admitted,monitoring',
             'result_files.*' => 'nullable|file|mimes:pdf|max:10240',
+            'assistant_id' => 'nullable|exists:users,id',
         ]);
 
         $resultFiles = [];
@@ -55,6 +58,7 @@ class MedicalRecordController extends Controller
         $medicalRecord = MedicalRecord::create([
             'appointment_id' => $appointment->id,
             'doctor_profile_id' => $doctorProfile->id,
+            'assistant_id' => $validated['assistant_id'] ?? null,
             'diagnosis' => $validated['diagnosis'],
             'icd10_code' => $validated['icd10_code'],
             'conclusion' => $validated['conclusion'],
@@ -90,7 +94,8 @@ class MedicalRecordController extends Controller
     public function edit(MedicalRecord $medical_record)
     {
         $medical_record->load('appointment');
-        return view('doctor.medical-records.edit', compact('medical_record'));
+        $assistants = \App\Models\User::where('role', '!=', 'patient')->get();
+        return view('doctor.medical-records.edit', compact('medical_record', 'assistants'));
     }
 
     public function update(Request $request, MedicalRecord $medical_record)
@@ -104,6 +109,7 @@ class MedicalRecordController extends Controller
             'treatment_result' => 'required|in:outpatient,admitted,monitoring',
             'result_files.*' => 'nullable|file|mimes:pdf|max:10240',
             'remove_files' => 'nullable|array',
+            'assistant_id' => 'nullable|exists:users,id',
         ]);
 
         $resultFiles = $medical_record->result_files ?? [];

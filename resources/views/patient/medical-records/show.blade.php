@@ -21,7 +21,7 @@
                 <div>
                     <div class="text-xs uppercase tracking-[0.25em] text-slate-400">Lịch khám</div>
                     <h2 class="mt-2 text-xl font-semibold text-slate-900">{{ $appointment->appointment_date?->format('d/m/Y') ?? '—' }}@if($appointment->appointment_time) lúc {{ substr($appointment->appointment_time, 0, 5) }}@endif</h2>
-                    <div class="mt-2 text-sm text-slate-600">Bác sĩ: {{ $appointment->doctorProfile->full_title ?? 'Chưa có' }} · Phòng: {{ $appointment->room->name ?? 'Chưa có' }}</div>
+                    <div class="mt-2 text-sm text-slate-600">Bác sĩ: {{ $appointment->doctorProfile->full_title ?? 'Chưa có' }} @if($appointment->medicalRecord?->assistant) · Người hỗ trợ: {{ $appointment->medicalRecord->assistant->full_name }} @endif · Phòng: {{ $appointment->room->name ?? 'Chưa có' }}</div>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
                     <span class="rounded-full px-4 py-1.5 text-sm font-semibold {{ $appointment->status === 'completed' ? 'bg-emerald-100 text-emerald-700' : ($appointment->status === 'cancelled' ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700') }}">{{ $appointment->status_label }}</span>
