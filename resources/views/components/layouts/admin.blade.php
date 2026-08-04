@@ -149,6 +149,13 @@
                 Cấu hình BHYT
             </a>
 
+            <a href="{{ route('admin.doctor-level-fees.index') }}"
+                class="{{ request()->routeIs('admin.doctor-level-fees.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
+                <i
+                    class="fa-solid fa-sack-dollar w-5 text-center mr-3 {{ request()->routeIs('admin.doctor-level-fees.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
+                Phí khám
+            </a>
+
 
             <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-4 mb-1">
                 Hệ thống

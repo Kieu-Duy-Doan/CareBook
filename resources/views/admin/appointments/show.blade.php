@@ -527,6 +527,11 @@
                                     {{ $appointment->medicalRecord->diagnosis ?? 'Chưa có chẩn đoán' }}
                                 </div>
                             </div>
+                            @if($appointment->medicalRecord->assistant)
+                            <div class="mt-3 text-sm text-gray-500 bg-gray-50 p-2 rounded">
+                                <span class="font-medium">Người hỗ trợ gõ máy:</span> {{ $appointment->medicalRecord->assistant->full_name }} ({{ $appointment->medicalRecord->assistant->display_role }})
+                            </div>
+                            @endif
                         </div>
 
                         <!-- Kết luận -->

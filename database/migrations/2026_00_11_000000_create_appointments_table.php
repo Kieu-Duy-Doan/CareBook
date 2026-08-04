@@ -39,6 +39,7 @@ return new class extends Migration
             $table->text('vital_note')->nullable();
             $table->foreignId('measured_by')->nullable()->constrained('users')->restrictOnDelete();
             $table->timestamp('checked_in_at')->nullable();
+            $table->boolean('is_late')->default(false);
             $table->timestamp('completed_at')->nullable();
             $table->timestamps();
 

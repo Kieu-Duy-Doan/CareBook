@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'Lễ tân' }} - CareBook</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -68,11 +69,25 @@
                 Giám sát lâm sàng
             </a>
 
+            <a href="{{ route('receptionist.hospital-history.index') }}"
+                class="{{ request()->routeIs('receptionist.hospital-history.*') ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
+                <i class="fa-solid fa-clock-rotate-left w-5 text-center mr-3 {{ request()->routeIs('receptionist.hospital-history.*') ? 'text-emerald-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
+                Lịch sử khám
+            </a>
+
+            <a href="{{ route('receptionist.on-duty.index') }}"
+                class="{{ request()->routeIs('receptionist.on-duty.*') ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
+                <i class="fa-solid fa-user-clock w-5 text-center mr-3 {{ request()->routeIs('receptionist.on-duty.*') ? 'text-emerald-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
+                Bác sĩ trực hôm nay
+            </a>
+
             <a href="{{ route('receptionist.payments.index') }}"
                 class="{{ request()->routeIs('receptionist.payments.*') ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
                 <i class="fa-solid fa-file-invoice-dollar w-5 text-center mr-3 {{ request()->routeIs('receptionist.payments.*') ? 'text-emerald-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
                 Thanh toán
             </a>
+
+
 
             <a href="{{ route('receptionist.notifications.page') }}"
                 class="{{ request()->routeIs('receptionist.notifications.*') ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">

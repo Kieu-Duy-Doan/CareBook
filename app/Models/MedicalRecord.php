@@ -9,6 +9,7 @@ class MedicalRecord extends Model
     protected $fillable = [
         'appointment_id',
         'doctor_profile_id',
+        'assistant_id',
         'diagnosis',
         'icd10_code',
         'conclusion',
@@ -39,5 +40,10 @@ class MedicalRecord extends Model
     public function prescription()
     {
         return $this->hasOne(Prescription::class);
+    }
+
+    public function assistant()
+    {
+        return $this->belongsTo(User::class, 'assistant_id');
     }
 }

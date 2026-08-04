@@ -48,6 +48,12 @@
                     </span>
                 </div>
                 <div class="p-6">
+                    @if($medical_record->assistant)
+                    <div class="mb-4 bg-blue-50 text-blue-800 p-3 rounded-lg text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-user-nurse"></i>
+                        <span><strong>Người hỗ trợ gõ máy:</strong> {{ $medical_record->assistant->full_name }} ({{ $medical_record->assistant->display_role }})</span>
+                    </div>
+                    @endif
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6">
                         <div class="md:col-span-2">
                             <span class="block text-sm text-gray-500 mb-1">Chẩn đoán:</span>

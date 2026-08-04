@@ -597,6 +597,11 @@
                                         {{ $appointment->medicalRecord->diagnosis ?? 'Chưa có chẩn đoán' }}
                                     </div>
                                 </div>
+                                @if($appointment->medicalRecord->assistant)
+                                <div class="mt-3 text-sm text-gray-500 bg-gray-50 p-2 rounded">
+                                    <span class="font-medium">Người hỗ trợ gõ máy:</span> {{ $appointment->medicalRecord->assistant->full_name }} ({{ $appointment->medicalRecord->assistant->display_role }})
+                                </div>
+                                @endif
                             </div>
 
                             <!-- Kết luận -->
@@ -935,11 +940,13 @@
                                     </button>
                                 </form>
 
-                                <a href="{{ route('receptionist.payments.create', $appointment->id) }}"
+                                @if($summary['remaining_to_pay'] > 0)
+                                <button type="button" id="btn-generate-qr" onclick="openQrInline()"
                                     class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl text-sm font-bold text-center transition-colors flex items-center justify-center gap-2 shadow-sm">
                                     <i class="fa-solid fa-qrcode"></i>
                                     Tạo mã QR SePay
-                                </a>
+                                </button>
+                                @endif
 
                                 @if($overpaid > 0)
                                 <form action="{{ route('receptionist.payments.refund', $appointment->id) }}" method="POST" class="flex-1">
@@ -952,6 +959,56 @@
                                 </form>
                                 @endif
                             </div>
+
+                            @if($summary['remaining_to_pay'] > 0)
+                            <!-- Inline QR Code Container (hidden by default) -->
+                            <div id="qr-inline-wrapper" class="hidden mt-6 bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/80">
+                                    <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                        <i class="fa-solid fa-bolt text-blue-600"></i> Mã QR Thanh toán SePay
+                                    </h3>
+                                    <div class="flex gap-2">
+                                        <button type="button" onclick="closeQrInline()" class="text-gray-400 hover:text-gray-600 transition-colors p-1.5 rounded-lg hover:bg-gray-100">
+                                            <i class="fa-solid fa-xmark"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="p-6 text-center bg-white flex flex-col items-center">
+                                    <p class="text-sm text-gray-500 mb-1">Số tiền cần thanh toán:</p>
+                                    <div class="text-2xl font-bold text-red-600 mb-6">{{ number_format($summary['remaining_to_pay'], 0, ',', '.') }}đ</div>
+
+                                    <div id="qr-container" class="bg-gray-50 p-4 rounded-xl inline-block border border-gray-200 shadow-inner mb-4 relative overflow-hidden min-h-[220px] min-w-[220px] flex items-center justify-center">
+                                        <div id="qr-loading" class="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
+                                            <i class="fa-solid fa-circle-notch fa-spin text-3xl text-blue-500"></i>
+                                        </div>
+                                        <div class="absolute inset-0 border-2 border-blue-400 rounded-xl opacity-20 pointer-events-none animate-pulse"></div>
+                                        <img src="" alt="QR Code" class="w-48 h-48 mx-auto rounded-lg transition-all duration-300 hidden" id="qr-image">
+
+                                        <div id="qr-expired-overlay" class="hidden absolute inset-0 bg-white/90 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center z-20">
+                                            <i class="fa-solid fa-clock-rotate-left text-3xl text-gray-500 mb-2"></i>
+                                            <p class="font-bold text-gray-800">Mã QR hết hạn</p>
+                                            <button onclick="fetchQrCode()" class="mt-2 px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                                                <i class="fa-solid fa-rotate-right mr-1"></i> Tạo mới
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="w-full max-w-sm">
+                                        <div id="payment-status-banner" class="bg-blue-50 text-blue-800 text-sm p-3 rounded-lg flex items-center justify-between font-medium mb-4">
+                                            <div class="flex items-center">
+                                                <i class="fa-solid fa-circle-notch fa-spin mr-2 text-blue-600" id="payment-spinner"></i> <span id="payment-status-text">Đang chờ...</span>
+                                            </div>
+                                            <div class="text-blue-700 font-mono font-bold bg-blue-100 px-2 py-0.5 rounded" id="qr-countdown">05:00</div>
+                                        </div>
+
+                                        <button onclick="fetchQrCode()" class="w-full px-4 py-2 bg-white text-blue-600 hover:bg-blue-50 font-medium rounded-lg transition-colors border border-blue-200 text-sm shadow-sm flex items-center justify-center">
+                                            <i class="fa-solid fa-arrows-rotate mr-2"></i> Làm mới mã QR
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
                         </div>
                     </div>
                     @elseif ($appointment->clinicalVisits->isNotEmpty() && $remaining <= 0 && $amountPaid> 0)
@@ -1255,5 +1312,153 @@
                     </div>
                 </div>
 
-    </div>
+    @if($summary['remaining_to_pay'] > 0)
+
+    <script>
+        const appointmentId = Number("{{ $appointment->id }}");
+        const currentPaidAmount = Number("{{ $summary['amount_paid'] ?? 0 }}");
+        const statusBanner = document.getElementById('payment-status-banner');
+
+        let serverStartTime = null;
+        let qrExpired = false;
+        let checkPaymentInterval = null;
+        let countdownTimer = null;
+        let qrGenerated = false;
+
+        function updateTimer() {
+            if (qrExpired || !serverStartTime) return;
+
+            let nowUnix = Math.floor(Date.now() / 1000);
+            let elapsed = nowUnix - serverStartTime;
+            let timeLeft = 300 - elapsed;
+
+            if (timeLeft <= 0) {
+                qrExpired = true;
+                if (checkPaymentInterval) clearInterval(checkPaymentInterval);
+
+                document.getElementById('qr-countdown').innerText = '00:00';
+                document.getElementById('qr-image').classList.add('blur-[4px]', 'opacity-50');
+                document.getElementById('qr-expired-overlay').classList.remove('hidden');
+
+                if (statusBanner) {
+                    statusBanner.classList.remove('bg-blue-50', 'text-blue-800');
+                    statusBanner.classList.add('bg-gray-100', 'text-gray-600', 'border', 'border-gray-300');
+                    document.getElementById('payment-spinner').classList.replace('fa-circle-notch', 'fa-clock');
+                    document.getElementById('payment-spinner').classList.replace('fa-spin', 'opacity-50');
+                    document.getElementById('payment-spinner').classList.replace('text-blue-600', 'text-gray-500');
+                    document.getElementById('payment-status-text').innerText = 'Hết hạn';
+                }
+            } else {
+                let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+                let s = (timeLeft % 60).toString().padStart(2, '0');
+                document.getElementById('qr-countdown').innerText = m + ':' + s;
+
+                if (timeLeft <= 60) {
+                    document.getElementById('qr-countdown').classList.replace('bg-blue-100', 'bg-red-100');
+                    document.getElementById('qr-countdown').classList.replace('text-blue-700', 'text-red-700');
+                }
+            }
+        }
+
+        function fetchQrCode() {
+            // Reset state
+            if (countdownTimer) clearInterval(countdownTimer);
+            if (checkPaymentInterval) clearInterval(checkPaymentInterval);
+            
+            qrExpired = false;
+            document.getElementById('qr-loading').classList.remove('hidden');
+            document.getElementById('qr-image').classList.add('hidden');
+            document.getElementById('qr-image').classList.remove('blur-[4px]', 'opacity-50');
+            document.getElementById('qr-expired-overlay').classList.add('hidden');
+            
+            // Reset banner styling
+            statusBanner.classList.remove('bg-gray-100', 'text-gray-600', 'border', 'border-gray-300');
+            statusBanner.classList.add('bg-blue-50', 'text-blue-800');
+            let spinner = document.getElementById('payment-spinner');
+            spinner.className = 'fa-solid fa-circle-notch fa-spin mr-2 text-blue-600';
+            document.getElementById('payment-status-text').innerText = 'Đang chờ...';
+            document.getElementById('qr-countdown').innerText = '05:00';
+            document.getElementById('qr-countdown').className = 'text-blue-700 font-mono font-bold bg-blue-100 px-2 py-0.5 rounded';
+            
+            fetch(`/api/payments/${appointmentId}/generate-qr`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.qrUrl) {
+                    document.getElementById('qr-image').src = data.qrUrl;
+                    document.getElementById('qr-image').classList.remove('hidden');
+                    document.getElementById('qr-loading').classList.add('hidden');
+                    
+                    serverStartTime = data.startTime;
+                    qrGenerated = true;
+                    
+                    updateTimer();
+                    countdownTimer = setInterval(updateTimer, 1000);
+                    startPolling();
+                }
+            })
+            .catch(err => {
+                console.error('Error generating QR:', err);
+                document.getElementById('qr-loading').innerHTML = '<span class="text-red-500 font-medium"><i class="fa-solid fa-circle-exclamation mr-1"></i> Lỗi tạo QR</span>';
+            });
+        }
+
+        function startPolling() {
+            checkPaymentInterval = setInterval(function() {
+                if (qrExpired) return;
+
+                fetch(`/api/payments/${appointmentId}/check-status`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.paid === true) {
+                            clearInterval(checkPaymentInterval);
+                            clearInterval(countdownTimer);
+                            
+                            if (statusBanner) {
+                                statusBanner.classList.remove('bg-blue-50', 'text-blue-800');
+                                statusBanner.classList.add('bg-emerald-50', 'text-emerald-800', 'justify-center');
+                                statusBanner.innerHTML = '<i class="fa-solid fa-circle-check mr-2 text-emerald-600"></i> Thanh toán thành công!';
+                            }
+
+                            setTimeout(function() {
+                                window.location.reload();
+                            }, 2000);
+                        } else if (data.paid_amount > currentPaidAmount) {
+                            window.location.reload();
+                        }
+                    })
+                    .catch(err => {});
+            }, 3000);
+        }
+
+        function openQrInline() {
+            document.getElementById('btn-generate-qr').parentElement.classList.add('hidden');
+            document.getElementById('qr-inline-wrapper').classList.remove('hidden');
+            
+            if (!qrGenerated) {
+                fetchQrCode();
+            } else {
+                updateTimer();
+                countdownTimer = setInterval(updateTimer, 1000);
+                startPolling();
+            }
+        }
+
+        function closeQrInline() {
+            document.getElementById('qr-inline-wrapper').classList.add('hidden');
+            document.getElementById('btn-generate-qr').parentElement.classList.remove('hidden');
+            
+            if (countdownTimer) clearInterval(countdownTimer);
+            if (checkPaymentInterval) clearInterval(checkPaymentInterval);
+        }
+    </script>
+    @endif
+    
+    </div> <!-- Close CỘT PHẢI -->
+</div> <!-- Close Main Layout 3 Cột -->
 </x-layouts.receptionist>

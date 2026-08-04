@@ -29,6 +29,18 @@
         @csrf
         @method('PUT')
 
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Người hỗ trợ (nếu có)</label>
+            <select name="assistant_id" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none">
+                <option value="">-- Không có --</option>
+                @foreach($assistants as $assistant)
+                    <option value="{{ $assistant->id }}" {{ old('assistant_id', $medical_record->assistant_id) == $assistant->id ? 'selected' : '' }}>
+                        {{ $assistant->full_name }} ({{ $assistant->display_role }})
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Chẩn đoán (Diagnosis) <span class="text-red-500">*</span></label>

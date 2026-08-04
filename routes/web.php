@@ -278,9 +278,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,doctor']
         Route::delete('/{id}', [\App\Http\Controllers\Admin\InsuranceTypeController::class, 'destroy'])->name('destroy');
     });
 
+    // Phí khám theo cấp bác sĩ
+    Route::get('doctor-level-fees', [\App\Http\Controllers\Admin\DoctorLevelFeeController::class, 'index'])->name('doctor-level-fees.index');
+    Route::put('doctor-level-fees', [\App\Http\Controllers\Admin\DoctorLevelFeeController::class, 'update'])->name('doctor-level-fees.update');
+
     // Báo cáo & Thống kê
     Route::prefix('reports')->name('reports.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\ReportController::class, 'index'])->name('index');
+        Route::get('/export-csv', [\App\Http\Controllers\Admin\ReportController::class, 'exportCsv'])->name('export-csv');
     });
 });
 
@@ -314,6 +319,39 @@ Route::prefix('api')->name('api.')->group(function () {
             'remaining_to_pay' => $summary['remaining_to_pay']
         ]);
     })->name('payments.check-status');
+
+    // Generate QR (from Appointment show page)
+    Route::post('/payments/{appointment}/generate-qr', function ($appointmentId) {
+        $appointment = \App\Models\Appointment::with('clinicalVisits.payments')->find($appointmentId);
+        if (!$appointment) return response()->json(['error' => 'Not found'], 404);
+        
+        $summary = app(\App\Services\PaymentService::class)->calculateSummary($appointment);
+        if ($summary['remaining_to_pay'] <= 0) return response()->json(['error' => 'No remaining payment'], 400);
+
+        $receptionistId = \Illuminate\Support\Facades\Auth::id();
+        $timeCacheKey = 'receptionist_active_checkout_time_' . $receptionistId;
+        $appointmentCacheKey = 'receptionist_active_checkout_' . $receptionistId;
+        $intentCacheKeySession = 'receptionist_active_checkout_intent_' . $receptionistId;
+
+        $startTime = time();
+        \Illuminate\Support\Facades\Cache::put($timeCacheKey, $startTime, now()->addMinutes(60));
+        
+        $intentCode = 'APT' . $appointment->id . strtoupper(\Illuminate\Support\Str::random(5));
+        \Illuminate\Support\Facades\Cache::put($intentCacheKeySession, $intentCode, now()->addMinutes(60));
+        
+        \Illuminate\Support\Facades\Cache::put('qr_intent_' . $intentCode, $appointment->id, now()->addMinutes(10));
+        \Illuminate\Support\Facades\Cache::put('qr_intent_' . $intentCode . '_user', $receptionistId, now()->addMinutes(10));
+
+        // Activate Customer Display
+        \Illuminate\Support\Facades\Cache::put($appointmentCacheKey, $appointment->id, now()->addMinutes(60));
+
+        $qrUrl = app(\App\Services\SePayService::class)->generateVietQrUrl($appointment, $summary['remaining_to_pay'], $intentCode);
+
+        return response()->json([
+            'qrUrl' => $qrUrl,
+            'startTime' => $startTime
+        ]);
+    })->name('payments.generate-qr')->middleware(['auth', 'role:receptionist']);
 });
 
 // ──────────────────────────────────────────────────────────
@@ -435,6 +473,15 @@ Route::prefix('receptionist')->name('receptionist.')->group(function () {
         Route::post('payments/{appointment}/refund', [\App\Http\Controllers\Receptionist\PaymentController::class, 'confirmRefund'])->name('payments.refund');
         Route::get('payments/{appointment}/print-vat', [\App\Http\Controllers\Receptionist\PaymentController::class, 'printVat'])->name('payments.printVat');
         Route::get('payments/{appointment}/print-deposit', [\App\Http\Controllers\Receptionist\PaymentController::class, 'printDeposit'])->name('payments.printDeposit');
+
+        // Reports (Now integrated into Dashboard)
+        Route::get('reports/export-csv', [\App\Http\Controllers\Receptionist\DashboardController::class, 'exportCsv'])->name('reports.export-csv');
+
+        // Hospital History
+        Route::get('hospital-history', [\App\Http\Controllers\Receptionist\HospitalHistoryController::class, 'index'])->name('hospital-history.index');
+
+        // On Duty (Bác sĩ trực hôm nay)
+        Route::get('on-duty', [\App\Http\Controllers\Receptionist\OnDutyController::class, 'index'])->name('on-duty.index');
 
         // Payments history
         Route::resource('payments', \App\Http\Controllers\Receptionist\PaymentController::class)->only(['index', 'show']);

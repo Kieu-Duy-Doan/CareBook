@@ -105,16 +105,9 @@
                                     </tr>
                                     @endif
 
-                                    @if($summary['medicine_fee'] > 0)
-                                    <tr class="border-b border-gray-50 last:border-0">
-                                        <td class="py-3 px-4 font-medium text-gray-900">
-                                            Thuốc & Vật tư y tế
-                                        </td>
-                                        <td class="py-3 px-4 text-right font-bold text-gray-900">{{ number_format($summary['medicine_fee'], 0, ',', '.') }}đ</td>
-                                    </tr>
-                                    @endif
 
-                                    @if($summary['exam_fee'] == 0 && $summary['service_fee'] == 0 && $summary['medicine_fee'] == 0)
+
+                                    @if($summary['exam_fee'] == 0 && $summary['service_fee'] == 0)
                                     <tr>
                                         <td colspan="2" class="py-3 px-4 text-center text-gray-500 text-sm">Không có khoản phí nào</td>
                                     </tr>

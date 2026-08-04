@@ -80,6 +80,12 @@
                                 Đặt lại
                             </a>
                         </div>
+                        @if($doctorId || $specialtyId)
+                        <a href="{{ route('admin.reports.export-csv', request()->only(['date_from','date_to','doctor_id','specialty_id'])) }}"
+                            class="flex items-center justify-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 py-2 rounded-lg text-sm font-medium transition-colors mt-2">
+                            <i class="fa-solid fa-file-csv"></i> Xuất CSV
+                        </a>
+                        @endif
                     </div>
                 </div>
                 <div class="text-xs text-gray-500">
@@ -245,4 +251,75 @@
             </div>
         </div>
     </div>
+
+    @if($detailRows && $detailRows->isNotEmpty())
+    {{-- DRILL-DOWN TABLE --}}
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <div>
+                <h3 class="font-semibold text-gray-900">
+                    <i class="fa-solid fa-table-list text-blue-500 mr-2"></i>
+                    Chi tiết lịch khám — {{ $detailRows->count() }} bản ghi
+                </h3>
+                <p class="text-xs text-gray-500 mt-0.5">
+                    Từ {{ $dateFrom->format('d/m/Y') }} đến {{ $dateTo->format('d/m/Y') }}
+                    @if($doctorId) &bull; Bộ lọc: bác sĩ đã chọn @endif
+                    @if($specialtyId) &bull; Bộ lọc: chuyên khoa đã chọn @endif
+                </p>
+            </div>
+            <a href="{{ route('admin.reports.export-csv', request()->only(['date_from','date_to','doctor_id','specialty_id'])) }}"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-sm font-semibold transition">
+                <i class="fa-solid fa-file-csv"></i> Xuất CSV
+            </a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-gray-50 border-b border-gray-100">
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Mã LH</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Bệnh nhân</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Bác sĩ</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Chuyên khoa</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Ngày khám</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Trạng thái</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Tổng thu</th>
+                        <th class="px-4 py-3"></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    @foreach($detailRows as $row)
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-4 py-3">
+                            <span class="font-mono text-xs text-gray-500">{{ $row->appointment_code }}</span>
+                        </td>
+                        <td class="px-4 py-3 font-medium text-gray-900">{{ $row->patientProfile->full_name ?? '—' }}</td>
+                        <td class="px-4 py-3 text-gray-700 text-xs">{{ $row->doctor->full_title ?? '—' }}</td>
+                        <td class="px-4 py-3 text-gray-600 text-xs">{{ $row->specialty->name ?? '—' }}</td>
+                        <td class="px-4 py-3 text-gray-600 text-xs">
+                            {{ $row->appointment_date?->format('d/m/Y') }}
+                            <span class="text-gray-400">{{ substr($row->appointment_time ?? '', 0, 5) }}</span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                                {{ $row->status === 'completed' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-600' }}">
+                                {{ $row->status }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-right font-semibold text-gray-900 text-sm">
+                            {{ number_format($row->payments->sum('amount'), 0, ',', '.') }}₫
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <a href="{{ route('admin.hospital-history.show', $row->id) }}"
+                                class="text-blue-500 hover:text-blue-700 text-xs">
+                                <i class="fa-solid fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endif
+
 </x-layouts.admin>
