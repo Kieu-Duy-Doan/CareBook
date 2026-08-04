@@ -174,10 +174,22 @@ class RoomController extends Controller
             return back()->with('error', 'Không thể xoá phòng đang có lịch hẹn chờ khám hoặc đang khám.');
         }
 
-        $room->specialties()->detach();
-        $room->delete();
+        $hasWorkSchedules = $room->workSchedules()->exists();
+        if ($hasWorkSchedules) {
+            return back()->with('error', 'Không thể xoá phòng khám này vì đang có bác sĩ (lịch làm việc) được xếp tại đây.');
+        }
 
-        return back()->with('success', 'Đã xoá phòng thành công.');
+        try {
+            DB::transaction(function () use ($room) {
+                $room->specialties()->detach();
+                $room->delete();
+            });
+            return back()->with('success', 'Đã xoá phòng thành công.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            return back()->with('error', 'Không thể xoá phòng khám này vì dữ liệu đang được sử dụng ở nơi khác.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Có lỗi xảy ra khi xoá phòng khám.');
+        }
     }
 
     public function show($id)
