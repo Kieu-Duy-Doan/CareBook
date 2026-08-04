@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\InsuranceType;
 use App\Models\PatientProfile;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -29,13 +30,15 @@ class HealthInsuranceService
             $expiryDate = $profile->insurance_expiry ? Carbon::parse($profile->insurance_expiry)->format('d/m/Y') : 'Không rõ';
             $warningMessage = "Thẻ BHYT đã hết hạn ngày {$expiryDate}. Bệnh nhân thanh toán toàn bộ.";
         } else {
-            $prefix = strtoupper(substr($profile->insurance_code, 0, 2));
-            if (in_array($prefix, ['TE', 'HT'])) {
-                $insuranceRate = 1.00;
-            } elseif (in_array($prefix, ['DN', 'HC'])) {
-                $insuranceRate = 0.95;
+            // Tra cứu tỷ lệ chi trả từ bảng insurance_types thay vì fix cứng
+            $insuranceType = InsuranceType::findByInsuranceCode($profile->insurance_code);
+
+            if ($insuranceType) {
+                $insuranceRate = $insuranceType->coverage_rate;
             } else {
-                $insuranceRate = 0.80; // Phổ thông
+                // Fallback: mã BHYT hợp lệ nhưng chưa được cấu hình trong hệ thống
+                $insuranceRate = 0.80;
+                $warningMessage = "Mã BHYT chưa được cấu hình trong hệ thống. Áp dụng tỷ lệ mặc định 80%.";
             }
         }
 

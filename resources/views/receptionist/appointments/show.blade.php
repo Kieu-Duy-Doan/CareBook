@@ -303,8 +303,65 @@
                                     <div>
                                         <div class="text-xs text-blue-600 font-medium uppercase tracking-wider">Bảo
                                             hiểm y tế</div>
-                                        <div class="font-mono font-bold text-gray-900">
+                                        <div class="font-mono font-bold text-gray-900 flex items-center gap-2">
                                             {{ $appointment->patientProfile->insurance_code }}
+                                            
+                                            <!-- BHYT Lookup Tooltip -->
+                                            @php
+                                                $insuranceTypes = \App\Models\InsuranceType::orderBy('coverage_percent', 'desc')->get();
+                                                $codePrefix = substr($appointment->patientProfile->insurance_code, 0, 2);
+                                                $matchedInsurance = $insuranceTypes->firstWhere('prefix', $codePrefix);
+                                            @endphp
+
+                                            <div x-data="{ open: false }" class="relative inline-block">
+                                                <button type="button" @click="open = !open" @click.away="open = false" 
+                                                    class="text-blue-500 hover:text-blue-700 focus:outline-none transition-colors"
+                                                    title="Tra cứu mức hưởng BHYT">
+                                                    <i class="fa-solid fa-circle-info"></i>
+                                                </button>
+
+                                                <div x-show="open" style="display: none;"
+                                                    x-transition:enter="transition ease-out duration-200"
+                                                    x-transition:enter-start="opacity-0 translate-y-1"
+                                                    x-transition:enter-end="opacity-100 translate-y-0"
+                                                    x-transition:leave="transition ease-in duration-150"
+                                                    x-transition:leave-start="opacity-100 translate-y-0"
+                                                    x-transition:leave-end="opacity-0 translate-y-1"
+                                                    class="absolute left-0 mt-2 w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden">
+                                                    
+                                                    <div class="px-4 py-3 bg-blue-50 border-b border-gray-100">
+                                                        <h4 class="text-sm font-bold text-blue-800"><i class="fa-solid fa-book-medical mr-1"></i> Tra cứu mức hưởng BHYT</h4>
+                                                    </div>
+                                                    
+                                                    @if($matchedInsurance)
+                                                    <div class="px-4 py-3 bg-green-50 border-b border-gray-100">
+                                                        <p class="text-xs text-green-700 mb-1">Mã thẻ của bệnh nhân:</p>
+                                                        <p class="font-bold text-green-800">{{ $matchedInsurance->name }} ({{ $matchedInsurance->prefix }}) — Hưởng <strong>{{ $matchedInsurance->coverage_percent }}%</strong></p>
+                                                    </div>
+                                                    @endif
+
+                                                    <div class="max-h-60 overflow-y-auto p-2">
+                                                        <table class="w-full text-left text-xs">
+                                                            <thead class="bg-gray-50 text-gray-500">
+                                                                <tr>
+                                                                    <th class="px-2 py-1 font-medium">Mã</th>
+                                                                    <th class="px-2 py-1 font-medium">Đối tượng</th>
+                                                                    <th class="px-2 py-1 font-medium text-right">Mức hưởng</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody class="divide-y divide-gray-100">
+                                                                @foreach($insuranceTypes as $type)
+                                                                <tr class="{{ $codePrefix === $type->prefix ? 'bg-blue-50' : '' }}">
+                                                                    <td class="px-2 py-1 font-mono font-bold text-gray-700">{{ $type->prefix }}</td>
+                                                                    <td class="px-2 py-1 text-gray-600 truncate max-w-[120px]" title="{{ $type->name }}">{{ $type->name }}</td>
+                                                                    <td class="px-2 py-1 font-bold text-blue-600 text-right">{{ $type->coverage_percent }}%</td>
+                                                                </tr>
+                                                                @endforeach
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -867,20 +924,30 @@
                             </div>
                             @endif
 
-                            {{-- Nút hành động --}}
-                            <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                            {{-- Nút hành động Thanh toán nhanh --}}
+                            <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-100 mt-4">
+                                <form action="{{ route('receptionist.payments.storeManual', $appointment->id) }}" method="POST" class="flex-1">
+                                    @csrf
+                                    <button type="submit" onclick="return confirm('Xác nhận đã thu đủ tiền mặt từ khách?')"
+                                        class="w-full bg-gray-900 hover:bg-gray-800 text-white py-3 rounded-xl text-sm font-bold text-center transition-colors flex items-center justify-center gap-2 shadow-sm">
+                                        <i class="fa-solid fa-money-bill-wave"></i>
+                                        Thu Tiền Mặt
+                                    </button>
+                                </form>
+
                                 <a href="{{ route('receptionist.payments.create', $appointment->id) }}"
-                                    class="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl text-sm font-bold text-center transition-colors flex items-center justify-center gap-2">
-                                    <i class="fa-solid fa-cash-register"></i>
-                                    Thu tiền — {{ number_format($remaining, 0, ',', '.') }}đ
+                                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl text-sm font-bold text-center transition-colors flex items-center justify-center gap-2 shadow-sm">
+                                    <i class="fa-solid fa-qrcode"></i>
+                                    Tạo mã QR SePay
                                 </a>
+
                                 @if($overpaid > 0)
                                 <form action="{{ route('receptionist.payments.refund', $appointment->id) }}" method="POST" class="flex-1">
                                     @csrf
                                     <button type="submit"
                                         class="w-full bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 py-3 rounded-xl text-sm font-bold text-center transition-colors flex items-center justify-center gap-2">
                                         <i class="fa-solid fa-rotate-left"></i>
-                                        Yêu cầu hoàn tiền thừa ({{ number_format($overpaid, 0, ',', '.') }}đ)
+                                        Hoàn tiền thừa ({{ number_format($overpaid, 0, ',', '.') }}đ)
                                     </button>
                                 </form>
                                 @endif

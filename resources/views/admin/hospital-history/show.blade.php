@@ -5,32 +5,18 @@
             <div class="flex items-center text-sm text-gray-500 mb-2">
                 <a href="{{ route('admin.dashboard') }}" class="hover:text-blue-600 transition-colors">Dashboard</a>
                 <i class="fa-solid fa-chevron-right text-[10px] mx-2"></i>
-                <a href="{{ route('admin.appointments.index') }}" class="hover:text-blue-600 transition-colors">Lịch
-                    hẹn</a>
+                <a href="{{ route('admin.hospital-history.index') }}" class="hover:text-blue-600 transition-colors">Lịch sử khám</a>
                 <i class="fa-solid fa-chevron-right text-[10px] mx-2"></i>
                 <span class="text-gray-800 font-medium">{{ $appointment->appointment_code }}</span>
             </div>
-            <h2 class="text-2xl font-bold text-gray-900">Chi tiết lịch hẹn <span
+            <h2 class="text-2xl font-bold text-gray-900">Chi tiết lịch khám <span
                     class="text-blue-600">#{{ $appointment->appointment_code }}</span></h2>
         </div>
         <div class="flex items-center gap-2">
-            <a href="{{ route('admin.appointments.index') }}"
+            <a href="{{ route('admin.hospital-history.index') }}"
                 class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
                 <i class="fa-solid fa-arrow-left"></i> Quay lại
             </a>
-            <a href="{{ route('admin.appointments.edit', $appointment->id) }}"
-                class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                <i class="fa-solid fa-pen"></i> Chỉnh sửa
-            </a>
-            <form action="{{ route('admin.appointments.destroy', $appointment->id) }}" method="POST"
-                class="inline-block" onsubmit="return confirm('Bạn có chắc chắn muốn xoá lịch hẹn này?');">
-                @csrf
-                @method('DELETE')
-                <button type="submit"
-                    class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                    <i class="fa-solid fa-trash"></i> Xoá
-                </button>
-            </form>
         </div>
     </div>
 
@@ -922,56 +908,7 @@
                 </div>
             </div>
 
-            <!-- Cập nhật trạng thái (Admin Action) -->
-            @if (!in_array($appointment->status, ['completed', 'cancelled']))
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
-                    <i class="fa-solid fa-bolt text-yellow-500"></i>
-                    <h3 class="text-base font-bold text-gray-900">Cập nhật trạng thái</h3>
-                </div>
-                <div class="p-6">
-                    <form action="{{ route('admin.appointments.update-status', $appointment->id) }}"
-                        method="POST">
-                        @csrf
-                        @method('PATCH')
 
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Trạng thái mới <span
-                                    class="text-red-500">*</span></label>
-                            <select name="status" required
-                                class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
-                                <option value="pending"
-                                    {{ $appointment->status === 'pending' ? 'selected' : '' }}>Đã tiếp nhận</option>
-                                <option value="checked_in"
-                                    {{ $appointment->status === 'checked_in' ? 'selected' : '' }}>Đã checkin
-                                </option>
-                                <option value="examining"
-                                    {{ $appointment->status === 'examining' ? 'selected' : '' }}>Đang khám</option>
-                                <option value="completed"
-                                    {{ $appointment->status === 'completed' ? 'selected' : '' }}>Hoàn thành
-                                </option>
-                                <option value="cancelled"
-                                    {{ $appointment->status === 'cancelled' ? 'selected' : '' }}>Đã huỷ</option>
-                                <option value="absent" {{ $appointment->status === 'absent' ? 'selected' : '' }}>
-                                    Vắng mặt</option>
-                                <option value="late" {{ $appointment->status === 'late' ? 'selected' : '' }}>
-                                    Đến muộn</option>
-                            </select>
-                        </div>
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Lý do / Ghi chú</label>
-                            <textarea name="reason" rows="2"
-                                class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none"
-                                placeholder="VD: Khách hàng gọi huỷ, nhập sai thông tin..."></textarea>
-                        </div>
-                        <button type="submit"
-                            class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium transition-colors">
-                            Cập nhật ngay
-                        </button>
-                    </form>
-                </div>
-            </div>
-            @endif
 
             <!-- Lịch sử trạng thái (Activity Log) -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">

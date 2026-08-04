@@ -36,6 +36,7 @@ class AppointmentController extends Controller
             $query->whereDate('appointment_date', today())
                   ->where('status', '!=', 'pending')
                   ->orderByRaw("CASE WHEN status = 'checked_in' THEN 1 ELSE 2 END ASC")
+                  ->orderBy('is_late', 'asc') // Đưa người đến muộn xuống cuối
                   ->orderBy('appointment_time', 'asc');
         } else {
             if ($request->filled('date_from')) {

@@ -149,6 +149,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,doctor']
         Route::post('/transfer', [\App\Http\Controllers\Admin\WorkScheduleController::class, 'transferDoctorSchedules'])->name('transfer');
     });
 
+    // Lịch sử khám
+    Route::prefix('hospital-history')->name('hospital-history.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\HospitalHistoryController::class, 'index'])->name('index');
+        Route::get('/export-csv', [\App\Http\Controllers\Admin\HospitalHistoryController::class, 'exportCsv'])->name('export-csv');
+        Route::get('/{id}', [\App\Http\Controllers\Admin\HospitalHistoryController::class, 'show'])->name('show');
+    });
+
     // Lịch hẹn
     Route::prefix('appointments')->name('appointments.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\AppointmentController::class, 'index'])->name('index');
@@ -260,6 +267,20 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,doctor']
         // Hoàn tiền
         Route::get('/refunds', [\App\Http\Controllers\Admin\PaymentDashboardController::class, 'refunds'])->name('refunds');
         Route::post('/refunds/{refund}/review', [\App\Http\Controllers\Admin\PaymentDashboardController::class, 'reviewRefund'])->name('refunds.review');
+    });
+
+    // Cấu hình BHYT
+    Route::prefix('insurance-types')->name('insurance-types.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\InsuranceTypeController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\Admin\InsuranceTypeController::class, 'store'])->name('store');
+        Route::put('/{id}', [\App\Http\Controllers\Admin\InsuranceTypeController::class, 'update'])->name('update');
+        Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\InsuranceTypeController::class, 'toggleActive'])->name('toggle-active');
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\InsuranceTypeController::class, 'destroy'])->name('destroy');
+    });
+
+    // Báo cáo & Thống kê
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\ReportController::class, 'index'])->name('index');
     });
 });
 

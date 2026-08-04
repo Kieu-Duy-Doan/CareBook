@@ -50,6 +50,30 @@ class PaymentService
             return $visit->payment_status === 'pending';
         })->values();
 
+        // --- OVERRIDE PATIENT PAYS & INSURANCE COVERS WITH ACTUALS FOR PAID VISITS ---
+        $actualPatientPays = 0;
+        $actualInsuranceCovers = 0;
+
+        foreach ($allVisits as $visit) {
+            if ($visit->payment_status !== 'pending') {
+                // If paid or waived, use the exact amount allocated from completed payments
+                $paidForVisit = $visit->payments->where('status', 'completed')->sum('pivot.amount_allocated');
+                $actualPatientPays += $paidForVisit;
+                $actualInsuranceCovers += max(0, $visit->payment_amount - $paidForVisit);
+            } else {
+                // If pending, use dynamic calculation based on current BHYT rate
+                $expectedInsurance = round($visit->payment_amount * $calc['insurance_rate']);
+                $expectedPatient = $visit->payment_amount - $expectedInsurance;
+                
+                $actualPatientPays += $expectedPatient;
+                $actualInsuranceCovers += $expectedInsurance;
+            }
+        }
+        
+        $calc['patient_pays'] = $actualPatientPays;
+        $calc['insurance_covers'] = $actualInsuranceCovers;
+        // --- END OVERRIDE ---
+
         $payments = collect();
         foreach ($allVisits as $visit) {
             foreach ($visit->payments as $payment) {
@@ -68,13 +92,34 @@ class PaymentService
         if ($prescription) {
             $prescriptionAmount = $prescription->payment_amount ?? 0;
             $calc['total_amount'] += $prescriptionAmount;
-            $calc['patient_pays'] += $prescriptionAmount; // Giả sử thuốc không áp dụng BHYT
             
-            $calc['remaining_to_pay'] += max(0, $prescriptionAmount - $prescription->payments()->sum('payment_prescription.amount_allocated'));
-            
-            if ($prescription->payment_status === 'pending') {
-                $calc['pending_visits']->push($prescription); // Gộp chung vào pending để dễ xử lý vòng lặp thu tiền
+            if ($prescription->payment_status !== 'pending') {
+                $paidForRx = $prescription->payments->where('status', 'completed')->sum('pivot.amount_allocated');
+                $calc['patient_pays'] += $paidForRx;
+            } else {
+                $calc['patient_pays'] += $prescriptionAmount; // Giả sử thuốc không áp dụng BHYT
+                $calc['pending_visits']->push($prescription);
             }
+            
+            $prescriptionAmountPaid = $prescription->payments->where('status', 'completed')->sum('pivot.amount_allocated');
+            $calc['remaining_to_pay'] += max(0, $prescriptionAmount - $prescriptionAmountPaid);
+        }
+
+        // --- Gộp hóa đơn (3 loại) ---
+        $calc['exam_fee'] = 0;
+        $calc['service_fee'] = 0;
+        $calc['medicine_fee'] = 0;
+
+        foreach ($allVisits as $visit) {
+            if ($visit->is_origin) {
+                $calc['exam_fee'] += $visit->payment_amount;
+            } else {
+                $calc['service_fee'] += $visit->payment_amount;
+            }
+        }
+
+        if ($prescription) {
+            $calc['medicine_fee'] = $prescription->payment_amount ?? 0;
         }
 
         $calc['overpaid_amount'] = max(0, $amountPaid - $calc['patient_pays']);

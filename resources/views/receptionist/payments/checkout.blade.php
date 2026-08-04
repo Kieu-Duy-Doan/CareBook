@@ -45,15 +45,44 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($summary['all_visits'] as $visit)
-                                <tr class="border-b border-gray-50 last:border-0">
-                                    <td class="py-3 px-4 font-medium text-gray-900">
-                                        {{ $visit->is_origin ? 'Phí Khám Bệnh' : 'Dịch vụ Cận lâm sàng / Khác' }}
-                                        <span class="text-xs text-gray-400 block font-mono">#{{ $visit->id }}</span>
-                                    </td>
-                                    <td class="py-3 px-4 text-right font-bold text-gray-900">{{ number_format($visit->payment_amount, 0, ',', '.') }}đ</td>
-                                </tr>
-                                @endforeach
+                                @if(isset($summary))
+                                    @if($summary['exam_fee'] > 0)
+                                    <tr class="border-b border-gray-50 last:border-0">
+                                        <td class="py-3 px-4 font-medium text-gray-900">
+                                            Khám lâm sàng ban đầu
+                                        </td>
+                                        <td class="py-3 px-4 text-right font-bold text-gray-900">{{ number_format($summary['exam_fee'], 0, ',', '.') }}đ</td>
+                                    </tr>
+                                    @endif
+
+                                    @if($summary['service_fee'] > 0)
+                                    <tr class="border-b border-gray-50 last:border-0">
+                                        <td class="py-3 px-4 font-medium text-gray-900">
+                                            Cận lâm sàng & Dịch vụ kỹ thuật
+                                        </td>
+                                        <td class="py-3 px-4 text-right font-bold text-gray-900">{{ number_format($summary['service_fee'], 0, ',', '.') }}đ</td>
+                                    </tr>
+                                    @endif
+
+                                    @if($summary['medicine_fee'] > 0)
+                                    <tr class="border-b border-gray-50 last:border-0">
+                                        <td class="py-3 px-4 font-medium text-gray-900">
+                                            Thuốc & Vật tư y tế
+                                        </td>
+                                        <td class="py-3 px-4 text-right font-bold text-gray-900">{{ number_format($summary['medicine_fee'], 0, ',', '.') }}đ</td>
+                                    </tr>
+                                    @endif
+
+                                    @if($summary['exam_fee'] == 0 && $summary['service_fee'] == 0 && $summary['medicine_fee'] == 0)
+                                    <tr>
+                                        <td colspan="2" class="py-3 px-4 text-center text-gray-500 text-sm">Không có khoản phí nào</td>
+                                    </tr>
+                                    @endif
+                                @else
+                                    <tr>
+                                        <td colspan="2" class="py-3 px-4 text-center text-gray-500 text-sm">Không thể tải dữ liệu phí</td>
+                                    </tr>
+                                @endif
                             </tbody>
                         </table>
                     </div>
