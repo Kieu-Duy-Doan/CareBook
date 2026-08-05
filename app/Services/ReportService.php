@@ -180,10 +180,19 @@ class ReportService
             ->where('method', 'insurance')
             ->sum('amount');
 
-        // Chờ thu (pending payments)
-        $pendingRevenue = (clone $paymentQuery)
-            ->where('status', 'pending')
-            ->sum('amount');
+        // Chờ thu (pending clinical visits)
+        $pendingRevenue = \App\Models\ClinicalVisit::where('payment_status', 'pending')
+            ->whereHas('appointment', function ($q) use ($dateFrom, $dateTo, $doctorId, $specialtyId) {
+                $q->whereDate('appointment_date', '>=', $dateFrom)
+                  ->whereDate('appointment_date', '<=', $dateTo);
+                if ($doctorId) {
+                    $q->where('doctor_profile_id', $doctorId);
+                }
+                if ($specialtyId) {
+                    $q->where('specialty_id', $specialtyId);
+                }
+            })
+            ->sum('payment_amount');
 
         // Phân tách theo phương thức
         $cashRevenue = (clone $paymentQuery)

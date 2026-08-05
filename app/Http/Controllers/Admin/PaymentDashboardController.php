@@ -32,14 +32,7 @@ class PaymentDashboardController extends Controller
             ->where('amount', '>', 0)
             ->sum('amount');
 
-        $totalRefunded = Payment::whereBetween('paid_at', [$from, $to])
-            ->where('status', 'refunded')
-            ->sum('amount');
-
         $totalPending = ClinicalVisit::where('payment_status', 'pending')->sum('payment_amount');
-
-        $needsReviewCount = Payment::where('status', 'needs_review')->count();
-        $pendingRefundCount = RefundRequest::where('status', 'pending')->count();
 
         // ── Doanh thu theo phương thức ──────────────────────
         $byMethod = Payment::whereBetween('paid_at', [$from, $to])
@@ -70,18 +63,6 @@ class PaymentDashboardController extends Controller
             $chartData[] = (float)($dailyRevenue[$date] ?? 0);
         }
 
-        // ── Giao dịch gần nhất chờ xử lý ──────────────────
-        $needsReviewPayments = Payment::with(['appointment.patientProfile'])
-            ->where('status', 'needs_review')
-            ->latest('paid_at')
-            ->take(5)
-            ->get();
-
-        $pendingRefunds = RefundRequest::with(['appointment.patientProfile', 'requestedBy'])
-            ->where('status', 'pending')
-            ->latest()
-            ->take(5)
-            ->get();
 
         // ── Đối soát: % đã khớp ───────────────────────────
         $totalSepayTxns = SePayTransaction::count();
@@ -90,11 +71,9 @@ class PaymentDashboardController extends Controller
 
         return view('admin.payments.dashboard', compact(
             'from', 'to',
-            'totalRevenue', 'totalRefunded', 'totalPending',
-            'needsReviewCount', 'pendingRefundCount',
+            'totalRevenue', 'totalPending',
             'byMethod',
             'chartLabels', 'chartData',
-            'needsReviewPayments', 'pendingRefunds',
             'reconciliationRate', 'totalSepayTxns', 'matchedTxns'
         ));
     }

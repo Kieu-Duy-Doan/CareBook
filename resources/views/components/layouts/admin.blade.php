@@ -100,6 +100,12 @@
                     class="fa-solid fa-clock-rotate-left w-5 text-center mr-3 {{ request()->routeIs('admin.hospital-history.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
                 Lịch sử khám
             </a>
+            <a href="{{ route('admin.payments.transactions') }}"
+                class="{{ request()->routeIs('admin.payments.transactions*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
+                <i
+                    class="fa-solid fa-list-check w-5 text-center mr-3 {{ request()->routeIs('admin.payments.transactions*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
+                Lịch sử giao dịch
+            </a>
 
             <!-- QUẢN LÝ THANH TOÁN -->
             <div x-data="{ openPayments: {{ request()->routeIs('admin.payments.needs-review', 'admin.payments.refunds', 'admin.sepay-transactions.*') ? 'true' : 'false' }} }">

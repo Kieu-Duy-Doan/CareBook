@@ -52,15 +52,11 @@
     @endif
 
     {{-- ── Thẻ Thống kê ─────────────────────────────────────────────── --}}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
             <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Doanh thu</p>
             <p class="text-2xl font-bold text-green-600">{{ number_format($totalRevenue) }}đ</p>
             <p class="text-xs text-gray-400 mt-1">{{ $from->format('d/m') }} — {{ $to->format('d/m/Y') }}</p>
-        </div>
-        <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Đã hoàn trả</p>
-            <p class="text-2xl font-bold text-red-500">{{ number_format(abs($totalRefunded)) }}đ</p>
         </div>
         <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
             <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Chờ thu</p>
@@ -108,66 +104,6 @@
         </div>
     </div>
 
-    {{-- ── Hàng 3: Cần xử lý + Hoàn tiền chờ duyệt ──────────────────── --}}
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {{-- Needs Review --}}
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
-            <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                <h3 class="font-semibold text-gray-800">
-                    Giao dịch cần xử lý
-                    @if($needsReviewCount > 0)
-                        <span class="ml-2 bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full">{{ $needsReviewCount }}</span>
-                    @endif
-                </h3>
-                <a href="{{ route('admin.payments.needs-review') }}" class="text-blue-600 text-sm hover:underline">Xem tất cả →</a>
-            </div>
-            <ul class="divide-y divide-gray-100">
-                @forelse($needsReviewPayments as $p)
-                <li class="px-5 py-3 flex items-center justify-between gap-3">
-                    <div>
-                        <div class="text-sm font-medium text-gray-900">{{ $p->appointment?->patientProfile?->full_name ?? 'N/A' }}</div>
-                        <div class="text-xs text-gray-500">{{ $p->appointment?->appointment_code }} — {{ $p->paid_at?->format('d/m/Y H:i') }}</div>
-                        <div class="text-xs text-gray-400 mt-0.5 truncate max-w-xs">{{ $p->note }}</div>
-                    </div>
-                    <span class="text-sm font-bold text-orange-600 shrink-0">{{ number_format($p->amount) }}đ</span>
-                </li>
-                @empty
-                <li class="px-5 py-6 text-center text-gray-400 text-sm">
-                    <i class="fa-solid fa-check-circle text-2xl mb-2 block text-green-300"></i>Không có giao dịch nào cần xử lý.
-                </li>
-                @endforelse
-            </ul>
-        </div>
-
-        {{-- Hoàn tiền chờ duyệt --}}
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
-            <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                <h3 class="font-semibold text-gray-800">
-                    Yêu cầu hoàn tiền
-                    @if($pendingRefundCount > 0)
-                        <span class="ml-2 bg-yellow-100 text-yellow-700 text-xs font-bold px-2 py-0.5 rounded-full">{{ $pendingRefundCount }}</span>
-                    @endif
-                </h3>
-                <a href="{{ route('admin.payments.refunds') }}" class="text-blue-600 text-sm hover:underline">Xem tất cả →</a>
-            </div>
-            <ul class="divide-y divide-gray-100">
-                @forelse($pendingRefunds as $r)
-                <li class="px-5 py-3 flex items-center justify-between gap-3">
-                    <div>
-                        <div class="text-sm font-medium text-gray-900">{{ $r->appointment?->patientProfile?->full_name ?? 'N/A' }}</div>
-                        <div class="text-xs text-gray-500">Yêu cầu bởi: {{ $r->requestedBy?->name }} — {{ $r->created_at->format('d/m/Y') }}</div>
-                        <div class="text-xs text-gray-400 mt-0.5">{{ $r->reason }}</div>
-                    </div>
-                    <span class="text-sm font-bold text-red-600 shrink-0">{{ number_format($r->amount) }}đ</span>
-                </li>
-                @empty
-                <li class="px-5 py-6 text-center text-gray-400 text-sm">
-                    <i class="fa-solid fa-check-circle text-2xl mb-2 block text-green-300"></i>Không có yêu cầu hoàn tiền nào.
-                </li>
-                @endforelse
-            </ul>
-        </div>
-    </div>
 
     @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>

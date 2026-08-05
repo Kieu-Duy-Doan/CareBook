@@ -267,7 +267,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,doctor']
         // Hoàn tiền
         Route::get('/refunds', [\App\Http\Controllers\Admin\PaymentDashboardController::class, 'refunds'])->name('refunds');
         Route::post('/refunds/{refund}/review', [\App\Http\Controllers\Admin\PaymentDashboardController::class, 'reviewRefund'])->name('refunds.review');
+
+        // Lịch sử giao dịch
+        Route::get('/transactions', [\App\Http\Controllers\Admin\TransactionHistoryController::class, 'index'])->name('transactions');
+        Route::get('/transactions/export', [\App\Http\Controllers\Admin\TransactionHistoryController::class, 'exportExcel'])->name('transactions.export');
+        Route::get('/transactions/{payment}', [\App\Http\Controllers\Admin\TransactionHistoryController::class, 'show'])->name('transactions.show');
     });
+
 
     // Cấu hình BHYT
     Route::prefix('insurance-types')->name('insurance-types.')->group(function () {
