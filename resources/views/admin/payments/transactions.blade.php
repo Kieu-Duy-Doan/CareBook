@@ -399,7 +399,7 @@
 
                             {{-- BHYT chi trả --}}
                             <td class="px-4 py-3 text-right whitespace-nowrap">
-                                @if($payment->method === 'insurance' && $payment->insurance_amount > 0)
+                                @if($payment->insurance_amount > 0)
                                     <div class="text-sm font-semibold text-indigo-600">{{ number_format($payment->insurance_amount) }}đ</div>
                                     <div class="text-xs text-indigo-400">{{ $payment->insurance_percent }}%</div>
                                 @else

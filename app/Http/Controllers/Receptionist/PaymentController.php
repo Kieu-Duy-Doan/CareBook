@@ -83,7 +83,9 @@ class PaymentController extends Controller
             $query = Payment::with([
                 'appointment.patientProfile',
                 'appointment.specialty',
-                'collectedBy'
+                'collectedBy',
+                'clinicalVisits',
+                'prescriptions'
             ]);
 
             $query->whereBetween('paid_at', [$from, $to]);
@@ -142,10 +144,10 @@ class PaymentController extends Controller
         $totalCash = (clone $basePaymentQuery)->where('method', 'cash')->where('amount', '>', 0)->sum('amount');
         $totalSepay = (clone $basePaymentQuery)->where('method', 'qr')->where('amount', '>', 0)->sum('amount');
         
-        $insurancePayments = (clone $basePaymentQuery)->where('method', 'insurance')->with('appointment.patientProfile')->get();
+        $allCompletedPayments = (clone $basePaymentQuery)->with(['appointment.patientProfile', 'clinicalVisits', 'prescriptions'])->get();
         $insuranceCacheForSummary = [];
         $totalInsurance = 0;
-        foreach ($insurancePayments as $p) {
+        foreach ($allCompletedPayments as $p) {
             $enriched = $this->enrichPayment($p, $insuranceCacheForSummary);
             $totalInsurance += $enriched->insurance_amount;
         }
@@ -189,27 +191,42 @@ class PaymentController extends Controller
      */
     private function enrichPayment(Payment $payment, array &$insuranceCache): Payment
     {
-        $totalFee        = (float) ($payment->appointment?->total_fee ?? $payment->amount ?? 0);
-        $patientProfile  = $payment->appointment?->patientProfile;
-        $insuranceCode   = $patientProfile?->insurance_code;
-        $coveragePercent = 0;
-
-        if ($payment->method === 'insurance' && $insuranceCode && strlen($insuranceCode) >= 2) {
-            $prefix = strtoupper(substr($insuranceCode, 0, 2));
-            if (!isset($insuranceCache[$prefix])) {
-                $insuranceCache[$prefix] = \App\Models\InsuranceType::where('prefix', $prefix)
-                    ->where('is_active', true)
-                    ->value('coverage_percent') ?? 0;
-            }
-            $coveragePercent = $insuranceCache[$prefix];
+        $totalFee = 0;
+        if ($payment->relationLoaded('clinicalVisits')) {
+            $totalFee += $payment->clinicalVisits->sum('payment_amount');
+        }
+        if ($payment->relationLoaded('prescriptions')) {
+            $totalFee += $payment->prescriptions->sum('payment_amount');
         }
 
-        $insuranceAmount = $totalFee > 0 ? round($totalFee * $coveragePercent / 100, 2) : 0;
-        $patientAmount   = max(0, $totalFee - $insuranceAmount);
-        $patientPercent  = 100 - $coveragePercent;
+        if ($totalFee == 0) {
+            $totalFee = (float) ($payment->amount ?? 0);
+        }
+
+        if ($payment->method === 'insurance' || $payment->method === 'waived') {
+            // Trường hợp bảo hiểm chi trả 100% hoặc miễn phí hoàn toàn
+            $insuranceAmount = $totalFee;
+            $patientAmount   = 0;
+            $patientPercent  = 0;
+            $insurancePercent= 100;
+        } else {
+            // Trường hợp có thanh toán Tiền mặt hoặc QR
+            $patientAmount   = (float) $payment->amount;
+            // BHYT chi trả = Số tiền gốc - Số tiền BN chi trả
+            $insuranceAmount = max(0, $totalFee - $patientAmount);
+            
+            if ($totalFee > 0) {
+                // Tính phần trăm tương ứng
+                $patientPercent = round(($patientAmount / $totalFee) * 100);
+                $insurancePercent = 100 - $patientPercent;
+            } else {
+                $patientPercent = 100;
+                $insurancePercent = 0;
+            }
+        }
 
         $payment->total_fee         = $totalFee;
-        $payment->insurance_percent = $coveragePercent;
+        $payment->insurance_percent = $insurancePercent;
         $payment->insurance_amount  = $insuranceAmount;
         $payment->patient_percent   = $patientPercent;
         $payment->patient_amount    = $patientAmount;
