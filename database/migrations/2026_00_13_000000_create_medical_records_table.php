@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('appointment_id')->unique()->constrained('appointments')->restrictOnDelete();
             $table->foreignId('doctor_profile_id')->constrained('doctor_profiles')->restrictOnDelete();
+            $table->foreignId('assistant_id')->nullable()->constrained('users')->nullOnDelete()->comment('ID người hỗ trợ (Điều dưỡng/Lễ tân)');
             $table->text('diagnosis');
             $table->string('icd10_code', 20)->nullable();
             $table->text('conclusion')->nullable();

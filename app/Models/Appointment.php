@@ -37,6 +37,7 @@ class Appointment extends Model
         'completed_at',
         'reminded_2h',
         'reminded_30m',
+        'is_late',
     ];
 
     protected function casts(): array
@@ -52,6 +53,7 @@ class Appointment extends Model
             'completed_at' => 'datetime',
             'reminded_2h' => 'boolean',
             'reminded_30m' => 'boolean',
+            'is_late' => 'boolean',
         ];
     }
 
