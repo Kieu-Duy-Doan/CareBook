@@ -103,32 +103,38 @@
                                 </td>
 
                                 <!-- Thao tác -->
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <div class="flex items-center justify-end gap-3">
+                                <td class="px-6 py-4 whitespace-nowrap text-right">
+                                    <div class="flex items-center justify-end gap-2">
                                         <button @click="$dispatch('edit-specialty', { 
                                             id: {{ $specialty->id }}, 
                                             name: '{{ addslashes($specialty->name) }}', 
                                             description: '{{ addslashes($specialty->description) }}', 
                                             display_order: {{ $specialty->display_order }}, 
                                             is_active: {{ $specialty->is_active ? 'true' : 'false' }} 
-                                        })" class="text-blue-600 hover:text-blue-900 transition-colors" title="Sửa">
+                                        })" class="w-7 h-7 rounded text-[13px] bg-yellow-50 text-yellow-600 flex items-center justify-center hover:bg-yellow-100 transition" title="Sửa">
                                             <i class="fa-solid fa-pen"></i>
                                         </button>
                                         
-                                        <form action="{{ route('admin.specialties.toggle-active', $specialty->id) }}" method="POST" class="inline-block">
+                                        <form action="{{ route('admin.specialties.toggle-active', $specialty->id) }}" method="POST" class="inline">
                                             @csrf
                                             @method('PATCH')
-                                            <button type="submit" class="text-gray-500 hover:text-gray-800 transition-colors" title="{{ $specialty->is_active ? 'Ẩn chuyên khoa' : 'Hiện chuyên khoa' }}">
-                                                <i class="fa-solid {{ $specialty->is_active ? 'fa-eye-slash' : 'fa-eye' }}"></i>
-                                            </button>
+                                            @if($specialty->is_active)
+                                                <button type="submit" class="w-7 h-7 rounded text-[13px] bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 transition" title="Ẩn chuyên khoa">
+                                                    <i class="fa-solid fa-eye-slash"></i>
+                                                </button>
+                                            @else
+                                                <button type="submit" class="w-7 h-7 rounded text-[13px] bg-green-50 text-green-600 flex items-center justify-center hover:bg-green-100 transition" title="Hiện chuyên khoa">
+                                                    <i class="fa-solid fa-eye"></i>
+                                                </button>
+                                            @endif
                                         </form>
 
-                                        <form action="{{ route('admin.specialties.destroy', $specialty->id) }}" method="POST" class="inline-block">
+                                        <form action="{{ route('admin.specialties.destroy', $specialty->id) }}" method="POST" class="inline">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" 
                                                 onclick="return confirm('Bạn có chắc muốn xoá chuyên khoa này? Các dữ liệu liên quan có thể bị ảnh hưởng.')"
-                                                class="text-red-600 hover:text-red-900 transition-colors"
+                                                class="w-7 h-7 rounded text-[13px] bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition"
                                                 title="Xoá">
                                                 <i class="fa-solid fa-trash"></i>
                                             </button>

@@ -260,13 +260,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,doctor']
         Route::get('/export-csv', [\App\Http\Controllers\Admin\PaymentDashboardController::class, 'exportCsv'])->name('export-csv');
         Route::get('/print-report', [\App\Http\Controllers\Admin\PaymentDashboardController::class, 'printReport'])->name('print-report');
 
-        // Needs Review
-        Route::get('/needs-review', [\App\Http\Controllers\Admin\PaymentDashboardController::class, 'needsReview'])->name('needs-review');
-        Route::post('/needs-review/{payment}/resolve', [\App\Http\Controllers\Admin\PaymentDashboardController::class, 'resolveReview'])->name('resolve-review');
 
-        // Hoàn tiền
-        Route::get('/refunds', [\App\Http\Controllers\Admin\PaymentDashboardController::class, 'refunds'])->name('refunds');
-        Route::post('/refunds/{refund}/review', [\App\Http\Controllers\Admin\PaymentDashboardController::class, 'reviewRefund'])->name('refunds.review');
 
         // Lịch sử giao dịch
         Route::get('/transactions', [\App\Http\Controllers\Admin\TransactionHistoryController::class, 'index'])->name('transactions');
@@ -288,11 +282,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,doctor']
     Route::get('doctor-level-fees', [\App\Http\Controllers\Admin\DoctorLevelFeeController::class, 'index'])->name('doctor-level-fees.index');
     Route::put('doctor-level-fees', [\App\Http\Controllers\Admin\DoctorLevelFeeController::class, 'update'])->name('doctor-level-fees.update');
 
-    // Báo cáo & Thống kê
-    Route::prefix('reports')->name('reports.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\ReportController::class, 'index'])->name('index');
-        Route::get('/export-csv', [\App\Http\Controllers\Admin\ReportController::class, 'exportCsv'])->name('export-csv');
-    });
+
 });
 
 

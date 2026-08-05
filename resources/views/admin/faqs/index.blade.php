@@ -132,19 +132,19 @@
                                         </button>
                                     </form>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <div class="flex items-center justify-end gap-3">
+                                <td class="px-6 py-4 whitespace-nowrap text-right">
+                                    <div class="flex items-center justify-end gap-2">
                                         <a href="{{ route('admin.faqs.edit', $faq->id) }}"
-                                            class="text-blue-600 hover:text-blue-900 transition-colors" title="Sửa FAQ">
+                                            class="w-7 h-7 rounded text-[13px] bg-yellow-50 text-yellow-600 flex items-center justify-center hover:bg-yellow-100 transition" title="Sửa FAQ">
                                             <i class="fa-solid fa-pen"></i>
                                         </a>
                                         <form action="{{ route('admin.faqs.destroy', $faq->id) }}" method="POST"
-                                            class="inline-block">
+                                            class="inline">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"
                                                 onclick="return confirm('Bạn có chắc muốn xoá câu hỏi này không?')"
-                                                class="text-red-600 hover:text-red-900 transition-colors"
+                                                class="w-7 h-7 rounded text-[13px] bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition"
                                                 title="Xoá FAQ">
                                                 <i class="fa-solid fa-trash"></i>
                                             </button>

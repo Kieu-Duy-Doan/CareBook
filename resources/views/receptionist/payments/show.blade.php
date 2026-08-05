@@ -112,6 +112,27 @@
                                         <td colspan="2" class="py-3 px-4 text-center text-gray-500 text-sm">Không có khoản phí nào</td>
                                     </tr>
                                     @endif
+
+                                    @if(isset($summary['total_amount']) && $summary['total_amount'] > 0)
+                                    <tr class="border-t border-gray-200">
+                                        <td class="py-3 px-4 font-medium text-gray-600 text-right">
+                                            Tổng chi phí:
+                                        </td>
+                                        <td class="py-3 px-4 text-right font-bold text-gray-900">{{ number_format($summary['total_amount'], 0, ',', '.') }}đ</td>
+                                    </tr>
+                                    <tr class="bg-emerald-50">
+                                        <td class="py-2 px-4 font-medium text-emerald-700 text-right text-sm">
+                                            BHYT chi trả ({{ $summary['insurance_rate'] * 100 }}%):
+                                        </td>
+                                        <td class="py-2 px-4 text-right font-bold text-emerald-700 text-sm">-{{ number_format($summary['insurance_covers'], 0, ',', '.') }}đ</td>
+                                    </tr>
+                                    <tr class="bg-blue-50">
+                                        <td class="py-3 px-4 font-bold text-blue-900 text-right">
+                                            Bệnh nhân chi trả:
+                                        </td>
+                                        <td class="py-3 px-4 text-right font-bold text-blue-900 text-lg">{{ number_format($summary['patient_pays'], 0, ',', '.') }}đ</td>
+                                    </tr>
+                                    @endif
                                 @else
                                     <tr>
                                         <td colspan="2" class="py-3 px-4 text-center text-gray-500 text-sm">Không thể tải dữ liệu phí</td>
@@ -150,7 +171,7 @@
                             </div>
                             @if($payment->collectedBy)
                             <div class="text-[10px] text-gray-400 mt-1 uppercase tracking-wider">
-                                Thu bởi: {{ $payment->collectedBy->name }}
+                                Thu bởi: {{ $payment->collectedBy->full_name ?? $payment->collectedBy->name }}
                             </div>
                             @endif
                         </div>

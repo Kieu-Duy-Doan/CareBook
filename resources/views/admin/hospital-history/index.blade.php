@@ -195,10 +195,10 @@
                             <span class="text-gray-400">—</span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div class="flex items-center justify-end gap-3">
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            <div class="flex items-center justify-end gap-2">
                                 <a href="{{ route('admin.hospital-history.show', $appt->id) }}"
-                                    class="text-gray-400 hover:text-blue-600 transition-colors"
+                                    class="w-7 h-7 rounded text-[13px] bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition"
                                     title="Xem chi tiết">
                                     <i class="fa-solid fa-eye"></i>
                                 </a>

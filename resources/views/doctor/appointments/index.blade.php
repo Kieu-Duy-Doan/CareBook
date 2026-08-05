@@ -32,8 +32,8 @@
 
     <!-- FILTER FORM -->
     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
-        <form action="{{ route('doctor.appointments.index') }}" method="GET" class="space-y-4">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+        <form action="{{ route('doctor.appointments.index') }}" method="GET" class="flex flex-col gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
                 <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1">Tìm kiếm</label>
                     <input type="text" name="search" value="{{ request('search') }}"
@@ -63,17 +63,16 @@
                         <option value="absent" {{ request('status') === 'absent' ? 'selected' : '' }}>Vắng mặt</option>
                     </select>
                 </div>
-            </div>
-
-            <div class="flex gap-2 justify-end">
-                <a href="{{ route('doctor.appointments.index') }}"
-                    class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                    Đặt lại
-                </a>
-                <button type="submit"
-                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                    Lọc dữ liệu
-                </button>
+                <div class="flex gap-2">
+                    <a href="{{ route('doctor.appointments.index') }}"
+                        class="w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        Đặt lại
+                    </a>
+                    <button type="submit"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        Lọc dữ liệu
+                    </button>
+                </div>
             </div>
         </form>
     </div>

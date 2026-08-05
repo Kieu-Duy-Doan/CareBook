@@ -27,12 +27,16 @@ class ReportController extends Controller
             ->count();
 
         // 2. Tổng thu của lễ tân này
-        $payments = Payment::where('collected_by', $receptionistId)
+        $payments = Payment::with(['clinicalVisits', 'prescriptions'])
+            ->where('collected_by', $receptionistId)
             ->whereBetween('paid_at', [$start, $end])
             ->where('status', 'completed')
             ->get();
 
-        $totalRevenue = $payments->sum('amount');
+        $totalRevenue = $payments->sum(function($p) {
+            $fee = $p->clinicalVisits->sum('payment_amount') + $p->prescriptions->sum('payment_amount');
+            return max($fee, (float) $p->amount);
+        });
         $cashRevenue = $payments->where('method', 'cash')->sum('amount');
         $qrRevenue = $payments->where('method', 'qr')->sum('amount');
 

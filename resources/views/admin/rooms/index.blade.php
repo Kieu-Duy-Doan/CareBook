@@ -169,29 +169,35 @@
                                     </span>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <div class="flex items-center justify-end gap-3">
-                                    <a href="{{ route('admin.rooms.show', $room->id) }}" class="text-teal-600 hover:text-teal-900 transition-colors" title="Xem chi tiết">
-                                        <i class="fa-solid fa-circle-info"></i>
+                            <td class="px-6 py-4 whitespace-nowrap text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    <a href="{{ route('admin.rooms.show', $room->id) }}" class="w-7 h-7 rounded text-[13px] bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition" title="Xem chi tiết">
+                                        <i class="fa-solid fa-eye"></i>
                                     </a>
-                                    <a href="{{ route('admin.rooms.edit', $room->id) }}" class="text-blue-600 hover:text-blue-900 transition-colors" title="Sửa">
+                                    <a href="{{ route('admin.rooms.edit', $room->id) }}" class="w-7 h-7 rounded text-[13px] bg-yellow-50 text-yellow-600 flex items-center justify-center hover:bg-yellow-100 transition" title="Sửa">
                                         <i class="fa-solid fa-pen"></i>
                                     </a>
                                     
-                                    <form action="{{ route('admin.rooms.toggle-active', $room->id) }}" method="POST" class="inline-block">
+                                    <form action="{{ route('admin.rooms.toggle-active', $room->id) }}" method="POST" class="inline">
                                         @csrf
                                         @method('PATCH')
-                                        <button type="submit" class="text-gray-500 hover:text-gray-800 transition-colors" title="{{ $room->is_active ? 'Tạm đóng' : 'Mở lại' }}">
-                                            <i class="fa-solid {{ $room->is_active ? 'fa-eye-slash' : 'fa-eye' }}"></i>
-                                        </button>
+                                        @if($room->is_active)
+                                            <button type="submit" class="w-7 h-7 rounded text-[13px] bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 transition" title="Tạm đóng">
+                                                <i class="fa-solid fa-eye-slash"></i>
+                                            </button>
+                                        @else
+                                            <button type="submit" class="w-7 h-7 rounded text-[13px] bg-green-50 text-green-600 flex items-center justify-center hover:bg-green-100 transition" title="Mở lại">
+                                                <i class="fa-solid fa-eye"></i>
+                                            </button>
+                                        @endif
                                     </form>
 
-                                    <form action="{{ route('admin.rooms.destroy', $room->id) }}" method="POST" class="inline-block">
+                                    <form action="{{ route('admin.rooms.destroy', $room->id) }}" method="POST" class="inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" 
                                             onclick="return confirm('Bạn có chắc muốn xoá phòng này?')"
-                                            class="text-red-600 hover:text-red-900 transition-colors"
+                                            class="w-7 h-7 rounded text-[13px] bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition"
                                             title="Xoá">
                                             <i class="fa-solid fa-trash"></i>
                                         </button>

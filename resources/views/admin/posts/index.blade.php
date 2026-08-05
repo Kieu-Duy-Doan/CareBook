@@ -153,26 +153,26 @@
                                     -
                                 @endif
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <div class="flex items-center justify-end gap-3">
-                                    <a href="{{ route('admin.posts.edit', $post->id) }}" class="text-blue-600 hover:text-blue-900 transition-colors" title="Sửa bài viết">
+                            <td class="px-6 py-4 whitespace-nowrap text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    <a href="{{ route('admin.posts.edit', $post->id) }}" class="w-7 h-7 rounded text-[13px] bg-yellow-50 text-yellow-600 flex items-center justify-center hover:bg-yellow-100 transition" title="Sửa bài viết">
                                         <i class="fa-solid fa-pen"></i>
                                     </a>
 
-                                    <form action="{{ route('admin.posts.toggle-publish', $post->id) }}" method="POST" class="inline-block">
+                                    <form action="{{ route('admin.posts.toggle-publish', $post->id) }}" method="POST" class="inline">
                                         @csrf
                                         @method('PATCH')
-                                        <button type="submit" class="{{ $post->is_published ? 'text-orange-500 hover:text-orange-700' : 'text-green-600 hover:text-green-800' }} transition-colors" title="{{ $post->is_published ? 'Gỡ xuống thành Bản nháp' : 'Xuất bản bài viết' }}">
+                                        <button type="submit" class="w-7 h-7 rounded text-[13px] {{ $post->is_published ? 'bg-orange-50 text-orange-600 hover:bg-orange-100' : 'bg-green-50 text-green-600 hover:bg-green-100' }} flex items-center justify-center transition" title="{{ $post->is_published ? 'Gỡ xuống thành Bản nháp' : 'Xuất bản bài viết' }}">
                                             <i class="fa-solid {{ $post->is_published ? 'fa-file-arrow-down' : 'fa-paper-plane' }}"></i>
                                         </button>
                                     </form>
 
-                                    <form action="{{ route('admin.posts.destroy', $post->id) }}" method="POST" class="inline-block">
+                                    <form action="{{ route('admin.posts.destroy', $post->id) }}" method="POST" class="inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit"
                                             onclick="return confirm('Bạn có chắc muốn xoá bài viết này không? Hành động này không thể hoàn tác.')"
-                                            class="text-red-600 hover:text-red-900 transition-colors"
+                                            class="w-7 h-7 rounded text-[13px] bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition"
                                             title="Xoá bài viết">
                                             <i class="fa-solid fa-trash"></i>
                                         </button>

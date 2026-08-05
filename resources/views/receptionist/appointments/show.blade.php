@@ -243,8 +243,8 @@
 
                     <!-- Thông tin bệnh nhân -->
                     @if ($appointment->patientProfile)
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center gap-2 rounded-t-xl">
                             <i class="fa-regular fa-user text-blue-500"></i>
                             <h3 class="text-lg font-bold text-gray-900">Thông tin bệnh nhân</h3>
                         </div>

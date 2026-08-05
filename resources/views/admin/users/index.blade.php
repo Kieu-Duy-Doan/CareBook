@@ -1,8 +1,25 @@
 <x-layouts.admin title="Quản lý tài khoản">
     <div class="space-y-6">
         <!-- Header -->
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <h2 class="text-2xl font-bold text-gray-800">Quản lý tài khoản</h2>
+            <div class="flex flex-wrap gap-3">
+                <a href="{{ route('admin.doctors.create') }}"
+                   class="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm">
+                    <i class="fa-solid fa-user-doctor"></i>
+                    <span>Thêm bác sĩ</span>
+                </a>
+                <a href="{{ route('admin.receptionists.create') }}"
+                   class="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition text-sm">
+                    <i class="fa-solid fa-user-tie"></i>
+                    <span>Thêm lễ tân</span>
+                </a>
+                <a href="{{ Route::has('admin.patients.create') ? route('admin.patients.create') : '#' }}"
+                   class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm">
+                    <i class="fa-solid fa-user-injured"></i>
+                    <span>Thêm bệnh nhân</span>
+                </a>
+            </div>
         </div>
 
         <!-- PHẦN 1: Stats -->
@@ -75,24 +92,6 @@
             </a>
         </div>
 
-        <!-- PHẦN 2: Thêm nhanh -->
-        <div class="flex flex-wrap gap-3">
-            <a href="{{ route('admin.doctors.create') }}"
-               class="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
-                <i class="fa-solid fa-user-doctor"></i>
-                <span>Thêm bác sĩ</span>
-            </a>
-            <a href="{{ route('admin.receptionists.create') }}"
-               class="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">
-                <i class="fa-solid fa-user-tie"></i>
-                <span>Thêm lễ tân</span>
-            </a>
-            <a href="{{ Route::has('admin.patients.create') ? route('admin.patients.create') : '#' }}"
-               class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
-                <i class="fa-solid fa-user-injured"></i>
-                <span>Thêm bệnh nhân</span>
-            </a>
-        </div>
 
         <!-- PHẦN 3: Bộ lọc -->
         <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
@@ -226,7 +225,7 @@
                                         $showRoute = match($user->role) {
                                             'doctor' => Route::has('admin.doctors.show') ? route('admin.doctors.show', $user->doctorProfile->id ?? 0) : '#',
                                             'receptionist' => Route::has('admin.receptionists.show') ? route('admin.receptionists.show', $user->id) : '#',
-                                            'patient' => Route::has('admin.patients.show') ? route('admin.patients.show', $user->id) : '#',
+                                            'patient' => Route::has('admin.customers.show') ? route('admin.customers.show', $user->id) : '#',
                                             'admin' => Route::has('admin.users.show') ? route('admin.users.show', $user->id) : '#',
                                             default => '#'
                                         };

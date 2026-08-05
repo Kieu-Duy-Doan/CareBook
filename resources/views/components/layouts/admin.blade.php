@@ -69,19 +69,36 @@
                 </div>
             </div>
 
-            <!-- Single menus -->
-            <a href="{{ route('admin.specialties.index') }}"
-                class="{{ request()->routeIs('admin.specialties.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
-                <i
-                    class="fa-solid fa-stethoscope w-5 text-center mr-3 {{ request()->routeIs('admin.specialties.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
-                Chuyên khoa
-            </a>
-            <a href="{{ route('admin.rooms.index') }}"
-                class="{{ request()->routeIs('admin.rooms.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
-                <i
-                    class="fa-solid fa-door-open w-5 text-center mr-3 {{ request()->routeIs('admin.rooms.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
-                Phòng khám
-            </a>
+            <!-- QUẢN LÝ DỊCH VỤ -->
+            <div x-data="{ openServices: {{ request()->routeIs('admin.specialties.*', 'admin.rooms.*', 'admin.doctor-level-fees.*', 'admin.insurance-types.*') ? 'true' : 'false' }} }">
+                <button @click="openServices = !openServices"
+                    class="w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium mt-1
+                               {{ request()->routeIs('admin.specialties.*', 'admin.rooms.*', 'admin.doctor-level-fees.*', 'admin.insurance-types.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                    <span class="flex items-center">
+                        <i
+                            class="fa-solid fa-stethoscope w-5 text-center mr-3 {{ request()->routeIs('admin.specialties.*', 'admin.rooms.*', 'admin.doctor-level-fees.*', 'admin.insurance-types.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
+                        Quản lý dịch vụ
+                    </span>
+                    <i class="fa-solid fa-chevron-down text-xs transition-transform"
+                        :class="openServices ? 'rotate-180' : ''"></i>
+                </button>
+                <div x-show="openServices" {!! request()->routeIs('admin.specialties.*', 'admin.rooms.*', 'admin.doctor-level-fees.*', 'admin.insurance-types.*') ? '' : 'style="display: none;"' !!} x-transition class="pl-8 mt-1 space-y-1">
+                    <a href="{{ route('admin.specialties.index') }}"
+                        class="flex items-center px-3 py-2 rounded-md text-sm {{ request()->routeIs('admin.specialties.*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}"><i
+                            class="fa-solid fa-notes-medical w-4 mr-2 text-gray-400"></i> Chuyên khoa</a>
+                    <a href="{{ route('admin.rooms.index') }}"
+                        class="flex items-center px-3 py-2 rounded-md text-sm {{ request()->routeIs('admin.rooms.*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}"><i
+                            class="fa-solid fa-door-open w-4 mr-2 text-gray-400"></i> Phòng khám</a>
+                    <a href="{{ route('admin.doctor-level-fees.index') }}"
+                        class="flex items-center px-3 py-2 rounded-md text-sm {{ request()->routeIs('admin.doctor-level-fees.*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}"><i
+                            class="fa-solid fa-sack-dollar w-4 mr-2 text-gray-400"></i> Phí khám</a>
+                    <a href="{{ route('admin.insurance-types.index') }}"
+                        class="flex items-center px-3 py-2 rounded-md text-sm {{ request()->routeIs('admin.insurance-types.*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}"><i
+                            class="fa-solid fa-shield-halved w-4 mr-2 text-gray-400"></i> Cấu hình BHYT</a>
+                </div>
+            </div>
+
+            <!-- Single menus: Lịch làm việc & Lịch hẹn -->
             <a href="{{ route('admin.work-schedules.index') }}"
                 class="{{ request()->routeIs('admin.work-schedules.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
                 <i
@@ -94,74 +111,45 @@
                     class="fa-solid fa-calendar-check w-5 text-center mr-3 {{ request()->routeIs('admin.appointments.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
                 Lịch hẹn
             </a>
-            <a href="{{ route('admin.hospital-history.index') }}"
-                class="{{ request()->routeIs('admin.hospital-history.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
-                <i
-                    class="fa-solid fa-clock-rotate-left w-5 text-center mr-3 {{ request()->routeIs('admin.hospital-history.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
-                Lịch sử khám
-            </a>
-            <a href="{{ route('admin.payments.transactions') }}"
-                class="{{ request()->routeIs('admin.payments.transactions*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
-                <i
-                    class="fa-solid fa-list-check w-5 text-center mr-3 {{ request()->routeIs('admin.payments.transactions*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
-                Lịch sử giao dịch
-            </a>
 
-            <!-- QUẢN LÝ THANH TOÁN -->
-            <div x-data="{ openPayments: {{ request()->routeIs('admin.payments.needs-review', 'admin.payments.refunds', 'admin.sepay-transactions.*') ? 'true' : 'false' }} }">
-                <button @click="openPayments = !openPayments"
+            <!-- QUẢN LÝ LỊCH SỬ -->
+            <div x-data="{ openHistory: {{ request()->routeIs('admin.hospital-history.*', 'admin.payments.transactions*') ? 'true' : 'false' }} }">
+                <button @click="openHistory = !openHistory"
                     class="w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium mt-1
-                               {{ request()->routeIs('admin.payments.needs-review', 'admin.payments.refunds', 'admin.sepay-transactions.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                               {{ request()->routeIs('admin.hospital-history.*', 'admin.payments.transactions*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }}">
                     <span class="flex items-center">
                         <i
-                            class="fa-solid fa-money-bill-transfer w-5 text-center mr-3 {{ request()->routeIs('admin.payments.needs-review', 'admin.payments.refunds', 'admin.sepay-transactions.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
-                        Quản lý thanh toán
+                            class="fa-solid fa-clock-rotate-left w-5 text-center mr-3 {{ request()->routeIs('admin.hospital-history.*', 'admin.payments.transactions*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
+                        Quản lý lịch sử
                     </span>
                     <i class="fa-solid fa-chevron-down text-xs transition-transform"
-                        :class="openPayments ? 'rotate-180' : ''"></i>
+                        :class="openHistory ? 'rotate-180' : ''"></i>
                 </button>
-
-                <div x-show="openPayments" {!! request()->routeIs('admin.payments.needs-review', 'admin.payments.refunds', 'admin.sepay-transactions.*') ? '' : 'style="display: none;"' !!} x-transition class="pl-8 mt-1 space-y-1">
-                    <a href="{{ route('admin.payments.needs-review') }}"
-                        class="flex items-center px-3 py-2 rounded-md text-sm
-                              {{ request()->routeIs('admin.payments.needs-review') ? 'bg-blue-50/50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
-                        Cần xử lý
-                    </a>
-                    <a href="{{ route('admin.sepay-transactions.index') }}"
-                        class="flex items-center px-3 py-2 rounded-md text-sm
-                              {{ request()->routeIs('admin.sepay-transactions.*') ? 'bg-blue-50/50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
-                        Đối soát SePay
-                    </a>
-                    <a href="{{ route('admin.payments.refunds') }}"
-                        class="flex items-center px-3 py-2 rounded-md text-sm
-                              {{ request()->routeIs('admin.payments.refunds') ? 'bg-blue-50/50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
-                        Yêu cầu hoàn tiền
-                    </a>
+                <div x-show="openHistory" {!! request()->routeIs('admin.hospital-history.*', 'admin.payments.transactions*') ? '' : 'style="display: none;"' !!} x-transition class="pl-8 mt-1 space-y-1">
+                    <a href="{{ route('admin.hospital-history.index') }}"
+                        class="flex items-center px-3 py-2 rounded-md text-sm {{ request()->routeIs('admin.hospital-history.*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}"><i
+                            class="fa-solid fa-file-medical w-4 mr-2 text-gray-400"></i> Lịch sử khám</a>
+                    <a href="{{ route('admin.payments.transactions') }}"
+                        class="flex items-center px-3 py-2 rounded-md text-sm {{ request()->routeIs('admin.payments.transactions*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}"><i
+                            class="fa-solid fa-list-check w-4 mr-2 text-gray-400"></i> Lịch sử giao dịch</a>
                 </div>
             </div>
 
+            <!-- QUẢN LÝ SEPAY -->
+            <a href="{{ route('admin.sepay-transactions.index') }}"
+                class="{{ request()->routeIs('admin.sepay-transactions.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
+                <i
+                    class="fa-solid fa-money-bill-transfer w-5 text-center mr-3 {{ request()->routeIs('admin.sepay-transactions.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
+                Quản lý SePay
+            </a>
 
+            <!-- Bài viết -->
             <a href="{{ route('admin.posts.index') }}"
                 class="{{ request()->routeIs('admin.posts.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
                 <i
                     class="fa-regular fa-clipboard w-5 text-center mr-3 {{ request()->routeIs('admin.posts.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
                 Bài viết
             </a>
-
-            <a href="{{ route('admin.insurance-types.index') }}"
-                class="{{ request()->routeIs('admin.insurance-types.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
-                <i
-                    class="fa-solid fa-shield-halved w-5 text-center mr-3 {{ request()->routeIs('admin.insurance-types.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
-                Cấu hình BHYT
-            </a>
-
-            <a href="{{ route('admin.doctor-level-fees.index') }}"
-                class="{{ request()->routeIs('admin.doctor-level-fees.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md mt-1">
-                <i
-                    class="fa-solid fa-sack-dollar w-5 text-center mr-3 {{ request()->routeIs('admin.doctor-level-fees.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
-                Phí khám
-            </a>
-
 
             <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-4 mb-1">
                 Hệ thống

@@ -19,7 +19,7 @@ class MedicalRecordController extends Controller
             return redirect()->route('doctor.medical-records.show', $appointment->medicalRecord->id);
         }
 
-        $assistants = \App\Models\User::where('role', '!=', 'patient')->get();
+        $assistants = \App\Models\User::where('role', 'receptionist')->get();
 
         return view('doctor.medical-records.create', compact('appointment', 'assistants'));
     }
@@ -94,7 +94,7 @@ class MedicalRecordController extends Controller
     public function edit(MedicalRecord $medical_record)
     {
         $medical_record->load('appointment');
-        $assistants = \App\Models\User::where('role', '!=', 'patient')->get();
+        $assistants = \App\Models\User::where('role', 'receptionist')->get();
         return view('doctor.medical-records.edit', compact('medical_record', 'assistants'));
     }
 

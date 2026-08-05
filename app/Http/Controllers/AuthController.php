@@ -106,6 +106,8 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         $user = Auth::user();
+        $redirectUrl = '/';
+
         if ($user) {
             SystemLog::create([
                 'user_id' => $user->id,
@@ -114,6 +116,10 @@ class AuthController extends Controller
                 'ip_address' => $request->ip(),
                 'description' => 'User logged out'
             ]);
+
+            if (in_array($user->role, ['admin', 'doctor', 'receptionist'])) {
+                $redirectUrl = route('login');
+            }
         }
 
         Auth::logout();
@@ -121,7 +127,7 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect($redirectUrl);
     }
 
     public function showForgotPassword(Request $request)

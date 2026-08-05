@@ -78,29 +78,17 @@
                     </div>
                     <div class="flex flex-col">
                         <span class="text-gray-400 font-bold uppercase tracking-wider text-xs mb-1">Trạng thái</span>
-                        @php
-                        $statusLabels = [
-                        'pending' => 'Chờ xác nhận',
-                        'confirmed' => 'Đã xác nhận',
-                        'completed' => 'Hoàn thành',
-                        'cancelled' => 'Đã huỷ',
-                        'in_progress' => 'Đang khám'
-                        ];
-                        $statusLabel = $statusLabels[$appointment->status] ?? ucfirst($appointment->status);
-                        @endphp
-                        @if($appointment->status === 'cancelled')
-                        <span class="inline-flex items-center gap-1.5 bg-red-50 text-red-600 font-bold px-3 py-1.5 rounded-lg w-fit border border-red-100">
-                            <i class="fa-solid fa-ban text-sm"></i> {{ $statusLabel }}
+                        @php $color = $appointment->status_color; @endphp
+                        <span class="inline-flex items-center gap-1.5 bg-{{ $color }}-50 text-{{ $color }}-600 font-bold px-3 py-1.5 rounded-lg w-fit border border-{{ $color }}-100">
+                            @if($appointment->status === 'cancelled')
+                                <i class="fa-solid fa-ban text-sm"></i>
+                            @elseif($appointment->status === 'completed')
+                                <i class="fa-solid fa-check-circle text-sm"></i>
+                            @else
+                                <i class="fa-solid fa-circle-info text-sm"></i>
+                            @endif
+                            {{ $appointment->status_label }}
                         </span>
-                        @elseif($appointment->status === 'completed')
-                        <span class="inline-flex items-center gap-1.5 bg-green-50 text-green-600 font-bold px-3 py-1.5 rounded-lg w-fit border border-green-100">
-                            <i class="fa-solid fa-check-circle text-sm"></i> {{ $statusLabel }}
-                        </span>
-                        @else
-                        <span class="inline-flex items-center gap-1.5 bg-blue-50 text-blue-600 font-bold px-3 py-1.5 rounded-lg w-fit border border-blue-100">
-                            <i class="fa-solid fa-check-circle text-sm"></i> {{ $statusLabel }}
-                        </span>
-                        @endif
                     </div>
                 </div>
 

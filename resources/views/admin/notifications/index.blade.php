@@ -131,19 +131,19 @@
                             <div class="flex items-center justify-end gap-2">
                                 <!-- Hiện nút gửi lại nếu có lỗi xảy ra hoặc email chưa được gửi hết -->
                                 @if($campaign->total_email > 0 && $campaign->sent_email_count < $campaign->total_email)
-                                <form action="{{ route('admin.notifications.resend') }}" method="POST" class="inline-block" onsubmit="return confirm('Bạn có chắc muốn đặt lại trạng thái để gửi lại thông báo chưa gửi thành công trong chiến dịch này?');">
+                                <form action="{{ route('admin.notifications.resend') }}" method="POST" class="inline" onsubmit="return confirm('Bạn có chắc muốn đặt lại trạng thái để gửi lại thông báo chưa gửi thành công trong chiến dịch này?');">
                                     @csrf
                                     <input type="hidden" name="batch_id" value="{{ $campaign->batch_id }}">
-                                    <button type="submit" class="text-blue-600 hover:text-blue-900" title="Thử gửi lại các email lỗi">
+                                    <button type="submit" class="w-7 h-7 rounded text-[13px] bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition" title="Thử gửi lại các email lỗi">
                                         <i class="fa-solid fa-rotate-right"></i>
                                     </button>
                                 </form>
                                 @endif
-                                <form action="{{ route('admin.notifications.destroy') }}" method="POST" class="inline-block" onsubmit="return confirm('Xoá chiến dịch này? Hành động này không thể hoàn tác.');">
+                                <form action="{{ route('admin.notifications.destroy') }}" method="POST" class="inline" onsubmit="return confirm('Xoá chiến dịch này? Hành động này không thể hoàn tác.');">
                                     @csrf
                                     @method('DELETE')
                                     <input type="hidden" name="batch_id" value="{{ $campaign->batch_id }}">
-                                    <button type="submit" class="text-red-600 hover:text-red-900" title="Xóa">
+                                    <button type="submit" class="w-7 h-7 rounded text-[13px] bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition" title="Xóa">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
                                 </form>
@@ -186,21 +186,21 @@
                     <h3 class="text-sm font-bold text-gray-900 mb-1 leading-snug">{{ $campaign->title }}</h3>
                     <p class="text-xs text-gray-600 line-clamp-2">{{ $campaign->content }}</p>
                 </div>
-                <div class="flex items-center gap-1 ml-3">
+                <div class="flex items-center justify-end gap-2 ml-3">
                     @if($campaign->total_email > 0 && $campaign->sent_email_count < $campaign->total_email)
-                    <form action="{{ route('admin.notifications.resend') }}" method="POST" class="inline-block" onsubmit="return confirm('Gửi lại các email bị lỗi?');">
+                    <form action="{{ route('admin.notifications.resend') }}" method="POST" class="inline" onsubmit="return confirm('Gửi lại các email bị lỗi?');">
                         @csrf
                         <input type="hidden" name="batch_id" value="{{ $campaign->batch_id }}">
-                        <button type="submit" class="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors" title="Gửi lại">
+                        <button type="submit" class="w-7 h-7 rounded text-[13px] bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition" title="Gửi lại">
                             <i class="fa-solid fa-rotate-right"></i>
                         </button>
                     </form>
                     @endif
-                    <form action="{{ route('admin.notifications.destroy') }}" method="POST" class="inline-block" onsubmit="return confirm('Xoá chiến dịch này?');">
+                    <form action="{{ route('admin.notifications.destroy') }}" method="POST" class="inline" onsubmit="return confirm('Xoá chiến dịch này?');">
                         @csrf
                         @method('DELETE')
                         <input type="hidden" name="batch_id" value="{{ $campaign->batch_id }}">
-                        <button type="submit" class="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-colors" title="Xóa">
+                        <button type="submit" class="w-7 h-7 rounded text-[13px] bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition" title="Xóa">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </form>

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Services\DashboardService;
+use App\Services\ReportService;
 
 /**
  * Controller xử lý màn hình Dashboard của Admin
@@ -14,15 +15,18 @@ use App\Services\DashboardService;
 class DashboardController extends Controller
 {
     protected $dashboardService;
+    protected $reportService;
 
     /**
      * Tiêm (Inject) DashboardService vào Controller
      * 
      * @param DashboardService $dashboardService
+     * @param ReportService $reportService
      */
-    public function __construct(DashboardService $dashboardService)
+    public function __construct(DashboardService $dashboardService, ReportService $reportService)
     {
         $this->dashboardService = $dashboardService;
+        $this->reportService = $reportService;
     }
 
     /**
@@ -32,21 +36,32 @@ class DashboardController extends Controller
      */
     public function index(Request $request)
     {
-        // Khởi tạo mốc thời gian hiện tại và đầu tháng làm chuẩn
-        $today = Carbon::today();
-        $startOfMonth = Carbon::now()->startOfMonth();
+        // Xử lý bộ lọc thời gian
+        $dateFrom = $request->filled('date_from') 
+            ? Carbon::parse($request->date_from)->startOfDay() 
+            : Carbon::now()->startOfMonth();
+            
+        $dateTo = $request->filled('date_to') 
+            ? Carbon::parse($request->date_to)->endOfDay() 
+            : Carbon::today()->endOfDay();
 
         // 1. Dữ liệu thẻ thông tin (KPI Cards)
-        $kpiData = $this->dashboardService->getKpiData($today, $startOfMonth);
+        $kpiData = $this->dashboardService->getKpiData($dateFrom, $dateTo);
 
-        // 2. Danh sách Top Bác sĩ & Lịch khám hôm nay
-        $topDoctors = $this->dashboardService->getTopDoctors($startOfMonth);
-        $todayAppointments = $this->dashboardService->getTodayAppointments($today);
+        // 2. Danh sách Top Bác sĩ & Lịch khám
+        $topDoctors = $this->dashboardService->getTopDoctors($dateFrom, $dateTo);
+        $todayAppointments = $this->dashboardService->getAppointmentsList($dateFrom, $dateTo);
+
+        // 3. Thống kê doanh thu trong khoảng thời gian
+        $revenueStats = $this->reportService->getRevenueStats($dateFrom, $dateTo);
 
         // Đẩy data ra view hiển thị (Chưa kèm Data biểu đồ vì sẽ fetch qua AJAX)
         return view('admin.dashboard', array_merge($kpiData, [
             'topDoctors' => $topDoctors,
             'todayAppointments' => $todayAppointments,
+            'revenueStats' => $revenueStats,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
         ]));
     }
 

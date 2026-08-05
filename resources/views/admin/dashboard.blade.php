@@ -26,16 +26,31 @@
                     class="{{ request()->routeIs('admin.payments.dashboard') ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm">
                     <i class="fa-solid fa-money-bill-wave mr-2"></i> Tài chính & Thanh toán
                 </a>
-                <a href="{{ route('admin.reports.index') }}"
-                    class="{{ request()->routeIs('admin.reports.index') ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm">
-                    <i class="fa-solid fa-chart-line mr-2"></i> Báo cáo chi tiết
-                </a>
             </nav>
         </div>
     </div>
 
+    <!-- Bộ lọc thời gian -->
+    <div class="mb-6 flex justify-end">
+        <form method="GET" action="{{ route('admin.dashboard') }}" class="flex gap-2 items-center flex-wrap">
+            <input type="date" name="date_from" value="{{ $dateFrom->format('Y-m-d') }}"
+                class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+            <span class="text-gray-400 text-sm">→</span>
+            <input type="date" name="date_to" value="{{ $dateTo->format('Y-m-d') }}"
+                class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors shadow-sm">
+                <i class="fa-solid fa-filter mr-1"></i> Tra cứu
+            </button>
+            @if(request()->has('date_from'))
+            <a href="{{ route('admin.dashboard') }}" class="px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors shadow-sm">
+                Xóa lọc
+            </a>
+            @endif
+        </form>
+    </div>
+
     <!-- Hàng 1: KPI Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <!-- Card 1: Lịch khám hôm nay -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 relative overflow-hidden group hover:shadow-md transition-shadow">
             <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -43,7 +58,7 @@
             </div>
             <div class="flex justify-between items-start mb-4 relative z-10">
                 <div>
-                    <p class="text-sm font-medium text-gray-500">Lịch khám hôm nay</p>
+                    <p class="text-sm font-medium text-gray-500">Lịch khám (Kỳ này)</p>
                     <h3 class="text-3xl font-bold text-gray-900 mt-1">{{ number_format($todayApptCount) }}</h3>
                 </div>
                 <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
@@ -62,7 +77,7 @@
             </div>
             <div class="flex justify-between items-start mb-4 relative z-10">
                 <div>
-                    <p class="text-sm font-medium text-gray-500">Bị hủy hôm nay</p>
+                    <p class="text-sm font-medium text-gray-500">Bị hủy (Kỳ này)</p>
                     <h3 class="text-3xl font-bold text-gray-900 mt-1">{{ number_format($canceledToday ?? 0) }}</h3>
                 </div>
                 <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-600">
@@ -81,7 +96,7 @@
             </div>
             <div class="flex justify-between items-start mb-4 relative z-10">
                 <div>
-                    <p class="text-sm font-medium text-gray-500">Tỷ lệ hoàn thành (Hôm nay)</p>
+                    <p class="text-sm font-medium text-gray-500">Tỷ lệ hoàn thành</p>
                     <h3 class="text-3xl font-bold text-gray-900 mt-1">{{ $completionRate }}%</h3>
                 </div>
                 <div class="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
@@ -94,52 +109,16 @@
             <p class="text-xs text-gray-400 mt-2 relative z-10">{{ $completedToday }} / {{ $todayApptCount }} ca đã khám</p>
         </div>
 
-        <!-- Card 4: Doanh thu hôm nay -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 relative overflow-hidden group hover:shadow-md transition-shadow">
-            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <i class="fa-solid fa-hand-holding-dollar text-6xl text-amber-600"></i>
-            </div>
-            <div class="flex justify-between items-start mb-4 relative z-10">
-                <div>
-                    <p class="text-sm font-medium text-gray-500">Doanh thu hôm nay</p>
-                    <h3 class="text-3xl font-bold text-gray-900 mt-1">{{ number_format($revenueToday ?? 0) }}đ</h3>
-                </div>
-                <div class="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
-                    <i class="fa-solid fa-coins"></i>
-                </div>
-            </div>
-            <div class="flex items-center text-sm relative z-10">
-                <span class="text-gray-500 font-medium">Tổng thu trong ngày</span>
-            </div>
-        </div>
 
-        <!-- Card 5: Doanh thu tháng này -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 relative overflow-hidden group hover:shadow-md transition-shadow">
-            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <i class="fa-solid fa-vault text-6xl text-indigo-600"></i>
-            </div>
-            <div class="flex justify-between items-start mb-4 relative z-10">
-                <div>
-                    <p class="text-sm font-medium text-gray-500">Doanh thu tháng này</p>
-                    <h3 class="text-3xl font-bold text-gray-900 mt-1">{{ number_format($revenueThisMonth ?? 0) }}đ</h3>
-                </div>
-                <div class="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
-                    <i class="fa-solid fa-sack-dollar"></i>
-                </div>
-            </div>
-            <div class="flex items-center text-sm relative z-10">
-                <span class="text-gray-500 font-medium">Tổng thu trong tháng</span>
-            </div>
-        </div>
 
-        <!-- Card 6: Bệnh nhân mới -->
+        <!-- Card 4: Bệnh nhân mới -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 relative overflow-hidden group hover:shadow-md transition-shadow">
             <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                 <i class="fa-solid fa-users text-6xl text-teal-600"></i>
             </div>
             <div class="flex justify-between items-start mb-4 relative z-10">
                 <div>
-                    <p class="text-sm font-medium text-gray-500">Bệnh nhân mới (Tháng)</p>
+                    <p class="text-sm font-medium text-gray-500">Bệnh nhân mới (Kỳ này)</p>
                     <h3 class="text-3xl font-bold text-gray-900 mt-1">{{ number_format($newPatientsThisMonth) }}</h3>
                 </div>
                 <div class="w-10 h-10 rounded-full bg-teal-50 flex items-center justify-center text-teal-600">
@@ -160,7 +139,39 @@
                         <i class="fa-solid fa-minus mr-1 text-xs"></i> 0%
                     </span>
                     @endif
-                    <span class="text-gray-400 ml-2">so với tháng trước</span>
+                    <span class="text-gray-400 ml-2">so với kỳ trước</span>
+            </div>
+        </div>
+    </div>
+
+    {{-- KPI CARDS: Doanh thu --}}
+    <div class="mb-8">
+        <h2 class="text-lg font-semibold text-gray-800 mb-3">
+            <i class="fa-solid fa-coins text-yellow-500 mr-2"></i>Thống kê doanh thu
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200 p-5">
+                <div class="text-xs text-blue-600 font-medium mb-1">Tổng doanh thu</div>
+                <div class="text-2xl font-bold text-blue-900">{{ number_format($revenueStats['total_revenue']) }}đ</div>
+                <div class="text-xs text-blue-500 mt-1">Đã thanh toán hoàn tất</div>
+            </div>
+            <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200 p-5">
+                <div class="text-xs text-green-600 font-medium mb-1">Thực thu từ bệnh nhân</div>
+                <div class="text-2xl font-bold text-green-900">{{ number_format($revenueStats['patient_revenue']) }}đ</div>
+                <div class="text-xs text-green-500 mt-1">
+                    Tiền mặt: {{ number_format($revenueStats['cash_revenue']) }}đ
+                    &bull; QR: {{ number_format($revenueStats['qr_revenue']) }}đ
+                </div>
+            </div>
+            <div class="bg-gradient-to-br from-teal-50 to-teal-100 rounded-xl border border-teal-200 p-5">
+                <div class="text-xs text-teal-600 font-medium mb-1">BHYT chi trả</div>
+                <div class="text-2xl font-bold text-teal-900">{{ number_format($revenueStats['insurance_revenue']) }}đ</div>
+                <div class="text-xs text-teal-500 mt-1">Phần BHYT đã ghi nhận</div>
+            </div>
+            <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl border border-yellow-200 p-5">
+                <div class="text-xs text-yellow-600 font-medium mb-1">Chờ quyết toán / Chờ thu</div>
+                <div class="text-2xl font-bold text-yellow-900">{{ number_format($revenueStats['pending_revenue']) }}đ</div>
+                <div class="text-xs text-yellow-500 mt-1">Các khoản chưa hoàn tất</div>
             </div>
         </div>
     </div>
@@ -249,7 +260,7 @@
         <!-- Bảng 1: Bệnh nhân hôm nay (Chiếm 2 cột) -->
         <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
             <div class="p-6 border-b border-gray-100 flex justify-between items-center">
-                <h3 class="text-lg font-bold text-gray-900">Lịch khám Hôm nay</h3>
+                <h3 class="text-lg font-bold text-gray-900">Danh sách Lịch khám</h3>
                 <a href="{{ route('admin.appointments.index') }}"
                     class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">Xem tất cả <i
                         class="fa-solid fa-arrow-right text-xs ml-1"></i></a>
@@ -282,10 +293,10 @@
                                 <div class="flex items-center gap-2">
                                     <div
                                         class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">
-                                        {{ substr($appt->doctorProfile->user->name ?? 'BS', 0, 1) }}
+                                        {{ substr($appt->doctorProfile->user->full_name ?? 'BS', 0, 1) }}
                                     </div>
                                     <span
-                                        class="text-sm text-gray-700 font-medium">{{ $appt->doctorProfile->user->name ?? 'N/A' }}</span>
+                                        class="text-sm text-gray-700 font-medium">{{ $appt->doctorProfile->user->full_name ?? 'N/A' }}</span>
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-center whitespace-nowrap">
@@ -311,7 +322,7 @@
                         @empty
                         <tr>
                             <td colspan="4" class="px-6 py-8 text-center text-gray-500 text-sm">Không có lịch
-                                khám nào trong hôm nay.</td>
+                                khám nào trong khoảng thời gian này.</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -322,8 +333,8 @@
         <!-- Bảng 2: Top Bác sĩ -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
             <div class="p-6 border-b border-gray-100">
-                <h3 class="text-lg font-bold text-gray-900">Top Bác sĩ (Tháng)</h3>
-                <p class="text-xs text-gray-500 mt-1">Dựa trên số ca tiếp nhận</p>
+                <h3 class="text-lg font-bold text-gray-900">Top Bác sĩ</h3>
+                <p class="text-xs text-gray-500 mt-1">Dựa trên số ca tiếp nhận kỳ này</p>
             </div>
             <div class="p-0 flex-1">
                 <ul class="divide-y divide-gray-100">
@@ -335,7 +346,7 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="text-sm font-medium text-gray-900 truncate">
-                                {{ $item->doctorProfile->user->name ?? 'Unknown' }}
+                                {{ $item->doctorProfile->user->full_name ?? 'Unknown' }}
                             </p>
                             <p class="text-xs text-gray-500 truncate">
                                 {{ $item->doctorProfile->specialty->name ?? 'Khoa khám bệnh' }}

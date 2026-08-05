@@ -27,10 +27,15 @@ class PaymentDashboardController extends Controller
             : Carbon::now()->endOfDay();
 
         // ── Thống kê tổng quan ──────────────────────────────
-        $totalRevenue = Payment::whereBetween('paid_at', [$from, $to])
+        $payments = Payment::with(['clinicalVisits', 'prescriptions'])
+            ->whereBetween('paid_at', [$from, $to])
             ->where('status', 'completed')
-            ->where('amount', '>', 0)
-            ->sum('amount');
+            ->get();
+            
+        $totalRevenue = $payments->sum(function($p) {
+            $fee = $p->clinicalVisits->sum('payment_amount') + $p->prescriptions->sum('payment_amount');
+            return max($fee, (float) $p->amount);
+        });
 
         $totalPending = ClinicalVisit::where('payment_status', 'pending')->sum('payment_amount');
 
@@ -46,13 +51,18 @@ class PaymentDashboardController extends Controller
         $chartDays = min((int)$from->diffInDays($to) + 1, 30);
         $chartFrom = $to->copy()->subDays($chartDays - 1)->startOfDay();
 
-        $dailyRevenue = Payment::whereBetween('paid_at', [$chartFrom, $to])
+        $chartPayments = Payment::with(['clinicalVisits', 'prescriptions'])
+            ->whereBetween('paid_at', [$chartFrom, $to])
             ->where('status', 'completed')
-            ->where('amount', '>', 0)
-            ->selectRaw('DATE(paid_at) as date, SUM(amount) as total')
-            ->groupBy('date')
-            ->orderBy('date')
-            ->pluck('total', 'date');
+            ->get();
+
+        $dailyRevenue = [];
+        foreach ($chartPayments as $p) {
+            $date = $p->paid_at->format('Y-m-d');
+            $fee = $p->clinicalVisits->sum('payment_amount') + $p->prescriptions->sum('payment_amount');
+            $rev = max($fee, (float) $p->amount);
+            $dailyRevenue[$date] = ($dailyRevenue[$date] ?? 0) + $rev;
+        }
 
         // Fill days with 0 for missing dates
         $chartLabels = [];
@@ -78,146 +88,7 @@ class PaymentDashboardController extends Controller
         ));
     }
 
-    /**
-     * Danh sách Payment cần xử lý (needs_review)
-     */
-    public function needsReview(Request $request)
-    {
-        $payments = Payment::with(['appointment.patientProfile', 'appointment.doctorProfile.user'])
-            ->where('status', 'needs_review')
-            ->when($request->filled('search'), function ($q) use ($request) {
-                $q->whereHas('appointment', function ($q2) use ($request) {
-                    $q2->where('appointment_code', 'like', '%' . $request->search . '%')
-                        ->orWhereHas('patientProfile', fn($q3) =>
-                            $q3->where('full_name', 'like', '%' . $request->search . '%')
-                        );
-                });
-            })
-            ->latest('paid_at')
-            ->paginate(20);
 
-        return view('admin.payments.needs-review', compact('payments'));
-    }
-
-    /**
-     * Xác nhận/Xử lý một payment needs_review
-     */
-    public function resolveReview(Request $request, Payment $payment)
-    {
-        $request->validate([
-            'action' => 'required|in:approve,create_refund',
-            'note' => 'nullable|string|max:500',
-        ], [
-            'action.required' => 'Vui lòng chọn hành động.',
-            'action.in' => 'Hành động không hợp lệ.',
-            'note.string' => 'Ghi chú phải là chuỗi ký tự.',
-            'note.max' => 'Ghi chú không được vượt quá 500 ký tự.',
-        ]);
-
-        if ($request->action === 'approve') {
-            $payment->update([
-                'status' => 'completed',
-                'note' => $payment->note . ' | Admin xác nhận: ' . ($request->note ?? ''),
-            ]);
-
-            PaymentLog::record(
-                'payment_approved',
-                "Admin xác nhận Payment #{$payment->id} (trước đó: needs_review). Ghi chú: " . ($request->note ?? 'Không có'),
-                'success',
-                ['payment_id' => $payment->id, 'appointment_id' => $payment->appointment_id]
-            );
-
-            return redirect()->route('admin.payments.needs-review')
-                ->with('success', 'Đã xác nhận payment thành công.');
-        }
-
-        if ($request->action === 'create_refund') {
-            RefundRequest::create([
-                'appointment_id' => $payment->appointment_id,
-                'payment_id' => $payment->id,
-                'amount' => $payment->amount,
-                'reason' => $request->note ?? 'Tạo từ trang Needs Review',
-                'status' => 'pending',
-                'requested_by' => Auth::id(),
-            ]);
-
-            $payment->update(['status' => 'completed']);
-
-            PaymentLog::record(
-                'refund_request_created',
-                "Tạo yêu cầu hoàn tiền từ Payment #{$payment->id}",
-                'info',
-                ['payment_id' => $payment->id, 'appointment_id' => $payment->appointment_id]
-            );
-
-            return redirect()->route('admin.payments.refunds')
-                ->with('success', 'Đã tạo yêu cầu hoàn tiền. Vui lòng duyệt tại trang Hoàn tiền.');
-        }
-    }
-
-    /**
-     * Danh sách yêu cầu hoàn tiền
-     */
-    public function refunds(Request $request)
-    {
-        $refunds = RefundRequest::with(['appointment.patientProfile', 'payment', 'requestedBy', 'reviewedBy'])
-            ->when($request->filled('status'), fn($q) => $q->where('status', $request->status))
-            ->latest()
-            ->paginate(20);
-
-        return view('admin.payments.refunds', compact('refunds'));
-    }
-
-    /**
-     * Duyệt/Từ chối yêu cầu hoàn tiền
-     */
-    public function reviewRefund(Request $request, RefundRequest $refund)
-    {
-        $request->validate([
-            'action' => 'required|in:approve,reject',
-            'refund_method' => 'nullable|in:cash,bank_transfer',
-            'review_note' => 'nullable|string|max:500',
-        ], [
-            'action.required' => 'Vui lòng chọn hành động (Duyệt hoặc Từ chối).',
-            'action.in' => 'Hành động không hợp lệ.',
-            'refund_method.in' => 'Phương thức hoàn tiền không hợp lệ.',
-            'review_note.string' => 'Ghi chú phải là chuỗi ký tự.',
-            'review_note.max' => 'Ghi chú không được vượt quá 500 ký tự.',
-        ]);
-
-        $status = $request->action === 'approve' ? 'approved' : 'rejected';
-
-        $refund->update([
-            'status' => $status,
-            'refund_method' => $request->refund_method,
-            'reviewed_by' => Auth::id(),
-            'reviewed_at' => now(),
-            'review_note' => $request->review_note,
-        ]);
-
-        if ($status === 'approved') {
-            Payment::create([
-                'appointment_id' => $refund->appointment_id,
-                'transaction_code' => 'RFD-' . now()->format('YmdHis') . '-' . $refund->id,
-                'amount' => -$refund->amount,
-                'method' => 'cash',
-                'status' => 'refunded',
-                'collected_by' => Auth::id(),
-                'paid_at' => now(),
-                'note' => 'Hoàn tiền: ' . ($refund->review_note ?? ''),
-            ]);
-        }
-
-        PaymentLog::record(
-            'refund_' . $status,
-            "Admin " . ($status === 'approved' ? 'duyệt' : 'từ chối') . " hoàn tiền #" . $refund->id . " — " . number_format($refund->amount) . "đ",
-            $status === 'approved' ? 'success' : 'warning',
-            ['appointment_id' => $refund->appointment_id]
-        );
-
-        return redirect()->route('admin.payments.refunds')
-            ->with('success', $status === 'approved' ? 'Đã duyệt hoàn tiền.' : 'Đã từ chối hoàn tiền.');
-    }
 
     /**
      * Export danh sách thanh toán ra CSV

@@ -261,25 +261,25 @@
                                 class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-gray-50 text-gray-600 border border-gray-100">Khác</span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div class="flex items-center justify-end gap-3">
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            <div class="flex items-center justify-end gap-2">
                                 <a href="{{ route('admin.appointments.show', $appt->id) }}"
-                                    class="text-gray-400 hover:text-blue-600 transition-colors"
+                                    class="w-7 h-7 rounded text-[13px] bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition"
                                     title="Xem chi tiết">
                                     <i class="fa-solid fa-eye"></i>
                                 </a>
                                 <a href="{{ route('admin.appointments.edit', $appt->id) }}"
-                                    class="text-gray-400 hover:text-yellow-600 transition-colors"
+                                    class="w-7 h-7 rounded text-[13px] bg-yellow-50 text-yellow-600 flex items-center justify-center hover:bg-yellow-100 transition"
                                     title="Chỉnh sửa">
                                     <i class="fa-solid fa-pen"></i>
                                 </a>
                                 <form action="{{ route('admin.appointments.destroy', $appt->id) }}"
-                                    method="POST" class="inline-block"
+                                    method="POST" class="inline"
                                     onsubmit="return confirm('Bạn có chắc chắn muốn xoá lịch hẹn này?');">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit"
-                                        class="text-gray-400 hover:text-red-600 transition-colors" title="Xoá">
+                                        class="w-7 h-7 rounded text-[13px] bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition" title="Xoá">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
                                 </form>

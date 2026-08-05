@@ -78,21 +78,23 @@
                                 </button>
                             </form>
                         </td>
-                        <td class="px-6 py-4 text-right space-x-2">
-                            <a href="{{ route('admin.chatbot.intents.show', $intent->id) }}"
-                                class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors"
-                                title="Chi tiết & Phản hồi">
-                                <i class="fa-solid fa-list-check"></i>
-                            </a>
-                            <form action="{{ route('admin.chatbot.intents.destroy', $intent->id) }}" method="POST"
-                                class="inline-block" onsubmit="return confirm('Xác nhận xoá kịch bản này?');">
-                                @csrf @method('DELETE')
-                                <button type="submit"
-                                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-red-600 bg-red-50 hover:bg-red-100 transition-colors"
-                                    title="Xoá">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
-                            </form>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <a href="{{ route('admin.chatbot.intents.show', $intent->id) }}"
+                                    class="w-7 h-7 rounded text-[13px] bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition"
+                                    title="Chi tiết & Phản hồi">
+                                    <i class="fa-solid fa-list-check"></i>
+                                </a>
+                                <form action="{{ route('admin.chatbot.intents.destroy', $intent->id) }}" method="POST"
+                                    class="inline" onsubmit="return confirm('Xác nhận xoá kịch bản này?');">
+                                    @csrf @method('DELETE')
+                                    <button type="submit"
+                                        class="w-7 h-7 rounded text-[13px] bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition"
+                                        title="Xoá">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 @empty

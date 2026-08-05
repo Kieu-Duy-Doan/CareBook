@@ -84,7 +84,12 @@
     <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm mb-6">
         <form action="{{ route('receptionist.payments.index') }}" method="GET" class="flex flex-col gap-4">
             <input type="hidden" name="tab" value="{{ $tab }}">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 {{ $tab === 'history' ? 'lg:grid-cols-4' : 'lg:grid-cols-5' }} gap-4 items-end">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Tìm kiếm</label>
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="{{ $tab === 'pending' ? 'Mã APT / Tên BN...' : 'Mã GD / Mã APT...' }}"
+                        class="block w-full py-2.5 px-3 border border-gray-200 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 text-sm outline-none bg-gray-50/50">
+                </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Từ ngày</label>
                     <input type="date" name="from" value="{{ request('from', $from->format('Y-m-d')) }}"
@@ -96,19 +101,15 @@
                         class="block w-full py-2.5 px-3 border border-gray-200 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 text-sm outline-none bg-gray-50/50">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Lọc theo tháng (Ghi đè ngày)</label>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Lọc theo tháng</label>
                     <input type="month" name="month" value="{{ request('month') }}"
                         class="block w-full py-2.5 px-3 border border-gray-200 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 text-sm outline-none bg-gray-50/50">
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Tìm kiếm</label>
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="{{ $tab === 'pending' ? 'Mã APT / Tên BN...' : 'Mã GD / Mã APT / Tên BN...' }}"
-                        class="block w-full py-2.5 px-3 border border-gray-200 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 text-sm outline-none bg-gray-50/50">
-                </div>
+
                 
                 @if($tab === 'history')
                 <div>
-                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Phương thức thanh toán</label>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Phương thức</label>
                     <select name="method"
                         class="block w-full py-2.5 px-3 border border-gray-200 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 text-sm outline-none bg-gray-50/50">
                         <option value="">Tất cả</option>
@@ -177,17 +178,17 @@
                     </select>
                 </div>
                 @endif
-            </div>
 
-            <div class="flex gap-2 justify-end mt-2">
-                <a href="{{ route('receptionist.payments.index', ['tab' => $tab]) }}"
-                    class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold transition-colors">
-                    Đặt lại
-                </a>
-                <button type="submit"
-                    class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold transition-colors">
-                    Lọc dữ liệu
-                </button>
+                <div class="flex gap-2">
+                    <a href="{{ route('receptionist.payments.index', ['tab' => $tab]) }}"
+                        class="w-full text-center px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold transition-colors">
+                        Đặt lại
+                    </a>
+                    <button type="submit"
+                        class="w-full px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold transition-colors">
+                        Lọc dữ liệu
+                    </button>
+                </div>
             </div>
         </form>
     </div>
@@ -272,8 +273,6 @@
                             <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Bệnh nhân</th>
                             <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Nội dung</th>
                             <th class="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Phí gốc</th>
-                            <th class="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">BN chi trả</th>
-                            <th class="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">BHYT chi trả</th>
                             <th class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">PT TT</th>
                             <th class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Thao tác</th>
                         </tr>
@@ -324,20 +323,6 @@
                                     <span class="text-sm font-bold text-gray-600">
                                         {{ $payment->total_fee > 0 ? number_format($payment->total_fee) . 'đ' : '—' }}
                                     </span>
-                                </td>
-                                <!-- BN chi trả -->
-                                <td class="px-4 py-3 text-right whitespace-nowrap">
-                                    <div class="text-sm font-bold text-gray-900">{{ number_format($payment->patient_amount) }}đ</div>
-                                    <div class="text-xs text-gray-500">{{ $payment->patient_percent }}%</div>
-                                </td>
-                                <!-- BHYT chi trả -->
-                                <td class="px-4 py-3 text-right whitespace-nowrap">
-                                    @if($payment->insurance_amount > 0)
-                                        <div class="text-sm font-bold text-indigo-600">{{ number_format($payment->insurance_amount) }}đ</div>
-                                        <div class="text-xs font-semibold text-indigo-400">{{ $payment->insurance_percent }}%</div>
-                                    @else
-                                        <span class="text-xs text-gray-300 font-bold">—</span>
-                                    @endif
                                 </td>
                                 <!-- PT TT -->
                                 <td class="px-4 py-3 text-center">

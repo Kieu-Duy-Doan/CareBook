@@ -47,6 +47,43 @@
         </div>
     </div>
 
+    {{-- Search & Filter --}}
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6" x-data="{ range: '{{ $dateRange }}' }">
+        <form method="GET" action="{{ route('doctor.payments.index') }}" class="flex flex-wrap items-center gap-3">
+            <input type="hidden" name="tab" value="{{ $tab }}">
+            
+            <div class="flex-1 min-w-[200px]">
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Tìm mã LH, tên BN..."
+                       class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-400">
+            </div>
+
+            <select name="date_range" x-model="range" class="px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-400 bg-white min-w-[150px]">
+                <option value="today">Hôm nay</option>
+                <option value="this_month">Tháng này</option>
+                <option value="this_year">Năm nay</option>
+                <option value="custom">Tùy chỉnh...</option>
+            </select>
+
+            <div x-show="range === 'custom'" class="flex items-center gap-2" style="display: none;" x-cloak>
+                <input type="date" name="from_date" value="{{ $fromDate }}"
+                       class="px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-400">
+                <span class="text-gray-400 text-sm">-</span>
+                <input type="date" name="to_date" value="{{ $toDate }}"
+                       class="px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-400">
+            </div>
+
+
+            <div class="flex gap-2">
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                    <i class="fa-solid fa-magnifying-glass mr-1"></i> Lọc
+                </button>
+                <a href="{{ route('doctor.payments.index', ['tab' => $tab]) }}" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">
+                    Đặt lại
+                </a>
+            </div>
+        </form>
+    </div>
+
     {{-- Tabs --}}
     <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         <div class="border-b border-gray-100 flex">
@@ -59,38 +96,9 @@
                 <i class="fa-solid fa-history mr-2"></i>Lịch sử
             </a>
 
-            {{-- Search & Filter --}}
-            <div class="ml-auto flex items-center gap-3 px-4" x-data="{ range: '{{ $dateRange }}' }">
-                <form method="GET" action="{{ route('doctor.payments.index') }}" class="flex items-center gap-2">
-                    <input type="hidden" name="tab" value="{{ $tab }}">
-                    
-                    <select name="date_range" x-model="range" class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-400 bg-white">
-                        <option value="today">Hôm nay</option>
-                        <option value="this_month">Tháng này</option>
-                        <option value="this_year">Năm nay</option>
-                        <option value="custom">Tùy chỉnh...</option>
-                    </select>
-
-                    <div x-show="range === 'custom'" class="flex items-center gap-1" style="display: none;" x-cloak>
-                        <input type="date" name="from_date" value="{{ $fromDate }}"
-                               class="px-2 py-1.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-400 w-32">
-                        <span class="text-gray-400 text-xs">-</span>
-                        <input type="date" name="to_date" value="{{ $toDate }}"
-                               class="px-2 py-1.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-400 w-32">
-                    </div>
-
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Tìm mã LH, tên BN..."
-                           class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-400 w-48">
-                    
-                    <button type="submit" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </button>
-                    <a href="{{ route('doctor.payments.index', ['tab' => $tab]) }}" class="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors" title="Đặt lại">
-                        <i class="fa-solid fa-arrow-rotate-right"></i>
-                    </a>
-                </form>
-            </div>
         </div>
+
+
 
         <div class="overflow-x-auto">
             <table class="w-full text-sm text-left">

@@ -17,67 +17,55 @@ use Illuminate\Support\Facades\DB;
 class DashboardService
 {
     /**
-     * Tính toán các chỉ số thống kê tổng quan (KPIs)
-     * So sánh dữ liệu ngày hiện tại với ngày hôm qua, tháng này với tháng trước để tính phần trăm tăng trưởng.
+     * Tính toán các chỉ số thống kê tổng quan (KPIs) theo khoảng thời gian
+     * So sánh dữ liệu trong khoảng thời gian với khoảng thời gian trước đó tương đương để tính phần trăm tăng trưởng.
      * 
-     * @param Carbon $today Ngày hôm nay
-     * @param Carbon $startOfMonth Ngày đầu tiên của tháng hiện tại
+     * @param Carbon $dateFrom Ngày bắt đầu
+     * @param Carbon $dateTo Ngày kết thúc
      * @return array Các chỉ số KPI
      */
-    public function getKpiData(Carbon $today, Carbon $startOfMonth): array
+    public function getKpiData(Carbon $dateFrom, Carbon $dateTo): array
     {
-        // Khởi tạo các mốc thời gian dùng để so sánh (Hôm qua, tháng trước)
-        $yesterday = Carbon::yesterday();
-        $startOfLastMonth = Carbon::now()->subMonth()->startOfMonth();
-        $endOfLastMonth = Carbon::now()->subMonth()->endOfMonth();
+        // Tính số ngày trong khoảng thời gian để lấy khoảng trước đó tương đương
+        $daysDiff = clone $dateFrom;
+        $daysDiff = $daysDiff->diffInDays($dateTo);
+        
+        $prevDateTo = (clone $dateFrom)->subDay()->endOfDay();
+        $prevDateFrom = (clone $prevDateTo)->subDays($daysDiff)->startOfDay();
 
         // 1. Thống kê Lịch khám
-        $todayApptCount = Appointment::whereDate('appointment_date', $today)->count();
-        $yesterdayApptCount = Appointment::whereDate('appointment_date', $yesterday)->count();
-        // Công thức tính % tăng trưởng: ((Hôm nay - Hôm qua) / Hôm qua) * 100
-        $apptGrowth = $yesterdayApptCount > 0 ? (($todayApptCount - $yesterdayApptCount) / $yesterdayApptCount) * 100 : ($todayApptCount > 0 ? 100 : 0);
+        $apptCount = Appointment::whereBetween('appointment_date', [$dateFrom, $dateTo])->count();
+        $prevApptCount = Appointment::whereBetween('appointment_date', [$prevDateFrom, $prevDateTo])->count();
+        $apptGrowth = $prevApptCount > 0 ? (($apptCount - $prevApptCount) / $prevApptCount) * 100 : ($apptCount > 0 ? 100 : 0);
 
         // 2. Thống kê Bệnh nhân mới
         $totalPatients = PatientProfile::count();
-        $newPatientsThisMonth = PatientProfile::where('created_at', '>=', $startOfMonth)->count();
-        $newPatientsLastMonth = PatientProfile::whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])->count();
-        $patientGrowth = $newPatientsLastMonth > 0 ? (($newPatientsThisMonth - $newPatientsLastMonth) / $newPatientsLastMonth) * 100 : ($newPatientsThisMonth > 0 ? 100 : 0);
+        $newPatients = PatientProfile::whereBetween('created_at', [$dateFrom, $dateTo])->count();
+        $prevNewPatients = PatientProfile::whereBetween('created_at', [$prevDateFrom, $prevDateTo])->count();
+        $patientGrowth = $prevNewPatients > 0 ? (($newPatients - $prevNewPatients) / $prevNewPatients) * 100 : ($newPatients > 0 ? 100 : 0);
 
         // 3. Tỷ lệ hoạt động & Mức độ hoàn thành công việc
-        // Chỉ đếm các bác sĩ có quyền 'doctor' và đang ở trạng thái kích hoạt (is_active = true)
         $activeDoctorsCount = User::where('role', 'doctor')->where('is_active', true)->count();
 
-        // Đếm số ca đã khám xong (status = completed) trong ngày hôm nay
-        $completedToday = Appointment::whereDate('appointment_date', $today)->where('status', 'completed')->count();
-        $completionRate = $todayApptCount > 0 ? round(($completedToday / $todayApptCount) * 100) : 0;
+        $completedAppts = Appointment::whereBetween('appointment_date', [$dateFrom, $dateTo])->where('status', 'completed')->count();
+        $completionRate = $apptCount > 0 ? round(($completedAppts / $apptCount) * 100) : 0;
 
-        // 4. Doanh thu (Hôm nay & Tháng này)
-        $revenueToday = Payment::whereDate('paid_at', $today)
-            ->where('status', 'completed')
-            ->sum('amount');
-
-        $revenueThisMonth = Payment::where('paid_at', '>=', $startOfMonth)
-            ->where('status', 'completed')
-            ->sum('amount');
-
-        // 5. Số lịch khám bị hủy (Hôm nay)
-        $canceledToday = Appointment::whereDate('appointment_date', $today)
+        // Số lịch khám bị hủy
+        $canceledAppts = Appointment::whereBetween('appointment_date', [$dateFrom, $dateTo])
             ->where('status', 'cancelled')
             ->count();
 
-        return compact(
-            'todayApptCount',
-            'apptGrowth',
-            'totalPatients',
-            'newPatientsThisMonth',
-            'patientGrowth',
-            'activeDoctorsCount',
-            'completedToday',
-            'completionRate',
-            'revenueToday',
-            'revenueThisMonth',
-            'canceledToday'
-        );
+        return [
+            'todayApptCount' => $apptCount, // Giữ nguyên tên biến để view không bị lỗi
+            'apptGrowth' => $apptGrowth,
+            'totalPatients' => $totalPatients,
+            'newPatientsThisMonth' => $newPatients, // Giữ nguyên tên biến
+            'patientGrowth' => $patientGrowth,
+            'activeDoctorsCount' => $activeDoctorsCount,
+            'completedToday' => $completedAppts, // Giữ nguyên tên biến
+            'completionRate' => $completionRate,
+            'canceledToday' => $canceledAppts, // Giữ nguyên tên biến
+        ];
     }
 
     /**
@@ -181,11 +169,11 @@ class DashboardService
      * Lấy danh sách Top bác sĩ tiếp nhận nhiều ca nhất trong tháng
      * Để hiển thị bảng xếp hạng năng suất.
      */
-    public function getTopDoctors(Carbon $startOfMonth)
+    public function getTopDoctors(Carbon $dateFrom, Carbon $dateTo)
     {
         return Appointment::select('doctor_profile_id', DB::raw('count(*) as total'))
             ->with('doctorProfile.user') // Eager Loading thông tin tài khoản của bác sĩ
-            ->where('appointment_date', '>=', $startOfMonth)
+            ->whereBetween('appointment_date', [$dateFrom, $dateTo])
             ->whereNotNull('doctor_profile_id')
             ->groupBy('doctor_profile_id')
             ->orderByDesc('total') // Sắp xếp giảm dần theo số lượng ca khám
@@ -194,13 +182,13 @@ class DashboardService
     }
 
     /**
-     * Lấy danh sách 10 ca khám sớm nhất trong ngày hôm nay
-     * Để hiển thị cho Lễ tân theo dõi tại bàn làm việc.
+     * Lấy danh sách 10 ca khám mới nhất trong khoảng thời gian
+     * Để hiển thị danh sách lịch khám.
      */
-    public function getTodayAppointments(Carbon $today)
+    public function getAppointmentsList(Carbon $dateFrom, Carbon $dateTo)
     {
         return Appointment::with(['patientProfile', 'doctorProfile.user', 'specialty']) // Load luôn thông tin liên quan để tránh N+1 Query
-            ->whereDate('appointment_date', $today)
+            ->whereBetween('appointment_date', [$dateFrom, $dateTo])
             ->orderBy('appointment_time') // Sắp xếp lịch khám theo thứ tự thời gian (từ sáng đến chiều)
             ->take(10) // Tối đa hiển thị 10 ca
             ->get();

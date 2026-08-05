@@ -122,7 +122,7 @@
                 <strong>Người Thu Tiền</strong><br>
                 <i>(Ký, ghi rõ họ tên)</i>
                 <div class="signature"></div>
-                <span>{{ auth()->user()->name }}</span>
+                <span>{{ auth()->user()->full_name ?? auth()->user()->name }}</span>
             </div>
         </div>
     </div>

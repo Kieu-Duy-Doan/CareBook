@@ -295,7 +295,7 @@ class BookingService
 
             // Kiểm tra 1 hồ sơ chỉ có 1 lịch active
             $hasActiveAppointment = Appointment::where('patient_profile_id', $data['patient_profile_id'])
-                ->whereIn('status', ['pending', 'confirmed'])
+                ->whereIn('status', ['pending', 'checked_in', 'examining', 'late'])
                 ->exists();
 
             if ($hasActiveAppointment) {

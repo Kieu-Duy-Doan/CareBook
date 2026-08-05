@@ -11,6 +11,11 @@
         <!-- Filters -->
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
             <form action="{{ route('receptionist.hospital-history.index') }}" method="GET" class="flex flex-wrap gap-3 items-end">
+                <div class="flex-1 min-w-[200px]">
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Tìm kiếm</label>
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Mã LH, tên bệnh nhân..."
+                        class="w-full py-2 px-3 border border-gray-300 rounded-lg text-sm outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1">Từ ngày</label>
                     <input type="date" name="date_from" value="{{ request('date_from') }}"
@@ -43,11 +48,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="flex-1 min-w-[200px]">
-                    <label class="block text-xs font-medium text-gray-500 mb-1">Tìm kiếm</label>
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Mã LH, tên bệnh nhân..."
-                        class="w-full py-2 px-3 border border-gray-300 rounded-lg text-sm outline-none focus:ring-blue-500 focus:border-blue-500">
-                </div>
+
                 <div class="flex gap-2">
                     <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition">
                         <i class="fa-solid fa-magnifying-glass mr-1"></i> Lọc

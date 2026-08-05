@@ -256,10 +256,10 @@
                                 </span>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <div class="flex items-center justify-end gap-3">
+                            <td class="px-6 py-4 whitespace-nowrap text-right">
+                                <div class="flex items-center justify-end gap-2">
                                     <a href="{{ route('admin.work-schedules.show', $schedule->id) }}"
-                                        class="text-blue-600 hover:text-blue-900 transition-colors"
+                                        class="w-7 h-7 rounded text-[13px] bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition"
                                         title="Xem chi tiết">
                                         <i class="fa-solid fa-eye"></i>
                                     </a>
@@ -276,31 +276,38 @@
                                         max_slots: {{ $schedule->max_slots }},
                                         is_active: {{ $schedule->is_active ? 'true' : 'false' }}
                                     })"
-                                        class="text-blue-600 hover:text-blue-900 transition-colors"
+                                        class="w-7 h-7 rounded text-[13px] bg-yellow-50 text-yellow-600 flex items-center justify-center hover:bg-yellow-100 transition"
                                         title="Sửa">
                                         <i class="fa-solid fa-pen"></i>
                                     </button>
 
                                     <form
                                         action="{{ route('admin.work-schedules.toggle-active', $schedule->id) }}"
-                                        method="POST" class="inline-block">
+                                        method="POST" class="inline">
                                         @csrf
                                         @method('PATCH')
-                                        <button type="submit"
-                                            class="text-gray-500 hover:text-gray-800 transition-colors"
-                                            title="{{ $schedule->is_active ? 'Tạm ngưng' : 'Mở lại' }}">
-                                            <i
-                                                class="fa-solid {{ $schedule->is_active ? 'fa-toggle-on text-green-500' : 'fa-toggle-off' }} text-lg"></i>
-                                        </button>
+                                        @if($schedule->is_active)
+                                            <button type="submit"
+                                                class="w-7 h-7 rounded text-[13px] bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 transition"
+                                                title="Tạm ngưng">
+                                                <i class="fa-solid fa-eye-slash"></i>
+                                            </button>
+                                        @else
+                                            <button type="submit"
+                                                class="w-7 h-7 rounded text-[13px] bg-green-50 text-green-600 flex items-center justify-center hover:bg-green-100 transition"
+                                                title="Mở lại">
+                                                <i class="fa-solid fa-eye"></i>
+                                            </button>
+                                        @endif
                                     </form>
 
                                     <form action="{{ route('admin.work-schedules.destroy', $schedule->id) }}"
-                                        method="POST" class="inline-block">
+                                        method="POST" class="inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit"
                                             onclick="return confirm('Bạn có chắc muốn xoá lịch này?')"
-                                            class="text-red-600 hover:text-red-900 transition-colors"
+                                            class="w-7 h-7 rounded text-[13px] bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition"
                                             title="Xoá">
                                             <i class="fa-solid fa-trash"></i>
                                         </button>
@@ -402,17 +409,19 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {{ $ov->createdBy->full_name ?? '—' }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <form action="{{ route('admin.work-schedules.overrides.destroy', $ov->id) }}"
-                                    method="POST" class="inline-block">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit"
-                                        onclick="return confirm('Bạn có chắc muốn xoá ngoại lệ này?')"
-                                        class="text-red-600 hover:text-red-900 transition-colors" title="Xoá">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                </form>
+                            <td class="px-6 py-4 whitespace-nowrap text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    <form action="{{ route('admin.work-schedules.overrides.destroy', $ov->id) }}"
+                                        method="POST" class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                            onclick="return confirm('Bạn có chắc muốn xoá ngoại lệ này?')"
+                                            class="w-7 h-7 rounded text-[13px] bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition" title="Xoá">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                         @empty

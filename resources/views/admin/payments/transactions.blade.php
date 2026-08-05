@@ -430,10 +430,13 @@
 
                             {{-- Thao tác --}}
                             <td class="px-4 py-3 text-center">
-                                <button @click="openModal({{ $payment->id }})"
-                                        class="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2.5 py-1.5 rounded-lg transition-colors font-medium">
-                                    <i class="fa-solid fa-eye text-xs"></i> Xem
-                                </button>
+                                <div class="flex items-center justify-center gap-2">
+                                    <button @click="openModal({{ $payment->id }})"
+                                            class="w-7 h-7 rounded text-[13px] bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition"
+                                            title="Xem">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     @empty

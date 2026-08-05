@@ -240,21 +240,21 @@
                                 </td>
                                 <td class="px-4 py-3 text-center">
                                     <div class="flex items-center justify-center gap-2">
-                                        <a href="{{ route('admin.doctors.show', $doctor->id) }}" class="w-8 h-8 rounded bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition" title="Xem chi tiết">
+                                        <a href="{{ route('admin.doctors.show', $doctor->id) }}" class="w-7 h-7 rounded text-[13px] bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition" title="Xem chi tiết">
                                             <i class="fa-solid fa-eye"></i>
                                         </a>
-                                        <a href="{{ route('admin.doctors.edit', $doctor->id) }}" class="w-8 h-8 rounded bg-yellow-50 text-yellow-600 flex items-center justify-center hover:bg-yellow-100 transition" title="Chỉnh sửa">
+                                        <a href="{{ route('admin.doctors.edit', $doctor->id) }}" class="w-7 h-7 rounded text-[13px] bg-yellow-50 text-yellow-600 flex items-center justify-center hover:bg-yellow-100 transition" title="Chỉnh sửa">
                                             <i class="fa-solid fa-pen"></i>
                                         </a>
                                         <form action="{{ route('admin.doctors.toggle-active', $doctor->id) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn thay đổi trạng thái bác sĩ này?');" class="inline">
                                             @csrf
                                             @method('PATCH')
                                             @if($doctor->user->is_active)
-                                                <button type="submit" class="w-8 h-8 rounded bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition" title="Khoá tài khoản">
+                                                <button type="submit" class="w-7 h-7 rounded text-[13px] bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition" title="Khoá tài khoản">
                                                     <i class="fa-solid fa-lock"></i>
                                                 </button>
                                             @else
-                                                <button type="submit" class="w-8 h-8 rounded bg-green-50 text-green-600 flex items-center justify-center hover:bg-green-100 transition" title="Mở khoá tài khoản">
+                                                <button type="submit" class="w-7 h-7 rounded text-[13px] bg-green-50 text-green-600 flex items-center justify-center hover:bg-green-100 transition" title="Mở khoá tài khoản">
                                                     <i class="fa-solid fa-lock-open"></i>
                                                 </button>
                                             @endif
