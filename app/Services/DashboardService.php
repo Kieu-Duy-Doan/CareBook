@@ -360,9 +360,8 @@ class DashboardService
                 ->where('doctor_profile_id', $doctorProfileId)
                 ->whereBetween('appointment_date', [$fromDateString, $toDateString])
                 ->where('status', 'checked_in')
-                ->selectRaw('*, (checked_in_at > appointment_time) as is_late')
                 ->orderBy('is_late', 'asc')
-                ->orderBy('appointment_time', 'asc')
+                ->orderByRaw("CASE WHEN is_late = true THEN TIME(checked_in_at) ELSE appointment_time END ASC")
                 ->paginate(10, ['*'], 'checked_in_page');
                 
             $waitingListData['examining'] = Appointment::with('patientProfile')
