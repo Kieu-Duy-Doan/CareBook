@@ -33,78 +33,188 @@ class PaymentController extends Controller
 
         $tab = $request->input('tab', 'pending'); // 'pending' or 'history'
 
-        $query = Appointment::with([
-            'patientProfile',
-            'doctorProfile.user',
-            'specialty',
-            'clinicalVisits',
-            'payments'
-        ]);
-
-        // Lọc theo khoảng ngày (dựa trên ngày đặt lịch)
-        if ($request->filled('date')) {
-            $query->whereDate('appointment_date', $request->input('date'));
+        // Define date range
+        $from = $request->filled('from') ? Carbon::parse($request->from)->startOfDay() : Carbon::today()->startOfDay();
+        $to = $request->filled('to') ? Carbon::parse($request->to)->endOfDay() : Carbon::today()->endOfDay();
+        if ($request->filled('month')) {
+            $monthDate = Carbon::parse($request->month . '-01');
+            $from = $monthDate->copy()->startOfMonth();
+            $to = $monthDate->copy()->endOfMonth();
         }
 
-        // Lọc theo Tab (Chờ thu tiền vs Lịch sử)
+        $appointments = collect();
+        $payments = collect();
+
         if ($tab === 'pending') {
-            // Lấy các Appointment có ClinicalVisits đang pending
+            $query = Appointment::with([
+                'patientProfile',
+                'doctorProfile.user',
+                'specialty',
+                'clinicalVisits',
+                'payments'
+            ]);
+
             $query->whereHas('clinicalVisits', function ($q) {
                 $q->where('payment_status', 'pending');
             });
-        } else {
-            // Lấy các Appointment có Payments
-            $query->has('payments');
 
-            // Filter theo phương thức thanh toán
-            if ($request->filled('method')) {
-                $method = $request->input('method');
-                $query->whereHas('payments', function ($q) use ($method) {
-                    $q->where('method', $method);
+            // Filter date for pending appts based on created_at or appointment_date
+            if ($request->filled('from')) {
+                $query->whereDate('appointment_date', '>=', $from);
+            }
+            if ($request->filled('to')) {
+                $query->whereDate('appointment_date', '<=', $to);
+            }
+
+            if ($request->filled('search')) {
+                $search = \App\Services\AppointmentService::escapeLikeWildcards($request->input('search'));
+                $query->where(function ($q) use ($search) {
+                    $q->where('appointment_code', 'like', "%{$search}%")
+                        ->orWhereHas('patientProfile', function ($q2) use ($search) {
+                            $q2->where('full_name', 'like', "%{$search}%")
+                                ->orWhere('patient_code', 'like', "%{$search}%");
+                        });
                 });
             }
-        }
 
-        if ($request->filled('search')) {
-            $search = \App\Services\AppointmentService::escapeLikeWildcards($request->input('search'));
-            $query->where(function ($q) use ($search) {
-                $q->where('appointment_code', 'like', "%{$search}%")
-                    ->orWhereHas('patientProfile', function ($q2) use ($search) {
-                        $q2->where('full_name', 'like', "%{$search}%")
-                            ->orWhere('patient_code', 'like', "%{$search}%");
-                    });
+            $appointments = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
+        } else {
+            // Lịch sử giao dịch (History)
+            $query = Payment::with([
+                'appointment.patientProfile',
+                'appointment.specialty',
+                'collectedBy'
+            ]);
+
+            $query->whereBetween('paid_at', [$from, $to]);
+
+            if ($request->filled('method')) {
+                $query->where('method', $request->input('method'));
+            }
+            if ($request->filled('collector_id')) {
+                $query->where('collected_by', $request->input('collector_id'));
+            }
+            if ($request->filled('specialty_id')) {
+                $query->whereHas('appointment', function($q) use ($request) {
+                    $q->where('specialty_id', $request->input('specialty_id'));
+                });
+            }
+
+            if ($request->filled('search')) {
+                $search = \App\Services\AppointmentService::escapeLikeWildcards($request->input('search'));
+                $query->where(function ($q) use ($search) {
+                    $q->where('transaction_code', 'like', "%{$search}%")
+                        ->orWhereHas('appointment', function ($q2) use ($search) {
+                            $q2->where('appointment_code', 'like', "%{$search}%")
+                                ->orWhereHas('patientProfile', function ($q3) use ($search) {
+                                    $q3->where('full_name', 'like', "%{$search}%")
+                                        ->orWhere('patient_code', 'like', "%{$search}%");
+                                });
+                        });
+                });
+            }
+
+            $payments = $query->orderBy('paid_at', 'desc')->paginate(20)->withQueryString();
+
+            // Enrich each payment for history view
+            $insuranceCache = [];
+            $payments->getCollection()->transform(function ($payment) use (&$insuranceCache) {
+                return $this->enrichPayment($payment, $insuranceCache);
             });
         }
 
-        $appointments = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
+        // --- Calculate Statistics based on $from and $to ---
+        $basePaymentQuery = Payment::whereBetween('paid_at', [$from, $to])->where('status', 'completed');
 
-        // Thống kê nhanh hôm nay
-        $today = Carbon::today();
+        if ($request->filled('method')) {
+            $basePaymentQuery->where('method', $request->input('method'));
+        }
+        if ($request->filled('collector_id')) {
+            $basePaymentQuery->where('collected_by', $request->input('collector_id'));
+        }
+        if ($request->filled('specialty_id')) {
+            $basePaymentQuery->whereHas('appointment', function($q) use ($request) {
+                $q->where('specialty_id', $request->input('specialty_id'));
+            });
+        }
+        
+        $totalTransactions = (clone $basePaymentQuery)->count();
+        $totalCash = (clone $basePaymentQuery)->where('method', 'cash')->where('amount', '>', 0)->sum('amount');
+        $totalSepay = (clone $basePaymentQuery)->where('method', 'qr')->where('amount', '>', 0)->sum('amount');
+        
+        $insurancePayments = (clone $basePaymentQuery)->where('method', 'insurance')->with('appointment.patientProfile')->get();
+        $insuranceCacheForSummary = [];
+        $totalInsurance = 0;
+        foreach ($insurancePayments as $p) {
+            $enriched = $this->enrichPayment($p, $insuranceCacheForSummary);
+            $totalInsurance += $enriched->insurance_amount;
+        }
 
-        $totalCollectedToday = Payment::whereDate('paid_at', $today)
-            ->where('status', 'completed')
-            ->sum('amount');
+        // Doanh thu = Tiền mặt + Sepay + BHYT chi trả
+        $totalRevenue = $totalCash + $totalSepay + $totalInsurance;
+        
+        // Dư nợ chờ thu
+        $pendingBaseQuery = ClinicalVisit::whereBetween('created_at', [$from, $to])
+            ->where('payment_status', 'pending');
+        if ($request->filled('specialty_id')) {
+            $pendingBaseQuery->whereHas('appointment', function($q) use ($request) {
+                $q->where('specialty_id', $request->input('specialty_id'));
+            });
+        }
+        $totalPending = $pendingBaseQuery->sum('payment_amount');
 
-        // Tổng tiền cần thu: Tổng tiền của tất cả các visits chưa thanh toán tạo hôm nay
-        // Note: Để đơn giản, ta tính theo các visits tạo hôm nay
-        $pendingAmountToday = ClinicalVisit::whereDate('created_at', $today)
-            ->where('payment_status', 'pending')
-            ->sum('payment_amount');
-        // Wait, patient's insurance could reduce this, but for quick stats, this is an estimate.
-        // Actually, let's keep it simple.
-
-        $qrCollectedToday = Payment::whereDate('paid_at', $today)
-            ->where('status', 'completed')
-            ->where('method', 'qr')
-            ->sum('amount');
+        // Phục vụ filter dropdowns
+        $collectors = \App\Models\User::whereIn('role', ['admin', 'receptionist', 'doctor'])->get();
+        $specialties = \App\Models\Specialty::all();
 
         return view('receptionist.payments.index', compact(
             'appointments',
+            'payments',
             'tab',
-            'totalCollectedToday',
-            'pendingAmountToday',
-            'qrCollectedToday'
+            'from',
+            'to',
+            'totalTransactions',
+            'totalRevenue',
+            'totalCash',
+            'totalSepay',
+            'totalInsurance',
+            'totalPending',
+            'collectors',
+            'specialties'
         ));
+    }
+
+    /**
+     * Tính toán thông tin BHYT/bệnh nhân chi trả cho một payment.
+     */
+    private function enrichPayment(Payment $payment, array &$insuranceCache): Payment
+    {
+        $totalFee        = (float) ($payment->appointment?->total_fee ?? $payment->amount ?? 0);
+        $patientProfile  = $payment->appointment?->patientProfile;
+        $insuranceCode   = $patientProfile?->insurance_code;
+        $coveragePercent = 0;
+
+        if ($payment->method === 'insurance' && $insuranceCode && strlen($insuranceCode) >= 2) {
+            $prefix = strtoupper(substr($insuranceCode, 0, 2));
+            if (!isset($insuranceCache[$prefix])) {
+                $insuranceCache[$prefix] = \App\Models\InsuranceType::where('prefix', $prefix)
+                    ->where('is_active', true)
+                    ->value('coverage_percent') ?? 0;
+            }
+            $coveragePercent = $insuranceCache[$prefix];
+        }
+
+        $insuranceAmount = $totalFee > 0 ? round($totalFee * $coveragePercent / 100, 2) : 0;
+        $patientAmount   = max(0, $totalFee - $insuranceAmount);
+        $patientPercent  = 100 - $coveragePercent;
+
+        $payment->total_fee         = $totalFee;
+        $payment->insurance_percent = $coveragePercent;
+        $payment->insurance_amount  = $insuranceAmount;
+        $payment->patient_percent   = $patientPercent;
+        $payment->patient_amount    = $patientAmount;
+
+        return $payment;
     }
 
     /**

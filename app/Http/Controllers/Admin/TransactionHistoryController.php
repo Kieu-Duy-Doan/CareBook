@@ -117,7 +117,7 @@ class TransactionHistoryController extends Controller
         $totalRevenue = $totalCash + $totalSepay + $totalInsurance;
 
         // ── Dữ liệu filter dropdowns ──────────────────────────────────────────
-        $collectors = User::whereIn('role', ['admin', 'receptionist'])
+        $collectors = User::whereIn('role', ['admin', 'receptionist', 'doctor'])
             ->where('is_active', true)
             ->orderBy('full_name')
             ->get(['id', 'full_name', 'role']);

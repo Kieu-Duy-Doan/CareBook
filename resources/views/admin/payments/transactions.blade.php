@@ -72,19 +72,50 @@
                     </div>
 
 
-                    {{-- Người thu tiền --}}
-                    <div>
+                    {{-- Người thu tiền (Searchable) --}}
+                    <div x-data="{
+                            open: false,
+                            search: '',
+                            selected: '{{ request('collector_id') }}',
+                            options: [
+                                { id: '', label: '-- Tất cả --' },
+                                @foreach($collectors as $c)
+                                    { id: '{{ $c->id }}', label: '{{ $c->full_name }} ({{ $c->role === 'admin' ? 'Admin' : ($c->role === 'doctor' ? 'Bác sĩ' : 'Lễ tân') }})' },
+                                @endforeach
+                            ],
+                            get filteredOptions() {
+                                if (this.search === '') return this.options;
+                                return this.options.filter(i => i.label.toLowerCase().includes(this.search.toLowerCase()));
+                            },
+                            get selectedLabel() {
+                                const opt = this.options.find(i => i.id == this.selected);
+                                return opt ? opt.label : '-- Tất cả --';
+                            }
+                        }" class="relative w-full" @click.away="open = false">
                         <label class="block text-xs font-medium text-gray-600 mb-1">Người thu tiền</label>
-                        <select name="collector_id"
-                                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 outline-none bg-white">
-                            <option value="">-- Tất cả --</option>
-                            @foreach($collectors as $c)
-                                <option value="{{ $c->id }}" {{ request('collector_id') == $c->id ? 'selected' : '' }}>
-                                    {{ $c->full_name }}
-                                    <span class="text-gray-400">({{ $c->role === 'admin' ? 'Admin' : 'Lễ tân' }})</span>
-                                </option>
-                            @endforeach
-                        </select>
+                        <input type="hidden" name="collector_id" x-model="selected">
+                        <button type="button" @click="open = !open" class="w-full flex items-center justify-between border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-400 outline-none bg-white text-left text-gray-700 h-[38px]">
+                            <span x-text="selectedLabel" class="truncate"></span>
+                            <i class="fa-solid fa-chevron-down text-xs text-gray-400"></i>
+                        </button>
+                        <div x-show="open" x-transition class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg" style="display: none;">
+                            <div class="p-2 border-b border-gray-100">
+                                <div class="relative">
+                                    <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                                    <input type="text" x-model="search" placeholder="Tìm kiếm..." class="w-full pl-7 pr-3 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400">
+                                </div>
+                            </div>
+                            <ul class="max-h-48 overflow-y-auto py-1">
+                                <template x-for="option in filteredOptions" :key="option.id">
+                                    <li @click="selected = option.id; open = false; search = ''" 
+                                        class="px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                                        :class="{'bg-blue-50 text-blue-600 font-medium': selected === option.id, 'text-gray-700': selected !== option.id}">
+                                        <span x-text="option.label"></span>
+                                    </li>
+                                </template>
+                                <li x-show="filteredOptions.length === 0" class="px-3 py-2 text-sm text-gray-500 text-center">Không tìm thấy</li>
+                            </ul>
+                        </div>
                     </div>
 
                     {{-- Chuyên khoa --}}
