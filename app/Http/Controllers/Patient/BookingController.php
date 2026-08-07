@@ -13,6 +13,11 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
+use App\Http\Requests\Patient\StoreBookingStep1Request;
+use App\Http\Requests\Patient\StoreBookingStep2Request;
+use App\Http\Requests\Patient\StoreBookingStep3Request;
+use App\Http\Requests\Patient\StoreBookingFinalRequest;
+use App\Http\Requests\Patient\StoreFastTrackRequest;
 
 class BookingController extends Controller
 {
@@ -37,15 +42,8 @@ class BookingController extends Controller
         return view('patient.booking.steps.step1', compact('profiles', 'selectedProfileId', 'draftId'));
     }
 
-    public function postStep1(Request $request): RedirectResponse
+    public function postStep1(StoreBookingStep1Request $request): RedirectResponse
     {
-        $request->validate([
-            'patient_profile_id' => 'required|exists:patient_profiles,id,owner_id,' . auth()->id(),
-        ], [
-            'patient_profile_id.required' => 'Vui lòng chọn hồ sơ bệnh nhân.',
-            'patient_profile_id.exists' => 'Hồ sơ bệnh nhân không hợp lệ hoặc không thuộc quyền quản lý của bạn.',
-        ]);
-        
         $draftId = $request->input('draft_id') ?: Str::uuid()->toString();
         $booking = Cache::get("booking_draft_{$draftId}", []);
         $booking['patient_profile_id'] = $request->patient_profile_id;
@@ -92,25 +90,8 @@ class BookingController extends Controller
         return view('patient.booking.steps.step2', compact('specialties', 'doctors', 'fees', 'booking', 'specialtyLevels', 'draftId'));
     }
 
-    public function postStep2(Request $request): RedirectResponse
+    public function postStep2(StoreBookingStep2Request $request): RedirectResponse
     {
-        $request->validate([
-            'draft_id' => 'required|string',
-            'booking_method' => 'required|in:specialty,doctor,suggested',
-            'specialty_id' => 'required_if:booking_method,specialty|nullable|exists:specialties,id',
-            'level' => 'required_if:booking_method,specialty|nullable|string',
-            'doctor_id' => 'required_if:booking_method,doctor,suggested|nullable|exists:doctor_profiles,id',
-        ], [
-            'booking_method.required' => 'Vui lòng chọn phương thức đặt lịch.',
-            'booking_method.in' => 'Phương thức đặt lịch không hợp lệ.',
-            'specialty_id.required_if' => 'Vui lòng chọn chuyên khoa.',
-            'specialty_id.exists' => 'Chuyên khoa không hợp lệ.',
-            'level.required_if' => 'Vui lòng chọn cấp bậc bác sĩ.',
-            'doctor_id.required_if' => 'Vui lòng chọn bác sĩ.',
-            'doctor_id.exists' => 'Bác sĩ không hợp lệ.',
-            'draft_id.required' => 'Dữ liệu đặt lịch không hợp lệ, vui lòng thử lại.',
-        ]);
-        
         $draftId = $request->input('draft_id');
         $booking = Cache::get("booking_draft_{$draftId}", []);
         
@@ -166,23 +147,8 @@ class BookingController extends Controller
         return view('patient.booking.steps.step3', compact('availableDates', 'selectedDate', 'slots', 'booking', 'draftId'));
     }
 
-    public function postStep3(Request $request): RedirectResponse
+    public function postStep3(StoreBookingStep3Request $request): RedirectResponse
     {
-        $request->validate([
-            'draft_id' => 'required|string',
-            'date' => 'required|date|after_or_equal:today',
-            'time' => 'required|date_format:H:i',
-            'doctor_id' => 'nullable|exists:doctor_profiles,id',
-        ], [
-            'date.required' => 'Vui lòng chọn ngày khám.',
-            'date.date' => 'Ngày khám không đúng định dạng.',
-            'date.after_or_equal' => 'Ngày khám phải từ hôm nay trở đi.',
-            'time.required' => 'Vui lòng chọn giờ khám.',
-            'time.date_format' => 'Giờ khám không hợp lệ.',
-            'doctor_id.exists' => 'Bác sĩ không hợp lệ.',
-            'draft_id.required' => 'Dữ liệu đặt lịch không hợp lệ, vui lòng thử lại.',
-        ]);
-        
         $draftId = $request->input('draft_id');
         $booking = Cache::get("booking_draft_{$draftId}", []);
         
@@ -242,16 +208,8 @@ class BookingController extends Controller
     /**
      * Store (Submit final)
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreBookingFinalRequest $request): RedirectResponse
     {
-        $request->validate([
-            'draft_id' => 'required|string',
-            'reason' => 'nullable|string|max:1000',
-        ], [
-            'draft_id.required' => 'Dữ liệu đặt lịch không hợp lệ, vui lòng thử lại.',
-            'reason.max' => 'Lý do khám không được vượt quá 1000 ký tự.',
-        ]);
-        
         $draftId = $request->input('draft_id');
         $booking = Cache::get("booking_draft_{$draftId}", []);
         
@@ -304,24 +262,8 @@ class BookingController extends Controller
     /**
      * Fast Track cho Đặt lịch thay thế
      */
-    public function fastTrack(Request $request): RedirectResponse
+    public function fastTrack(StoreFastTrackRequest $request): RedirectResponse
     {
-        $request->validate([
-            'patient_profile_id' => 'required|exists:patient_profiles,id',
-            'doctor_id' => 'required|exists:doctor_profiles,id',
-            'specialty_id' => 'nullable|exists:specialties,id',
-            'reason' => 'nullable|string',
-            'date' => 'nullable|date',
-            'time' => 'nullable|string'
-        ], [
-            'patient_profile_id.required' => 'Vui lòng chọn hồ sơ bệnh nhân.',
-            'patient_profile_id.exists' => 'Hồ sơ bệnh nhân không hợp lệ.',
-            'doctor_id.required' => 'Vui lòng chọn bác sĩ.',
-            'doctor_id.exists' => 'Bác sĩ không hợp lệ.',
-            'specialty_id.exists' => 'Chuyên khoa không hợp lệ.',
-            'date.date' => 'Ngày khám không đúng định dạng.',
-        ]);
-        
         $draftId = Str::uuid()->toString();
         $booking = [];
         

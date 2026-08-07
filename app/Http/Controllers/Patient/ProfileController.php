@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Patient;
 use App\Http\Controllers\Controller;
 use App\Models\PatientProfile;
 use Illuminate\Http\Request;
+use App\Http\Requests\Patient\StoreProfileRequest;
+use App\Http\Requests\Patient\UpdateProfileRequest;
 
 class ProfileController extends Controller
 {
@@ -33,7 +35,7 @@ class ProfileController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreProfileRequest $request)
     {
         $isSelfRequested = $request->input('is_self') == '1';
         $hasSelf = PatientProfile::where('owner_id', auth()->id())->where('is_self', true)->exists();
@@ -46,55 +48,7 @@ class ProfileController extends Controller
             }
         }
 
-        $rules = [
-            'full_name' => 'required|string|max:255',
-            'date_of_birth' => 'required|date|before:today',
-            'gender' => 'required|in:male,female,other,M,F,O',
-            'id_card' => 'nullable|string|max:20|unique:patient_profiles,id_card',
-            'phone' => 'nullable|string|max:20',
-            'address' => 'nullable|string|max:255',
-            'occupation' => 'nullable|string|max:100',
-            'ethnicity' => 'nullable|string|max:50',
-            'insurance_code' => 'nullable|string|min:10|max:15',
-            'insurance_place' => 'nullable|string|max:255',
-            'insurance_expiry' => 'nullable|date',
-            'medical_history' => 'nullable|array',
-            'medical_history.*' => 'string|max:255',
-            'symptom_notes' => 'nullable|string',
-        ];
-
-        if ($isSelf) {
-            $rules['email'] = 'nullable|email|max:150|unique:users,email,' . auth()->id();
-        } else {
-            $rules['relationship'] = 'required|in:parent,spouse,child,other';
-        }
-
-        $messages = [
-            'full_name.required' => 'Vui lòng nhập họ và tên.',
-            'full_name.max' => 'Họ và tên không được vượt quá 255 ký tự.',
-            'date_of_birth.required' => 'Vui lòng chọn ngày sinh.',
-            'date_of_birth.date' => 'Ngày sinh không hợp lệ.',
-            'date_of_birth.before' => 'Ngày sinh không hợp lệ (phải trước ngày hôm nay).',
-            'gender.required' => 'Vui lòng chọn giới tính.',
-            'gender.in' => 'Giới tính không hợp lệ.',
-            'id_card.max' => 'CCCD không được vượt quá 20 ký tự.',
-            'phone.max' => 'Số điện thoại không được vượt quá 20 ký tự.',
-            'address.max' => 'Địa chỉ không được vượt quá 255 ký tự.',
-            'occupation.max' => 'Nghề nghiệp không được vượt quá 100 ký tự.',
-            'ethnicity.max' => 'Dân tộc không được vượt quá 50 ký tự.',
-            'insurance_code.min' => 'Mã BHYT phải có từ 10 đến 15 ký tự.',
-            'insurance_code.max' => 'Mã BHYT phải có từ 10 đến 15 ký tự.',
-            'insurance_place.max' => 'Nơi KCB ban đầu không được vượt quá 255 ký tự.',
-            'insurance_expiry.date' => 'Hạn thẻ BHYT không hợp lệ.',
-            'email.email' => 'Email không đúng định dạng.',
-            'email.max' => 'Email không được vượt quá 150 ký tự.',
-            'email.unique' => 'Email này đã được sử dụng.',
-            'relationship.required' => 'Vui lòng chọn mối quan hệ.',
-            'relationship.in' => 'Mối quan hệ không hợp lệ.',
-            'id_card.unique' => 'Số CMND/CCCD này đã được sử dụng trong hệ thống.',
-        ];
-
-        $validated = $request->validate($rules, $messages);
+        $validated = $request->validated();
 
         if ($isSelf && auth()->user()->id_card) {
             $validated['id_card'] = auth()->user()->id_card;
@@ -148,61 +102,13 @@ class ProfileController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, PatientProfile $profile)
+    public function update(UpdateProfileRequest $request, PatientProfile $profile)
     {
         if ($profile->owner_id !== auth()->id()) {
             abort(403);
         }
 
-        $rules = [
-            'full_name' => 'required|string|max:255',
-            'date_of_birth' => 'required|date|before:today',
-            'gender' => 'required|in:male,female,other,M,F,O',
-            'id_card' => 'nullable|string|max:20|unique:patient_profiles,id_card,' . $profile->id,
-            'phone' => 'nullable|string|max:20',
-            'address' => 'nullable|string|max:255',
-            'occupation' => 'nullable|string|max:100',
-            'ethnicity' => 'nullable|string|max:50',
-            'insurance_code' => 'nullable|string|min:10|max:15',
-            'insurance_place' => 'nullable|string|max:255',
-            'insurance_expiry' => 'nullable|date',
-            'medical_history' => 'nullable|array',
-            'medical_history.*' => 'string|max:255',
-            'symptom_notes' => 'nullable|string',
-        ];
-
-        if ($profile->is_self) {
-            $rules['email'] = 'nullable|email|max:150|unique:users,email,' . auth()->id();
-        } else {
-            $rules['relationship'] = 'required|in:parent,spouse,child,other';
-        }
-
-        $messages = [
-            'full_name.required' => 'Vui lòng nhập họ và tên.',
-            'full_name.max' => 'Họ và tên không được vượt quá 255 ký tự.',
-            'date_of_birth.required' => 'Vui lòng chọn ngày sinh.',
-            'date_of_birth.date' => 'Ngày sinh không hợp lệ.',
-            'date_of_birth.before' => 'Ngày sinh không hợp lệ (phải trước ngày hôm nay).',
-            'gender.required' => 'Vui lòng chọn giới tính.',
-            'gender.in' => 'Giới tính không hợp lệ.',
-            'id_card.max' => 'CCCD không được vượt quá 20 ký tự.',
-            'phone.max' => 'Số điện thoại không được vượt quá 20 ký tự.',
-            'address.max' => 'Địa chỉ không được vượt quá 255 ký tự.',
-            'occupation.max' => 'Nghề nghiệp không được vượt quá 100 ký tự.',
-            'ethnicity.max' => 'Dân tộc không được vượt quá 50 ký tự.',
-            'insurance_code.min' => 'Mã BHYT phải có từ 10 đến 15 ký tự.',
-            'insurance_code.max' => 'Mã BHYT phải có từ 10 đến 15 ký tự.',
-            'insurance_place.max' => 'Nơi KCB ban đầu không được vượt quá 255 ký tự.',
-            'insurance_expiry.date' => 'Hạn thẻ BHYT không hợp lệ.',
-            'email.email' => 'Email không đúng định dạng.',
-            'email.max' => 'Email không được vượt quá 150 ký tự.',
-            'email.unique' => 'Email này đã được sử dụng.',
-            'relationship.required' => 'Vui lòng chọn mối quan hệ.',
-            'relationship.in' => 'Mối quan hệ không hợp lệ.',
-            'id_card.unique' => 'Số CMND/CCCD này đã được sử dụng trong hệ thống.',
-        ];
-
-        $validated = $request->validate($rules, $messages);
+        $validated = $request->validated();
 
         if ($profile->id_card) {
             $validated['id_card'] = $profile->id_card;
