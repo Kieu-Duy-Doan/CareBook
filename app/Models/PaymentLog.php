@@ -72,9 +72,6 @@ class PaymentLog extends Model
             'payment_approved' => 'Xác nhận thanh toán',
             'cash_payment' => 'Thanh toán tiền mặt',
             'zero_fee_payment' => 'Thanh toán 0đ / Miễn phí',
-            'refund_request_created' => 'Tạo yêu cầu hoàn tiền',
-            'refund_requested' => 'Yêu cầu hoàn tiền',
-            'refund_reviewed' => 'Xử lý yêu cầu hoàn tiền',
         ];
 
         return $map[$this->action] ?? $this->action;

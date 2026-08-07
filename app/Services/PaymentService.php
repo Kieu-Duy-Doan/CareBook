@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Appointment;
 use App\Models\Payment;
-use App\Models\Prescription;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -292,7 +291,7 @@ class PaymentService
 
             $summary = $this->calculateSummary($appointment);
             $requiredAmount = $summary['remaining_to_pay'];
-            $pendingVisits = $summary['pending_visits']; // Use from summary to include prescriptions
+            $pendingVisits = $summary['pending_visits'];
             $insuranceRate = $summary['insurance_rate'];
             $patientName = $appointment->patientProfile->full_name ?? 'N/A';
 

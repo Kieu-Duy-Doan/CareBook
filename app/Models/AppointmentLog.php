@@ -22,7 +22,6 @@ class AppointmentLog extends Model
     const ACTION_STATUS_CHANGED = 'STATUS_CHANGED';
     const ACTION_PAYMENT_COMPLETED = 'PAYMENT_COMPLETED';
     const ACTION_PAYMENT_FAILED = 'PAYMENT_FAILED';
-    const ACTION_REFUND_REQUESTED = 'REFUND_REQUESTED';
     const ACTION_CLINICAL_VISIT_CREATED = 'CLINICAL_VISIT_CREATED';
     const ACTION_CLINICAL_VISIT_UPDATED = 'CLINICAL_VISIT_UPDATED';
     const ACTION_CLINICAL_VISIT_DELETED = 'CLINICAL_VISIT_DELETED';
@@ -81,7 +80,6 @@ class AppointmentLog extends Model
             self::ACTION_RECEPTIONIST_STATUS_CHANGE => 'Lễ tân đổi trạng thái',
             self::ACTION_PAYMENT_COMPLETED   => 'Thanh toán thành công',
             self::ACTION_PAYMENT_FAILED      => 'Thanh toán thất bại',
-            self::ACTION_REFUND_REQUESTED    => 'Yêu cầu hoàn tiền',
             self::ACTION_CLINICAL_VISIT_CREATED => 'Chỉ định khám lâm sàng / cận lâm sàng',
             self::ACTION_CLINICAL_VISIT_UPDATED => 'Cập nhật trạng thái khám',
             self::ACTION_CLINICAL_VISIT_DELETED => 'Hủy chỉ định khám',
