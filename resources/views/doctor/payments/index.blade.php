@@ -7,13 +7,13 @@
     </div>
 
     @php
-        $periodLabel = match($dateRange) {
-            'today' => 'Hôm nay',
-            'this_month' => 'Tháng này',
-            'this_year' => 'Năm nay',
-            'custom' => 'Tùy chỉnh',
-            default => 'Hôm nay'
-        };
+    $periodLabel = match($dateRange) {
+    'today' => 'Hôm nay',
+    'this_month' => 'Tháng này',
+    'this_year' => 'Năm nay',
+    'custom' => 'Tùy chỉnh',
+    default => 'Hôm nay'
+    };
     @endphp
 
     {{-- Thống kê nhanh --}}
@@ -51,10 +51,10 @@
     <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6" x-data="{ range: '{{ $dateRange }}' }">
         <form method="GET" action="{{ route('doctor.payments.index') }}" class="flex flex-wrap items-center gap-3">
             <input type="hidden" name="tab" value="{{ $tab }}">
-            
+
             <div class="flex-1 min-w-[200px]">
                 <input type="text" name="search" value="{{ request('search') }}" placeholder="Tìm mã LH, tên BN..."
-                       class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-400">
+                    class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-400">
             </div>
 
             <select name="date_range" x-model="range" class="px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-400 bg-white min-w-[150px]">
@@ -66,10 +66,10 @@
 
             <div x-show="range === 'custom'" class="flex items-center gap-2" style="display: none;" x-cloak>
                 <input type="date" name="from_date" value="{{ $fromDate }}"
-                       class="px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-400">
+                    class="px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-400">
                 <span class="text-gray-400 text-sm">-</span>
                 <input type="date" name="to_date" value="{{ $toDate }}"
-                       class="px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-400">
+                    class="px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-400">
             </div>
 
 
@@ -88,11 +88,11 @@
     <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         <div class="border-b border-gray-100 flex">
             <a href="{{ route('doctor.payments.index', ['tab' => 'pending']) }}"
-               class="px-6 py-4 text-sm font-semibold border-b-2 transition-colors {{ $tab === 'pending' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700' }}">
+                class="px-6 py-4 text-sm font-semibold border-b-2 transition-colors {{ $tab === 'pending' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700' }}">
                 <i class="fa-solid fa-clock mr-2"></i>Chờ thanh toán
             </a>
             <a href="{{ route('doctor.payments.index', ['tab' => 'history']) }}"
-               class="px-6 py-4 text-sm font-semibold border-b-2 transition-colors {{ $tab === 'history' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700' }}">
+                class="px-6 py-4 text-sm font-semibold border-b-2 transition-colors {{ $tab === 'history' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700' }}">
                 <i class="fa-solid fa-history mr-2"></i>Lịch sử
             </a>
 
@@ -117,24 +117,24 @@
                 <tbody class="divide-y divide-gray-50">
                     @forelse($appointments as $apt)
                     @php
-                        $paymentService = app(\App\Services\PaymentService::class);
-                        $summary = $paymentService->calculateSummary($apt);
-                        $rate = $summary['insurance_rate'];
-                        $userId = Auth::id();
+                    $paymentService = app(\App\Services\PaymentService::class);
+                    $summary = $paymentService->calculateSummary($apt);
+                    $rate = $summary['insurance_rate'];
+                    $userId = Auth::id();
 
-                        if ($tab === 'history') {
-                            $relevantVisits = $apt->clinicalVisits->filter(function($cv) use ($userId) {
-                                return $cv->payments->where('collected_by', $userId)->where('status', 'completed')->isNotEmpty();
-                            });
-                            $totalAmt = $relevantVisits->sum('payment_amount');
-                            $hasPending = false;
-                        } else {
-                            $totalAmt = $apt->clinicalVisits->sum('payment_amount');
-                            $hasPending = $apt->clinicalVisits->where('payment_status', 'pending')->isNotEmpty();
-                        }
+                    if ($tab === 'history') {
+                    $relevantVisits = $apt->clinicalVisits->filter(function($cv) use ($userId) {
+                    return $cv->payments->where('collected_by', $userId)->where('status', 'completed')->isNotEmpty();
+                    });
+                    $totalAmt = $relevantVisits->sum('payment_amount');
+                    $hasPending = false;
+                    } else {
+                    $totalAmt = $apt->clinicalVisits->sum('payment_amount');
+                    $hasPending = $apt->clinicalVisits->where('payment_status', 'pending')->isNotEmpty();
+                    }
 
-                        $insurancePaid = $totalAmt * $rate;
-                        $patientPays = $totalAmt - $insurancePaid;
+                    $insurancePaid = $totalAmt * $rate;
+                    $patientPays = $totalAmt - $insurancePaid;
                     @endphp
                     <tr class="hover:bg-gray-50/50 transition-colors">
                         <td class="py-3.5 px-5">
@@ -162,29 +162,29 @@
                         </td>
                         <td class="py-3.5 px-5 text-center">
                             @if(!$hasPending && $totalAmt > 0)
-                                <span class="inline-flex items-center gap-1 text-xs font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
-                                    <i class="fa-solid fa-check"></i> Đã thu
-                                </span>
+                            <span class="inline-flex items-center gap-1 text-xs font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                                <i class="fa-solid fa-check"></i> Đã thu
+                            </span>
                             @elseif($hasPending)
-                                <span class="inline-flex items-center gap-1 text-xs font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
-                                    <i class="fa-solid fa-clock"></i> Chờ thu
-                                </span>
+                            <span class="inline-flex items-center gap-1 text-xs font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                                <i class="fa-solid fa-clock"></i> Chờ thu
+                            </span>
                             @else
-                                <span class="inline-flex items-center gap-1 text-xs font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                                    Xử lý
-                                </span>
+                            <span class="inline-flex items-center gap-1 text-xs font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                                Xử lý
+                            </span>
                             @endif
                         </td>
                         <td class="py-3.5 px-5 text-center">
                             <div class="flex items-center justify-center gap-2">
                                 @if($hasPending && $patientPays > 0)
                                 <a href="{{ route('doctor.payments.checkout', $apt->id) }}"
-                                   class="px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1">
+                                    class="px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1">
                                     <i class="fa-solid fa-qrcode"></i> QR
                                 </a>
                                 @endif
                                 <a href="{{ route('doctor.payments.show', $apt->id) }}"
-                                   class="px-3 py-1.5 bg-white border border-gray-200 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                                    class="px-3 py-1.5 bg-white border border-gray-200 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-50 transition-colors">
                                     Chi tiết
                                 </a>
                             </div>

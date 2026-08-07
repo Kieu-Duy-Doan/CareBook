@@ -23,7 +23,6 @@ class PatientController extends Controller
     {
         $this->patientProfileService = $patientProfileService;
     }
-{
     public function export(Request $request)
     {
         return Excel::download(new PatientsExport($request), 'patients_' . date('Ymd_His') . '.xlsx');

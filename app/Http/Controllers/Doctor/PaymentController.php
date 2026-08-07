@@ -35,7 +35,7 @@ class PaymentController extends Controller
         Cache::forget('doctor_active_checkout_appointment_' . $userId);
 
         $tab = $request->input('tab', 'pending');
-        
+
         $dateRange = $request->input('date_range', 'today'); // 'today', 'this_month', 'this_year', 'custom'
         $fromDate = $request->input('from_date');
         $toDate = $request->input('to_date');
@@ -74,12 +74,12 @@ class PaymentController extends Controller
 
         $totalCollected = (clone $paymentQuery)->sum('amount');
         $qrCollected = (clone $paymentQuery)->where('method', 'qr')->sum('amount');
-        
+
         $clinicalVisitsQuery = \App\Models\ClinicalVisit::with(['appointment.patientProfile'])
             ->whereHas('payments', function ($q) use ($userId, $queryStart, $queryEnd) {
                 $q->where('status', 'completed')
-                  ->where('collected_by', $userId);
-                  
+                    ->where('collected_by', $userId);
+
                 if ($queryStart) {
                     $q->where('paid_at', '>=', $queryStart);
                 }
@@ -90,12 +90,12 @@ class PaymentController extends Controller
 
         $paidVisits = $clinicalVisitsQuery->get();
         $insuranceCovered = 0;
-        
+
         $appointmentsForStats = $paidVisits->pluck('appointment')->unique('id');
         foreach ($appointmentsForStats as $apt) {
             $summary = $this->paymentService->calculateSummary($apt);
             $rate = $summary['insurance_rate'];
-            
+
             $visitsOfApt = $paidVisits->where('appointment_id', $apt->id);
             $totalAmt = $visitsOfApt->sum('payment_amount');
             $insuranceCovered += $totalAmt * $rate;
@@ -112,40 +112,39 @@ class PaymentController extends Controller
             $query->where(function ($q) use ($doctorProfileId) {
                 // Ca khám do bác sĩ này chỉ định
                 $q->where('doctor_profile_id', $doctorProfileId)
-                  ->whereHas('clinicalVisits', function ($q2) {
-                      $q2->where('payment_status', 'pending');
-                  });
+                    ->whereHas('clinicalVisits', function ($q2) {
+                        $q2->where('payment_status', 'pending');
+                    });
             })->orWhere(function ($q) use ($doctorProfileId) {
                 // Hoặc ca khám do bác sĩ này thực hiện (cận lâm sàng)
                 $q->whereHas('clinicalVisits', function ($q2) use ($doctorProfileId) {
                     $q2->where('doctor_profile_id', $doctorProfileId)
-                       ->where('payment_status', 'pending');
+                        ->where('payment_status', 'pending');
                 });
             });
-            
+
             if ($queryStart) {
                 $query->where('appointment_date', '>=', $queryStart->toDateString());
             }
             if ($queryEnd) {
                 $query->where('appointment_date', '<=', $queryEnd->toDateString());
             }
-
         } else {
             // Lịch sử (các lịch khám đã thanh toán hết)
             $query->where(function ($q) use ($doctorProfileId) {
                 $q->where('doctor_profile_id', $doctorProfileId)
-                  ->orWhereHas('clinicalVisits', function ($q2) use ($doctorProfileId) {
-                      $q2->where('doctor_profile_id', $doctorProfileId);
-                  });
+                    ->orWhereHas('clinicalVisits', function ($q2) use ($doctorProfileId) {
+                        $q2->where('doctor_profile_id', $doctorProfileId);
+                    });
             })->whereDoesntHave('clinicalVisits', function ($q2) {
                 $q2->where('payment_status', 'pending');
             })->whereHas('payments', function ($q2) use ($userId) {
                 $q2->where('collected_by', $userId);
             });
-            
+
             if ($queryStart) {
                 // Dựa trên thời gian thanh toán của các clinical visits
-                $query->whereHas('clinicalVisits', function($q2) use ($queryStart, $queryEnd) {
+                $query->whereHas('clinicalVisits', function ($q2) use ($queryStart, $queryEnd) {
                     if ($queryStart) $q2->where('paid_at', '>=', $queryStart);
                     if ($queryEnd) $q2->where('paid_at', '<=', $queryEnd);
                 });
@@ -156,18 +155,26 @@ class PaymentController extends Controller
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('appointment_code', 'like', "%{$search}%")
-                  ->orWhereHas('patientProfile', fn($q2) =>
-                      $q2->where('full_name', 'like', "%{$search}%")
-                         ->orWhere('patient_code', 'like', "%{$search}%")
-                  );
+                    ->orWhereHas(
+                        'patientProfile',
+                        fn($q2) =>
+                        $q2->where('full_name', 'like', "%{$search}%")
+                            ->orWhere('patient_code', 'like', "%{$search}%")
+                    );
             });
         }
 
         $appointments = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
 
         return view('doctor.payments.index', compact(
-            'appointments', 'tab', 'totalCollected', 'qrCollected', 'insuranceCovered', 
-            'dateRange', 'fromDate', 'toDate'
+            'appointments',
+            'tab',
+            'totalCollected',
+            'qrCollected',
+            'insuranceCovered',
+            'dateRange',
+            'fromDate',
+            'toDate'
         ));
     }
 
@@ -189,9 +196,9 @@ class PaymentController extends Controller
             'medicalRecord.prescription',
         ])->where(function ($query) use ($doctorProfileId) {
             $query->where('doctor_profile_id', $doctorProfileId)
-                  ->orWhereHas('clinicalVisits', function ($q) use ($doctorProfileId) {
-                      $q->where('doctor_profile_id', $doctorProfileId);
-                  });
+                ->orWhereHas('clinicalVisits', function ($q) use ($doctorProfileId) {
+                    $q->where('doctor_profile_id', $doctorProfileId);
+                });
         })->findOrFail($id);
 
         $summary = $this->paymentService->calculateSummary($appointment);
@@ -210,14 +217,14 @@ class PaymentController extends Controller
             'patientProfile',
             'medicalRecord.prescription'
         ])
-        ->where('id', $id)
-        ->where(function ($query) use ($doctorProfileId) {
-            $query->where('doctor_profile_id', $doctorProfileId)
-                  ->orWhereHas('clinicalVisits', function ($q) use ($doctorProfileId) {
-                      $q->where('doctor_profile_id', $doctorProfileId);
-                  });
-        })
-        ->firstOrFail();
+            ->where('id', $id)
+            ->where(function ($query) use ($doctorProfileId) {
+                $query->where('doctor_profile_id', $doctorProfileId)
+                    ->orWhereHas('clinicalVisits', function ($q) use ($doctorProfileId) {
+                        $q->where('doctor_profile_id', $doctorProfileId);
+                    });
+            })
+            ->firstOrFail();
 
         $summary = $this->paymentService->calculateSummary($appointment);
 
@@ -285,9 +292,9 @@ class PaymentController extends Controller
             'medicalRecord',
         ])->where(function ($query) use ($doctorProfileId) {
             $query->where('doctor_profile_id', $doctorProfileId)
-                  ->orWhereHas('clinicalVisits', function ($q) use ($doctorProfileId) {
-                      $q->where('doctor_profile_id', $doctorProfileId);
-                  });
+                ->orWhereHas('clinicalVisits', function ($q) use ($doctorProfileId) {
+                    $q->where('doctor_profile_id', $doctorProfileId);
+                });
         })->findOrFail($id);
 
         $summary = $this->paymentService->calculateSummary($appointment);
@@ -315,9 +322,9 @@ class PaymentController extends Controller
             'payments',
         ])->where(function ($query) use ($doctorProfileId) {
             $query->where('doctor_profile_id', $doctorProfileId)
-                  ->orWhereHas('clinicalVisits', function ($q) use ($doctorProfileId) {
-                      $q->where('doctor_profile_id', $doctorProfileId);
-                  });
+                ->orWhereHas('clinicalVisits', function ($q) use ($doctorProfileId) {
+                    $q->where('doctor_profile_id', $doctorProfileId);
+                });
         })->findOrFail($id);
 
         $summary = $this->paymentService->calculateSummary($appointment);
@@ -326,4 +333,3 @@ class PaymentController extends Controller
         return view('doctor.payments.prescription-print', compact('appointment', 'summary', 'prescription'));
     }
 }
-

@@ -10,47 +10,47 @@
             {{-- Nút In Phiếu Chỉ Định (chỉ hiện nếu có sub-visits) --}}
             @if($appointment->clinicalVisits->where('is_origin', false)->count() > 0)
             <a href="{{ route('doctor.payments.print-referral', $appointment->id) }}" target="_blank"
-               class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+                class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
                 <i class="fa-solid fa-print"></i> In Phiếu Chỉ Định
             </a>
             @endif
 
             {{-- Nút In Đơn Thuốc (chỉ hiện nếu đã có đơn thuốc và đã thanh toán xong) --}}
             @if($appointment->medicalRecord?->prescription && $summary['remaining_to_pay'] <= 0)
-            <a href="{{ route('doctor.payments.print-prescription', $appointment->id) }}" target="_blank"
-               class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+                <a href="{{ route('doctor.payments.print-prescription', $appointment->id) }}" target="_blank"
+                class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
                 <i class="fa-solid fa-pills"></i> In Đơn Thuốc
-            </a>
-            @endif
+                </a>
+                @endif
 
-            <a href="{{ route('doctor.payments.index') }}"
-               class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm flex items-center gap-2">
-                <i class="fa-solid fa-arrow-left"></i> Quay lại
-            </a>
+                <a href="{{ route('doctor.payments.index') }}"
+                    class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i> Quay lại
+                </a>
         </div>
     </div>
 
     @if(session('success'))
     <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)" style="display:none"
-         class="bg-green-50 border border-green-200 text-green-800 p-4 rounded-lg mb-6 flex items-center justify-between">
+        class="bg-green-50 border border-green-200 text-green-800 p-4 rounded-lg mb-6 flex items-center justify-between">
         <div class="flex items-center gap-3"><i class="fa-solid fa-circle-check text-green-500"></i>{{ session('success') }}</div>
         <button @click="show=false" class="text-green-500 hover:text-green-700"><i class="fa-solid fa-xmark"></i></button>
     </div>
     @endif
 
     @php
-        $rate = $summary['insurance_rate'];
-        $totalAmt = $appointment->clinicalVisits->sum('payment_amount');
-        $insurancePaid = $totalAmt * $rate;
-        $patientPays = $totalAmt - $insurancePaid;
-        
-        $remaining = 0;
-        foreach($appointment->clinicalVisits as $cv) {
-            if ($cv->payment_status === 'pending') {
-                $remaining += ($cv->payment_amount * (1 - $rate));
-            }
-        }
-        $paidAmt = $patientPays - $remaining;
+    $rate = $summary['insurance_rate'];
+    $totalAmt = $appointment->clinicalVisits->sum('payment_amount');
+    $insurancePaid = $totalAmt * $rate;
+    $patientPays = $totalAmt - $insurancePaid;
+
+    $remaining = 0;
+    foreach($appointment->clinicalVisits as $cv) {
+    if ($cv->payment_status === 'pending') {
+    $remaining += ($cv->payment_amount * (1 - $rate));
+    }
+    }
+    $paidAmt = $patientPays - $remaining;
     @endphp
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -85,9 +85,9 @@
                                 </td>
                                 <td class="py-2.5 px-3 text-center">
                                     @if($visit->payment_status === 'paid')
-                                        <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">Đã thu</span>
+                                    <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">Đã thu</span>
                                     @else
-                                        <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">Chờ thu</span>
+                                    <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">Chờ thu</span>
                                     @endif
                                 </td>
                                 <td class="py-2.5 px-3 text-right font-bold text-gray-900">{{ number_format($visit->payment_amount, 0, ',', '.') }}đ</td>
@@ -132,7 +132,7 @@
                     <p class="text-amber-700 text-sm">Còn <strong>{{ number_format($remaining, 0, ',', '.') }}đ</strong> chưa thu.</p>
                 </div>
                 <a href="{{ route('doctor.payments.checkout', $appointment->id) }}"
-                   class="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors text-sm flex items-center gap-2 shrink-0">
+                    class="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors text-sm flex items-center gap-2 shrink-0">
                     <i class="fa-solid fa-qrcode"></i> Tạo QR
                 </a>
             </div>
@@ -160,13 +160,13 @@
                             <div class="font-bold text-gray-900 text-lg mb-1">{{ number_format($payment->amount, 0, ',', '.') }}đ</div>
                             <div class="text-xs text-gray-500 flex items-center gap-2">
                                 @if($payment->method === 'cash')
-                                    <i class="fa-solid fa-money-bill text-emerald-600"></i> Tiền mặt
+                                <i class="fa-solid fa-money-bill text-emerald-600"></i> Tiền mặt
                                 @elseif($payment->method === 'qr')
-                                    <i class="fa-solid fa-qrcode text-purple-600"></i> QR (SePay)
+                                <i class="fa-solid fa-qrcode text-purple-600"></i> QR (SePay)
                                 @elseif($payment->method === 'insurance')
-                                    <i class="fa-solid fa-shield-heart text-blue-600"></i> BHYT
+                                <i class="fa-solid fa-shield-heart text-blue-600"></i> BHYT
                                 @else
-                                    <i class="fa-solid fa-credit-card text-gray-500"></i> Khác
+                                <i class="fa-solid fa-credit-card text-gray-500"></i> Khác
                                 @endif
                                 <span>&bull;</span>
                                 <span class="font-mono">{{ $payment->transaction_code ?? 'N/A' }}</span>

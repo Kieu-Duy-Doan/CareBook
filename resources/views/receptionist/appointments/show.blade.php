@@ -402,32 +402,35 @@
                     @endif
 
                     <!-- Chỉ số sinh tồn -->
-                    @if (
-                    $appointment->vital_pulse ||
-                    $appointment->vital_systolic_bp ||
-                    $appointment->vital_temperature ||
-                    $appointment->vital_weight_kg)
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div
-                            class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between gap-2">
+                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between gap-2">
                             <div class="flex items-center gap-2">
                                 <i class="fa-solid fa-heart-pulse text-blue-500"></i>
                                 <h3 class="text-lg font-bold text-gray-900">Chỉ số sinh tồn</h3>
                             </div>
-                            @if ($appointment->checked_in_at)
-                            <div class="text-xs text-gray-500">
-                                Đo lúc: {{ $appointment->checked_in_at->format('H:i d/m/Y') }}
+                            <div class="flex items-center gap-4">
+                                @if ($appointment->checked_in_at)
+                                <div class="text-xs text-gray-500">
+                                    Đo lúc: {{ $appointment->checked_in_at->format('H:i d/m/Y') }}
+                                </div>
+                                @endif
+                                <button type="button" onclick="document.getElementById('vitalsModal').classList.remove('hidden')" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                                    <i class="fa-regular fa-pen-to-square mr-1"></i> Cập nhật
+                                </button>
                             </div>
-                            @endif
                         </div>
                         <div class="p-6">
+                            @if (
+                                $appointment->vital_pulse ||
+                                $appointment->vital_systolic_bp ||
+                                $appointment->vital_temperature ||
+                                $appointment->vital_weight_kg)
                             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                 <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
                                     <div class="text-gray-400 mb-1"><i class="fa-solid fa-heart-crack"></i></div>
                                     <div class="text-xs text-gray-500 uppercase font-medium">Mạch</div>
                                     <div class="text-lg font-bold text-gray-900">
-                                        {{ $appointment->vital_pulse ?? '—' }} <span
-                                            class="text-xs font-normal text-gray-500">l/p</span>
+                                        {{ $appointment->vital_pulse ?? '—' }} <span class="text-xs font-normal text-gray-500">l/p</span>
                                     </div>
                                 </div>
                                 <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
@@ -442,8 +445,7 @@
                                     <div class="text-gray-400 mb-1"><i class="fa-solid fa-temperature-half"></i></div>
                                     <div class="text-xs text-gray-500 uppercase font-medium">Nhiệt độ</div>
                                     <div class="text-lg font-bold text-gray-900">
-                                        {{ $appointment->vital_temperature ?? '—' }} <span
-                                            class="text-xs font-normal text-gray-500">°C</span>
+                                        {{ $appointment->vital_temperature ?? '—' }} <span class="text-xs font-normal text-gray-500">°C</span>
                                     </div>
                                 </div>
                                 <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
@@ -457,36 +459,45 @@
                                     <div class="text-gray-400 mb-1"><i class="fa-solid fa-wind"></i></div>
                                     <div class="text-xs text-gray-500 uppercase font-medium">Nhịp thở</div>
                                     <div class="text-lg font-bold text-gray-900">
-                                        {{ $appointment->vital_respiratory ?? '—' }} <span
-                                            class="text-xs font-normal text-gray-500">l/p</span>
+                                        {{ $appointment->vital_respiratory ?? '—' }} <span class="text-xs font-normal text-gray-500">l/p</span>
                                     </div>
                                 </div>
                                 <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
                                     <div class="text-gray-400 mb-1"><i class="fa-solid fa-weight-scale"></i></div>
                                     <div class="text-xs text-gray-500 uppercase font-medium">Cân nặng</div>
                                     <div class="text-lg font-bold text-gray-900">
-                                        {{ $appointment->vital_weight_kg ?? '—' }} <span
-                                            class="text-xs font-normal text-gray-500">kg</span>
+                                        {{ $appointment->vital_weight_kg ?? '—' }} <span class="text-xs font-normal text-gray-500">kg</span>
                                     </div>
                                 </div>
                                 <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
                                     <div class="text-gray-400 mb-1"><i class="fa-solid fa-ruler-vertical"></i></div>
                                     <div class="text-xs text-gray-500 uppercase font-medium">Chiều cao</div>
                                     <div class="text-lg font-bold text-gray-900">
-                                        {{ $appointment->vital_height_cm ?? '—' }} <span
-                                            class="text-xs font-normal text-gray-500">cm</span>
+                                        {{ $appointment->vital_height_cm ?? '—' }} <span class="text-xs font-normal text-gray-500">cm</span>
                                     </div>
                                 </div>
                                 <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
-                                    <div class="text-gray-400 mb-1"><i class="fa-solid fa-person"></i></div>
+                                    <div class="text-gray-400 mb-1"><i class="fa-solid fa-calculator"></i></div>
                                     <div class="text-xs text-gray-500 uppercase font-medium">BMI</div>
-                                    <div class="text-lg font-bold text-gray-900">{{ $appointment->vital_bmi ?? '—' }}
-                                    </div>
+                                    <div class="text-lg font-bold text-gray-900">{{ $appointment->vital_bmi ?? '—' }}</div>
                                 </div>
                             </div>
+                            @if ($appointment->vital_note)
+                            <div class="mt-4 text-sm text-gray-600 bg-yellow-50 p-3 rounded-lg border border-yellow-100">
+                                <strong><i class="fa-regular fa-comment-dots mr-1"></i> Ghi chú sinh hiệu:</strong>
+                                {{ $appointment->vital_note }}
+                            </div>
+                            @endif
+                            @else
+                            <div class="text-center py-6 text-gray-500">
+                                <i class="fa-solid fa-stethoscope text-4xl mb-3 text-gray-300"></i>
+                                <p>Chưa có thông tin chỉ số sinh tồn</p>
+                                <button type="button" onclick="document.getElementById('vitalsModal').classList.remove('hidden')" class="mt-2 text-blue-600 hover:underline text-sm font-medium">Đo ngay</button>
+                            </div>
+                            @endif
                         </div>
                     </div>
-                    @endif
+
 
                     <!-- Quy trình khám -->
                     @if ($appointment->clinicalVisits && $appointment->clinicalVisits->isNotEmpty())
@@ -1449,4 +1460,163 @@
     
     </div> <!-- Close CỘT PHẢI -->
 </div> <!-- Close Main Layout 3 Cột -->
+
+@push('scripts')
+<!-- Vitals Modal -->
+<div id="vitalsModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+            <div class="absolute inset-0 bg-gray-500 opacity-75" onclick="document.getElementById('vitalsModal').classList.add('hidden')"></div>
+        </div>
+
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <div class="relative z-10 inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full border border-gray-100">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-blue-100 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-full bg-white shadow-sm text-blue-600">
+                        <i class="fa-solid fa-heart-pulse"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900" id="modal-title">Cập nhật Chỉ số sinh tồn</h3>
+                </div>
+                <button type="button" onclick="document.getElementById('vitalsModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 transition-colors focus:outline-none">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <form action="{{ route('receptionist.appointments.update-vitals', $appointment->id) }}" method="POST">
+                @csrf
+                @method('PATCH')
+                
+                <div class="px-6 py-5 space-y-6">
+                    <!-- Group 1: Dấu hiệu sinh tồn cơ bản -->
+                    <div>
+                        <h4 class="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2"><i class="fa-solid fa-stethoscope text-gray-400"></i> Huyết áp & Nhịp tim</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <!-- Huyết áp -->
+                            <div class="sm:col-span-2 grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-500 mb-1">H.áp tâm thu (Sys)</label>
+                                    <div class="relative">
+                                        <input type="number" name="vital_systolic_bp" value="{{ old('vital_systolic_bp', $appointment->vital_systolic_bp) }}" class="block w-full py-2 pl-3 pr-12 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-shadow outline-none">
+                                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-xs text-gray-400">mmHg</div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-500 mb-1">H.áp tâm trương (Dia)</label>
+                                    <div class="relative">
+                                        <input type="number" name="vital_diastolic_bp" value="{{ old('vital_diastolic_bp', $appointment->vital_diastolic_bp) }}" class="block w-full py-2 pl-3 pr-12 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-shadow outline-none">
+                                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-xs text-gray-400">mmHg</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Nhịp tim -->
+                            <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Nhịp tim (Pulse)</label>
+                                <div class="relative">
+                                    <input type="number" name="vital_pulse" value="{{ old('vital_pulse', $appointment->vital_pulse) }}" class="block w-full py-2 pl-3 pr-12 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-shadow outline-none">
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-xs text-gray-400">bpm</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+                            <!-- Nhiệt độ -->
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Nhiệt độ (Temp)</label>
+                                <div class="relative">
+                                    <input type="number" step="0.1" name="vital_temperature" value="{{ old('vital_temperature', $appointment->vital_temperature) }}" class="block w-full py-2 pl-3 pr-8 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-shadow outline-none">
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-xs text-gray-400">°C</div>
+                                </div>
+                            </div>
+                            <!-- SpO2 -->
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Nồng độ SpO2</label>
+                                <div class="relative">
+                                    <input type="number" step="0.1" name="vital_spo2" value="{{ old('vital_spo2', $appointment->vital_spo2) }}" class="block w-full py-2 pl-3 pr-8 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-shadow outline-none">
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-xs text-gray-400">%</div>
+                                </div>
+                            </div>
+                            <!-- Nhịp thở -->
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Nhịp thở (Resp)</label>
+                                <div class="relative">
+                                    <input type="number" name="vital_respiratory" value="{{ old('vital_respiratory', $appointment->vital_respiratory) }}" class="block w-full py-2 pl-3 pr-10 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-shadow outline-none">
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-xs text-gray-400">l/p</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="border-gray-100">
+
+                    <!-- Group 2: Chỉ số cơ thể -->
+                    <div>
+                        <h4 class="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2"><i class="fa-solid fa-weight-scale text-gray-400"></i> Chỉ số thể chất</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <!-- Chiều cao -->
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Chiều cao (Height)</label>
+                                <div class="relative">
+                                    <input type="number" step="0.1" id="vital_height" name="vital_height_cm" value="{{ old('vital_height_cm', $appointment->vital_height_cm) }}" oninput="calculateBMI()" class="block w-full py-2 pl-3 pr-10 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-shadow outline-none">
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-xs text-gray-400">cm</div>
+                                </div>
+                            </div>
+                            <!-- Cân nặng -->
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Cân nặng (Weight)</label>
+                                <div class="relative">
+                                    <input type="number" step="0.1" id="vital_weight" name="vital_weight_kg" value="{{ old('vital_weight_kg', $appointment->vital_weight_kg) }}" oninput="calculateBMI()" class="block w-full py-2 pl-3 pr-10 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-shadow outline-none">
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-xs text-gray-400">kg</div>
+                                </div>
+                            </div>
+                            <!-- BMI -->
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Chỉ số BMI</label>
+                                <input type="text" id="vital_bmi_display" value="{{ old('vital_bmi', $appointment->vital_bmi) }}" readonly class="block w-full py-2 px-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-600 text-sm font-semibold text-center focus:outline-none">
+                                <input type="hidden" id="vital_bmi_hidden" name="vital_bmi" value="{{ old('vital_bmi', $appointment->vital_bmi) }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ghi chú -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Ghi chú sinh hiệu</label>
+                        <textarea name="vital_note" rows="2" class="block w-full py-2 px-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-shadow resize-none outline-none" placeholder="Nhập ghi chú thêm (nếu có)...">{{ old('vital_note', $appointment->vital_note) }}</textarea>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 px-6 py-4 rounded-b-2xl border-t border-gray-100 flex justify-end gap-3">
+                    <button type="button" onclick="document.getElementById('vitalsModal').classList.add('hidden')" class="px-5 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none transition-colors">
+                        Đóng
+                    </button>
+                    <button type="submit" class="px-5 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 shadow-sm hover:shadow focus:outline-none transition-all">
+                        <i class="fa-solid fa-save mr-1.5"></i> Cập nhật Sinh hiệu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function calculateBMI() {
+        let weight = parseFloat(document.getElementById('vital_weight').value);
+        let height = parseFloat(document.getElementById('vital_height').value);
+        let bmiDisplay = document.getElementById('vital_bmi_display');
+        let bmiHidden = document.getElementById('vital_bmi_hidden');
+
+        if (weight > 0 && height > 0) {
+            let heightM = height / 100;
+            let bmi = (weight / (heightM * heightM)).toFixed(2);
+            bmiDisplay.value = bmi;
+            bmiHidden.value = bmi;
+        } else {
+            bmiDisplay.value = '';
+            bmiHidden.value = '';
+        }
+    }
+</script>
+@endpush
 </x-layouts.receptionist>

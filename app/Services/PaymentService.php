@@ -63,12 +63,12 @@ class PaymentService
                 // If pending, use dynamic calculation based on current BHYT rate
                 $expectedInsurance = round($visit->payment_amount * $calc['insurance_rate']);
                 $expectedPatient = $visit->payment_amount - $expectedInsurance;
-                
+
                 $actualPatientPays += $expectedPatient;
                 $actualInsuranceCovers += $expectedInsurance;
             }
         }
-        
+
         $calc['patient_pays'] = $actualPatientPays;
         $calc['insurance_covers'] = $actualInsuranceCovers;
         // --- END OVERRIDE ---
@@ -364,9 +364,9 @@ class PaymentService
 
                 // Số tiền bệnh nhân cần trả cho visit này
                 $visitPatientPays = round($visit->payment_amount * (1 - $insuranceRate));
-                
+
                 $alreadyPaid = $visit->payments()->sum('payment_clinical_visit.amount_allocated');
-                
+
                 $visitRemaining = max(0, $visitPatientPays - $alreadyPaid);
 
                 if ($visitRemaining <= 0) continue;

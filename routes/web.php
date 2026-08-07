@@ -294,7 +294,9 @@ Route::prefix('api')->name('api.')->group(function () {
 
     // Lấy danh lịch làm việc theo bác sĩ và ngày
     Route::get('/work-schedule/by-doctor-date/{doctorId}/{appointmentDate}', [\App\Http\Controllers\Api\WorkScheduleController::class, 'getWorkSchedule'])->name('work-schedule');
-    Route::post('/chatbot/message', [\App\Http\Controllers\Api\ChatbotController::class, 'sendMessage'])->name('chatbot.message');
+    Route::post('/chatbot/message', [\App\Http\Controllers\Api\ChatbotController::class, 'sendMessage'])
+        ->middleware('throttle:5,1')
+        ->name('chatbot.message');
 
     // SePay Webhook (xác thực bởi VerifySePayWebhook middleware)
     Route::post('/webhooks/sepay', [\App\Http\Controllers\Api\Webhook\SePayWebhookController::class, 'handle'])
@@ -447,6 +449,7 @@ Route::prefix('receptionist')->name('receptionist.')->group(function () {
 
         // Appointments
         Route::patch('appointments/{id}/status', [\App\Http\Controllers\Receptionist\AppointmentController::class, 'updateStatus'])->name('appointments.update-status');
+        Route::patch('appointments/{id}/vitals', [\App\Http\Controllers\Receptionist\AppointmentController::class, 'updateVitals'])->name('appointments.update-vitals');
         Route::resource('appointments', \App\Http\Controllers\Receptionist\AppointmentController::class);
 
         // Patients

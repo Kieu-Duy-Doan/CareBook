@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Support\Facades\Cache;
 use App\Models\Appointment;
 use App\Models\ClinicalVisit;
+use App\Models\AppointmentLog;
 use Carbon\Carbon;
 use Exception;
 

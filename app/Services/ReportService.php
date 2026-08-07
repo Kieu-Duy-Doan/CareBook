@@ -147,11 +147,46 @@ class ReportService
 
     /**
      * Thống kê doanh thu phân tách theo nguồn (BN trả / BHYT / Chờ thu)
+     * 
+     * QUAN TRỌNG: Lọc theo paid_at (ngày thanh toán thực tế) thay vì appointment_date
+     * để đồng nhất với logic của Lễ tân và Tab Tài chính.
      */
     public function getRevenueStats(Carbon $dateFrom, Carbon $dateTo, ?int $doctorId = null, ?int $specialtyId = null): array
     {
-        // Query payments qua appointments trong khoảng ngày
-        $paymentQuery = Payment::query()
+        // Base query: lọc theo paid_at (ngày thanh toán thực tế)
+        $baseQuery = Payment::with(['clinicalVisits'])
+            ->whereBetween('paid_at', [$dateFrom, $dateTo])
+            ->where('status', 'completed');
+
+        // Nếu có filter theo bác sĩ hoặc chuyên khoa
+        if ($doctorId || $specialtyId) {
+            $baseQuery->whereHas('appointment', function ($q) use ($doctorId, $specialtyId) {
+                if ($doctorId) {
+                    $q->where('doctor_profile_id', $doctorId);
+                }
+                if ($specialtyId) {
+                    $q->where('specialty_id', $specialtyId);
+                }
+            });
+        }
+
+        $payments = $baseQuery->get();
+
+        // Tổng doanh thu = max(clinicalVisits fee, payment amount) — đồng nhất với PaymentDashboard & Lễ tân
+        $totalRevenue = $payments->sum(function ($p) {
+            $fee = $p->clinicalVisits->sum('payment_amount');
+            return max($fee, (float) $p->amount);
+        });
+
+        // Doanh thu thực thu từ bệnh nhân (cash + qr)
+        $patientPayments = $payments->whereIn('method', ['cash', 'qr']);
+        $patientRevenue = $patientPayments->sum('amount');
+
+        // Doanh thu BHYT chi trả
+        $insuranceRevenue = $payments->where('method', 'insurance')->sum('amount');
+
+        // Chờ thu (pending clinical visits) — vẫn lọc theo appointment_date vì chưa có paid_at
+        $pendingQuery = \App\Models\ClinicalVisit::where('payment_status', 'pending')
             ->whereHas('appointment', function ($q) use ($dateFrom, $dateTo, $doctorId, $specialtyId) {
                 $q->whereDate('appointment_date', '>=', $dateFrom)
                   ->whereDate('appointment_date', '<=', $dateTo);
@@ -162,53 +197,12 @@ class ReportService
                     $q->where('specialty_id', $specialtyId);
                 }
             });
-
-        // Tổng doanh thu đã thanh toán hoàn tất
-        $totalRevenue = (clone $paymentQuery)
-            ->where('status', 'completed')
-            ->sum('amount');
-
-        // Doanh thu thực thu từ bệnh nhân (cash + qr)
-        $patientRevenue = (clone $paymentQuery)
-            ->where('status', 'completed')
-            ->whereIn('method', ['cash', 'qr'])
-            ->sum('amount');
-
-        // Doanh thu BHYT chi trả
-        $insuranceRevenue = (clone $paymentQuery)
-            ->where('status', 'completed')
-            ->where('method', 'insurance')
-            ->sum('amount');
-
-        // Chờ thu (pending clinical visits)
-        $pendingRevenue = \App\Models\ClinicalVisit::where('payment_status', 'pending')
-            ->whereHas('appointment', function ($q) use ($dateFrom, $dateTo, $doctorId, $specialtyId) {
-                $q->whereDate('appointment_date', '>=', $dateFrom)
-                  ->whereDate('appointment_date', '<=', $dateTo);
-                if ($doctorId) {
-                    $q->where('doctor_profile_id', $doctorId);
-                }
-                if ($specialtyId) {
-                    $q->where('specialty_id', $specialtyId);
-                }
-            })
-            ->sum('payment_amount');
+        $pendingRevenue = $pendingQuery->sum('payment_amount');
 
         // Phân tách theo phương thức
-        $cashRevenue = (clone $paymentQuery)
-            ->where('status', 'completed')
-            ->where('method', 'cash')
-            ->sum('amount');
-
-        $qrRevenue = (clone $paymentQuery)
-            ->where('status', 'completed')
-            ->where('method', 'qr')
-            ->sum('amount');
-
-        $waivedRevenue = (clone $paymentQuery)
-            ->where('status', 'completed')
-            ->where('method', 'waived')
-            ->sum('amount');
+        $cashRevenue = $payments->where('method', 'cash')->sum('amount');
+        $qrRevenue = $payments->where('method', 'qr')->sum('amount');
+        $waivedRevenue = $payments->where('method', 'waived')->sum('amount');
 
         return [
             'total_revenue' => $totalRevenue,

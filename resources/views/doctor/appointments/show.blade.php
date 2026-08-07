@@ -166,29 +166,80 @@
         </div>
 
         <!-- Chỉ số sinh tồn -->
-        @if ($appointment->vital_pulse || $appointment->vital_systolic_bp || $appointment->vital_temperature || $appointment->vital_weight_kg)
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-6">
-            <h3 class="text-lg font-bold text-gray-900 border-b border-gray-100 pb-4 mb-4">Chỉ số sinh tồn</h3>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
-                    <div class="text-gray-400 mb-1"><i class="fa-solid fa-heart-pulse"></i></div>
-                    <div class="text-xs text-gray-500 uppercase font-medium">Mạch</div>
-                    <div class="text-lg font-bold text-gray-900">{{ $appointment->vital_pulse ?? '—' }} <span class="text-xs font-normal text-gray-500">l/p</span></div>
+        @if (
+        $appointment->vital_pulse ||
+        $appointment->vital_systolic_bp ||
+        $appointment->vital_temperature ||
+        $appointment->vital_weight_kg)
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mt-6">
+            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-heart-pulse text-blue-500"></i>
+                    <h3 class="text-lg font-bold text-gray-900">Chỉ số sinh tồn</h3>
                 </div>
-                <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
-                    <div class="text-gray-400 mb-1"><i class="fa-solid fa-droplet"></i></div>
-                    <div class="text-xs text-gray-500 uppercase font-medium">Huyết áp</div>
-                    <div class="text-lg font-bold text-gray-900">{{ $appointment->vital_systolic_bp ?? '—' }}/{{ $appointment->vital_diastolic_bp ?? '—' }} <span class="text-xs font-normal text-gray-500">mmHg</span></div>
+                @if ($appointment->checked_in_at)
+                <div class="text-xs text-gray-500">
+                    Đo lúc: {{ \Carbon\Carbon::parse($appointment->checked_in_at)->format('H:i d/m/Y') }}
                 </div>
-                <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
-                    <div class="text-gray-400 mb-1"><i class="fa-solid fa-temperature-half"></i></div>
-                    <div class="text-xs text-gray-500 uppercase font-medium">Nhiệt độ</div>
-                    <div class="text-lg font-bold text-gray-900">{{ $appointment->vital_temperature ?? '—' }} <span class="text-xs font-normal text-gray-500">°C</span></div>
-                </div>
-                <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
-                    <div class="text-gray-400 mb-1"><i class="fa-solid fa-weight-scale"></i></div>
-                    <div class="text-xs text-gray-500 uppercase font-medium">Cân nặng</div>
-                    <div class="text-lg font-bold text-gray-900">{{ $appointment->vital_weight_kg ?? '—' }} <span class="text-xs font-normal text-gray-500">kg</span></div>
+                @endif
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
+                        <div class="text-gray-400 mb-1"><i class="fa-solid fa-heart-pulse"></i></div>
+                        <div class="text-xs text-gray-500 uppercase font-medium">Mạch</div>
+                        <div class="text-lg font-bold text-gray-900">
+                            {{ $appointment->vital_pulse ?? '—' }} <span class="text-xs font-normal text-gray-500">l/p</span>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
+                        <div class="text-gray-400 mb-1"><i class="fa-solid fa-droplet"></i></div>
+                        <div class="text-xs text-gray-500 uppercase font-medium">Huyết áp</div>
+                        <div class="text-lg font-bold text-gray-900">
+                            {{ $appointment->vital_systolic_bp ?? '—' }}/{{ $appointment->vital_diastolic_bp ?? '—' }}
+                            <span class="text-xs font-normal text-gray-500">mmHg</span>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
+                        <div class="text-gray-400 mb-1"><i class="fa-solid fa-temperature-half"></i></div>
+                        <div class="text-xs text-gray-500 uppercase font-medium">Nhiệt độ</div>
+                        <div class="text-lg font-bold text-gray-900">
+                            {{ $appointment->vital_temperature ?? '—' }} <span class="text-xs font-normal text-gray-500">°C</span>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
+                        <div class="text-gray-400 mb-1"><i class="fa-solid fa-lungs"></i></div>
+                        <div class="text-xs text-gray-500 uppercase font-medium">SpO2</div>
+                        <div class="text-lg font-bold text-gray-900">
+                            {{ $appointment->vital_spo2 ?? '—' }} <span class="text-xs font-normal text-gray-500">%</span>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
+                        <div class="text-gray-400 mb-1"><i class="fa-solid fa-wind"></i></div>
+                        <div class="text-xs text-gray-500 uppercase font-medium">Nhịp thở</div>
+                        <div class="text-lg font-bold text-gray-900">
+                            {{ $appointment->vital_respiratory ?? '—' }} <span class="text-xs font-normal text-gray-500">l/p</span>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
+                        <div class="text-gray-400 mb-1"><i class="fa-solid fa-weight-scale"></i></div>
+                        <div class="text-xs text-gray-500 uppercase font-medium">Cân nặng</div>
+                        <div class="text-lg font-bold text-gray-900">
+                            {{ $appointment->vital_weight_kg ?? '—' }} <span class="text-xs font-normal text-gray-500">kg</span>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
+                        <div class="text-gray-400 mb-1"><i class="fa-solid fa-ruler-vertical"></i></div>
+                        <div class="text-xs text-gray-500 uppercase font-medium">Chiều cao</div>
+                        <div class="text-lg font-bold text-gray-900">
+                            {{ $appointment->vital_height_cm ?? '—' }} <span class="text-xs font-normal text-gray-500">cm</span>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
+                        <div class="text-gray-400 mb-1"><i class="fa-solid fa-person"></i></div>
+                        <div class="text-xs text-gray-500 uppercase font-medium">BMI</div>
+                        <div class="text-lg font-bold text-gray-900">{{ $appointment->vital_bmi ?? '—' }}</div>
+                    </div>
                 </div>
             </div>
         </div>

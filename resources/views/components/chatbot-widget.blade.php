@@ -22,7 +22,7 @@
         x-transition:leave="transition ease-in duration-200 transform"
         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
         x-transition:leave-end="opacity-0 translate-y-8 scale-95"
-        class="bg-white w-[350px] max-w-[calc(100vw-32px)] sm:w-[380px] h-[500px] max-h-[calc(100vh-100px)] flex flex-col rounded-2xl shadow-2xl border border-gray-100 overflow-hidden absolute bottom-0 right-0 origin-bottom-right">
+        class="bg-white w-[calc(100vw-48px)] sm:w-[420px] h-[550px] sm:h-[600px] max-h-[calc(100vh-120px)] sm:max-h-[calc(100vh-100px)] flex flex-col rounded-2xl shadow-2xl border border-gray-100 overflow-hidden absolute bottom-0 right-0 origin-bottom-right">
 
         <!-- Header -->
         <div
@@ -93,7 +93,7 @@
                                         <!-- Nếu là Action thì render Nút bấm điều hướng -->
                                         <template x-if="key === 'action'">
                                             <template x-if="val === 'guide_booking'">
-                                                <a href="/booking"
+                                                <a href="/dat-lich"
                                                     class="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg px-4 py-2 mt-2 transition-colors text-xs">
                                                     <i class="fa-regular fa-calendar-check mr-1"></i> Đặt lịch khám ngay
                                                 </a>
@@ -143,8 +143,32 @@
             </div>
         </div>
 
+        <!-- Suggested Questions Header/Toggle (Mobile only) -->
+        <div class="px-3 pt-2 bg-white border-t border-gray-100 flex justify-between items-center z-10 relative sm:hidden">
+            <span class="text-[12px] text-gray-500 font-medium"><i class="fa-regular fa-lightbulb text-yellow-500 mr-1"></i> Gợi ý câu hỏi</span>
+            <button type="button" @click="showSuggestions = !showSuggestions" class="text-gray-400 hover:text-blue-600 px-2 py-1 focus:outline-none">
+                <i class="fa-solid text-xs" :class="showSuggestions ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
+            </button>
+        </div>
+
+        <!-- Suggested Questions -->
+        <div :class="showSuggestions ? 'flex' : 'hidden sm:flex'" class="px-3 pb-2 pt-2 sm:pt-3 bg-white sm:border-t border-gray-100 flex-col items-start gap-2 relative z-10">
+            <button @click="sendSuggestion('Cho tôi xem danh sách chuyên khoa')" class="bg-blue-50 hover:bg-blue-100 text-blue-700 text-[13px] px-4 py-2 rounded-xl transition-colors border border-blue-100 shadow-sm flex items-center w-full text-left">
+                <i class="fa-solid fa-stethoscope w-5 text-center mr-2"></i> Danh sách chuyên khoa
+            </button>
+            <button @click="sendSuggestion('Xin lịch làm việc của bác sĩ')" class="bg-blue-50 hover:bg-blue-100 text-blue-700 text-[13px] px-4 py-2 rounded-xl transition-colors border border-blue-100 shadow-sm flex items-center w-full text-left">
+                <i class="fa-regular fa-calendar-days w-5 text-center mr-2"></i> Lịch bác sĩ
+            </button>
+            <button @click="sendSuggestion('Bảng giá dịch vụ khám thế nào?')" class="bg-blue-50 hover:bg-blue-100 text-blue-700 text-[13px] px-4 py-2 rounded-xl transition-colors border border-blue-100 shadow-sm flex items-center w-full text-left">
+                <i class="fa-solid fa-hand-holding-dollar w-5 text-center mr-2"></i> Bảng giá khám
+            </button>
+            <button @click="sendSuggestion('Làm sao để đặt lịch khám?')" class="bg-blue-50 hover:bg-blue-100 text-blue-700 text-[13px] px-4 py-2 rounded-xl transition-colors border border-blue-100 shadow-sm flex items-center w-full text-left">
+                <i class="fa-solid fa-circle-question w-5 text-center mr-2"></i> Cách đặt lịch
+            </button>
+        </div>
+
         <!-- Input Area -->
-        <div class="p-3 bg-white border-t border-gray-100 relative z-10">
+        <div class="p-3 bg-white relative z-10">
             <form @submit.prevent="sendMessage" class="flex gap-2">
                 <input x-model="inputMessage" type="text" placeholder="Nhập câu hỏi..."
                     class="flex-1 bg-gray-100 border-transparent focus:bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-100 rounded-full px-4 py-2.5 text-[14px] transition-all outline-none"
@@ -173,6 +197,7 @@
             isTyping: false,
             sessionToken: null,
             unreadCount: 0,
+            showSuggestions: false,
 
             initWidget() {
                 // Load history from localStorage
@@ -258,6 +283,11 @@
                     this.saveState();
                     this.scrollToBottom();
                 }
+            },
+
+            sendSuggestion(text) {
+                this.inputMessage = text;
+                this.sendMessage();
             },
 
             clearHistory() {

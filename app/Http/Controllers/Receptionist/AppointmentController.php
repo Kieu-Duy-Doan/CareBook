@@ -285,6 +285,45 @@ class AppointmentController extends Controller
     }
 
 
+
+    public function updateVitals(Request $request, $id)
+    {
+        $appointment = Appointment::findOrFail($id);
+
+        $data = $request->validate([
+            'vital_pulse'        => 'nullable|integer|min:0',
+            'vital_systolic_bp'  => 'nullable|integer|min:0',
+            'vital_diastolic_bp' => 'nullable|integer|min:0',
+            'vital_temperature'  => 'nullable|numeric|min:0',
+            'vital_respiratory'  => 'nullable|integer|min:0',
+            'vital_spo2'         => 'nullable|numeric|min:0',
+            'vital_weight_kg'    => 'nullable|numeric|min:0',
+            'vital_height_cm'    => 'nullable|numeric|min:0',
+            'vital_bmi'          => 'nullable|numeric|min:0',
+            'vital_note'         => 'nullable|string',
+        ]);
+
+        $hasVitals = $request->filled('vital_pulse') || $request->filled('vital_systolic_bp') || $request->filled('vital_diastolic_bp') || 
+                     $request->filled('vital_temperature') || $request->filled('vital_respiratory') || $request->filled('vital_spo2') || 
+                     $request->filled('vital_weight_kg') || $request->filled('vital_height_cm');
+                     
+        $data['measured_by'] = $hasVitals ? Auth::id() : null;
+
+        $appointment->update($data);
+
+        // Ghi log
+        \App\Models\AppointmentLog::create([
+            'appointment_id' => $appointment->id,
+            'action'         => 'UPDATED',
+            'old_status'     => $appointment->status,
+            'new_status'     => $appointment->status,
+            'changed_by'     => Auth::id(),
+            'reason'         => 'Cập nhật chỉ số sinh tồn (Vitals).'
+        ]);
+
+        return back()->with('success', 'Cập nhật chỉ số sinh tồn thành công.');
+    }
+
     public function destroy($id)
     {
         $appointment = Appointment::findOrFail($id);
