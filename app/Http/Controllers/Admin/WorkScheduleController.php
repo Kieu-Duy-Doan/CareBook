@@ -16,10 +16,21 @@ use Illuminate\Support\Facades\DB;
 use App\Exports\WorkSchedulesExport;
 use App\Exports\WorkSchedulesTemplateExport;
 use App\Imports\WorkSchedulesImport;
-use Maatwebsite\Excel\Facades\Excel;
+use App\Models\User;
+use App\Services\WorkScheduleService;
+use App\Http\Requests\Admin\StoreWorkScheduleRequest;
+use App\Http\Requests\Admin\UpdateWorkScheduleRequest;
+use App\Http\Requests\Admin\StoreScheduleOverrideRequest;
+use App\Http\Requests\Admin\TransferDoctorSchedulesRequest;
 
 class WorkScheduleController extends Controller
 {
+    protected WorkScheduleService $workScheduleService;
+
+    public function __construct(WorkScheduleService $workScheduleService)
+    {
+        $this->workScheduleService = $workScheduleService;
+    }
     public function export(Request $request)
     {
         return Excel::download(new WorkSchedulesExport($request), 'danh-sach-lich-lam-viec.xlsx');
@@ -93,75 +104,11 @@ class WorkScheduleController extends Controller
         return view('admin.work-schedules.index', compact('schedules', 'doctors', 'rooms', 'overrides'));
     }
 
-    public function store(Request $request)
+    public function store(StoreWorkScheduleRequest $request)
     {
-        $request->validate([
-            'doctor_profile_id' => 'required|exists:doctor_profiles,id',
-            'room_id' => 'required|exists:rooms,id',
-            'day_of_week' => 'required|integer|between:1,7',
-            'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i|after:start_time',
-            'slot_duration_minutes' => 'required|integer|min:5|max:120',
-            'max_slots' => 'required|integer|min:1|max:100',
-            'is_active' => 'boolean'
-        ]);
-
-        $isValidTime = ($request->start_time === '07:00' && $request->end_time === '11:00') ||
-            ($request->start_time === '13:00' && $request->end_time === '17:00');
-
-        if (!$isValidTime) {
-            return back()->with('error', 'Thời gian ca trực chỉ được phép là Sáng (07:00 - 11:00) hoặc Chiều (13:00 - 17:00).')->withInput();
-        }
-
-        // Kiểm tra bác sĩ được chọn đã có ca làm việc trùng thời gian vào thứ đã chọn chưa
-
-        $existsTime = WorkSchedule::where('doctor_profile_id', $request->doctor_profile_id)
-            ->where('day_of_week', $request->day_of_week)
-            ->where('is_active', true)
-            ->where(function ($query) use ($request) {
-                $query->where('start_time', '<', $request->end_time)
-                    ->where('end_time', '>', $request->start_time);
-            })
-            ->exists();
-
-        if ($existsTime) {
-            return back()->with('error', 'Bác sĩ đã có lịch làm việc trùng thời gian.');
-        }
-
-        // Kiểm tra lịch đăng ký có trùng với lịch hay phòng bác sĩ khác không
-        $existsTimeAndRoomWithOthers = WorkSchedule::where('day_of_week', $request->day_of_week)
-            ->where('is_active', true)
-            ->where('room_id', $request->room_id)
-            ->where(function ($query) use ($request) {
-                $query->where('start_time', '<', $request->end_time)
-                    ->where('end_time', '>', $request->start_time);
-            })
-            ->exists();
-
-        if ($existsTimeAndRoomWithOthers) {
-            return back()->with('error', 'Lịch này đã có bác sĩ khác làm việc.');
-        }
-
-        $schedule = WorkSchedule::create([
-            'doctor_profile_id' => $request->doctor_profile_id,
-            'room_id' => $request->room_id,
-            'day_of_week' => $request->day_of_week,
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
-            'slot_duration_minutes' => $request->slot_duration_minutes,
-            'max_slots' => $request->max_slots,
-            'is_active' => $request->has('is_active'),
-        ]);
-
-        SystemLog::create([
-            'user_id' => Auth::id(),
-            'action' => 'WORK_SCHEDULE_CREATED',
-            'module' => 'work_schedule',
-            'ref_type' => 'work_schedule',
-            'ref_id' => $schedule->id,
-            'description' => 'Thêm ca trực cho bác sĩ ID ' . $schedule->doctor_profile_id,
-            'ip_address' => request()->ip()
-        ]);
+        $validated = $request->validated();
+        
+        $this->workScheduleService->createSchedule($validated, Auth::id());
 
         return back()->with('success', 'Đã thêm ca trực thành công.');
     }
@@ -382,78 +329,13 @@ class WorkScheduleController extends Controller
         return view('admin.work-schedules.show', compact('schedule', 'upcomingAppointments', 'slotsCount', 'weeklySchedules', 'isOverride'));
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateWorkScheduleRequest $request, $id)
     {
         $schedule = WorkSchedule::findOrFail($id);
-
-        $request->validate([
-            'doctor_profile_id' => 'required|exists:doctor_profiles,id',
-            'room_id' => 'required|exists:rooms,id',
-            'day_of_week' => 'required|integer|between:1,7',
-            'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i|after:start_time',
-            'slot_duration_minutes' => 'required|integer|min:5|max:120',
-            'max_slots' => 'required|integer|min:1|max:100',
-            'is_active' => 'boolean'
-        ]);
-
-        $isValidTime = ($request->start_time === '07:00' && $request->end_time === '11:00') ||
-            ($request->start_time === '13:00' && $request->end_time === '17:00');
-
-        if (!$isValidTime) {
-            return back()->with('error', 'Thời gian ca trực chỉ được phép là Sáng (07:00 - 11:00) hoặc Chiều (13:00 - 17:00).')->withInput();
-        }
-
-        // Kiểm tra bác sĩ được chọn đã có ca làm việc trùng thời gian vào thứ đã chọn chưa
-        $existsTime = WorkSchedule::where('doctor_profile_id', $request->doctor_profile_id)
-            ->where('day_of_week', $request->day_of_week)
-            ->where('is_active', true)
-            ->where('id', '!=', $id)
-            ->where(function ($query) use ($request) {
-                $query->where('start_time', '<', $request->end_time)
-                    ->where('end_time', '>', $request->start_time);
-            })
-            ->exists();
-
-        if ($existsTime) {
-            return back()->with('error', 'Bác sĩ đã có lịch làm việc trùng thời gian.');
-        }
-
-        // Kiểm tra lịch đăng ký có trùng với lịch hay phòng bác sĩ khác không
-        $existsTimeAndRoomWithOthers = WorkSchedule::where('day_of_week', $request->day_of_week)
-            ->where('is_active', true)
-            ->where('room_id', $request->room_id)
-            ->where('id', '!=', $id)
-            ->where(function ($query) use ($request) {
-                $query->where('start_time', '<', $request->end_time)
-                    ->where('end_time', '>', $request->start_time);
-            })
-            ->exists();
-
-        if ($existsTimeAndRoomWithOthers) {
-            return back()->with('error', 'Lịch này đã có bác sĩ khác làm việc.');
-        }
-
-        $schedule->update([
-            'doctor_profile_id' => $request->doctor_profile_id,
-            'room_id' => $request->room_id,
-            'day_of_week' => $request->day_of_week,
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
-            'slot_duration_minutes' => $request->slot_duration_minutes,
-            'max_slots' => $request->max_slots,
-            'is_active' => $request->has('is_active'),
-        ]);
-
-        SystemLog::create([
-            'user_id' => Auth::id(),
-            'action' => 'WORK_SCHEDULE_UPDATED',
-            'module' => 'work_schedule',
-            'ref_type' => 'work_schedule',
-            'ref_id' => $schedule->id,
-            'description' => 'Cập nhật ca trực cho bác sĩ ID ' . $schedule->doctor_profile_id,
-            'ip_address' => request()->ip()
-        ]);
+        
+        $validated = $request->validated();
+        
+        $this->workScheduleService->updateSchedule($schedule, $validated, Auth::id());
 
         return back()->with('success', 'Đã cập nhật ca trực thành công.');
     }
@@ -496,113 +378,13 @@ class WorkScheduleController extends Controller
         return back()->with('success', 'Đã xoá ca trực thành công.');
     }
 
-    public function storeOverride(Request $request)
+    public function storeOverride(StoreScheduleOverrideRequest $request)
     {
-        try {
-            $request->validate([
-                'doctor_profile_id' => 'required|exists:doctor_profiles,id',
-                'room_id' => 'required|exists:rooms,id',
-                'override_date' => 'required|date|after_or_equal:today',
-                'type' => 'required|in:close,extra',
-                'start_time' => 'required|date_format:H:i',
-                'end_time' => 'required|date_format:H:i|after:start_time',
-                'reason' => 'nullable|string|max:255'
-            ], [
-                'start_time.required' => 'Vui lòng nhập giờ bắt đầu.',
-                'end_time.required' => 'Vui lòng nhập giờ kết thúc.',
-            ]);
+        $validated = $request->validated();
+        
+        $this->workScheduleService->createOverride($validated, Auth::id());
 
-            $isValidTime = ($request->start_time === '07:00' && $request->end_time === '11:00') ||
-                ($request->start_time === '13:00' && $request->end_time === '17:00');
-
-            if (!$isValidTime) {
-                return back()->with('error', 'Thời gian ca trực chỉ được phép là Sáng (07:00 - 11:00) hoặc Chiều (13:00 - 17:00).')->withInput();
-            }
-
-            $dayOfWeek = Carbon::parse($request->override_date)->dayOfWeekIso + 1;
-            if ($dayOfWeek == 8) {
-                $dayOfWeek = 1;
-            }
-
-            $overlapQuery = WorkSchedule::where('doctor_profile_id', $request->doctor_profile_id)
-                ->where('day_of_week', $dayOfWeek)
-                ->where('is_active', true)
-                ->where(function ($query) use ($request) {
-                    $query->where('start_time', '<', $request->end_time)
-                        ->where('end_time', '>', $request->start_time);
-                });
-
-            if ($request->filled('room_id')) {
-                $overlapQuery->where('room_id', $request->room_id);
-            }
-
-            $existsTime = $overlapQuery->exists();
-
-            if ($request->type === 'extra') {
-                if ($existsTime) {
-                    return back()->with('error', 'Không thể thêm ca. Bác sĩ đã có lịch làm việc trùng thời gian này.');
-                }
-
-                if ($request->filled('room_id')) {
-                    $existsWithOtherDoctors = WorkSchedule::where('day_of_week', $dayOfWeek)
-                        ->where('is_active', true)
-                        ->where('room_id', $request->room_id)
-                        ->where('doctor_profile_id', '!=', $request->doctor_profile_id)
-                        ->where(function ($query) use ($request) {
-                            $query->where('start_time', '<', $request->end_time)
-                                ->where('end_time', '>', $request->start_time);
-                        })
-                        ->exists();
-
-                    if ($existsWithOtherDoctors) {
-                        return back()->with('error', 'Không thể thêm ca. Phòng này đã có bác sĩ khác làm việc theo lịch định kỳ.');
-                    }
-
-                    $existsOverrideWithOtherDoctors = ScheduleOverride::where('override_date', $request->override_date)
-                        ->where('type', 'extra')
-                        ->where('room_id', $request->room_id)
-                        ->where('doctor_profile_id', '!=', $request->doctor_profile_id)
-                        ->where(function ($query) use ($request) {
-                            $query->where('start_time', '<', $request->end_time)
-                                ->where('end_time', '>', $request->start_time);
-                        })
-                        ->exists();
-
-                    if ($existsOverrideWithOtherDoctors) {
-                        return back()->with('error', 'Không thể thêm ca. Phòng này đã có bác sĩ khác đăng ký ca ngoại lệ.');
-                    }
-                }
-            }
-
-            if ($request->type === 'close' && !$existsTime) {
-                return back()->with('error', 'Không thể đóng ca. Không có lịch làm việc nào trùng thời gian này để đóng.');
-            }
-
-            $override = ScheduleOverride::create([
-                'doctor_profile_id' => $request->doctor_profile_id,
-                'room_id' => $request->room_id,
-                'override_date' => $request->override_date,
-                'type' => $request->type,
-                'start_time' => $request->start_time,
-                'end_time' => $request->end_time,
-                'reason' => $request->reason,
-                'created_by' => Auth::id(),
-            ]);
-
-            SystemLog::create([
-                'user_id' => Auth::id(),
-                'action' => 'SCHEDULE_OVERRIDE_CREATED',
-                'module' => 'schedule_override',
-                'ref_type' => 'schedule_override',
-                'ref_id' => $override->id,
-                'description' => 'Thêm ngoại lệ lịch ' . $override->type,
-                'ip_address' => request()->ip()
-            ]);
-
-            return back()->with('success', 'Đã thêm ngoại lệ lịch thành công.');
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return back()->withErrors($e->errors())->withInput();
-        }
+        return back()->with('success', 'Đã thêm ngoại lệ lịch thành công.');
     }
 
     public function destroyOverride($id)
@@ -613,114 +395,14 @@ class WorkScheduleController extends Controller
         return back()->with('success', 'Đã xoá ngoại lệ lịch thành công.');
     }
 
-    public function transferDoctorSchedules(Request $request)
+    public function transferDoctorSchedules(TransferDoctorSchedulesRequest $request)
     {
-        $request->validate([
-            'from_doctor_id' => 'required|exists:doctor_profiles,id',
-            'to_doctor_id' => 'required|exists:doctor_profiles,id|different:from_doctor_id',
-            'transfer_type' => 'required|in:all,date_range',
-            'start_date' => 'required_if:transfer_type,date_range|date|nullable',
-            'end_date' => 'required_if:transfer_type,date_range|date|after_or_equal:start_date|nullable',
-        ], [
-            'to_doctor_id.different' => 'Bác sĩ nguồn và bác sĩ đích phải khác nhau.',
-            'start_date.required_if' => 'Vui lòng chọn ngày bắt đầu.',
-            'end_date.required_if' => 'Vui lòng chọn ngày kết thúc.',
-            'end_date.after_or_equal' => 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.',
-        ]);
-
-        $fromDoctorId = $request->from_doctor_id;
-        $toDoctorId = $request->to_doctor_id;
-        $transferType = $request->transfer_type;
-
-        DB::beginTransaction();
-
+        $validated = $request->validated();
+        
         try {
-            if ($transferType === 'all') {
-                // Lấy tất cả WorkSchedule của Bác sĩ A
-                $schedulesA = WorkSchedule::where('doctor_profile_id', $fromDoctorId)->get();
-
-                foreach ($schedulesA as $scheduleA) {
-                    // Kiểm tra trùng lịch với Bác sĩ B
-                    $existsTime = WorkSchedule::where('doctor_profile_id', $toDoctorId)
-                        ->where('day_of_week', $scheduleA->day_of_week)
-                        ->where('is_active', true)
-                        ->where(function ($query) use ($scheduleA) {
-                            $query->where('start_time', '<', $scheduleA->end_time)
-                                ->where('end_time', '>', $scheduleA->start_time);
-                        })
-                        ->exists();
-
-                    if ($existsTime) {
-                        DB::rollBack();
-                        return back()->with('error', 'Bác sĩ đích bị trùng lịch làm việc vào ' . $scheduleA->day_name . ' (' . substr($scheduleA->start_time, 0, 5) . ' - ' . substr($scheduleA->end_time, 0, 5) . '). Không thể chuyển.');
-                    }
-
-                    $scheduleA->doctor_profile_id = $toDoctorId;
-                    $scheduleA->save();
-                }
-
-                // Chuyển lịch hẹn từ ngày hiện tại trở đi
-                $appointmentsToUpdate = \App\Models\Appointment::where('doctor_profile_id', $fromDoctorId)
-                    ->where('appointment_date', '>=', now()->toDateString())
-                    ->whereIn('status', ['pending', 'confirmed', 'checked_in'])
-                    ->get();
-
-                foreach ($appointmentsToUpdate as $appointment) {
-                    $appointment->doctor_profile_id = $toDoctorId;
-                    $appointment->save();
-                }
-
-                // Chuyển ngoại lệ lịch từ ngày hiện tại
-                $overridesToUpdate = ScheduleOverride::where('doctor_profile_id', $fromDoctorId)
-                    ->where('override_date', '>=', now()->toDateString())
-                    ->get();
-
-                foreach ($overridesToUpdate as $override) {
-                    $override->doctor_profile_id = $toDoctorId;
-                    $override->save();
-                }
-
-                $logDesc = "Chuyển toàn bộ ca khám và lịch hẹn từ BS $fromDoctorId sang BS $toDoctorId";
-            } else {
-                // Chuyển lịch hẹn trong khoảng thời gian
-                $startDate = $request->start_date;
-                $endDate = $request->end_date;
-
-                $appointmentsToUpdate = \App\Models\Appointment::where('doctor_profile_id', $fromDoctorId)
-                    ->whereBetween('appointment_date', [$startDate, $endDate])
-                    ->whereIn('status', ['pending', 'confirmed', 'checked_in'])
-                    ->get();
-
-                foreach ($appointmentsToUpdate as $appointment) {
-                    $appointment->doctor_profile_id = $toDoctorId;
-                    $appointment->save();
-                }
-
-                // Chuyển ngoại lệ
-                $overridesToUpdate = ScheduleOverride::where('doctor_profile_id', $fromDoctorId)
-                    ->whereBetween('override_date', [$startDate, $endDate])
-                    ->get();
-
-                foreach ($overridesToUpdate as $override) {
-                    $override->doctor_profile_id = $toDoctorId;
-                    $override->save();
-                }
-
-                $logDesc = "Chuyển ca khám từ BS $fromDoctorId sang BS $toDoctorId (Từ $startDate đến $endDate)";
-            }
-
-            SystemLog::create([
-                'user_id' => Auth::id(),
-                'action' => 'WORK_SCHEDULE_TRANSFERRED',
-                'module' => 'work_schedule',
-                'description' => $logDesc,
-                'ip_address' => request()->ip()
-            ]);
-
-            DB::commit();
+            $this->workScheduleService->transferSchedules($validated, Auth::id());
             return back()->with('success', 'Chuyển đổi bác sĩ thành công.');
         } catch (\Exception $e) {
-            DB::rollBack();
             return back()->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
         }
     }

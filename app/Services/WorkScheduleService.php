@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\WorkSchedule;
 use App\Models\ScheduleOverride;
 use App\Models\Appointment;
+use App\Models\SystemLog;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class WorkScheduleService
@@ -135,5 +137,154 @@ class WorkScheduleService
         }
 
         return $slots;
+    }
+
+    public function createSchedule(array $data, $userId)
+    {
+        $data['is_active'] = isset($data['is_active']) ? (bool)$data['is_active'] : false;
+        
+        $schedule = WorkSchedule::create($data);
+
+        SystemLog::create([
+            'user_id' => $userId,
+            'action' => 'WORK_SCHEDULE_CREATED',
+            'module' => 'work_schedule',
+            'ref_type' => 'work_schedule',
+            'ref_id' => $schedule->id,
+            'description' => 'Thêm ca trực cho bác sĩ ID ' . $schedule->doctor_profile_id,
+            'ip_address' => request()->ip()
+        ]);
+
+        return $schedule;
+    }
+
+    public function updateSchedule(WorkSchedule $schedule, array $data, $userId)
+    {
+        $data['is_active'] = isset($data['is_active']) ? (bool)$data['is_active'] : false;
+        
+        $schedule->update($data);
+
+        SystemLog::create([
+            'user_id' => $userId,
+            'action' => 'WORK_SCHEDULE_UPDATED',
+            'module' => 'work_schedule',
+            'ref_type' => 'work_schedule',
+            'ref_id' => $schedule->id,
+            'description' => 'Cập nhật ca trực cho bác sĩ ID ' . $schedule->doctor_profile_id,
+            'ip_address' => request()->ip()
+        ]);
+
+        return $schedule;
+    }
+
+    public function createOverride(array $data, $userId)
+    {
+        $data['created_by'] = $userId;
+        $override = ScheduleOverride::create($data);
+
+        SystemLog::create([
+            'user_id' => $userId,
+            'action' => 'SCHEDULE_OVERRIDE_CREATED',
+            'module' => 'schedule_override',
+            'ref_type' => 'schedule_override',
+            'ref_id' => $override->id,
+            'description' => 'Thêm ngoại lệ lịch ' . $override->type,
+            'ip_address' => request()->ip()
+        ]);
+
+        return $override;
+    }
+
+    public function transferSchedules(array $data, $userId)
+    {
+        $fromDoctorId = $data['from_doctor_id'];
+        $toDoctorId = $data['to_doctor_id'];
+        $transferType = $data['transfer_type'];
+
+        DB::beginTransaction();
+
+        try {
+            if ($transferType === 'all') {
+                $schedulesA = WorkSchedule::where('doctor_profile_id', $fromDoctorId)->get();
+
+                foreach ($schedulesA as $scheduleA) {
+                    $existsTime = WorkSchedule::where('doctor_profile_id', $toDoctorId)
+                        ->where('day_of_week', $scheduleA->day_of_week)
+                        ->where('is_active', true)
+                        ->where(function ($query) use ($scheduleA) {
+                            $query->where('start_time', '<', $scheduleA->end_time)
+                                ->where('end_time', '>', $scheduleA->start_time);
+                        })
+                        ->exists();
+
+                    if ($existsTime) {
+                        DB::rollBack();
+                        throw new \Exception('Bác sĩ đích bị trùng lịch làm việc vào ' . $scheduleA->day_name . ' (' . substr($scheduleA->start_time, 0, 5) . ' - ' . substr($scheduleA->end_time, 0, 5) . '). Không thể chuyển.');
+                    }
+
+                    $scheduleA->doctor_profile_id = $toDoctorId;
+                    $scheduleA->save();
+                }
+
+                $appointmentsToUpdate = \App\Models\Appointment::where('doctor_profile_id', $fromDoctorId)
+                    ->where('appointment_date', '>=', now()->toDateString())
+                    ->whereIn('status', ['pending', 'confirmed', 'checked_in'])
+                    ->get();
+
+                foreach ($appointmentsToUpdate as $appointment) {
+                    $appointment->doctor_profile_id = $toDoctorId;
+                    $appointment->save();
+                }
+
+                $overridesToUpdate = ScheduleOverride::where('doctor_profile_id', $fromDoctorId)
+                    ->where('override_date', '>=', now()->toDateString())
+                    ->get();
+
+                foreach ($overridesToUpdate as $override) {
+                    $override->doctor_profile_id = $toDoctorId;
+                    $override->save();
+                }
+
+                $logDesc = "Chuyển toàn bộ ca khám và lịch hẹn từ BS $fromDoctorId sang BS $toDoctorId";
+            } else {
+                $startDate = $data['start_date'];
+                $endDate = $data['end_date'];
+
+                $appointmentsToUpdate = \App\Models\Appointment::where('doctor_profile_id', $fromDoctorId)
+                    ->whereBetween('appointment_date', [$startDate, $endDate])
+                    ->whereIn('status', ['pending', 'confirmed', 'checked_in'])
+                    ->get();
+
+                foreach ($appointmentsToUpdate as $appointment) {
+                    $appointment->doctor_profile_id = $toDoctorId;
+                    $appointment->save();
+                }
+
+                $overridesToUpdate = ScheduleOverride::where('doctor_profile_id', $fromDoctorId)
+                    ->whereBetween('override_date', [$startDate, $endDate])
+                    ->get();
+
+                foreach ($overridesToUpdate as $override) {
+                    $override->doctor_profile_id = $toDoctorId;
+                    $override->save();
+                }
+
+                $logDesc = "Chuyển ca khám từ BS $fromDoctorId sang BS $toDoctorId (Từ $startDate đến $endDate)";
+            }
+
+            SystemLog::create([
+                'user_id' => $userId,
+                'action' => 'WORK_SCHEDULE_TRANSFERRED',
+                'module' => 'work_schedule',
+                'description' => $logDesc,
+                'ip_address' => request()->ip()
+            ]);
+
+            DB::commit();
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 }
