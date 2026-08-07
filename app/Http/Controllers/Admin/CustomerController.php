@@ -28,6 +28,7 @@ class CustomerController extends Controller
         ];
 
         $query = User::with(['patientProfiles'])
+            ->withCount('patientProfiles')
             ->where('role', 'patient')
             ->latest('created_at');
 
@@ -172,7 +173,9 @@ class CustomerController extends Controller
 
     public function show($id)
     {
-        $customer = User::with(['patientProfiles', 'patientProfiles.appointments'])->findOrFail($id);
+        $customer = User::with(['patientProfiles' => function($query) {
+            $query->withCount('appointments');
+        }, 'patientProfiles.appointments'])->findOrFail($id);
 
         $logs = SystemLog::where('user_id', $customer->id)
             ->latest('created_at')

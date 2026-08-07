@@ -64,7 +64,7 @@
                 </div>
                 <div class="bg-purple-50 p-4 rounded-lg border border-purple-100">
                     <div class="text-xs text-purple-600 font-medium uppercase tracking-wider mb-1">Chuyên khoa</div>
-                    <div class="font-bold text-purple-900">{{ $room->specialties->count() }} chuyên khoa</div>
+                    <div class="font-bold text-purple-900">{{ $room->specialties_count ?? $room->specialties->count() }} chuyên khoa</div>
                 </div>
             </div>
         </div>
@@ -80,7 +80,7 @@
             </h3>
             
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-                @if($room->specialties->count() > 0)
+                @if(($room->specialties_count ?? $room->specialties->count()) > 0)
                     <div class="flex flex-wrap gap-2">
                         @foreach($room->specialties as $specialty)
                             <a href="{{ route('admin.specialties.show', $specialty->id) }}" class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-100 transition-colors">

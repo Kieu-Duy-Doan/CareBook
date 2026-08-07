@@ -8,9 +8,18 @@ use App\Models\User;
 use App\Models\StaffProfile;
 use App\Models\SystemLog;
 use Illuminate\Support\Facades\DB;
+use App\Http\Requests\Admin\StoreReceptionistRequest;
+use App\Http\Requests\Admin\UpdateReceptionistRequest;
+use App\Services\ReceptionistProfileService;
 
 class ReceptionistController extends Controller
 {
+    protected $receptionistProfileService;
+
+    public function __construct(ReceptionistProfileService $receptionistProfileService)
+    {
+        $this->receptionistProfileService = $receptionistProfileService;
+    }
     public function index(Request $request)
     {
         $stats = [
@@ -72,72 +81,11 @@ class ReceptionistController extends Controller
 
         return view('admin.receptionists.create', compact('nextEmployeeCode'));
     }
-    public function store(Request $request)
+    public function store(StoreReceptionistRequest $request)
     {
-        $validated = $request->validate([
-            'full_name'      => 'required|string|max:100',
-            'phone'          => ['required', 'string', 'max:15', 'regex:/^(0|\+84)[3|5|7|8|9][0-9]{8}$/', 'unique:users,phone'],
-            'username'       => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z0-9_\.]+$/', 'unique:users,username'],
-            'id_card'        => 'nullable|string|max:20|unique:users,id_card',
-            'email'          => 'nullable|email|max:150|unique:users,email',
-            'password'       => 'required|string|min:8|confirmed',
-            'employee_code'  => ['required', 'string', 'max:20', 'regex:/^LT\d{3,}$/', 'unique:staff_profiles,employee_code'],
-            'department'     => ['required', 'string', 'in:Tiếp nhận bệnh nhân,Chăm sóc khách hàng'],
-            'internal_phone' => 'nullable|string|max:15',
-            'start_date'     => 'nullable|date|before_or_equal:today',
-        ], [
-            'full_name.required'     => 'Vui lòng nhập họ tên.',
-            'phone.required'         => 'Vui lòng nhập số điện thoại.',
-            'phone.regex'            => 'Số điện thoại không đúng định dạng (VD: 0901234567 hoặc +84901234567).',
-            'phone.unique'           => 'Số điện thoại đã được sử dụng.',
-            'username.required'      => 'Vui lòng nhập tên đăng nhập.',
-            'username.regex'         => 'Tên đăng nhập chỉ được chứa chữ cái, số, dấu gạch dưới và dấu chấm.',
-            'username.unique'        => 'Tên đăng nhập đã tồn tại.',
-            'id_card.unique'         => 'Số CCCD đã được sử dụng.',
-            'email.unique'           => 'Email đã được sử dụng.',
-            'password.required'      => 'Vui lòng nhập mật khẩu.',
-            'password.min'           => 'Mật khẩu tối thiểu 8 ký tự.',
-            'password.confirmed'     => 'Xác nhận mật khẩu không khớp.',
-            'employee_code.required' => 'Vui lòng nhập mã nhân viên.',
-            'employee_code.regex'    => 'Mã nhân viên phải bắt đầu bằng LT và theo sau bởi ít nhất 3 chữ số (VD: LT001).',
-            'employee_code.unique'   => 'Mã nhân viên đã tồn tại.',
-            'department.required'    => 'Vui lòng chọn phòng ban.',
-            'department.in'          => 'Phòng ban không hợp lệ.',
-            'start_date.before_or_equal' => 'Ngày vào làm không được là ngày trong tương lai.',
-        ]);
+        $validated = $request->validated();
 
-        DB::transaction(function() use ($validated) {
-            $user = User::create([
-                'full_name'  => $validated['full_name'],
-                'phone'      => $validated['phone'],
-                'username'   => $validated['username'],
-                'id_card'    => $validated['id_card'] ?? null,
-                'email'      => $validated['email'] ?? null,
-                'password'   => bcrypt($validated['password']),
-                'role'       => 'receptionist',
-                'is_active'  => true,
-            ]);
-
-            StaffProfile::create([
-                'user_id'        => $user->id,
-                'employee_code'  => $validated['employee_code'],
-                'position'       => 'Lễ tân',
-                'department'     => $validated['department'] ?? null,
-                'internal_phone' => $validated['internal_phone'] ?? null,
-                'start_date'     => $validated['start_date'] ?? null,
-                'is_active'      => true,
-            ]);
-
-            SystemLog::create([
-                'user_id'     => auth()->id(),
-                'action'      => 'RECEPTIONIST_CREATED',
-                'module'      => 'receptionists',
-                'ref_type'    => 'users',
-                'ref_id'      => $user->id,
-                'description' => 'Thêm lễ tân mới: ' . $validated['full_name'],
-                'ip_address'  => request()->ip(),
-            ]);
-        });
+        $this->receptionistProfileService->createReceptionist($validated);
 
         return redirect()->route('admin.receptionists.index')
             ->with('success', 'Thêm lễ tân thành công.');
@@ -174,75 +122,15 @@ class ReceptionistController extends Controller
         return view('admin.receptionists.edit', compact('receptionist'));
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateReceptionistRequest $request, $id)
     {
         $receptionist = User::with('staffProfile')
             ->where('role', 'receptionist')
             ->findOrFail($id);
 
-        $staffProfileId = $receptionist->staffProfile?->id;
+        $validated = $request->validated();
 
-        $validated = $request->validate([
-            'full_name'      => 'required|string|max:100',
-            'phone'          => ["required", "string", "max:15", "regex:/^(0|\+84)[3|5|7|8|9][0-9]{8}$/", "unique:users,phone,$id"],
-            'username'       => ["required", "string", "max:50", "regex:/^[a-zA-Z0-9_\.]+$/", "unique:users,username,$id"],
-            'id_card'        => "nullable|string|max:20|unique:users,id_card,$id",
-            'email'          => "nullable|email|max:150|unique:users,email,$id",
-            'employee_code'  => ["required", "string", "max:20", "regex:/^LT\d{3,}$/", "unique:staff_profiles,employee_code,$staffProfileId"],
-            'department'     => ['required', 'string', 'in:Tiếp nhận bệnh nhân,Chăm sóc khách hàng'],
-            'internal_phone' => 'nullable|string|max:15',
-            'start_date'     => 'nullable|date|before_or_equal:today',
-        ], [
-            'full_name.required'     => 'Vui lòng nhập họ tên.',
-            'phone.required'         => 'Vui lòng nhập số điện thoại.',
-            'phone.regex'            => 'Số điện thoại không đúng định dạng (VD: 0901234567 hoặc +84901234567).',
-            'phone.unique'           => 'Số điện thoại đã được sử dụng.',
-            'username.required'      => 'Vui lòng nhập tên đăng nhập.',
-            'username.regex'         => 'Tên đăng nhập chỉ được chứa chữ cái, số, dấu gạch dưới và dấu chấm.',
-            'username.unique'        => 'Tên đăng nhập đã tồn tại.',
-            'id_card.unique'         => 'Số CCCD đã được sử dụng.',
-            'email.unique'           => 'Email đã được sử dụng.',
-            'employee_code.required' => 'Vui lòng nhập mã nhân viên.',
-            'employee_code.regex'    => 'Mã nhân viên phải bắt đầu bằng LT và theo sau bởi ít nhất 3 chữ số (VD: LT001).',
-            'employee_code.unique'   => 'Mã nhân viên đã tồn tại.',
-            'department.required'    => 'Vui lòng chọn phòng ban.',
-            'department.in'          => 'Phòng ban không hợp lệ.',
-            'start_date.before_or_equal' => 'Ngày vào làm không được là ngày trong tương lai.',
-        ]);
-
-        DB::transaction(function() use ($receptionist, $validated) {
-            $userData = [
-                'full_name' => $validated['full_name'],
-                'phone'     => $validated['phone'],
-                'username'  => $validated['username'],
-                'id_card'   => $validated['id_card'] ?? null,
-                'email'     => $validated['email'] ?? null,
-            ];
-            $receptionist->update($userData);
-
-            $receptionist->staffProfile()->updateOrCreate(
-                ['user_id' => $receptionist->id],
-                [
-                    'employee_code'  => $validated['employee_code'],
-                    'position'       => 'Lễ tân',
-                    'department'     => $validated['department'] ?? null,
-                    'internal_phone' => $validated['internal_phone'] ?? null,
-                    'start_date'     => $validated['start_date'] ?? null,
-                ]
-            );
-
-            $receptionist->touch();
-
-            SystemLog::create([
-                'user_id'     => auth()->id(),
-                'action'      => 'RECEPTIONIST_UPDATED',
-                'module'      => 'receptionists',
-                'ref_type'    => 'users',
-                'ref_id'      => $receptionist->id,
-                'description' => 'Cập nhật thông tin lễ tân: ' . $validated['full_name'],
-                'ip_address'  => request()->ip(),
-            ]);
-        });
+        $this->receptionistProfileService->updateReceptionist($receptionist, $validated);
 
         return redirect()->route('admin.receptionists.edit', $id)
             ->with('success', 'Cập nhật thông tin lễ tân thành công.');

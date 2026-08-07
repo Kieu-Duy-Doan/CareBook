@@ -157,5 +157,188 @@ class AppointmentService
     {
         return str_replace(['%', '_'], ['\\%', '\\_'], $value);
     }
+
+    public function storeByReceptionist(array $data, \App\Models\DoctorProfile $doctor, \App\Models\PatientProfile $patient, $userId)
+    {
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($data, $doctor, $patient, $userId) {
+            $appointmentCode = $this->generateUniqueCode();
+
+            $totalFee = 0;
+            if ($doctor->level) {
+                $fee = \App\Models\DoctorLevelFee::where('level', $doctor->level)->first();
+                $totalFee = $fee ? $fee->specific_price : 0;
+            }
+
+            $checkedInAt = in_array($data['status'], ['checked_in', 'examining', 'completed']) ? now() : null;
+            $completedAt = ($data['status'] === 'completed') ? now() : null;
+
+            $appointment = Appointment::create(array_merge($data, [
+                'appointment_code'   => $appointmentCode,
+                'booked_by_user_id'  => $data['source'] === 'counter' ? $userId : ($patient->owner_id ?? $userId),
+                'doctor_level'       => $doctor->level,
+                'total_fee'          => $totalFee,
+                'checked_in_at'      => $checkedInAt,
+                'completed_at'       => $completedAt,
+            ]));
+
+            if (in_array($appointment->status, ['checked_in', 'examining', 'completed'])) {
+                $this->createClinicalVisitIfNotExists($appointment, true);
+            }
+
+            \App\Models\AppointmentLog::create([
+                'appointment_id' => $appointment->id,
+                'old_status'     => null,
+                'new_status'     => $appointment->status,
+                'action'         => \App\Models\AppointmentLog::ACTION_ADMIN_CREATE,
+                'changed_by'     => $userId,
+                'reason'         => 'Khởi tạo lịch hẹn bởi Quản trị/Lễ tân',
+            ]);
+            
+            return $appointment;
+        });
+    }
+
+    public function updateByReceptionist(Appointment $appointment, array $data, $userId, $doctor = null, $patient = null)
+    {
+        $oldStatus = $appointment->status;
+        $newStatus = $data['status'];
+        
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($appointment, $data, $oldStatus, $newStatus, $userId, $doctor, $patient) {
+            if ($doctor && $patient) {
+                // Lịch chưa khóa
+                $data['booked_by_user_id'] = $data['source'] === 'counter' ? $userId : ($patient->owner_id ?? $userId);
+                $data['doctor_level'] = $doctor->level;
+                
+                $totalFee = 0;
+                if ($doctor->level) {
+                    $fee = \App\Models\DoctorLevelFee::where('level', $doctor->level)->first();
+                    $totalFee = $fee ? $fee->specific_price : 0;
+                }
+                $data['total_fee'] = $totalFee;
+            }
+            
+            $appointment->fill($data);
+
+            if (in_array($newStatus, ['checked_in', 'examining', 'completed']) && is_null($appointment->checked_in_at)) {
+                $appointment->checked_in_at = now();
+                
+                // Tính toán đến muộn (>30 phút)
+                $appointmentDatetime = \Carbon\Carbon::parse($appointment->appointment_date->format('Y-m-d') . ' ' . $appointment->appointment_time);
+                if (now()->isAfter($appointmentDatetime->copy()->addMinutes(30))) {
+                    $appointment->is_late = true;
+                } else {
+                    $appointment->is_late = false;
+                }
+            }
+            if ($newStatus === 'completed' && is_null($appointment->completed_at)) {
+                $appointment->completed_at = now();
+            }
+
+            $appointment->save();
+
+            // Đồng bộ lượt khám lâm sàng
+            if (in_array($newStatus, ['checked_in', 'examining', 'completed'])) {
+                $this->createClinicalVisitIfNotExists($appointment, true);
+            }
+
+            // Tự động dọn dẹp lượt khám chưa khám nếu hủy lịch/đổi về chờ khám
+            if (in_array($newStatus, ['cancelled', 'pending'])) {
+                $visit = ClinicalVisit::where('appointment_id', $appointment->id)->first();
+                if ($visit && $visit->status === 'waiting') {
+                    $visit->delete();
+                }
+            }
+
+            if ($oldStatus !== $newStatus) {
+                \App\Models\AppointmentLog::create([
+                    'appointment_id' => $appointment->id,
+                    'old_status'     => $oldStatus,
+                    'new_status'     => $newStatus,
+                    'action'         => \App\Models\AppointmentLog::ACTION_RECEPTIONIST_UPDATE,
+                    'changed_by'     => $userId,
+                    'reason'         => 'Cập nhật lịch hẹn và trạng thái',
+                ]);
+
+                if ($newStatus === 'cancelled') {
+                    \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'cancellation');
+                }
+            }
+            
+            return $appointment;
+        });
+    }
+
+    public function destroyAppointment(Appointment $appointment)
+    {
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($appointment) {
+            // Xoá lượt khám lâm sàng liên quan trước
+            ClinicalVisit::where('appointment_id', $appointment->id)->delete();
+            // Xoá logs liên quan trước
+            $appointment->logs()->delete();
+            $appointment->delete();
+        });
+    }
+
+    public function updateDoctorAppointmentStatus(Appointment $appointment, string $newStatus, ?string $reason, int $userId)
+    {
+        $oldStatus = $appointment->status;
+
+        // Guard: kiểm tra điều kiện hoàn thành
+        if ($newStatus === 'completed') {
+            if (!$appointment->medicalRecord) {
+                throw new Exception('Vui lòng ghi kết luận bệnh án trước khi hoàn thành.');
+            }
+
+            $pendingVisits = $appointment->clinicalVisits
+                ->whereNotIn('status', ['completed', 'refused'])
+                ->count();
+
+            if ($pendingVisits > 0) {
+                throw new Exception("Còn {$pendingVisits} phòng khám chưa hoàn thành. Vui lòng đợi kết quả từ tất cả phòng được chỉ định.");
+            }
+        }
+
+        if ($oldStatus !== $newStatus) {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($appointment, $oldStatus, $newStatus, $reason, $userId) {
+                $appointment->status = $newStatus;
+
+                if ($newStatus === 'checked_in' && is_null($appointment->checked_in_at)) {
+                    $appointment->checked_in_at = now();
+                }
+                if ($newStatus === 'completed' && is_null($appointment->completed_at)) {
+                    $appointment->completed_at = now();
+                }
+
+                $appointment->save();
+
+                if (in_array($newStatus, ['checked_in', 'examining'])) {
+                    $this->createClinicalVisitIfNotExists($appointment, true);
+                }
+
+                // Cập nhật started_at cho ClinicalVisit gốc khi bắt đầu khám
+                if ($newStatus === 'examining') {
+                    ClinicalVisit::where('appointment_id', $appointment->id)
+                        ->where('is_origin', true)
+                        ->whereNull('started_at')
+                        ->update(['started_at' => now(), 'status' => 'in_progress']);
+                }
+
+                AppointmentLog::create([
+                    'appointment_id' => $appointment->id,
+                    'old_status' => $oldStatus,
+                    'new_status' => $newStatus,
+                    'action' => AppointmentLog::ACTION_DOCTOR_STATUS_CHANGE,
+                    'changed_by' => $userId,
+                    'reason' => $reason,
+                ]);
+                
+                if ($newStatus === 'cancelled') {
+                    \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'cancellation');
+                }
+            });
+        }
+
+        return $appointment;
+    }
 }
 

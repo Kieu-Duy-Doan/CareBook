@@ -205,7 +205,10 @@ class AppointmentController extends Controller
             'payments'
         ])->findOrFail($id);
 
-        return view('admin.appointments.show', compact('appointment'));
+        $clinicSettings = \App\Models\SystemSetting::whereIn('key', ['clinic_name', 'clinic_address', 'clinic_phone'])
+            ->pluck('value', 'key')->toArray();
+
+        return view('admin.appointments.show', compact('appointment', 'clinicSettings'));
     }
 
     public function create()

@@ -44,11 +44,11 @@
                 </div>
                 <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
                     <div class="text-xs text-blue-600 font-medium uppercase tracking-wider mb-1">Số Bác sĩ</div>
-                    <div class="text-xl font-bold text-blue-900">{{ $specialty->doctors->count() }}</div>
+                    <div class="text-xl font-bold text-blue-900">{{ $specialty->doctors_count ?? $specialty->doctors->count() }}</div>
                 </div>
                 <div class="bg-purple-50 p-4 rounded-lg border border-purple-100">
                     <div class="text-xs text-purple-600 font-medium uppercase tracking-wider mb-1">Số Phòng khám</div>
-                    <div class="text-xl font-bold text-purple-900">{{ $specialty->rooms->count() }}</div>
+                    <div class="text-xl font-bold text-purple-900">{{ $specialty->rooms_count ?? $specialty->rooms->count() }}</div>
                 </div>
             </div>
         </div>

@@ -8,12 +8,21 @@ use App\Models\SystemLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Http\Requests\Admin\StoreRoomRequest;
+use App\Http\Requests\Admin\UpdateRoomRequest;
+use App\Services\RoomService;
 
 class RoomController extends Controller
 {
+    protected $roomService;
+
+    public function __construct(RoomService $roomService)
+    {
+        $this->roomService = $roomService;
+    }
     public function index(Request $request)
     {
-        $query = Room::with('specialties')->orderBy('updated_at', 'desc')->orderBy('id', 'desc');
+        $query = Room::with('specialties')->withCount('specialties')->orderBy('updated_at', 'desc')->orderBy('id', 'desc');
 
         if ($request->filled('building')) {
             $query->where('building', $request->building);
@@ -39,57 +48,14 @@ class RoomController extends Controller
         return view('admin.rooms.create', compact('specialties'));
     }
 
-    public function store(Request $request)
+    public function store(StoreRoomRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:150',
-            'room_number' => 'nullable|string|max:20',
-            'building' => 'nullable|string|max:50',
-            'floor' => 'nullable|string|max:10',
-            'room_type' => 'required|in:examination,diagnostic,surgery,other',
-            'price' => 'nullable|integer|min:0',
-            'capacity' => 'nullable|integer|min:1|max:200',
-            'is_active' => 'boolean',
-            'specialty_ids' => 'nullable|array',
-            'specialty_ids.*' => 'exists:specialties,id',
-        ], [
-            'required' => 'Vui lòng nhập/chọn trường này.',
-            'max' => 'Vượt quá số ký tự cho phép.',
-            'min' => 'Giá trị quá nhỏ.',
-            'in' => 'Giá trị không hợp lệ.',
-            'exists' => 'Dữ liệu không tồn tại.',
-        ]);
+        $validated = $request->validated();
+        $validated['is_active'] = $request->has('is_active');
+        $specialtyIds = $request->input('specialty_ids', []);
 
-        DB::transaction(function () use ($request) {
-            $room = Room::create([
-                'name' => $request->name,
-                'room_number' => $request->room_number,
-                'building' => $request->building,
-                'floor' => $request->floor,
-                'room_type' => $request->room_type,
-                'price' => $request->room_type === 'diagnostic' ? $request->price : null,
-                'capacity' => $request->capacity,
-                'is_active' => $request->has('is_active'),
-            ]);
-
-            if ($request->has('specialty_ids')) {
-                $syncData = [];
-                foreach ($request->specialty_ids as $id) {
-                    $syncData[$id] = ['is_primary' => false];
-                }
-                $room->specialties()->sync($syncData);
-            }
-
-            SystemLog::create([
-                'user_id' => Auth::id(),
-                'action' => 'ROOM_CREATED',
-                'module' => 'room_management',
-                'ref_type' => 'room',
-                'ref_id' => $room->id,
-                'description' => 'Thêm mới phòng khám: ' . $room->name,
-                'ip_address' => request()->ip()
-            ]);
-        });
+        $this->roomService->createRoom($validated, $specialtyIds);
+        
         return redirect()->route('admin.rooms.index')->with('success', 'Đã thêm phòng thành công.');
     }
 
@@ -100,55 +66,16 @@ class RoomController extends Controller
         return view('admin.rooms.edit', compact('room', 'specialties'));
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateRoomRequest $request, $id)
     {
         $room = Room::findOrFail($id);
+        $validated = $request->validated();
+        $validated['is_active'] = $request->has('is_active');
+        
+        $specialtyIds = $request->input('specialty_ids', []);
+        $hasSpecialties = $request->has('specialty_ids');
 
-        $request->validate([
-            'name' => 'required|string|max:150',
-            'room_number' => 'nullable|string|max:20',
-            'building' => 'nullable|string|max:50',
-            'floor' => 'nullable|string|max:10',
-            'room_type' => 'required|in:examination,diagnostic,surgery,other',
-            'price' => 'nullable|integer|min:0',
-            'capacity' => 'nullable|integer|min:1|max:200',
-            'is_active' => 'boolean',
-            'specialty_ids' => 'nullable|array',
-            'specialty_ids.*' => 'exists:specialties,id',
-        ]);
-
-        DB::transaction(function () use ($request, $room) {
-            $room->update([
-                'name' => $request->name,
-                'room_number' => $request->room_number,
-                'building' => $request->building,
-                'floor' => $request->floor,
-                'room_type' => $request->room_type,
-                'price' => $request->room_type === 'diagnostic' ? $request->price : null,
-                'capacity' => $request->capacity,
-                'is_active' => $request->has('is_active'),
-            ]);
-
-            if ($request->has('specialty_ids')) {
-                $syncData = [];
-                foreach ($request->specialty_ids as $spId) {
-                    $syncData[$spId] = ['is_primary' => false];
-                }
-                $room->specialties()->sync($syncData);
-            } else {
-                $room->specialties()->detach();
-            }
-
-            SystemLog::create([
-                'user_id' => Auth::id(),
-                'action' => 'ROOM_UPDATED',
-                'module' => 'room_management',
-                'ref_type' => 'room',
-                'ref_id' => $room->id,
-                'description' => 'Cập nhật phòng khám: ' . $room->name,
-                'ip_address' => request()->ip()
-            ]);
-        });
+        $this->roomService->updateRoom($room, $validated, $specialtyIds, $hasSpecialties);
 
         return redirect()->route('admin.rooms.index')->with('success', 'Đã cập nhật phòng thành công.');
     }
@@ -197,7 +124,7 @@ class RoomController extends Controller
         $room = Room::with([
             'specialties',
             'workSchedules.doctor.user'
-        ])->findOrFail($id);
+        ])->withCount('specialties')->findOrFail($id);
 
         $todayAppointments = $room->appointments()
             ->with(['patientProfile', 'doctorProfile.user'])

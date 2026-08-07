@@ -167,9 +167,9 @@
                                     <div>
                                         <p class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-0.5">{{ $booking['booking_method'] === 'specialty' ? 'Chuyên khoa' : 'Bác sĩ' }}</p>
                                         @if($booking['booking_method'] === 'specialty')
-                                            <p class="font-bold text-slate-800 text-base">{{ \App\Models\Specialty::find($booking['specialty_id'])->name ?? '' }}</p>
+                                            <p class="font-bold text-slate-800 text-base">{{ $specialty->name ?? '' }}</p>
                                         @else
-                                            <p class="font-bold text-slate-800 text-base uppercase">{{ \App\Models\DoctorProfile::find($booking['doctor_id'])->full_title ?? '' }}</p>
+                                            <p class="font-bold text-slate-800 text-base uppercase">{{ $doctor->full_title ?? '' }}</p>
                                         @endif
                                     </div>
                                 </div>

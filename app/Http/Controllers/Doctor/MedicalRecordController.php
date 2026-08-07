@@ -10,6 +10,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
+use App\Http\Requests\Doctor\StoreMedicalRecordRequest;
+use App\Http\Requests\Doctor\UpdateMedicalRecordRequest;
+
 class MedicalRecordController extends Controller
 {
     public function create(Appointment $appointment)
@@ -24,58 +27,21 @@ class MedicalRecordController extends Controller
         return view('doctor.medical-records.create', compact('appointment', 'assistants'));
     }
 
-    public function store(Request $request, Appointment $appointment)
+    public function store(StoreMedicalRecordRequest $request, Appointment $appointment, \App\Services\ClinicalService $clinicalService)
     {
         if ($appointment->medicalRecord) {
             return redirect()->route('doctor.medical-records.show', $appointment->medicalRecord->id)
                              ->with('error', 'Hồ sơ bệnh án đã tồn tại.');
         }
 
-        $validated = $request->validate([
-            'diagnosis' => 'required|string',
-            'icd10_code' => 'nullable|string|max:20',
-            'conclusion' => 'nullable|string',
-            'advice' => 'nullable|string',
-            'followup_date' => 'nullable|date',
-            'treatment_result' => 'required|in:outpatient,admitted,monitoring',
-            'result_files.*' => 'nullable|file|mimes:pdf|max:10240',
-            'assistant_id' => 'nullable|exists:users,id',
-        ]);
-
-        $resultFiles = [];
-        if ($request->hasFile('result_files')) {
-            foreach ($request->file('result_files') as $file) {
-                $path = $file->store('medical_records', 'public');
-                $resultFiles[] = [
-                    'name' => $file->getClientOriginalName(),
-                    'path' => $path,
-                ];
-            }
-        }
-
         $doctorProfile = DoctorProfile::where('user_id', Auth::id())->first();
 
-        $medicalRecord = MedicalRecord::create([
-            'appointment_id' => $appointment->id,
-            'doctor_profile_id' => $doctorProfile->id,
-            'assistant_id' => $validated['assistant_id'] ?? null,
-            'diagnosis' => $validated['diagnosis'],
-            'icd10_code' => $validated['icd10_code'],
-            'conclusion' => $validated['conclusion'],
-            'advice' => $validated['advice'],
-            'followup_date' => $validated['followup_date'],
-            'treatment_result' => $validated['treatment_result'],
-            'result_files' => empty($resultFiles) ? null : $resultFiles,
-        ]);
-
-        \App\Models\AppointmentLog::create([
-            'appointment_id' => $appointment->id,
-            'action'         => 'MEDICAL_RECORD_CREATED_OR_UPDATED',
-            'old_status'     => null,
-            'new_status'     => $appointment->status,
-            'changed_by'     => Auth::id(),
-            'reason'         => "Bác sĩ " . Auth::user()->full_name . " đã khởi tạo bệnh án với chẩn đoán: " . $validated['diagnosis']
-        ]);
+        $medicalRecord = $clinicalService->createMedicalRecord(
+            $appointment,
+            $doctorProfile->id,
+            $request->validated(),
+            $request->file('result_files')
+        );
 
         return redirect()->route('doctor.medical-records.show', $medicalRecord->id)
                          ->with('success', 'Tạo hồ sơ bệnh án thành công.');
@@ -98,56 +64,14 @@ class MedicalRecordController extends Controller
         return view('doctor.medical-records.edit', compact('medical_record', 'assistants'));
     }
 
-    public function update(Request $request, MedicalRecord $medical_record)
+    public function update(UpdateMedicalRecordRequest $request, MedicalRecord $medical_record, \App\Services\ClinicalService $clinicalService)
     {
-        $validated = $request->validate([
-            'diagnosis' => 'required|string',
-            'icd10_code' => 'nullable|string|max:20',
-            'conclusion' => 'nullable|string',
-            'advice' => 'nullable|string',
-            'followup_date' => 'nullable|date',
-            'treatment_result' => 'required|in:outpatient,admitted,monitoring',
-            'result_files.*' => 'nullable|file|mimes:pdf|max:10240',
-            'remove_files' => 'nullable|array',
-            'assistant_id' => 'nullable|exists:users,id',
-        ]);
-
-        $resultFiles = $medical_record->result_files ?? [];
-
-        // Handle deletions
-        if ($request->has('remove_files')) {
-            foreach ($request->remove_files as $pathToRemove) {
-                Storage::disk('public')->delete($pathToRemove);
-                $resultFiles = array_filter($resultFiles, function ($file) use ($pathToRemove) {
-                    return $file['path'] !== $pathToRemove;
-                });
-            }
-            $resultFiles = array_values($resultFiles); // Re-index array
-        }
-
-        // Handle new uploads
-        if ($request->hasFile('result_files')) {
-            foreach ($request->file('result_files') as $file) {
-                $path = $file->store('medical_records', 'public');
-                $resultFiles[] = [
-                    'name' => $file->getClientOriginalName(),
-                    'path' => $path,
-                ];
-            }
-        }
-
-        $validated['result_files'] = empty($resultFiles) ? null : $resultFiles;
-
-        $medical_record->update($validated);
-
-        \App\Models\AppointmentLog::create([
-            'appointment_id' => $medical_record->appointment_id,
-            'action'         => 'MEDICAL_RECORD_CREATED_OR_UPDATED',
-            'old_status'     => null,
-            'new_status'     => $medical_record->appointment->status ?? null,
-            'changed_by'     => Auth::id(),
-            'reason'         => "Bác sĩ " . Auth::user()->full_name . " đã cập nhật kết luận khám bệnh."
-        ]);
+        $clinicalService->updateMedicalRecord(
+            $medical_record,
+            $request->validated(),
+            $request->file('result_files'),
+            $request->input('remove_files', [])
+        );
 
         return redirect()->route('doctor.medical-records.show', $medical_record->id)
                          ->with('success', 'Cập nhật hồ sơ bệnh án thành công.');

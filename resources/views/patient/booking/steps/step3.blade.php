@@ -7,15 +7,15 @@
             <div>
                 <h2 class="text-2xl font-bold text-gray-800">Chọn ngày và giờ khám</h2>
                 <p class="text-base text-gray-500 mt-1">
-                    Hồ sơ: <strong>{{ \App\Models\PatientProfile::find($booking['patient_profile_id'])->full_name ?? '' }}</strong>
+                    Hồ sơ: <strong>{{ $profile->full_name ?? '' }}</strong>
                 </p>
                 @if($booking['booking_method'] === 'doctor' || $booking['booking_method'] === 'suggested')
                     <p class="text-base text-gray-500">
-                        Bác sĩ: <strong>{{ \App\Models\DoctorProfile::find($booking['doctor_id'])->user->full_name ?? '' }}</strong>
+                        Bác sĩ: <strong>{{ $doctor->user->full_name ?? '' }}</strong>
                     </p>
                 @elseif($booking['booking_method'] === 'specialty')
                     <p class="text-base text-gray-500">
-                        Chuyên khoa: <strong>{{ \App\Models\Specialty::find($booking['specialty_id'])->name ?? '' }}</strong>
+                        Chuyên khoa: <strong>{{ $specialty->name ?? '' }}</strong>
                     </p>
                 @endif
             </div>
@@ -81,7 +81,7 @@
                             @if($booking['booking_method'] === 'doctor' || $booking['booking_method'] === 'suggested')
                                 <span>Phòng khám của bác sĩ</span>
                             @else
-                                <span>{{ \App\Models\Specialty::find($booking['specialty_id'])->name ?? 'Phòng khám' }}</span>
+                                <span>{{ $specialty->name ?? 'Phòng khám' }}</span>
                             @endif
                         </div>
                     </div>

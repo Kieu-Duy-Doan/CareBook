@@ -144,7 +144,11 @@ class BookingController extends Controller
             $slots = $this->bookingService->getSlots($doctorId, $specialtyId, $selectedDate, $level, $draftId);
         }
 
-        return view('patient.booking.steps.step3', compact('availableDates', 'selectedDate', 'slots', 'booking', 'draftId'));
+        $profile = PatientProfile::find($booking['patient_profile_id']);
+        $doctor = $doctorId ? DoctorProfile::with('user')->find($doctorId) : null;
+        $specialty = $specialtyId ? Specialty::find($specialtyId) : null;
+
+        return view('patient.booking.steps.step3', compact('availableDates', 'selectedDate', 'slots', 'booking', 'draftId', 'profile', 'doctor', 'specialty'));
     }
 
     public function postStep3(StoreBookingStep3Request $request): RedirectResponse

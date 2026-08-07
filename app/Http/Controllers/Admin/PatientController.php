@@ -9,11 +9,20 @@ use App\Models\PatientProfile;
 use App\Models\Appointment;
 use App\Models\SystemLog;
 use Illuminate\Support\Facades\DB;
+use App\Http\Requests\Admin\StorePatientProfileRequest;
+use App\Http\Requests\Admin\UpdatePatientProfileRequest;
+use App\Services\PatientProfileService;
 use App\Exports\PatientsExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 class PatientController extends Controller
 {
+    protected $patientProfileService;
+
+    public function __construct(PatientProfileService $patientProfileService)
+    {
+        $this->patientProfileService = $patientProfileService;
+    }
     public function export(Request $request)
     {
         return Excel::download(new PatientsExport($request), 'patients_' . date('Ymd_His') . '.xlsx');
@@ -71,43 +80,9 @@ class PatientController extends Controller
         return view('admin.patients.create', compact('customers'));
     }
 
-    public function store(Request $request)
+    public function store(StorePatientProfileRequest $request)
     {
-        $validated = $request->validate([
-            'owner_id'               => 'required|exists:users,id',
-            'is_self'                => 'required|boolean',
-            'full_name'              => 'required|string|max:100',
-            'date_of_birth'          => 'required|date|before:today',
-            'gender'                 => 'required|in:male,female,other',
-            'id_card'                => ['nullable', 'string', 'regex:/^([0-9]{9}|[0-9]{12})$/'],
-            'phone'                  => ['nullable', 'string', 'max:15'],
-            'address'                => 'nullable|string',
-            'occupation'             => 'nullable|string|max:100',
-            'ethnicity'              => 'nullable|string|max:50',
-            'insurance_code'         => 'nullable|string|max:20',
-            'insurance_place'        => 'nullable|string|max:255',
-            'insurance_expiry'       => 'nullable|date',
-            'symptom_notes'          => 'nullable|string',
-            'medical_history.*'      => 'nullable|file|mimes:pdf|max:10240',
-        ], [
-            'owner_id.required'      => 'Vui lòng chọn tài khoản khách hàng quản lý hồ sơ này.',
-            'owner_id.exists'        => 'Khách hàng không tồn tại.',
-            'full_name.required'     => 'Vui lòng nhập họ tên hồ sơ.',
-            'date_of_birth.required' => 'Vui lòng nhập ngày sinh.',
-            'date_of_birth.before'   => 'Ngày sinh không hợp lệ.',
-            'gender.required'        => 'Vui lòng chọn giới tính.',
-            'id_card.regex'          => 'Số CCCD/CMND hồ sơ không đúng định dạng.',
-            'medical_history.*.mimes'=> 'File tiền sử bệnh lý phải là định dạng PDF.',
-            'medical_history.*.max'  => 'Kích thước file không được vượt quá 10MB.',
-        ]);
-
-        // Validate is_self: A user can only have 1 self profile
-        if ($validated['is_self']) {
-            $hasSelf = PatientProfile::where('owner_id', $validated['owner_id'])->where('is_self', 1)->exists();
-            if ($hasSelf) {
-                return back()->withInput()->with('error', 'Khách hàng này đã có hồ sơ bản thân. Vui lòng chọn loại hồ sơ là "Người thân".');
-            }
-        }
+        $validated = $request->validated();
 
         $medicalHistoryPaths = [];
         if ($request->hasFile('medical_history')) {
@@ -117,36 +92,7 @@ class PatientController extends Controller
             }
         }
 
-        DB::transaction(function() use ($validated, $medicalHistoryPaths) {
-            $profile = PatientProfile::create([
-                'patient_code'    => 'BN' . ($validated['id_card'] ?? substr(str_shuffle('0123456789'), 0, 10)),
-                'owner_id'        => $validated['owner_id'],
-                'full_name'       => $validated['full_name'],
-                'date_of_birth'   => $validated['date_of_birth'],
-                'gender'          => $validated['gender'],
-                'id_card'         => $validated['id_card'] ?? null,
-                'phone'           => $validated['phone'] ?? null,
-                'address'         => $validated['address'] ?? null,
-                'occupation'      => $validated['occupation'] ?? null,
-                'ethnicity'       => $validated['ethnicity'] ?? null,
-                'insurance_code'  => $validated['insurance_code'] ?? null,
-                'insurance_place' => $validated['insurance_place'] ?? null,
-                'insurance_expiry'=> $validated['insurance_expiry'] ?? null,
-                'symptom_notes'   => $validated['symptom_notes'] ?? null,
-                'medical_history' => !empty($medicalHistoryPaths) ? $medicalHistoryPaths : null,
-                'is_self'         => $validated['is_self'],
-            ]);
-
-            SystemLog::create([
-                'user_id'     => auth()->id(),
-                'action'      => 'PATIENT_PROFILE_CREATED',
-                'module'      => 'patients',
-                'ref_type'    => 'patient_profiles',
-                'ref_id'      => $profile->id,
-                'description' => 'Thêm hồ sơ bệnh nhân mới: ' . $validated['full_name'],
-                'ip_address'  => request()->ip(),
-            ]);
-        });
+        $this->patientProfileService->createProfile($validated, $medicalHistoryPaths);
 
         return redirect()->route('admin.patients.index')
             ->with('success', 'Thêm hồ sơ bệnh nhân thành công.');
@@ -188,75 +134,12 @@ class PatientController extends Controller
         return view('admin.patients.edit', compact('profile', 'customers'));
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdatePatientProfileRequest $request, $id)
     {
         $profile = PatientProfile::findOrFail($id);
+        $validated = $request->validated();
 
-        $rules = [
-            'owner_id'               => 'required|exists:users,id',
-            'is_self'                => 'required|boolean',
-            'full_name'              => 'required|string|max:100',
-            'date_of_birth'          => 'required|date|before:today',
-            'gender'                 => 'required|in:male,female,other',
-            'id_card'                => ['nullable', 'string', 'regex:/^([0-9]{9}|[0-9]{12})$/'],
-            'phone'                  => ['nullable', 'string', 'max:15'],
-            'address'                => 'nullable|string',
-            'occupation'             => 'nullable|string|max:100',
-            'ethnicity'              => 'nullable|string|max:50',
-            'insurance_code'         => 'nullable|string|max:20',
-            'insurance_place'        => 'nullable|string|max:255',
-            'insurance_expiry'       => 'nullable|date',
-            'symptom_notes'          => 'nullable|string',
-        ];
-
-        $validated = $request->validate($rules, [
-            'owner_id.required'      => 'Vui lòng chọn tài khoản khách hàng quản lý hồ sơ này.',
-            'owner_id.exists'        => 'Khách hàng không tồn tại.',
-            'full_name.required'     => 'Vui lòng nhập họ tên hồ sơ.',
-            'date_of_birth.required' => 'Vui lòng nhập ngày sinh.',
-            'date_of_birth.before'   => 'Ngày sinh không hợp lệ.',
-            'gender.required'        => 'Vui lòng chọn giới tính.',
-            'id_card.regex'          => 'Số CCCD/CMND hồ sơ không đúng định dạng.',
-        ]);
-
-        if ($validated['is_self'] && (!$profile->is_self || $profile->owner_id != $validated['owner_id'])) {
-            $hasSelf = PatientProfile::where('owner_id', $validated['owner_id'])
-                        ->where('is_self', 1)
-                        ->where('id', '!=', $profile->id)
-                        ->exists();
-            if ($hasSelf) {
-                return back()->withInput()->with('error', 'Khách hàng này đã có hồ sơ bản thân. Vui lòng chọn loại hồ sơ là "Người thân".');
-            }
-        }
-
-        DB::transaction(function() use ($profile, $validated) {
-            $profile->update([
-                'owner_id'        => $validated['owner_id'],
-                'is_self'         => $validated['is_self'],
-                'full_name'       => $validated['full_name'],
-                'date_of_birth'   => $validated['date_of_birth'],
-                'gender'          => $validated['gender'],
-                'id_card'         => $validated['id_card'] ?? null,
-                'phone'           => $validated['phone'] ?? null,
-                'address'         => $validated['address'] ?? null,
-                'occupation'      => $validated['occupation'] ?? null,
-                'ethnicity'       => $validated['ethnicity'] ?? null,
-                'insurance_code'  => $validated['insurance_code'] ?? null,
-                'insurance_place' => $validated['insurance_place'] ?? null,
-                'insurance_expiry'=> $validated['insurance_expiry'] ?? null,
-                'symptom_notes'   => $validated['symptom_notes'] ?? null,
-            ]);
-
-            SystemLog::create([
-                'user_id'     => auth()->id(),
-                'action'      => 'PATIENT_PROFILE_UPDATED',
-                'module'      => 'patients',
-                'ref_type'    => 'patient_profiles',
-                'ref_id'      => $profile->id,
-                'description' => 'Cập nhật thông tin hồ sơ: ' . $validated['full_name'],
-                'ip_address'  => request()->ip(),
-            ]);
-        });
+        $this->patientProfileService->updateProfile($profile, $validated);
 
         return redirect()->route('admin.patients.edit', $id)
             ->with('success', 'Cập nhật thông tin hồ sơ thành công.');

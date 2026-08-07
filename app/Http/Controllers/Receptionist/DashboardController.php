@@ -56,94 +56,11 @@ class DashboardController extends Controller
             ->get();
 
         $chartFilter = $request->input('chart_filter', '7_days');
-        $chartEnd = Carbon::today()->endOfDay();
+        $chartData = $this->dashboardService->getReceptionistRevenueChartData($receptionistId, $chartFilter);
         
-        $isYearly = false;
-        $isHourly = false;
-        
-        if ($chartFilter === 'today') {
-            $chartStart = Carbon::today()->startOfDay();
-            $isHourly = true;
-        } elseif ($chartFilter === 'this_month') {
-            $chartStart = Carbon::today()->startOfMonth();
-            $chartEnd = Carbon::today()->endOfMonth();
-        } elseif ($chartFilter === 'last_month') {
-            $chartStart = Carbon::today()->subMonth()->startOfMonth();
-            $chartEnd = Carbon::today()->subMonth()->endOfMonth();
-        } elseif ($chartFilter === 'this_year') {
-            $chartStart = Carbon::today()->startOfYear();
-            $chartEnd = Carbon::today()->endOfYear();
-            $isYearly = true;
-        } elseif ($chartFilter === 'last_year') {
-            $chartStart = Carbon::today()->subYear()->startOfYear();
-            $chartEnd = Carbon::today()->subYear()->endOfYear();
-            $isYearly = true;
-        } elseif ($chartFilter === '30_days') {
-            $chartStart = Carbon::today()->subDays(29)->startOfDay();
-        } else { // 7_days
-            $chartStart = Carbon::today()->subDays(6)->startOfDay();
-        }
-
-        $chartDates = [];
-        $revenueCashData = [];
-        $revenueQrData = [];
-
-        if ($isYearly) {
-            $chartDataObj = Payment::select(DB::raw('MONTH(paid_at) as month'), 'method', DB::raw('SUM(amount) as total'))
-                ->where('collected_by', $receptionistId)
-                ->whereBetween('paid_at', [$chartStart, $chartEnd])
-                ->where('status', 'completed')
-                ->groupBy('month', 'method')
-                ->get();
-                
-            for ($m = 1; $m <= 12; $m++) {
-                $chartDates[] = 'Tháng ' . $m;
-                
-                $cashForMonth = $chartDataObj->where('month', $m)->where('method', 'cash')->first();
-                $qrForMonth = $chartDataObj->where('month', $m)->where('method', 'qr')->first();
-                
-                $revenueCashData[] = $cashForMonth ? (float)$cashForMonth->total : 0;
-                $revenueQrData[] = $qrForMonth ? (float)$qrForMonth->total : 0;
-            }
-        } elseif ($isHourly) {
-            $chartDataObj = Payment::select(DB::raw('HOUR(paid_at) as hour'), 'method', DB::raw('SUM(amount) as total'))
-                ->where('collected_by', $receptionistId)
-                ->whereBetween('paid_at', [$chartStart, $chartEnd])
-                ->where('status', 'completed')
-                ->groupBy('hour', 'method')
-                ->get();
-                
-            for ($h = 7; $h <= 20; $h++) { // 7h - 20h
-                $chartDates[] = $h . ':00';
-                
-                $cashForHour = $chartDataObj->where('hour', $h)->where('method', 'cash')->first();
-                $qrForHour = $chartDataObj->where('hour', $h)->where('method', 'qr')->first();
-                
-                $revenueCashData[] = $cashForHour ? (float)$cashForHour->total : 0;
-                $revenueQrData[] = $qrForHour ? (float)$qrForHour->total : 0;
-            }
-        } else {
-            $chartDataObj = Payment::select(DB::raw('DATE(paid_at) as date'), 'method', DB::raw('SUM(amount) as total'))
-                ->where('collected_by', $receptionistId)
-                ->whereBetween('paid_at', [$chartStart, $chartEnd])
-                ->where('status', 'completed')
-                ->groupBy('date', 'method')
-                ->get();
-                
-            $currentDate = $chartStart->copy();
-            while ($currentDate <= $chartEnd) {
-                $dateStr = $currentDate->format('Y-m-d');
-                $chartDates[] = $currentDate->format('d/m');
-                
-                $cashForDate = $chartDataObj->where('date', $dateStr)->where('method', 'cash')->first();
-                $qrForDate = $chartDataObj->where('date', $dateStr)->where('method', 'qr')->first();
-                
-                $revenueCashData[] = $cashForDate ? (float)$cashForDate->total : 0;
-                $revenueQrData[] = $qrForDate ? (float)$qrForDate->total : 0;
-                
-                $currentDate->addDay();
-            }
-        }
+        $chartDates = $chartData['chartDates'];
+        $revenueCashData = $chartData['revenueCashData'];
+        $revenueQrData = $chartData['revenueQrData'];
 
         return view('receptionist.dashboard', array_merge($dashboardData, compact(
             'startDate', 'endDate', 'totalCheckins', 'totalRevenue', 'cashRevenue', 'qrRevenue',

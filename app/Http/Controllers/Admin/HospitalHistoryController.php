@@ -172,6 +172,9 @@ class HospitalHistoryController extends Controller
             'payments'
         ])->findOrFail($id);
 
-        return view('admin.hospital-history.show', compact('appointment'));
+        $clinicSettings = \App\Models\SystemSetting::whereIn('key', ['clinic_name', 'clinic_address', 'clinic_phone'])
+            ->pluck('value', 'key')->toArray();
+
+        return view('admin.hospital-history.show', compact('appointment', 'clinicSettings'));
     }
 }

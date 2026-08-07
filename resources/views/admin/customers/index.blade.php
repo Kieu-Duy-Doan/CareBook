@@ -165,7 +165,7 @@
                                 </td>
                                 <td class="px-4 py-3 text-center">
                                     <span class="inline-flex items-center justify-center px-2 py-1 text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200 rounded">
-                                        {{ $customer->patientProfiles->count() }} hồ sơ
+                                        {{ $customer->patient_profiles_count }} hồ sơ
                                     </span>
                                 </td>
                                 <td class="px-4 py-3">

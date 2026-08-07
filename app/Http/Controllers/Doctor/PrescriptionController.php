@@ -8,6 +8,9 @@ use App\Models\Prescription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+use App\Http\Requests\Doctor\StorePrescriptionRequest;
+use App\Http\Requests\Doctor\UpdatePrescriptionRequest;
+
 class PrescriptionController extends Controller
 {
     public function create(MedicalRecord $medical_record)
@@ -19,39 +22,14 @@ class PrescriptionController extends Controller
         return view('doctor.prescriptions.create', compact('medical_record'));
     }
 
-    public function store(Request $request, MedicalRecord $medical_record)
+    public function store(StorePrescriptionRequest $request, MedicalRecord $medical_record, \App\Services\ClinicalService $clinicalService)
     {
         if ($medical_record->prescription) {
             return redirect()->route('doctor.medical-records.show', $medical_record->id)
                              ->with('error', 'Đơn thuốc đã tồn tại.');
         }
 
-        $validated = $request->validate([
-            'diagnosis_note' => 'nullable|string',
-            'items' => 'required|array|min:1',
-            'items.*.medicine_name' => 'required|string',
-            'items.*.quantity' => 'required|string',
-            'items.*.dosage' => 'required|string',
-            'items.*.instructions' => 'nullable|string',
-            'general_note' => 'nullable|string',
-        ]);
-
-        $prescription = Prescription::create([
-            'medical_record_id' => $medical_record->id,
-            'prescribed_date' => now(),
-            'diagnosis_note' => $validated['diagnosis_note'] ?? null,
-            'items' => $validated['items'],
-            'general_note' => $validated['general_note'] ?? null,
-        ]);
-
-        \App\Models\AppointmentLog::create([
-            'appointment_id' => $medical_record->appointment_id,
-            'action'         => 'PRESCRIPTION_CREATED_OR_UPDATED',
-            'old_status'     => null,
-            'new_status'     => $medical_record->appointment->status ?? null,
-            'changed_by'     => Auth::id(),
-            'reason'         => "Bác sĩ " . Auth::user()->full_name . " đã kê đơn thuốc mới (gồm " . count($validated['items']) . " loại thuốc)."
-        ]);
+        $clinicalService->createPrescription($medical_record, $request->validated());
 
         return redirect()->route('doctor.medical-records.show', $medical_record->id)
                          ->with('success', 'Tạo đơn thuốc thành công.');
@@ -63,51 +41,18 @@ class PrescriptionController extends Controller
         return view('doctor.prescriptions.edit', compact('prescription'));
     }
 
-    public function update(Request $request, Prescription $prescription)
+    public function update(UpdatePrescriptionRequest $request, Prescription $prescription, \App\Services\ClinicalService $clinicalService)
     {
-        $validated = $request->validate([
-            'diagnosis_note' => 'nullable|string',
-            'items' => 'required|array|min:1',
-            'items.*.medicine_name' => 'required|string',
-            'items.*.quantity' => 'required|string',
-            'items.*.dosage' => 'required|string',
-            'items.*.instructions' => 'nullable|string',
-            'general_note' => 'nullable|string',
-        ]);
-
-        $prescription->update([
-            'diagnosis_note' => $validated['diagnosis_note'] ?? null,
-            'items' => $validated['items'],
-            'general_note' => $validated['general_note'] ?? null,
-        ]);
-
-        \App\Models\AppointmentLog::create([
-            'appointment_id' => $prescription->medicalRecord->appointment_id,
-            'action'         => 'PRESCRIPTION_CREATED_OR_UPDATED',
-            'old_status'     => null,
-            'new_status'     => $prescription->medicalRecord->appointment->status ?? null,
-            'changed_by'     => Auth::id(),
-            'reason'         => "Bác sĩ " . Auth::user()->full_name . " đã chỉnh sửa đơn thuốc (gồm " . count($validated['items']) . " loại thuốc)."
-        ]);
+        $clinicalService->updatePrescription($prescription, $request->validated());
 
         return redirect()->route('doctor.medical-records.show', $prescription->medical_record_id)
                          ->with('success', 'Cập nhật đơn thuốc thành công.');
     }
 
-    public function destroy(Prescription $prescription)
+    public function destroy(Prescription $prescription, \App\Services\ClinicalService $clinicalService)
     {
         $medical_record_id = $prescription->medical_record_id;
-        $appointment_id = $prescription->medicalRecord->appointment_id;
-        $prescription->delete();
-
-        \App\Models\AppointmentLog::create([
-            'appointment_id' => $appointment_id,
-            'action'         => 'PRESCRIPTION_CREATED_OR_UPDATED',
-            'old_status'     => null,
-            'new_status'     => null,
-            'changed_by'     => Auth::id(),
-            'reason'         => "Bác sĩ " . Auth::user()->full_name . " đã xóa đơn thuốc."
-        ]);
+        $clinicalService->deletePrescription($prescription);
 
         return redirect()->route('doctor.medical-records.show', $medical_record_id)
                          ->with('success', 'Xóa đơn thuốc thành công.');

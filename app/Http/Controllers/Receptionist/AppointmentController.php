@@ -13,6 +13,8 @@ use App\Models\PatientProfile;
 use App\Models\Room;
 use App\Models\User;
 use App\Services\AppointmentService;
+use App\Http\Requests\Receptionist\StoreAppointmentRequest;
+use App\Http\Requests\Receptionist\UpdateAppointmentRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -218,189 +220,20 @@ class AppointmentController extends Controller
         return view('receptionist.appointments.create', compact('patients', 'specialties', 'doctors', 'rooms', 'users'));
     }
 
-    public function store(Request $request)
+    public function store(StoreAppointmentRequest $request)
     {
-        $rules = [
-            'patient_profile_id' => 'required|exists:patient_profiles,id',
-            'specialty_id'       => 'required|exists:specialties,id',
-            'doctor_profile_id'  => 'required|exists:doctor_profiles,id',
-            'room_id'            => 'required|exists:rooms,id,is_active,1',
-            'appointment_date'   => 'required|date|after_or_equal:today',
-            'appointment_time'   => 'required',
-            'status'             => 'required|in:pending,checked_in,examining,completed,cancelled,absent,late',
-            'source'             => 'required|in:web,counter,chatbot',
-            'reason'             => 'required|string',
-
-            // Vitals
-            'vital_pulse'        => 'nullable|integer|min:0',
-            'vital_systolic_bp'  => 'nullable|integer|min:0',
-            'vital_diastolic_bp' => 'nullable|integer|min:0',
-            'vital_temperature'  => 'nullable|numeric|min:0',
-            'vital_respiratory'  => 'nullable|integer|min:0',
-            'vital_spo2'         => 'nullable|numeric|min:0',
-            'vital_weight_kg'    => 'nullable|numeric|min:0',
-            'vital_height_cm'    => 'nullable|numeric|min:0',
-            'vital_bmi'          => 'nullable|numeric|min:0',
-            'vital_note'         => 'nullable|string',
-            'measured_by'        => 'nullable|exists:users,id',
-        ];
-
-        $messages = [
-            'required' => 'Trường :attribute không được để trống.',
-            'exists' => 'Trường :attribute được chọn không hợp lệ hoặc đã bị vô hiệu hóa.',
-            'date' => 'Trường :attribute phải là định dạng ngày hợp lệ.',
-            'after_or_equal' => 'Trường :attribute phải là ngày hôm nay hoặc sau đó.',
-            'in' => 'Trường :attribute chọn giá trị không hợp lệ.',
-            'integer' => 'Trường :attribute phải là số nguyên.',
-            'numeric' => 'Trường :attribute phải là số.',
-            'min' => 'Trường :attribute không được nhỏ hơn :min.',
-            'string' => 'Trường :attribute phải là chuỗi ký tự.',
-        ];
-
-        $attributes = [
-            'patient_profile_id' => 'bệnh nhân',
-            'specialty_id' => 'chuyên khoa',
-            'doctor_profile_id' => 'bác sĩ',
-            'room_id' => 'phòng khám',
-            'appointment_date' => 'ngày khám',
-            'appointment_time' => 'giờ khám',
-            'status' => 'trạng thái',
-            'source' => 'nguồn đặt',
-            'reason' => 'lý do khám',
-            'receptionist_note' => 'ghi chú lễ tân',
-            'vital_pulse' => 'mạch',
-            'vital_systolic_bp' => 'huyết áp tâm thu',
-            'vital_diastolic_bp' => 'huyết áp tâm trương',
-            'vital_temperature' => 'nhiệt độ',
-            'vital_respiratory' => 'nhịp thở',
-            'vital_spo2' => 'SpO2',
-            'vital_weight_kg' => 'cân nặng',
-            'vital_height_cm' => 'chiều cao',
-            'vital_bmi' => 'chỉ số BMI',
-            'vital_note' => 'ghi chú sinh hiệu',
-            'measured_by' => 'người đo',
-        ];
-
-        $request->validate($rules, $messages, $attributes);
-
-        // Xác thực bác sĩ thuộc chuyên khoa được chọn
-        $doctorBelongsToSpecialty = DB::table('doctor_specialties')
-            ->where('doctor_profile_id', $request->doctor_profile_id)
-            ->where('specialty_id', $request->specialty_id)
-            ->exists();
-
-        if (!$doctorBelongsToSpecialty) {
-            return back()->withErrors(['doctor_profile_id' => 'Bác sĩ được chọn không thuộc chuyên khoa đã chỉ định.'])->withInput();
-        }
-
-        // Kiểm tra lịch làm việc (WorkSchedule) của bác sĩ
-        $dayOfWeek = \Carbon\Carbon::parse($request->appointment_date)->dayOfWeek + 1;
-        $reqTime = $request->appointment_time;
-
-        $hasSchedule = \App\Models\WorkSchedule::where('doctor_profile_id', $request->doctor_profile_id)
-            ->where('day_of_week', $dayOfWeek)
-            ->where('is_active', true)
-            ->where('start_time', '<=', $reqTime)
-            ->where('end_time', '>=', $reqTime)
-            ->exists();
-
-        if (!$hasSchedule) {
-            return back()->withErrors(['appointment_time' => 'Bác sĩ không có lịch làm việc đăng ký vào ngày và khung giờ này.'])->withInput();
-        }
-
-        // Chặn đặt/dời lịch về quá khứ trong ngày hôm nay
-        if ($request->appointment_date === now()->toDateString()) {
-            $currentTime = now()->format('H:i');
-            $reqTimeShort = substr($reqTime, 0, 5);
-            if ($reqTimeShort < $currentTime) {
-                return back()->withErrors(['appointment_time' => 'Không thể đặt hoặc dời lịch khám về thời gian trong quá khứ của ngày hôm nay.'])->withInput();
-            }
-        }
-
-        // Kiểm tra trùng lịch hẹn (Chống trùng lịch bác sĩ và trùng lịch bệnh nhân)
-        if ($request->status !== 'cancelled') {
-            // 1. Kiểm tra bác sĩ trùng lịch
-            $doctorConflict = Appointment::where('doctor_profile_id', $request->doctor_profile_id)
-                ->whereDate('appointment_date', $request->appointment_date)
-                ->whereTime('appointment_time', $request->appointment_time)
-                ->where('status', '!=', 'cancelled')
-                ->exists();
-
-            if ($doctorConflict) {
-                return back()->withErrors(['appointment_time' => 'Bác sĩ này đã có lịch hẹn khác vào khung giờ này. Vui lòng chọn giờ khác.'])->withInput();
-            }
-
-            // 2. Kiểm tra bệnh nhân trùng lịch
-            $patientConflict = Appointment::where('patient_profile_id', $request->patient_profile_id)
-                ->whereDate('appointment_date', $request->appointment_date)
-                ->whereTime('appointment_time', $request->appointment_time)
-                ->where('status', '!=', 'cancelled')
-                ->exists();
-
-            if ($patientConflict) {
-                return back()->withErrors(['appointment_time' => 'Bệnh nhân này đã có lịch hẹn khác vào cùng khung giờ này.'])->withInput();
-            }
-        }
-
         $patient = PatientProfile::findOrFail($request->patient_profile_id);
         $doctor = DoctorProfile::findOrFail($request->doctor_profile_id);
+        
+        $data = $request->validated();
+        if (!isset($data['measured_by'])) {
+            $hasVitals = $request->filled('vital_pulse') || $request->filled('vital_systolic_bp') || $request->filled('vital_diastolic_bp') || 
+                         $request->filled('vital_temperature') || $request->filled('vital_respiratory') || $request->filled('vital_spo2') || 
+                         $request->filled('vital_weight_kg') || $request->filled('vital_height_cm');
+            $data['measured_by'] = $hasVitals ? Auth::id() : null;
+        }
 
-        $appointment = DB::transaction(function () use ($request, $doctor, $patient, $checkedInAt, $completedAt, $totalFee) {
-            $appointmentCode = $this->appointmentService->generateUniqueCode();
-
-            $appointment = Appointment::create([
-                'appointment_code'   => $appointmentCode,
-                'patient_profile_id' => $request->patient_profile_id,
-                'booked_by_user_id'  => $request->source === 'counter' ? Auth::id() : ($patient->owner_id ?? Auth::id()),
-                'specialty_id'       => $request->specialty_id,
-                'doctor_level'       => $doctor->level,
-                'room_id'            => $request->room_id,
-                'doctor_profile_id'  => $request->doctor_profile_id,
-                'appointment_date'   => $request->appointment_date,
-                'appointment_time'   => $request->appointment_time,
-                'reason'             => $request->reason,
-                'status'             => $request->status,
-                'source'             => $request->source,
-                'total_fee'          => $totalFee,
-                'receptionist_note'  => $request->receptionist_note,
-
-                // Vitals
-                'vital_pulse'        => $request->vital_pulse,
-                'vital_systolic_bp'  => $request->vital_systolic_bp,
-                'vital_diastolic_bp' => $request->vital_diastolic_bp,
-                'vital_temperature'  => $request->vital_temperature,
-                'vital_respiratory'  => $request->vital_respiratory,
-                'vital_spo2'         => $request->vital_spo2,
-                'vital_weight_kg'    => $request->vital_weight_kg,
-                'vital_height_cm'    => $request->vital_height_cm,
-                'vital_bmi'          => $request->vital_bmi,
-                'vital_note'         => $request->vital_note,
-                'measured_by'        => $request->measured_by ?? (
-                    ($request->filled('vital_pulse') || $request->filled('vital_systolic_bp') || $request->filled('vital_diastolic_bp') || $request->filled('vital_temperature') || $request->filled('vital_respiratory') || $request->filled('vital_spo2') || $request->filled('vital_weight_kg') || $request->filled('vital_height_cm'))
-                    ? Auth::id()
-                    : null
-                ),
-
-                'checked_in_at'      => $checkedInAt,
-                'completed_at'       => $completedAt,
-            ]);
-
-            // Tạo lượt khám lâm sàng nếu trạng thái hợp lệ
-            if (in_array($appointment->status, ['checked_in', 'examining', 'completed'])) {
-                $this->appointmentService->createClinicalVisitIfNotExists($appointment, withPayment: true);
-            }
-
-            AppointmentLog::create([
-                'appointment_id' => $appointment->id,
-                'old_status'     => null,
-                'new_status'     => $appointment->status,
-                'action'         => AppointmentLog::ACTION_ADMIN_CREATE,
-                'changed_by'     => Auth::id(),
-                'reason'         => 'Khởi tạo lịch hẹn bởi Quản trị viên',
-            ]);
-            
-            return $appointment;
-        });
+        $this->appointmentService->storeByReceptionist($data, $doctor, $patient, Auth::id());
 
         return redirect()->route('receptionist.appointments.index')->with('success', 'Tạo lịch hẹn mới thành công.');
     }
@@ -424,310 +257,29 @@ class AppointmentController extends Controller
         return view('receptionist.appointments.edit', compact('appointment', 'patients', 'specialties', 'doctors', 'rooms', 'users'));
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateAppointmentRequest $request, $id)
     {
         $appointment = Appointment::findOrFail($id);
-        $oldStatus = $appointment->status;
-
-        // Khóa chỉnh sửa đối với lịch đã khám hoặc đang khám
-        $isLocked = in_array($oldStatus, ['examining', 'completed']);
-
-        $messages = [
-            'required' => 'Trường :attribute không được để trống.',
-            'exists' => 'Trường :attribute được chọn không hợp lệ hoặc đã bị vô hiệu hóa.',
-            'date' => 'Trường :attribute phải là định dạng ngày hợp lệ.',
-            'in' => 'Trường :attribute chọn giá trị không hợp lệ.',
-            'integer' => 'Trường :attribute phải là số nguyên.',
-            'numeric' => 'Trường :attribute phải là số.',
-            'min' => 'Trường :attribute không được nhỏ hơn :min.',
-            'string' => 'Trường :attribute phải là chuỗi ký tự.',
-        ];
-
-        $attributes = [
-            'patient_profile_id' => 'bệnh nhân',
-            'specialty_id' => 'chuyên khoa',
-            'doctor_profile_id' => 'bác sĩ',
-            'room_id' => 'phòng khám',
-            'appointment_date' => 'ngày khám',
-            'appointment_time' => 'giờ khám',
-            'status' => 'trạng thái',
-            'source' => 'nguồn đặt',
-            'reason' => 'lý do khám',
-            'receptionist_note' => 'ghi chú lễ tân',
-            'vital_pulse' => 'mạch',
-            'vital_systolic_bp' => 'huyết áp tâm thu',
-            'vital_diastolic_bp' => 'huyết áp tâm trương',
-            'vital_temperature' => 'nhiệt độ',
-            'vital_respiratory' => 'nhịp thở',
-            'vital_spo2' => 'SpO2',
-            'vital_weight_kg' => 'cân nặng',
-            'vital_height_cm' => 'chiều cao',
-            'vital_bmi' => 'chỉ số BMI',
-            'vital_note' => 'ghi chú sinh hiệu',
-            'measured_by' => 'người đo',
-        ];
-
-        if ($isLocked) {
-            // Lịch đang/đã khám: Lễ tân chỉ được cập nhật trạng thái và ghi chú
-            $request->validate([
-                'status' => 'required|in:pending,checked_in,examining,completed,cancelled,absent,late',
-                'receptionist_note' => 'nullable|string',
-            ], $messages, $attributes);
-
-            $newStatus = $request->status;
-
-            // Chặn chuyển đổi trạng thái của lịch hẹn đã khám hoàn thành
-            if ($oldStatus === 'completed' && $newStatus !== 'completed') {
-                return back()->with('error', 'Không thể thay đổi trạng thái của lịch hẹn đã hoàn thành.');
-            }
-
-            // Chặn đổi trạng thái của lịch hẹn đang khám sang các trạng thái khác ngoài Hoàn thành
-            if ($oldStatus === 'examining' && $newStatus !== 'examining' && $newStatus !== 'completed') {
-                return back()->with('error', 'Lịch hẹn đang khám chỉ có thể chuyển sang trạng thái Hoàn thành.');
-            }
-
-            DB::transaction(function () use ($appointment, $oldStatus, $newStatus, $request) {
-                $appointment->status = $newStatus;
-                $appointment->receptionist_note = $request->receptionist_note;
-
-                if (in_array($newStatus, ['checked_in', 'examining', 'completed']) && is_null($appointment->checked_in_at)) {
-                    $appointment->checked_in_at = now();
-                    
-                    // Tính toán đến muộn (>30 phút)
-                    $appointmentDatetime = \Carbon\Carbon::parse($appointment->appointment_date->format('Y-m-d') . ' ' . $appointment->appointment_time);
-                    if (now()->isAfter($appointmentDatetime->copy()->addMinutes(30))) {
-                        $appointment->is_late = true;
-                    } else {
-                        $appointment->is_late = false;
-                    }
-                }
-                if ($newStatus === 'completed' && is_null($appointment->completed_at)) {
-                    $appointment->completed_at = now();
-                }
-
-                $appointment->save();
-
-                // Đồng bộ lượt khám lâm sàng
-                if (in_array($newStatus, ['checked_in', 'examining', 'completed'])) {
-                    $this->appointmentService->createClinicalVisitIfNotExists($appointment, withPayment: true);
-                }
-
-                // Tự động dọn dẹp lượt khám chưa khám nếu hủy lịch/đổi về chờ khám
-                if (in_array($newStatus, ['cancelled', 'pending'])) {
-                    $visit = ClinicalVisit::where('appointment_id', $appointment->id)->first();
-                    if ($visit && $visit->status === 'waiting') {
-                        $visit->delete();
-                    }
-                }
-
-                if ($oldStatus !== $newStatus) {
-                    AppointmentLog::create([
-                        'appointment_id' => $appointment->id,
-                        'old_status'     => $oldStatus,
-                        'new_status'     => $newStatus,
-                        'action'         => AppointmentLog::ACTION_ADMIN_UPDATE,
-                        'changed_by'     => Auth::id(),
-                        'reason'         => 'Cập nhật trạng thái lịch hẹn bởi Lễ tân (Khóa thông tin chính)',
-                    ]);
-
-                    if ($newStatus === 'cancelled') {
-                        \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'cancellation');
-                    }
-                }
-            });
-
-            return redirect()->route('receptionist.appointments.index')->with('success', 'Cập nhật lịch hẹn thành công.');
-        }
-
-        // Trường hợp Lịch hẹn chưa khóa (pending, checked_in): Cho phép cập nhật tất cả thông tin
-        $rules = [
-            'patient_profile_id' => 'required|exists:patient_profiles,id',
-            'specialty_id'       => 'required|exists:specialties,id',
-            'doctor_profile_id'  => 'required|exists:doctor_profiles,id',
-            'room_id'            => 'required|exists:rooms,id,is_active,1',
-            'appointment_date'   => 'required|date',
-            'appointment_time'   => 'required',
-            'status'             => 'required|in:pending,checked_in,examining,completed,cancelled,absent,late',
-            'source'             => 'required|in:web,counter,chatbot',
-            'reason'             => 'required|string',
-            'receptionist_note'  => 'nullable|string',
-
-            // Vitals
-            'vital_pulse'        => 'nullable|integer|min:0',
-            'vital_systolic_bp'  => 'nullable|integer|min:0',
-            'vital_diastolic_bp' => 'nullable|integer|min:0',
-            'vital_temperature'  => 'nullable|numeric|min:0',
-            'vital_respiratory'  => 'nullable|integer|min:0',
-            'vital_spo2'         => 'nullable|numeric|min:0',
-            'vital_weight_kg'    => 'nullable|numeric|min:0',
-            'vital_height_cm'    => 'nullable|numeric|min:0',
-            'vital_bmi'          => 'nullable|numeric|min:0',
-            'vital_note'         => 'nullable|string',
-            'measured_by'        => 'nullable|exists:users,id',
-        ];
-
-        $request->validate($rules, $messages, $attributes);
-
-        // Xác thực bác sĩ thuộc chuyên khoa được chọn
-        $doctorBelongsToSpecialty = DB::table('doctor_specialties')
-            ->where('doctor_profile_id', $request->doctor_profile_id)
-            ->where('specialty_id', $request->specialty_id)
-            ->exists();
-
-        if (!$doctorBelongsToSpecialty) {
-            return back()->withErrors(['doctor_profile_id' => 'Bác sĩ được chọn không thuộc chuyên khoa đã chỉ định.'])->withInput();
-        }
-
-        $timeDb = substr($appointment->appointment_time, 0, 5);
-        $timeReq = substr($request->appointment_time, 0, 5);
-        $dateDb = $appointment->appointment_date->format('Y-m-d');
-        $dateReq = $request->appointment_date;
-
-        $dateTimeOrDoctorChanged = ($appointment->doctor_profile_id != $request->doctor_profile_id) || ($dateDb !== $dateReq) || ($timeDb !== $timeReq);
-
-        if ($dateTimeOrDoctorChanged) {
-            // Kiểm tra lịch làm việc (WorkSchedule) của bác sĩ
-            $dayOfWeek = \Carbon\Carbon::parse($request->appointment_date)->dayOfWeek + 1;
-            $reqTime = $request->appointment_time;
-
-            $hasSchedule = \App\Models\WorkSchedule::where('doctor_profile_id', $request->doctor_profile_id)
-                ->where('day_of_week', $dayOfWeek)
-                ->where('is_active', true)
-                ->where('start_time', '<=', $reqTime)
-                ->where('end_time', '>=', $reqTime)
-                ->exists();
-
-            if (!$hasSchedule) {
-                return back()->withErrors(['appointment_time' => 'Bác sĩ không có lịch làm việc đăng ký vào ngày và khung giờ này.'])->withInput();
-            }
-
-            // Chặn đặt/dời lịch về quá khứ trong ngày hôm nay
-            if ($request->appointment_date === now()->toDateString()) {
-                $currentTime = now()->format('H:i');
-                $reqTimeShort = substr($reqTime, 0, 5);
-                if ($reqTimeShort < $currentTime) {
-                    return back()->withErrors(['appointment_time' => 'Không thể đặt hoặc dời lịch khám về thời gian trong quá khứ của ngày hôm nay.'])->withInput();
-                }
+        
+        $data = $request->validated();
+        $isLocked = in_array($appointment->status, ['examining', 'completed']);
+        
+        $doctor = null;
+        $patient = null;
+        
+        if (!$isLocked) {
+            $patient = PatientProfile::findOrFail($request->patient_profile_id);
+            $doctor = DoctorProfile::findOrFail($request->doctor_profile_id);
+            
+            if (!isset($data['measured_by'])) {
+                $hasVitals = $request->filled('vital_pulse') || $request->filled('vital_systolic_bp') || $request->filled('vital_diastolic_bp') || 
+                             $request->filled('vital_temperature') || $request->filled('vital_respiratory') || $request->filled('vital_spo2') || 
+                             $request->filled('vital_weight_kg') || $request->filled('vital_height_cm');
+                $data['measured_by'] = $hasVitals ? Auth::id() : null;
             }
         }
 
-        // Kiểm tra trùng lịch hẹn (Chống trùng lịch bác sĩ và trùng lịch bệnh nhân - chỉ kiểm tra khi thay đổi thông tin quan trọng)
-        if ($request->status !== 'cancelled') {
-            $timeDb = substr($appointment->appointment_time, 0, 5);
-            $timeReq = substr($request->appointment_time, 0, 5);
-            $dateDb = $appointment->appointment_date->format('Y-m-d');
-            $dateReq = $request->appointment_date;
-
-            // 1. Kiểm tra bác sĩ trùng lịch (chỉ khi đổi bác sĩ, ngày hoặc giờ)
-            $doctorChanged = ($appointment->doctor_profile_id != $request->doctor_profile_id) || ($dateDb !== $dateReq) || ($timeDb !== $timeReq);
-            if ($doctorChanged) {
-                $doctorConflict = Appointment::where('doctor_profile_id', $request->doctor_profile_id)
-                    ->whereDate('appointment_date', $request->appointment_date)
-                    ->whereTime('appointment_time', $request->appointment_time)
-                    ->where('status', '!=', 'cancelled')
-                    ->where('id', '!=', $id)
-                    ->exists();
-
-                if ($doctorConflict) {
-                    return back()->withErrors(['appointment_time' => 'Bác sĩ này đã có lịch hẹn khác vào khung giờ này. Vui lòng chọn giờ khác.'])->withInput();
-                }
-            }
-
-            // 2. Kiểm tra bệnh nhân trùng lịch (chỉ khi đổi bệnh nhân, ngày hoặc giờ)
-            $patientChanged = ($appointment->patient_profile_id != $request->patient_profile_id) || ($dateDb !== $dateReq) || ($timeDb !== $timeReq);
-            if ($patientChanged) {
-                $patientConflict = Appointment::where('patient_profile_id', $request->patient_profile_id)
-                    ->whereDate('appointment_date', $request->appointment_date)
-                    ->whereTime('appointment_time', $request->appointment_time)
-                    ->where('status', '!=', 'cancelled')
-                    ->where('id', '!=', $id)
-                    ->exists();
-
-                if ($patientConflict) {
-                    return back()->withErrors(['appointment_time' => 'Bệnh nhân này đã có lịch hẹn khác vào cùng khung giờ này.'])->withInput();
-                }
-            }
-        }
-
-        $patient = PatientProfile::findOrFail($request->patient_profile_id);
-        $doctor = DoctorProfile::findOrFail($request->doctor_profile_id);
-
-        $newStatus = $request->status;
-
-        DB::transaction(function () use ($appointment, $request, $doctor, $patient, $oldStatus, $newStatus, $id) {
-            $appointment->patient_profile_id = $request->patient_profile_id;
-            $appointment->booked_by_user_id = $request->source === 'counter' ? Auth::id() : ($patient->owner_id ?? Auth::id());
-            $appointment->specialty_id = $request->specialty_id;
-            $appointment->doctor_level = $doctor->level;
-            $appointment->room_id = $request->room_id;
-            $appointment->doctor_profile_id = $request->doctor_profile_id;
-            $appointment->appointment_date = $request->appointment_date;
-            $appointment->appointment_time = $request->appointment_time;
-            $appointment->reason = $request->reason;
-            $appointment->status = $request->status;
-            $appointment->source = $request->source;
-            $appointment->receptionist_note = $request->receptionist_note;
-
-            $appointment->vital_pulse = $request->vital_pulse;
-            $appointment->vital_systolic_bp = $request->vital_systolic_bp;
-            $appointment->vital_diastolic_bp = $request->vital_diastolic_bp;
-            $appointment->vital_temperature = $request->vital_temperature;
-            $appointment->vital_respiratory = $request->vital_respiratory;
-            $appointment->vital_spo2 = $request->vital_spo2;
-            $appointment->vital_weight_kg = $request->vital_weight_kg;
-            $appointment->vital_height_cm = $request->vital_height_cm;
-            $appointment->vital_bmi = $request->vital_bmi;
-            $appointment->vital_note = $request->vital_note;
-            $appointment->measured_by = $request->measured_by ?? (
-                ($request->filled('vital_pulse') || $request->filled('vital_systolic_bp') || $request->filled('vital_diastolic_bp') || $request->filled('vital_temperature') || $request->filled('vital_respiratory') || $request->filled('vital_spo2') || $request->filled('vital_weight_kg') || $request->filled('vital_height_cm'))
-                ? Auth::id()
-                : null
-            );
-
-            $totalFee = 0;
-            if ($doctor->level) {
-                $fee = \App\Models\DoctorLevelFee::where('level', $doctor->level)->first();
-                $totalFee = $fee ? $fee->specific_price : 0;
-            }
-            $appointment->total_fee = $totalFee;
-
-            if (in_array($newStatus, ['checked_in', 'examining', 'completed']) && is_null($appointment->checked_in_at)) {
-                $appointment->checked_in_at = now();
-            }
-            if ($newStatus === 'completed' && is_null($appointment->completed_at)) {
-                $appointment->completed_at = now();
-            }
-
-            $appointment->save();
-
-            // Đồng bộ lượt khám lâm sàng
-            if (in_array($newStatus, ['checked_in', 'examining', 'completed'])) {
-                $this->appointmentService->createClinicalVisitIfNotExists($appointment, withPayment: true);
-            }
-
-            // Tự động dọn dẹp lượt khám chưa khám nếu hủy lịch/đổi về chờ khám
-            if (in_array($newStatus, ['cancelled', 'pending'])) {
-                $visit = ClinicalVisit::where('appointment_id', $appointment->id)->first();
-                if ($visit && $visit->status === 'waiting') {
-                    $visit->delete();
-                }
-            }
-
-            if ($oldStatus !== $newStatus) {
-                AppointmentLog::create([
-                    'appointment_id' => $appointment->id,
-                    'old_status'     => $oldStatus,
-                    'new_status'     => $newStatus,
-                    'action'         => AppointmentLog::ACTION_RECEPTIONIST_UPDATE,
-                    'changed_by'     => Auth::id(),
-                    'reason'         => 'Cập nhật lịch hẹn và trạng thái bởi Lễ tân',
-                ]);
-
-                if ($newStatus === 'cancelled') {
-                    \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'cancellation');
-                }
-            }
-        });
+        $this->appointmentService->updateByReceptionist($appointment, $data, Auth::id(), $doctor, $patient);
 
         return redirect()->route('receptionist.appointments.index')->with('success', 'Cập nhật lịch hẹn thành công.');
     }
@@ -738,13 +290,7 @@ class AppointmentController extends Controller
         $appointment = Appointment::findOrFail($id);
 
         try {
-            DB::transaction(function () use ($appointment) {
-                // Xoá lượt khám lâm sàng liên quan trước
-                ClinicalVisit::where('appointment_id', $appointment->id)->delete();
-                // Xoá logs liên quan trước (do có ràng buộc restrictOnDelete)
-                $appointment->logs()->delete();
-                $appointment->delete();
-            });
+            $this->appointmentService->destroyAppointment($appointment);
 
             return redirect()->route('receptionist.appointments.index')->with('success', 'Xoá lịch hẹn thành công.');
         } catch (\Exception $e) {

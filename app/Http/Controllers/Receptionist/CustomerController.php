@@ -8,11 +8,20 @@ use App\Models\User;
 use App\Models\PatientProfile;
 use App\Models\SystemLog;
 use Illuminate\Support\Facades\DB;
+use App\Http\Requests\Receptionist\StoreCustomerRequest;
+use App\Http\Requests\Receptionist\UpdateCustomerRequest;
+use App\Services\CustomerProfileService;
 use App\Exports\CustomersExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 class CustomerController extends Controller
 {
+    protected $customerProfileService;
+
+    public function __construct(CustomerProfileService $customerProfileService)
+    {
+        $this->customerProfileService = $customerProfileService;
+    }
     public function export(Request $request)
     {
         return Excel::download(new CustomersExport($request), 'customers_' . date('Ymd_His') . '.xlsx');
@@ -28,6 +37,7 @@ class CustomerController extends Controller
         ];
 
         $query = User::with(['patientProfiles'])
+            ->withCount('patientProfiles')
             ->where('role', 'patient')
             ->latest('created_at');
 
@@ -72,49 +82,9 @@ class CustomerController extends Controller
         return view('receptionist.customers.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreCustomerRequest $request)
     {
-        $validated = $request->validate([
-            // Tài khoản
-            'full_name'    => 'required|string|max:100',
-            'phone'        => ['required', 'string', 'max:15', 'regex:/^(0[35789])[0-9]{8}$/', 'unique:users,phone'],
-            'password'     => 'required|string|min:8|confirmed',
-            'username'     => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z0-9_.]*$/', 'unique:users,username'],
-            'id_card'      => ['required', 'string', 'regex:/^([0-9]{9}|[0-9]{12})$/', 'unique:users,id_card'],
-            'email'        => 'nullable|email|max:150|unique:users,email',
-            // Hồ sơ
-            'profile_full_name'      => 'nullable|string|max:100',
-            'date_of_birth'          => 'required|date|before:today',
-            'gender'                 => 'required|in:male,female,other',
-            'profile_phone'          => 'nullable|string|max:15',
-            'address'                => 'nullable|string',
-            'occupation'             => 'nullable|string|max:100',
-            'ethnicity'              => 'nullable|string|max:50',
-            'insurance_code'         => 'nullable|string|max:20',
-            'insurance_place'        => 'nullable|string|max:255',
-            'insurance_expiry'       => 'nullable|date',
-            'symptom_notes'          => 'nullable|string',
-            'medical_history.*'      => 'nullable|file|mimes:pdf|max:10240',
-        ], [
-            'full_name.required'  => 'Vui lòng nhập họ tên.',
-            'phone.required'      => 'Vui lòng nhập số điện thoại.',
-            'phone.unique'        => 'Số điện thoại đã được sử dụng.',
-            'phone.regex'         => 'Số điện thoại không đúng định dạng Việt Nam.',
-            'password.required'   => 'Vui lòng nhập mật khẩu.',
-            'password.min'        => 'Mật khẩu tối thiểu 8 ký tự.',
-            'password.confirmed'  => 'Xác nhận mật khẩu không khớp.',
-            'username.unique'     => 'Tên đăng nhập đã tồn tại.',
-            'username.regex'      => 'Tên đăng nhập không được chứa ký tự đặc biệt.',
-            'id_card.required'    => 'Vui lòng nhập số CCCD/CMND.',
-            'id_card.regex'       => 'Số CCCD/CMND không đúng định dạng.',
-            'id_card.unique'      => 'Số CCCD/CMND đã được sử dụng.',
-            'email.unique'        => 'Email đã được sử dụng.',
-            'date_of_birth.required' => 'Vui lòng nhập ngày sinh.',
-            'date_of_birth.before'=> 'Ngày sinh không hợp lệ.',
-            'gender.required'     => 'Vui lòng chọn giới tính.',
-            'medical_history.*.mimes'=> 'File tiền sử bệnh lý phải là định dạng PDF.',
-            'medical_history.*.max'  => 'Kích thước file không được vượt quá 10MB.',
-        ]);
+        $validated = $request->validated();
 
         $medicalHistoryPaths = [];
         if ($request->hasFile('medical_history')) {
@@ -124,47 +94,7 @@ class CustomerController extends Controller
             }
         }
 
-        \DB::transaction(function() use ($validated, $medicalHistoryPaths) {
-            $user = User::create([
-                'full_name' => $validated['full_name'],
-                'phone'     => $validated['phone'],
-                'username'  => $validated['username'] ?? $validated['phone'],
-                'id_card'   => $validated['id_card'],
-                'email'     => $validated['email'] ?? null,
-                'password'  => bcrypt($validated['password']),
-                'role'      => 'patient',
-                'is_active' => true,
-            ]);
-
-            PatientProfile::create([
-                'patient_code'    => 'BN' . $validated['id_card'],
-                'owner_id'        => $user->id,
-                'full_name'       => $validated['profile_full_name'] ?? $validated['full_name'],
-                'date_of_birth'   => $validated['date_of_birth'],
-                'gender'          => $validated['gender'],
-                'id_card'         => $validated['id_card'],
-                'phone'           => $validated['profile_phone'] ?? $validated['phone'],
-                'address'         => $validated['address'] ?? null,
-                'occupation'      => $validated['occupation'] ?? null,
-                'ethnicity'       => $validated['ethnicity'] ?? null,
-                'insurance_code'  => $validated['insurance_code'] ?? null,
-                'insurance_place' => $validated['insurance_place'] ?? null,
-                'insurance_expiry'=> $validated['insurance_expiry'] ?? null,
-                'symptom_notes'   => $validated['symptom_notes'] ?? null,
-                'medical_history' => !empty($medicalHistoryPaths) ? $medicalHistoryPaths : null,
-                'is_self'         => 1,
-            ]);
-
-            SystemLog::create([
-                'user_id'     => auth()->id(),
-                'action'      => 'CUSTOMER_CREATED',
-                'module'      => 'customers',
-                'ref_type'    => 'users',
-                'ref_id'      => $user->id,
-                'description' => 'Thêm khách hàng mới: ' . $validated['full_name'],
-                'ip_address'  => request()->ip(),
-            ]);
-        });
+        $this->customerProfileService->createCustomer($validated, $medicalHistoryPaths);
 
         return redirect()->route('receptionist.customers.index')
             ->with('success', 'Thêm khách hàng thành công.');
@@ -172,7 +102,9 @@ class CustomerController extends Controller
 
     public function show($id)
     {
-        $customer = User::with(['patientProfiles', 'patientProfiles.appointments'])->findOrFail($id);
+        $customer = User::with(['patientProfiles' => function($query) {
+            $query->withCount('appointments');
+        }, 'patientProfiles.appointments'])->findOrFail($id);
 
         $logs = SystemLog::where('user_id', $customer->id)
             ->latest('created_at')
@@ -191,113 +123,24 @@ class CustomerController extends Controller
         return view('receptionist.customers.edit', compact('customer'));
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateCustomerRequest $request, $id)
     {
         $customer = User::with(['patientProfiles' => function($q) {
             $q->where('is_self', 1);
         }])->findOrFail($id);
 
         $selfProfile = $customer->patientProfiles->first();
+        $validated = $request->validated();
 
-        $rules = [
-            'full_name'    => 'required|string|max:100',
-            'phone'        => ['required', 'string', 'max:15', 'regex:/^(0[35789])[0-9]{8}$/', 'unique:users,phone,' . $customer->id],
-            'username'     => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z0-9_.]*$/', 'unique:users,username,' . $customer->id],
-            'email'        => 'nullable|email|max:150|unique:users,email,' . $customer->id,
-            // Hồ sơ
-            'profile_full_name'      => 'nullable|string|max:100',
-            'date_of_birth'          => 'required|date|before:today',
-            'gender'                 => 'required|in:male,female,other',
-            'profile_phone'          => 'nullable|string|max:15',
-            'address'                => 'nullable|string',
-            'occupation'             => 'nullable|string|max:100',
-            'ethnicity'              => 'nullable|string|max:50',
-            'insurance_code'         => 'nullable|string|max:20',
-            'insurance_place'        => 'nullable|string|max:255',
-            'insurance_expiry'       => 'nullable|date',
-            'symptom_notes'          => 'nullable|string',
-        ];
-
-        if ($selfProfile && $selfProfile->card_id_change_count >= 1) {
-            $rules['id_card'] = ['nullable', 'string', 'regex:/^([0-9]{9}|[0-9]{12})$/', 'unique:users,id_card,' . $customer->id];
-        } else {
-            $rules['id_card'] = ['required', 'string', 'regex:/^([0-9]{9}|[0-9]{12})$/', 'unique:users,id_card,' . $customer->id];
+        $medicalHistoryPaths = [];
+        if ($request->hasFile('medical_history')) {
+            foreach ($request->file('medical_history') as $file) {
+                $path = $file->store('medical_histories', 'public');
+                $medicalHistoryPaths[] = $path;
+            }
         }
 
-        if ($request->filled('password')) {
-            $rules['password'] = 'required|string|min:8|confirmed';
-        }
-
-        $validated = $request->validate($rules, [
-            'full_name.required'  => 'Vui lòng nhập họ tên.',
-            'phone.required'      => 'Vui lòng nhập số điện thoại.',
-            'phone.unique'        => 'Số điện thoại đã được sử dụng.',
-            'phone.regex'         => 'Số điện thoại không đúng định dạng Việt Nam.',
-            'username.unique'     => 'Tên đăng nhập đã tồn tại.',
-            'username.regex'      => 'Tên đăng nhập không được chứa ký tự đặc biệt.',
-            'id_card.required'    => 'Vui lòng nhập số CCCD/CMND.',
-            'id_card.regex'       => 'Số CCCD/CMND không đúng định dạng.',
-            'id_card.unique'      => 'Số CCCD/CMND đã được sử dụng.',
-            'email.unique'        => 'Email đã được sử dụng.',
-            'date_of_birth.required'=> 'Vui lòng nhập ngày sinh.',
-            'date_of_birth.before'=> 'Ngày sinh không hợp lệ.',
-            'gender.required'     => 'Vui lòng chọn giới tính.',
-            'password.min'        => 'Mật khẩu tối thiểu 8 ký tự.',
-            'password.confirmed'  => 'Xác nhận mật khẩu không khớp.',
-        ]);
-
-        \DB::transaction(function() use ($validated, $customer, $selfProfile, $request) {
-            $userData = [
-                'full_name' => $validated['full_name'],
-                'phone'     => $validated['phone'],
-                'username'  => $validated['username'] ?? $validated['phone'],
-                'email'     => $validated['email'] ?? null,
-            ];
-
-            if (!$selfProfile || ($selfProfile->card_id_change_count < 1 && isset($validated['id_card']) && $validated['id_card'] !== $customer->id_card)) {
-                $userData['id_card'] = $validated['id_card'] ?? $customer->id_card;
-            }
-
-            if ($request->filled('password')) {
-                $userData['password'] = bcrypt($validated['password']);
-            }
-
-            $customer->update($userData);
-
-            if ($selfProfile) {
-                $selfProfileUpdateData = [
-                    'full_name'       => $validated['profile_full_name'] ?? $validated['full_name'],
-                    'date_of_birth'   => $validated['date_of_birth'],
-                    'gender'          => $validated['gender'],
-                    'phone'           => $validated['profile_phone'] ?? $validated['phone'],
-                    'address'         => $validated['address'] ?? null,
-                    'occupation'      => $validated['occupation'] ?? null,
-                    'ethnicity'       => $validated['ethnicity'] ?? null,
-                    'insurance_code'  => $validated['insurance_code'] ?? null,
-                    'insurance_place' => $validated['insurance_place'] ?? null,
-                    'insurance_expiry'=> $validated['insurance_expiry'] ?? null,
-                    'symptom_notes'   => $validated['symptom_notes'] ?? null,
-                ];
-
-                if ($selfProfile->card_id_change_count < 1 && isset($validated['id_card']) && $validated['id_card'] !== $selfProfile->id_card) {
-                    $selfProfileUpdateData['id_card'] = $validated['id_card'];
-                    $selfProfileUpdateData['patient_code'] = 'BN' . $validated['id_card'];
-                    $selfProfileUpdateData['card_id_change_count'] = $selfProfile->card_id_change_count + 1;
-                }
-
-                $selfProfile->update($selfProfileUpdateData);
-            }
-
-            SystemLog::create([
-                'user_id'     => auth()->id(),
-                'action'      => 'CUSTOMER_UPDATED',
-                'module'      => 'customers',
-                'ref_type'    => 'users',
-                'ref_id'      => $customer->id,
-                'description' => 'Cập nhật thông tin khách hàng: ' . $validated['full_name'],
-                'ip_address'  => request()->ip(),
-            ]);
-        });
+        $this->customerProfileService->updateCustomer($customer, $validated, $selfProfile, $medicalHistoryPaths);
 
         return redirect()->route('receptionist.customers.index')
             ->with('success', 'Cập nhật khách hàng thành công.');

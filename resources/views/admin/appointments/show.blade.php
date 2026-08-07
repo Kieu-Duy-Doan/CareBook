@@ -646,9 +646,9 @@
                     <div class="hidden print:block p-8 border-b-2 border-gray-800 mb-6">
                         <div class="flex justify-between items-start">
                             <div>
-                                <h1 class="text-2xl font-bold uppercase text-gray-900">{{ \App\Models\SystemSetting::where('key', 'clinic_name')->value('value') ?? 'BỆNH VIỆN ĐA KHOA CAREBOOK' }}</h1>
-                                <p class="text-sm mt-1">{{ \App\Models\SystemSetting::where('key', 'clinic_address')->value('value') ?? '123 Đường Sức Khoẻ, Quận Bình Thủy, TP. Cần Thơ' }}</p>
-                                <p class="text-sm">Hotline: {{ \App\Models\SystemSetting::where('key', 'clinic_phone')->value('value') ?? '1900 1234' }}</p>
+                                <h1 class="text-2xl font-bold uppercase text-gray-900">{{ $clinicSettings['clinic_name'] ?? 'BỆNH VIỆN ĐA KHOA CAREBOOK' }}</h1>
+                                <p class="text-sm mt-1">{{ $clinicSettings['clinic_address'] ?? '123 Đường Sức Khoẻ, Quận Bình Thủy, TP. Cần Thơ' }}</p>
+                                <p class="text-sm">Hotline: {{ $clinicSettings['clinic_phone'] ?? '1900 1234' }}</p>
                             </div>
                             <div class="text-right">
                                 <h2 class="text-xl font-bold uppercase mb-1">ĐƠN THUỐC</h2>

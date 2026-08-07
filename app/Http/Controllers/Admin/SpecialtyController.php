@@ -8,8 +8,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use App\Http\Requests\Admin\StoreSpecialtyRequest;
+use App\Http\Requests\Admin\UpdateSpecialtyRequest;
+use App\Services\SpecialtyService;
 
 class SpecialtyController extends Controller {
+    protected $specialtyService;
+
+    public function __construct(SpecialtyService $specialtyService)
+    {
+        $this->specialtyService = $specialtyService;
+    }
 public function index() 
     {
      $specialties = Specialty::withCount(['doctors', 'rooms'])
@@ -19,87 +28,27 @@ public function index()
 
         return view('admin.specialties.index', compact('specialties'));
     }
-public function store(Request $request)
+    public function store(StoreSpecialtyRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:150|unique:specialties,name',
-            'description' => 'nullable|string',
-            'display_order' => 'nullable|integer|min:0',
-            'is_active' => 'boolean',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,svg,webp|max:2048',
-        ], [
-            'name.required' => 'Vui lòng nhập tên chuyên khoa.',
-            'name.unique' => 'Tên chuyên khoa đã tồn tại.',
-            'display_order.min' => 'Thứ tự không hợp lệ.',
-        ]);  
+        $validated = $request->validated();
+        $validated['is_active'] = $request->has('is_active');
 
-        $data = [
-            'name' => $request->name,
-            'description' => $request->description,
-            'display_order' => $request->display_order ?? 0,
-            'is_active' => $request->has('is_active'),
-        ];
+        $imagePath = $this->uploadImage($request);
 
-        if ($imagePath = $this->uploadImage($request)) {
-            $data['image_url'] = $imagePath;
-        }
-
-        $specialty = Specialty::create($data);
-
-        SystemLog::create([
-            'user_id' => Auth::id(),
-            'action' => 'SPECIALTY_CREATED',
-            'module' => 'specialty_management',
-            'ref_type' => 'specialty',
-            'ref_id' => $specialty->id,
-            'description' => 'Thêm mới chuyên khoa: ' . $specialty->name,
-            'ip_address' => request()->ip()
-        ]);
+        $this->specialtyService->createSpecialty($validated, $imagePath);
 
         return back()->with('success', 'Đã thêm chuyên khoa thành công.');
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateSpecialtyRequest $request, $id)
     {
         $specialty = Specialty::findOrFail($id);
+        $validated = $request->validated();
+        $validated['is_active'] = $request->has('is_active');
 
-        $request->validate([
-            'name' => ['required', 'string', 'max:150', Rule::unique('specialties')->ignore($specialty->id)],
-            'description' => 'nullable|string',
-            'display_order' => 'nullable|integer|min:0',
-            'is_active' => 'boolean',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,svg,webp|max:2048',
-        ], [
-            'name.required' => 'Vui lòng nhập tên chuyên khoa.',
-            'name.unique' => 'Tên chuyên khoa đã tồn tại.',
-            'display_order.min' => 'Thứ tự không hợp lệ.',
-        ]);
+        $imagePath = $this->uploadImage($request);
 
-        $data = [
-            'name' => $request->name,
-            'description' => $request->description,
-            'display_order' => $request->display_order ?? 0,
-            'is_active' => $request->has('is_active'),
-        ];
-
-        if ($imagePath = $this->uploadImage($request)) {
-            if ($specialty->image_url) {
-                Storage::disk('public')->delete($specialty->image_url);
-            }
-            $data['image_url'] = $imagePath;
-        }
-
-        $specialty->update($data);
-
-        SystemLog::create([
-            'user_id' => Auth::id(),
-            'action' => 'SPECIALTY_UPDATED',
-            'module' => 'specialty_management',
-            'ref_type' => 'specialty',
-            'ref_id' => $specialty->id,
-            'description' => 'Cập nhật chuyên khoa: ' . $specialty->name,
-            'ip_address' => request()->ip()
-        ]);
+        $this->specialtyService->updateSpecialty($specialty, $validated, $imagePath);
 
         return back()->with('success', 'Đã cập nhật chuyên khoa thành công.');
     }
@@ -196,7 +145,7 @@ public function store(Request $request)
 
     public function show($id)
     {
-        $specialty = Specialty::with(['doctors.user', 'rooms'])->findOrFail($id);
+        $specialty = Specialty::with(['doctors.user', 'rooms'])->withCount(['doctors', 'rooms'])->findOrFail($id);
         
         return view('admin.specialties.show', compact('specialty'));
     }

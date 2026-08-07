@@ -113,7 +113,7 @@
                             <i class="fa-solid fa-folder-open text-blue-500"></i> Danh sách Hồ sơ Bệnh nhân
                         </h3>
                         <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-md">
-                            {{ $customer->patientProfiles->count() }} Hồ sơ
+                            {{ $customer->patient_profiles_count ?? $customer->patientProfiles->count() }} Hồ sơ
                         </span>
                     </div>
                     <div class="p-5">
@@ -141,7 +141,7 @@
                                                 </div>
                                                 <div class="text-xs text-gray-500 flex items-center gap-2">
                                                     <span class="bg-gray-100 px-2 py-1 rounded">
-                                                        <strong>{{ $profile->appointments->count() }}</strong> lịch khám
+                                                        <strong>{{ $profile->appointments_count ?? $profile->appointments->count() }}</strong> lịch khám
                                                     </span>
                                                 </div>
                                             </div>
