@@ -842,7 +842,6 @@
                     $isExpired = $summary['is_expired'] ?? false;
                     $warningMsg = $summary['warning_message']?? null;
                     $paidPayments = $appointment->payments->where('status', 'completed')->sortByDesc('paid_at');
-                    $needsReviewPayments = $appointment->payments->where('status', 'needs_review');
                     @endphp
 
                     {{-- Cảnh báo BHYT hết hạn --}}
@@ -948,16 +947,7 @@
                                 </button>
                                 @endif
 
-                                @if($overpaid > 0)
-                                <form action="{{ route('receptionist.payments.refund', $appointment->id) }}" method="POST" class="flex-1">
-                                    @csrf
-                                    <button type="submit"
-                                        class="w-full bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 py-3 rounded-xl text-sm font-bold text-center transition-colors flex items-center justify-center gap-2">
-                                        <i class="fa-solid fa-rotate-left"></i>
-                                        Hoàn tiền thừa ({{ number_format($overpaid, 0, ',', '.') }}đ)
-                                    </button>
-                                </form>
-                                @endif
+
                             </div>
 
                             @if($summary['remaining_to_pay'] > 0)
@@ -1034,7 +1024,7 @@
                         {{-- ============================================================
                          PHẦN 2: Lịch sử giao dịch đã thanh toán
                     ============================================================ --}}
-                        @if ($paidPayments->isNotEmpty() || $needsReviewPayments->isNotEmpty())
+                        @if ($paidPayments->isNotEmpty())
                         <div class="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col max-h-[400px]">
                             <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between sticky top-0 z-10">
                                 <div class="flex items-center gap-2">
@@ -1066,16 +1056,14 @@
                                 };
                                 [$statusLabel, $statusClass] = match($payment->status) {
                                 'completed' => ['Đã thu', 'bg-green-100 text-green-700'],
-                                'needs_review' => ['Cần xét duyệt', 'bg-yellow-100 text-yellow-700'],
-                                'refunded' => ['Đã hoàn', 'bg-red-100 text-red-700'],
                                 default => [$payment->status, 'bg-gray-100 text-gray-600'],
                                 };
                                 @endphp
                                 <div class="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors">
                                     <div class="flex items-center gap-3 min-w-0">
                                         <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0
-                                        {{ $payment->status === 'completed' ? 'bg-green-100 text-green-600' : ($payment->status === 'needs_review' ? 'bg-yellow-100 text-yellow-600' : 'bg-red-100 text-red-600') }}">
-                                            <i class="fa-solid {{ $payment->status === 'completed' ? 'fa-check' : ($payment->status === 'needs_review' ? 'fa-clock' : 'fa-rotate-left') }} text-xs"></i>
+                                        {{ $payment->status === 'completed' ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600' }}">
+                                            <i class="fa-solid {{ $payment->status === 'completed' ? 'fa-check' : 'fa-circle-exclamation' }} text-xs"></i>
                                         </div>
                                         <div class="min-w-0">
                                             <div class="text-sm font-medium text-gray-800 flex items-center gap-2 flex-wrap">

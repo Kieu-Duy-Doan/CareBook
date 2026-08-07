@@ -172,30 +172,7 @@
                                     </div>
                                 @endforeach
 
-                                @if($appointment->medicalRecord?->prescription)
-                                    @php
-                                        $rxFee = $appointment->medicalRecord->prescription->payment_amount ?? 0;
-                                    @endphp
-                                    @if($rxFee > 0)
-                                    <div class="rounded-xl bg-white p-3 border border-slate-100 shadow-sm text-sm">
-                                        <div class="font-semibold text-slate-800">Phí thuốc theo đơn</div>
-                                        <div class="mt-2 space-y-1">
-                                            <div class="flex justify-between text-slate-600">
-                                                <span>Phí ban đầu:</span>
-                                                <span>{{ number_format($rxFee, 0, ',', '.') }}đ</span>
-                                            </div>
-                                            <div class="flex justify-between text-slate-600">
-                                                <span>BHYT trả (0%):</span>
-                                                <span class="text-emerald-600">-0đ</span>
-                                            </div>
-                                            <div class="flex justify-between text-slate-700 font-medium border-t border-slate-100 pt-1 mt-1">
-                                                <span>Người bệnh trả (100%):</span>
-                                                <span class="text-rose-600">{{ number_format($rxFee, 0, ',', '.') }}đ</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    @endif
-                                @endif
+
                             </div>
                         </div>
                     @endif
@@ -226,9 +203,7 @@
                                             @foreach ($payment->clinicalVisits as $visit)
                                                 <li>{{ $visit->is_origin ? 'Phí Khám Bệnh' : ($visit->room ? 'Khám ' . $visit->room->name : 'Dịch vụ Cận lâm sàng / Khác') }}</li>
                                             @endforeach
-                                            @foreach ($payment->prescriptions as $prescription)
-                                                <li>Phí thuốc theo đơn</li>
-                                            @endforeach
+
                                         </ul>
                                     </div>
                                     <div class="pt-4 text-right">

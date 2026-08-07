@@ -68,8 +68,6 @@
             text-align: center;
         }
         .status-completed { color: green; }
-        .status-refunded { color: red; }
-        .status-needs_review { color: orange; }
 
         @media print {
             body { padding: 0; }
@@ -98,9 +96,6 @@
             <h3>Tổng doanh thu</h3>
             <p style="color: green;">+{{ number_format($totalRevenue) }}đ</p>
         </div>
-        <div>
-            <h3>Đã hoàn trả</h3>
-            <p style="color: red;">-{{ number_format($totalRefunded) }}đ</p>
         </div>
     </div>
 
@@ -134,8 +129,6 @@
                     <td class="text-right">{{ number_format($p->amount) }}</td>
                     <td class="status-{{ $p->status }}">
                         @if($p->status === 'completed') Thành công
-                        @elseif($p->status === 'refunded') Hoàn tiền
-                        @elseif($p->status === 'needs_review') Cần xử lý
                         @else {{ $p->status }} @endif
                     </td>
                 </tr>

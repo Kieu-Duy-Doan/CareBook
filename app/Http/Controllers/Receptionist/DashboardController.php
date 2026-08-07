@@ -35,14 +35,14 @@ class DashboardController extends Controller
             ->whereIn('status', ['checked_in', 'examining', 'completed'])
             ->count();
 
-        $payments = Payment::with(['clinicalVisits', 'prescriptions'])
+        $payments = Payment::with(['clinicalVisits'])
             ->where('collected_by', $receptionistId)
             ->whereBetween('paid_at', [$start, $end])
             ->where('status', 'completed')
             ->get();
 
         $totalRevenue = $payments->sum(function($p) {
-            $fee = $p->clinicalVisits->sum('payment_amount') + $p->prescriptions->sum('payment_amount');
+            $fee = $p->clinicalVisits->sum('payment_amount');
             return max($fee, (float) $p->amount);
         });
         $cashRevenue = $payments->where('method', 'cash')->sum('amount');

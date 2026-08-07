@@ -28,7 +28,6 @@ class TransactionHistoryController extends Controller
             'appointment.specialty',
             'collectedBy',
             'clinicalVisits',
-            'prescriptions',
         ]);
 
         // ── Bộ lọc ───────────────────────────────────────────────────────────
@@ -107,7 +106,7 @@ class TransactionHistoryController extends Controller
         $pendingVisits = $pendingQuery->latest('created_at')->take(100)->get();
         $totalPending = $pendingQuery->sum('payment_amount');
 
-        $allCompletedPayments = (clone $summaryQuery)->with(['appointment.patientProfile', 'clinicalVisits', 'prescriptions'])->get();
+        $allCompletedPayments = (clone $summaryQuery)->with(['appointment.patientProfile', 'clinicalVisits'])->get();
         $insuranceCacheForSummary = [];
         $totalInsurance = 0;
         foreach ($allCompletedPayments as $p) {
@@ -147,7 +146,6 @@ class TransactionHistoryController extends Controller
             'collectedBy',
             'clinicalVisits.doctorProfile.user',
             'clinicalVisits.room',
-            'prescriptions',
         ]);
 
         $insuranceCache = [];
@@ -209,13 +207,7 @@ class TransactionHistoryController extends Controller
                     'started_at'     => $v->started_at?->format('d/m/Y H:i'),
                     'completed_at'   => $v->completed_at?->format('d/m/Y H:i'),
                 ]),
-                'prescriptions' => $enriched->prescriptions?->map(fn($p) => [
-                    'payment_amount'  => $p->payment_amount,
-                    'payment_status'  => $p->payment_status,
-                    'payment_method'  => $p->payment_method,
-                    'prescribed_date' => $p->prescribed_date?->format('d/m/Y'),
-                    'diagnosis_note'  => $p->diagnosis_note,
-                ]),
+
             ],
             'logs' => $logs->map(fn($l) => [
                 'action'     => $l->action_label,
@@ -273,9 +265,7 @@ class TransactionHistoryController extends Controller
         if ($payment->relationLoaded('clinicalVisits')) {
             $totalFee += $payment->clinicalVisits->sum('payment_amount');
         }
-        if ($payment->relationLoaded('prescriptions')) {
-            $totalFee += $payment->prescriptions->sum('payment_amount');
-        }
+
 
         if ($totalFee == 0) {
             $totalFee = (float) ($payment->amount ?? 0);

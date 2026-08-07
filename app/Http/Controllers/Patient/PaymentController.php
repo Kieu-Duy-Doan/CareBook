@@ -21,7 +21,7 @@ class PaymentController extends Controller
             ->findOrFail($appointment_id);
 
         // 2. Lấy chi tiết payment cùng với các dịch vụ đã thanh toán trong hóa đơn này
-        $payment = Payment::with(['clinicalVisits.room', 'prescriptions'])
+        $payment = Payment::with(['clinicalVisits.room'])
             ->where('appointment_id', $appointment->id)
             ->findOrFail($payment_id);
 

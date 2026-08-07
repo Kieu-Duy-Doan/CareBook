@@ -170,9 +170,7 @@
             @foreach($appointment->payments->where('status', 'completed') as $payment)
             <li>Đã thu: {{ number_format($payment->amount, 0, ',', '.') }} đ ({{ $payment->method == 'cash' ? 'Tiền mặt' : 'Chuyển khoản' }}) lúc {{ $payment->paid_at->format('H:i d/m/Y') }}</li>
             @endforeach
-            @foreach($appointment->payments->where('status', 'refunded') as $payment)
-            <li>Hoàn tiền: {{ number_format(abs($payment->amount), 0, ',', '.') }} đ lúc {{ $payment->paid_at->format('H:i d/m/Y') }}</li>
-            @endforeach
+
         </ul>
 
         <div class="footer">

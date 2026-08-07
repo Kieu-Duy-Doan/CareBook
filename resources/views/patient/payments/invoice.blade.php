@@ -73,13 +73,7 @@
                     <td class="text-right">{{ number_format($visit->pivot->amount_allocated, 0, ',', '.') }} đ</td>
                 </tr>
                 @endforeach
-                @foreach($payment->prescriptions as $prescription)
-                <tr>
-                    <td class="text-center">{{ $stt++ }}</td>
-                    <td>Phí thuốc theo đơn (Mã: #{{ $prescription->id }})</td>
-                    <td class="text-right">{{ number_format($prescription->pivot->amount_allocated, 0, ',', '.') }} đ</td>
-                </tr>
-                @endforeach
+
             </tbody>
         </table>
 

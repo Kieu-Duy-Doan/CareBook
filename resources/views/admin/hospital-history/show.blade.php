@@ -847,10 +847,7 @@
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                             <i class="fa-solid fa-check mr-1"></i> Đã thanh toán
                                         </span>
-                                    @elseif ($payment->status === 'refunded')
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                            <i class="fa-solid fa-rotate-left mr-1"></i> Đã hoàn tiền
-                                        </span>
+
                                     @else
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                                             {{ match($payment->status) {

@@ -84,8 +84,7 @@ class PaymentController extends Controller
                 'appointment.patientProfile',
                 'appointment.specialty',
                 'collectedBy',
-                'clinicalVisits',
-                'prescriptions'
+                'clinicalVisits'
             ]);
 
             $query->whereBetween('paid_at', [$from, $to]);
@@ -144,7 +143,7 @@ class PaymentController extends Controller
         $totalCash = (clone $basePaymentQuery)->where('method', 'cash')->where('amount', '>', 0)->sum('amount');
         $totalSepay = (clone $basePaymentQuery)->where('method', 'qr')->where('amount', '>', 0)->sum('amount');
         
-        $allCompletedPayments = (clone $basePaymentQuery)->with(['appointment.patientProfile', 'clinicalVisits', 'prescriptions'])->get();
+        $allCompletedPayments = (clone $basePaymentQuery)->with(['appointment.patientProfile', 'clinicalVisits'])->get();
         $insuranceCacheForSummary = [];
         $totalInsurance = 0;
         foreach ($allCompletedPayments as $p) {
@@ -195,9 +194,7 @@ class PaymentController extends Controller
         if ($payment->relationLoaded('clinicalVisits')) {
             $totalFee += $payment->clinicalVisits->sum('payment_amount');
         }
-        if ($payment->relationLoaded('prescriptions')) {
-            $totalFee += $payment->prescriptions->sum('payment_amount');
-        }
+
 
         if ($totalFee == 0) {
             $totalFee = (float) ($payment->amount ?? 0);
@@ -335,56 +332,6 @@ class PaymentController extends Controller
         return redirect()->route('receptionist.appointments.show', $appointment->id)
             ->with('success', 'Đã ghi nhận thanh toán tiền mặt thành công.')
             ->with('active_tab', 'payments');
-    }
-
-    /**
-     * Tạo yêu cầu hoàn tiền thừa cho bệnh nhân
-     */
-    public function confirmRefund(Request $request, string $id)
-    {
-        $appointment = Appointment::findOrFail($id);
-        $summary = $this->paymentService->calculateSummary($appointment);
-
-        if ($summary['overpaid_amount'] > 0) {
-            $lastPayment = Payment::where('appointment_id', $appointment->id)
-                ->where('status', 'completed')
-                ->latest('paid_at')
-                ->first();
-
-            if (!$lastPayment) {
-                return redirect()->back()->with('error', 'Không tìm thấy giao dịch gốc để hoàn tiền.');
-            }
-
-            \App\Models\RefundRequest::create([
-                'appointment_id' => $appointment->id,
-                'payment_id' => $lastPayment->id,
-                'amount' => $summary['overpaid_amount'],
-                'reason' => 'Hoàn tiền thừa ' . number_format($summary['overpaid_amount'], 0, ',', '.') . 'đ cho bệnh nhân',
-                'status' => 'pending',
-                'refund_method' => 'cash',
-                'requested_by' => Auth::id(),
-            ]);
-
-            \App\Models\PaymentLog::record(
-                'refund_requested',
-                "Lễ tân yêu cầu hoàn tiền thừa " . number_format($summary['overpaid_amount']) . "đ cho bệnh nhân",
-                'info',
-                ['appointment_id' => $appointment->id]
-            );
-
-            \App\Models\AppointmentLog::create([
-                'appointment_id' => $appointment->id,
-                'action'         => 'REFUND_REQUESTED',
-                'old_status'     => null,
-                'new_status'     => $appointment->status,
-                'changed_by'     => Auth::id(),
-                'reason'         => "Yêu cầu hoàn tiền thừa " . number_format($summary['overpaid_amount']) . "đ cho bệnh nhân."
-            ]);
-
-            return redirect()->back()->with('success', 'Đã tạo yêu cầu hoàn tiền thừa thành công. Vui lòng báo quản lý duyệt.');
-        }
-
-        return redirect()->back()->with('error', 'Không có khoản tiền thừa nào cần hoàn trả.');
     }
 
     /**

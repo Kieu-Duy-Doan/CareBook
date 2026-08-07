@@ -344,8 +344,6 @@
                             $statusConfig = [
                                 'completed'    => ['label' => 'Hoàn thành',  'bg' => 'bg-green-100',  'text' => 'text-green-700'],
                                 'pending'      => ['label' => 'Chờ xử lý',   'bg' => 'bg-yellow-100', 'text' => 'text-yellow-700'],
-                                'refunded'     => ['label' => 'Hoàn trả',    'bg' => 'bg-red-100',    'text' => 'text-red-700'],
-                                'needs_review' => ['label' => 'Cần xem xét', 'bg' => 'bg-orange-100', 'text' => 'text-orange-700'],
                             ];
                             $mc = $methodConfig[$payment->method] ?? ['label' => $payment->method, 'bg' => 'bg-gray-100', 'text' => 'text-gray-600'];
                             $sc = $statusConfig[$payment->status] ?? ['label' => $payment->status, 'bg' => 'bg-gray-100', 'text' => 'text-gray-600'];
@@ -522,9 +520,7 @@
                                 <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium"
                                       :class="{
                                           'bg-green-100 text-green-700': detail?.payment?.status === 'completed',
-                                          'bg-yellow-100 text-yellow-700': detail?.payment?.status === 'pending',
-                                          'bg-red-100 text-red-700': detail?.payment?.status === 'refunded',
-                                          'bg-orange-100 text-orange-700': detail?.payment?.status === 'needs_review',
+                                          'bg-yellow-100 text-yellow-700': detail?.payment?.status === 'pending'
                                       }">
                                     <span x-text="detail?.statusLabels?.[detail?.payment?.status]?.label ?? detail?.payment?.status"></span>
                                 </span>
@@ -653,29 +649,7 @@
                         </div>
                     </template>
 
-                    {{-- Đơn thuốc --}}
-                    <template x-if="detail?.payment?.prescriptions?.length > 0">
-                        <div>
-                            <hr class="border-gray-100 mb-4">
-                            <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                                <i class="fa-solid fa-pills text-green-500"></i> Đơn thuốc
-                            </h4>
-                            <div class="space-y-2">
-                                <template x-for="(p, i) in detail.payment.prescriptions" :key="i">
-                                    <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg text-sm">
-                                        <div>
-                                            <span class="text-gray-700" x-text="p.prescribed_date"></span>
-                                            <span class="text-gray-400 mx-1">·</span>
-                                            <span class="text-gray-500 text-xs" x-text="p.diagnosis_note"></span>
-                                        </div>
-                                        <div class="text-right">
-                                            <span class="font-semibold text-gray-900" x-text="formatMoney(p.payment_amount) + 'đ'"></span>
-                                        </div>
-                                    </div>
-                                </template>
-                            </div>
-                        </div>
-                    </template>
+
 
                     {{-- Lịch sử log --}}
                     <template x-if="detail?.logs?.length > 0">

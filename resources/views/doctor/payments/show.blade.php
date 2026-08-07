@@ -185,8 +185,7 @@
                         <div class="text-right">
                             @if($payment->status === 'completed')
                             <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">THÀNH CÔNG</span>
-                            @elseif($payment->status === 'needs_review')
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-800">CẦN XEM XÉT</span>
+
                             @else
                             <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-600">{{ strtoupper($payment->status) }}</span>
                             @endif

@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Payment;
 use App\Models\ClinicalVisit;
-use App\Models\Prescription;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -53,11 +52,7 @@ class StatisticController extends Controller
             ->where('payment_status', 'paid')
             ->get();
             
-        $prescriptions = Prescription::whereHas('medicalRecord', function($q) use ($appointmentIds) {
-            $q->whereIn('appointment_id', $appointmentIds);
-        })->where('payment_status', 'paid')->get();
-
-        $totalBaseCost = $visits->sum('payment_amount') + $prescriptions->sum('payment_amount');
+        $totalBaseCost = $visits->sum('payment_amount');
         $totalBHYT = max(0, $totalBaseCost - $totalPaid);
 
         // Chart Data

@@ -22,10 +22,6 @@
     </div>
 
     @if(isset($summary) && $summary['overpaid_amount'] > 0)
-    @php
-    $hasRefunded = $appointment->payments->where('status', 'refunded')->isNotEmpty();
-    @endphp
-    @if(!$hasRefunded)
     <div class="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-5 flex items-center justify-between shadow-sm print:hidden">
         <div class="flex items-center">
             <div class="h-10 w-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-xl mr-4">
@@ -33,22 +29,10 @@
             </div>
             <div>
                 <h3 class="font-bold text-amber-900">Có khoản tiền thừa cần thối lại</h3>
-                <p class="text-amber-700 text-sm">Bệnh nhân đã chuyển dư <span class="font-bold">{{ number_format($summary['overpaid_amount'], 0, ',', '.') }}đ</span>. Vui lòng thối lại bằng tiền mặt.</p>
+                <p class="text-amber-700 text-sm">Bệnh nhân đã chuyển dư <span class="font-bold">{{ number_format($summary['overpaid_amount'], 0, ',', '.') }}đ</span>. Vui lòng thối lại bằng tiền mặt ngoài hệ thống.</p>
             </div>
         </div>
-        <form action="{{ route('receptionist.payments.refund', $appointment->id) }}" method="POST">
-            @csrf
-            <button type="submit" onclick="return confirm('Xác nhận đã thối lại {{ number_format($summary['overpaid_amount'], 0, ',', '.') }}đ cho bệnh nhân?')" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg shadow-sm transition-colors">
-                <i class="fa-solid fa-check mr-2"></i> Đã thối tiền
-            </button>
-        </form>
     </div>
-    @else
-    <div class="mb-6 bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center shadow-sm print:hidden">
-        <i class="fa-solid fa-circle-check text-emerald-500 text-xl mr-3"></i>
-        <p class="text-emerald-800 font-medium">Đã ghi nhận thối lại tiền thừa <span class="font-bold">{{ number_format($summary['overpaid_amount'], 0, ',', '.') }}đ</span> cho bệnh nhân.</p>
-    </div>
-    @endif
     @endif
 
     <!-- Tiêu đề dành riêng cho bản in -->

@@ -380,8 +380,6 @@
                                                     $statusLabel = match($payment->status) {
                                                     'completed' => ['Đã thanh toán', 'bg-green-100 text-green-700'],
                                                     'pending' => ['Chờ thanh toán', 'bg-yellow-100 text-yellow-700'],
-                                                    'refunded' => ['Hoàn tiền', 'bg-red-100 text-red-700'],
-                                                    'needs_review' => ['Cần đối soát', 'bg-orange-100 text-orange-700'],
                                                     default => [$payment->status, 'bg-gray-100 text-gray-700'],
                                                     };
                                                     @endphp

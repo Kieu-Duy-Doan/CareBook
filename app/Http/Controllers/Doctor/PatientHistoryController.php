@@ -92,7 +92,7 @@ class PatientHistoryController extends Controller
                 'clinicalVisits.room',
                 'clinicalVisits.collectedBy',
                 'payments.clinicalVisits.room',
-                'payments.prescriptions',
+
                 'logs.changedBy',
             ])
             ->where('doctor_profile_id', $doctorProfile->id)

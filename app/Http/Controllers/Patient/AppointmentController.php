@@ -45,7 +45,7 @@ class AppointmentController extends Controller
             'clinicalVisits.room',
             'clinicalVisits.collectedBy',
             'payments.clinicalVisits.room',
-            'payments.prescriptions',
+
             'logs.changedBy',
         ])
         ->where('booked_by_user_id', auth()->id())

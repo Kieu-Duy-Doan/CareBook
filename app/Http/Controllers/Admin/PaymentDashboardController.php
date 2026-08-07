@@ -7,7 +7,6 @@ use App\Models\Payment;
 use App\Models\ClinicalVisit;
 use App\Models\Appointment;
 use App\Models\PaymentLog;
-use App\Models\RefundRequest;
 use App\Models\SePayTransaction;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -27,13 +26,13 @@ class PaymentDashboardController extends Controller
             : Carbon::now()->endOfDay();
 
         // ── Thống kê tổng quan ──────────────────────────────
-        $payments = Payment::with(['clinicalVisits', 'prescriptions'])
+        $payments = Payment::with(['clinicalVisits'])
             ->whereBetween('paid_at', [$from, $to])
             ->where('status', 'completed')
             ->get();
             
         $totalRevenue = $payments->sum(function($p) {
-            $fee = $p->clinicalVisits->sum('payment_amount') + $p->prescriptions->sum('payment_amount');
+            $fee = $p->clinicalVisits->sum('payment_amount');
             return max($fee, (float) $p->amount);
         });
 
@@ -51,7 +50,7 @@ class PaymentDashboardController extends Controller
         $chartDays = min((int)$from->diffInDays($to) + 1, 30);
         $chartFrom = $to->copy()->subDays($chartDays - 1)->startOfDay();
 
-        $chartPayments = Payment::with(['clinicalVisits', 'prescriptions'])
+        $chartPayments = Payment::with(['clinicalVisits'])
             ->whereBetween('paid_at', [$chartFrom, $to])
             ->where('status', 'completed')
             ->get();
@@ -59,7 +58,7 @@ class PaymentDashboardController extends Controller
         $dailyRevenue = [];
         foreach ($chartPayments as $p) {
             $date = $p->paid_at->format('Y-m-d');
-            $fee = $p->clinicalVisits->sum('payment_amount') + $p->prescriptions->sum('payment_amount');
+            $fee = $p->clinicalVisits->sum('payment_amount');
             $rev = max($fee, (float) $p->amount);
             $dailyRevenue[$date] = ($dailyRevenue[$date] ?? 0) + $rev;
         }
@@ -149,8 +148,7 @@ class PaymentDashboardController extends Controller
             ->get();
 
         $totalRevenue = $payments->where('status', 'completed')->where('amount', '>', 0)->sum('amount');
-        $totalRefunded = abs($payments->where('status', 'refunded')->sum('amount'));
 
-        return view('admin.payments.print-report', compact('payments', 'from', 'to', 'totalRevenue', 'totalRefunded'));
+        return view('admin.payments.print-report', compact('payments', 'from', 'to', 'totalRevenue'));
     }
 }
