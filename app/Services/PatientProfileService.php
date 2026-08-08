@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\PatientProfile;
 use App\Models\SystemLog;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class PatientProfileService
 {
@@ -44,9 +45,9 @@ class PatientProfileService
         });
     }
 
-    public function updateProfile(PatientProfile $profile, array $data)
+    public function updateProfile(PatientProfile $profile, array $data, array $medicalHistoryPaths = [], array $deletedMedicalHistories = [])
     {
-        return DB::transaction(function() use ($profile, $data) {
+        return DB::transaction(function() use ($profile, $data, $medicalHistoryPaths, $deletedMedicalHistories) {
             $updateData = [
                 'owner_id'        => $data['owner_id'],
                 'is_self'         => $data['is_self'],
@@ -68,6 +69,25 @@ class PatientProfileService
                 $updateData['patient_code'] = 'BN' . $data['id_card'];
                 $updateData['card_id_change_count'] = $profile->card_id_change_count + 1;
             }
+
+            $currentMedicalHistories = is_string($profile->medical_history) ? json_decode($profile->medical_history, true) : ($profile->medical_history ?? []);
+            
+            if (!empty($deletedMedicalHistories)) {
+                foreach ($deletedMedicalHistories as $d) {
+                    Storage::disk('public')->delete($d);
+                    if (($key = array_search($d, $currentMedicalHistories)) !== false) {
+                        unset($currentMedicalHistories[$key]);
+                    }
+                }
+                $currentMedicalHistories = array_values($currentMedicalHistories);
+            }
+
+            if (!empty($medicalHistoryPaths)) {
+                $currentMedicalHistories = array_merge($currentMedicalHistories, $medicalHistoryPaths);
+            }
+            
+            $updateData['medical_history'] = !empty($currentMedicalHistories) ? $currentMedicalHistories : null;
+
 
             $profile->update($updateData);
 

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use App\Models\SystemLog;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
 use App\Models\PatientProfile;
 
@@ -59,9 +60,9 @@ class CustomerProfileService
         });
     }
 
-    public function updateCustomer(User $customer, array $data, $selfProfile, array $medicalHistoryPaths = [])
+    public function updateCustomer(User $customer, array $data, $selfProfile, array $medicalHistoryPaths = [], array $deletedMedicalHistories = [])
     {
-        return DB::transaction(function() use ($customer, $data, $selfProfile, $medicalHistoryPaths) {
+        return DB::transaction(function() use ($customer, $data, $selfProfile, $medicalHistoryPaths, $deletedMedicalHistories) {
             $userData = [
                 'full_name' => $data['full_name'],
                 'phone'     => $data['phone'],
@@ -100,10 +101,23 @@ class CustomerProfileService
                     $profileData['card_id_change_count'] = $selfProfile->card_id_change_count + 1;
                 }
 
-                if (!empty($medicalHistoryPaths)) {
-                    $existing = is_array($selfProfile->medical_history) ? $selfProfile->medical_history : [];
-                    $profileData['medical_history'] = array_merge($existing, $medicalHistoryPaths);
+                $currentMedicalHistories = is_string($selfProfile->medical_history) ? json_decode($selfProfile->medical_history, true) : ($selfProfile->medical_history ?? []);
+                
+                if (!empty($deletedMedicalHistories)) {
+                    foreach ($deletedMedicalHistories as $d) {
+                        Storage::disk('public')->delete($d);
+                        if (($key = array_search($d, $currentMedicalHistories)) !== false) {
+                            unset($currentMedicalHistories[$key]);
+                        }
+                    }
+                    $currentMedicalHistories = array_values($currentMedicalHistories);
                 }
+
+                if (!empty($medicalHistoryPaths)) {
+                    $currentMedicalHistories = array_merge($currentMedicalHistories, $medicalHistoryPaths);
+                }
+
+                $profileData['medical_history'] = !empty($currentMedicalHistories) ? $currentMedicalHistories : null;
 
                 $selfProfile->update($profileData);
             }

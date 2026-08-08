@@ -10,6 +10,7 @@ use App\Models\SystemLog;
 use Illuminate\Support\Facades\DB;
 use App\Exports\CustomersExport;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Storage;
 
 class CustomerController extends Controller
 {
@@ -220,6 +221,9 @@ class CustomerController extends Controller
             'insurance_place'        => 'nullable|string|max:255',
             'insurance_expiry'       => 'nullable|date',
             'symptom_notes'          => 'nullable|string',
+            'deleted_medical_histories' => 'nullable|array',
+            'deleted_medical_histories.*' => 'string',
+            'medical_history.*'      => 'nullable|file|mimes:pdf|max:10240',
         ];
 
         if ($request->filled('password')) {
@@ -242,6 +246,8 @@ class CustomerController extends Controller
             'gender.required'     => 'Vui lòng chọn giới tính.',
             'password.min'        => 'Mật khẩu tối thiểu 8 ký tự.',
             'password.confirmed'  => 'Xác nhận mật khẩu không khớp.',
+            'medical_history.*.mimes'=> 'File tiền sử bệnh lý phải là định dạng PDF.',
+            'medical_history.*.max'  => 'Kích thước file không được vượt quá 10MB.',
         ]);
 
         \DB::transaction(function() use ($validated, $customer, $selfProfile, $request) {
@@ -260,7 +266,7 @@ class CustomerController extends Controller
             $customer->update($userData);
 
             if ($selfProfile) {
-                $selfProfile->update([
+                $profileData = [
                     'full_name'       => $validated['profile_full_name'] ?? $validated['full_name'],
                     'date_of_birth'   => $validated['date_of_birth'],
                     'gender'          => $validated['gender'],
@@ -273,7 +279,31 @@ class CustomerController extends Controller
                     'insurance_place' => $validated['insurance_place'] ?? null,
                     'insurance_expiry'=> $validated['insurance_expiry'] ?? null,
                     'symptom_notes'   => $validated['symptom_notes'] ?? null,
-                ]);
+                ];
+
+                $currentMedicalHistories = is_string($selfProfile->medical_history) ? json_decode($selfProfile->medical_history, true) : ($selfProfile->medical_history ?? []);
+                
+                if ($request->filled('deleted_medical_histories')) {
+                    $deleted = $request->input('deleted_medical_histories');
+                    foreach ($deleted as $d) {
+                        Storage::disk('public')->delete($d);
+                        if (($key = array_search($d, $currentMedicalHistories)) !== false) {
+                            unset($currentMedicalHistories[$key]);
+                        }
+                    }
+                    $currentMedicalHistories = array_values($currentMedicalHistories);
+                }
+
+                if ($request->hasFile('medical_history')) {
+                    foreach ($request->file('medical_history') as $file) {
+                        $path = $file->store('medical_histories', 'public');
+                        $currentMedicalHistories[] = $path;
+                    }
+                }
+
+                $profileData['medical_history'] = !empty($currentMedicalHistories) ? $currentMedicalHistories : null;
+
+                $selfProfile->update($profileData);
             }
 
             SystemLog::create([

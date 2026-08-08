@@ -157,7 +157,17 @@ class PatientController extends Controller
             }
         }
 
-        $this->patientProfileService->updateProfile($profile, $validated);
+        $medicalHistoryPaths = [];
+        if ($request->hasFile('medical_history')) {
+            foreach ($request->file('medical_history') as $file) {
+                $path = $file->store('medical_histories', 'public');
+                $medicalHistoryPaths[] = $path;
+            }
+        }
+
+        $deletedMedicalHistories = $request->input('deleted_medical_histories', []);
+
+        $this->patientProfileService->updateProfile($profile, $validated, $medicalHistoryPaths, $deletedMedicalHistories);
 
         return redirect()->route('receptionist.patients.edit', $id)
             ->with('success', 'Cập nhật thông tin hồ sơ thành công.');

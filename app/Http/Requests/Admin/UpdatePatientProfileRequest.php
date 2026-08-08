@@ -28,6 +28,9 @@ class UpdatePatientProfileRequest extends FormRequest
             'insurance_place'        => 'nullable|string|max:255',
             'insurance_expiry'       => 'nullable|date',
             'symptom_notes'          => 'nullable|string',
+            'deleted_medical_histories' => 'nullable|array',
+            'deleted_medical_histories.*' => 'string',
+            'medical_history.*'      => 'nullable|file|mimes:pdf|max:10240',
         ];
     }
 
@@ -41,6 +44,8 @@ class UpdatePatientProfileRequest extends FormRequest
             'date_of_birth.before'   => 'Ngày sinh không hợp lệ.',
             'gender.required'        => 'Vui lòng chọn giới tính.',
             'id_card.regex'          => 'Số CCCD/CMND hồ sơ không đúng định dạng.',
+            'medical_history.*.mimes'=> 'File tiền sử bệnh lý phải là định dạng PDF.',
+            'medical_history.*.max'  => 'Kích thước file không được vượt quá 10MB.',
         ];
     }
 

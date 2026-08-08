@@ -37,6 +37,9 @@ class UpdateCustomerRequest extends FormRequest
             'insurance_place'        => 'nullable|string|max:255',
             'insurance_expiry'       => 'nullable|date',
             'symptom_notes'          => 'nullable|string',
+            'deleted_medical_histories' => 'nullable|array',
+            'deleted_medical_histories.*' => 'string',
+            'medical_history.*'      => 'nullable|file|mimes:pdf|max:10240',
         ];
 
         if ($selfProfile && $selfProfile->card_id_change_count >= 1) {
@@ -70,6 +73,8 @@ class UpdateCustomerRequest extends FormRequest
             'gender.required'     => 'Vui lòng chọn giới tính.',
             'password.min'        => 'Mật khẩu tối thiểu 8 ký tự.',
             'password.confirmed'  => 'Xác nhận mật khẩu không khớp.',
+            'medical_history.*.mimes'=> 'File tiền sử bệnh lý phải là định dạng PDF.',
+            'medical_history.*.max'  => 'Kích thước file không được vượt quá 10MB.',
         ];
     }
 }

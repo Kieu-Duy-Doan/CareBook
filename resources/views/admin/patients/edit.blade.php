@@ -45,7 +45,7 @@
             </div>
         @endif
 
-        <form action="{{ route('admin.patients.update', $profile->id) }}" method="POST" x-data="{ loading: false }"
+        <form action="{{ route('admin.patients.update', $profile->id) }}" method="POST" enctype="multipart/form-data" x-data="{ loading: false }"
             @submit="loading = true">
             @csrf
             @method('PUT')
@@ -216,6 +216,44 @@
                         </div>
                         <div class="p-6">
                             <div class="grid grid-cols-1 gap-6">
+                                <div x-data="{
+                                    existingFiles: {{ $profile->medical_history && is_string($profile->medical_history) ? $profile->medical_history : json_encode($profile->medical_history ?? []) }},
+                                    deletedFiles: [],
+                                    removeFile(path) {
+                                        this.deletedFiles.push(path);
+                                        this.existingFiles = this.existingFiles.filter(f => f !== path);
+                                    }
+                                }">
+                                    <template x-for="deleted in deletedFiles" :key="deleted">
+                                        <input type="hidden" name="deleted_medical_histories[]" :value="deleted">
+                                    </template>
+
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Tiền sử bệnh lý (Hồ sơ y tế cũ)</label>
+                                    
+                                    <div class="mb-3 space-y-2" x-show="existingFiles.length > 0" style="display: none;">
+                                        <template x-for="file in existingFiles" :key="file">
+                                            <div class="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                                                <div class="flex items-center gap-3 overflow-hidden">
+                                                    <i class="fa-solid fa-file-pdf text-red-500 text-xl flex-shrink-0"></i>
+                                                    <a :href="'/storage/' + file" target="_blank" class="text-sm font-medium text-blue-600 hover:underline truncate" x-text="file.split('/').pop()"></a>
+                                                </div>
+                                                <button type="button" @click="removeFile(file)" class="text-red-500 hover:text-red-700 p-1 rounded-md hover:bg-red-50 transition flex-shrink-0" title="Xóa file">
+                                                    <i class="fa-solid fa-trash-can"></i>
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <input type="file" name="medical_history[]" multiple accept=".pdf"
+                                        class="w-full border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 @error('medical_history') border-red-500 @enderror @error('medical_history.*') border-red-500 @enderror">
+                                    @error('medical_history')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                    @error('medical_history.*')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Ghi chú triệu chứng, dị
                                         ứng, thông tin khác...</label>

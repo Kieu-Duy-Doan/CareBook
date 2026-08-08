@@ -140,7 +140,9 @@ class CustomerController extends Controller
             }
         }
 
-        $this->customerProfileService->updateCustomer($customer, $validated, $selfProfile, $medicalHistoryPaths);
+        $deletedMedicalHistories = $request->input('deleted_medical_histories', []);
+
+        $this->customerProfileService->updateCustomer($customer, $validated, $selfProfile, $medicalHistoryPaths, $deletedMedicalHistories);
 
         return redirect()->route('receptionist.customers.index')
             ->with('success', 'Cập nhật khách hàng thành công.');
