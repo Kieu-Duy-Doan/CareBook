@@ -64,7 +64,7 @@ class PatientProfileService
                 'symptom_notes'   => $data['symptom_notes'] ?? null,
             ];
 
-            if ($profile->card_id_change_count < 1 && isset($data['id_card']) && $data['id_card'] !== $profile->id_card) {
+            if (array_key_exists('id_card', $data) && $data['id_card'] !== $profile->id_card) {
                 $updateData['id_card'] = $data['id_card'];
                 $updateData['patient_code'] = 'BN' . $data['id_card'];
                 $updateData['card_id_change_count'] = $profile->card_id_change_count + 1;

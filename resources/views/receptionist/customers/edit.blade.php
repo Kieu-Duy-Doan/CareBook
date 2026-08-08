@@ -88,13 +88,8 @@
                                     @endphp
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Số CCCD / CMND <span
                                             class="text-red-500">*</span></label>
-                                    @if($selfProfile && $selfProfile->card_id_change_count >= 1)
-                                        <input type="text" name="id_card" value="{{ old('id_card', $customer->id_card) }}"
-                                            readonly class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-100 text-gray-500 cursor-not-allowed" title="Trường này chỉ được phép cập nhật 1 lần">
-                                    @else
                                         <input type="text" name="id_card" value="{{ old('id_card', $customer->id_card) }}"
                                             required class="w-full border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 px-4 py-2 @error('id_card') border-red-500 @enderror">
-                                    @endif
                                 </div>
 
                                 <div>

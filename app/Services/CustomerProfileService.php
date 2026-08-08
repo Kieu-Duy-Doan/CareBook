@@ -74,7 +74,7 @@ class CustomerProfileService
                 $userData['password'] = Hash::make($data['password']);
             }
 
-            if ($selfProfile && $selfProfile->card_id_change_count < 1 && isset($data['id_card']) && $data['id_card'] !== $customer->id_card) {
+            if (array_key_exists('id_card', $data) && $data['id_card'] !== $customer->id_card) {
                 $userData['id_card'] = $data['id_card'];
             }
 
@@ -95,7 +95,7 @@ class CustomerProfileService
                     'symptom_notes'   => $data['symptom_notes'] ?? null,
                 ];
 
-                if ($selfProfile->card_id_change_count < 1 && isset($data['id_card']) && $data['id_card'] !== $selfProfile->id_card) {
+                if (array_key_exists('id_card', $data) && $data['id_card'] !== $selfProfile->id_card) {
                     $profileData['id_card'] = $data['id_card'];
                     $profileData['patient_code'] = 'BN' . $data['id_card'];
                     $profileData['card_id_change_count'] = $selfProfile->card_id_change_count + 1;
