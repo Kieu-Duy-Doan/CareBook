@@ -678,7 +678,7 @@
                     @if ($appointment->patientProfile && $appointment->patientProfile->medical_history)
                     @php
                     $historyFiles = is_string($appointment->patientProfile->medical_history) ? json_decode($appointment->patientProfile->medical_history, true) : $appointment->patientProfile->medical_history;
-                    $pdfFiles = is_array($historyFiles) ? array_filter($historyFiles, function($f) { return is_string($f) && str_starts_with($f, 'http'); }) : [];
+                    $pdfFiles = is_array($historyFiles) ? $historyFiles : [];
                     @endphp
                     @if (count($pdfFiles) > 0)
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -689,13 +689,13 @@
                         <div class="p-6">
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 @foreach($pdfFiles as $file)
-                                <a href="{{ $file }}" target="_blank" class="flex items-center gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition">
+                                <a href="{{ str_starts_with($file, 'http') ? $file : Storage::url($file) }}" target="_blank" class="flex items-center gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition">
                                     <i class="fa-solid fa-file-pdf text-red-500 text-2xl"></i>
                                     <div class="flex-1 overflow-hidden">
                                         <div class="text-sm font-medium text-gray-900 truncate">File bệnh án {{ $loop->iteration }}</div>
-                                        <div class="text-xs text-gray-500 truncate">{{ $file }}</div>
+                                        <div class="text-xs text-gray-500">Nhấn để xem / Tải về</div>
                                     </div>
-                                    <i class="fa-solid fa-arrow-up-right-from-square text-gray-400"></i>
+                                    <i class="fa-solid fa-external-link-alt text-gray-400"></i>
                                 </a>
                                 @endforeach
                             </div>

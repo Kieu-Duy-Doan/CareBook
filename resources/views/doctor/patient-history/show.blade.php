@@ -42,10 +42,37 @@
                 </div>
             </div>
         </div>
-        @if ($patient->medical_history)
+        @if ($patient->symptom_notes)
             <div class="mt-6 p-4 bg-red-50 border border-red-100 rounded-lg">
-                <div class="text-xs font-bold text-red-700 uppercase mb-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Lưu ý y tế / Tiền sử bệnh</div>
-                <p class="text-sm text-red-800">{{ is_string($patient->medical_history) ? $patient->medical_history : json_encode($patient->medical_history, JSON_UNESCAPED_UNICODE) }}</p>
+                <div class="text-xs font-bold text-red-700 uppercase mb-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Ghi chú triệu chứng / Lưu ý y tế</div>
+                <p class="text-sm text-red-800 whitespace-pre-line">{{ $patient->symptom_notes }}</p>
+            </div>
+        @endif
+
+        @if ($patient->medical_history)
+            <div class="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                <div class="text-xs font-bold text-blue-700 uppercase mb-2"><i class="fa-solid fa-file-medical mr-1"></i> Hồ sơ đính kèm (Tiền sử bệnh lý)</div>
+                @php
+                    $historyArray = is_string($patient->medical_history) ? json_decode($patient->medical_history, true) : $patient->medical_history;
+                @endphp
+                @if (is_array($historyArray) && count($historyArray) > 0)
+                    <div class="flex flex-wrap gap-2 mt-2">
+                        @foreach ($historyArray as $hist)
+                            <a href="{{ Storage::url($hist) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-blue-200 rounded text-xs font-medium text-blue-700 hover:bg-blue-100 transition" title="Xem trước / Tải về">
+                                @if(Str::endsWith($hist, ['.pdf']))
+                                    <i class="fa-solid fa-file-pdf text-red-500"></i>
+                                @elseif(Str::endsWith($hist, ['.doc', '.docx']))
+                                    <i class="fa-solid fa-file-word text-blue-600"></i>
+                                @elseif(Str::endsWith($hist, ['.png', '.jpg', '.jpeg']))
+                                    <i class="fa-regular fa-image text-green-500"></i>
+                                @else
+                                    <i class="fa-solid fa-file text-gray-400"></i>
+                                @endif
+                                Tệp đính kèm {{ $loop->iteration }}
+                            </a>
+                        @endforeach
+                    </div>
+                @endif
             </div>
         @endif
     </div>

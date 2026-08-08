@@ -150,12 +150,17 @@
                     <!-- Tiền sử y tế (Fixed Bug) -->
                     <div class="mt-8 pt-6 border-t border-slate-100">
                         <h4 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <div
-                                class="w-6 h-6 rounded border border-rose-100 bg-rose-50 text-rose-500 flex items-center justify-center text-xs">
+                            <div class="w-6 h-6 rounded border border-rose-100 bg-rose-50 text-rose-500 flex items-center justify-center text-xs">
                                 <i class="fa-solid fa-file-waveform"></i>
                             </div>
                             Tiền sử y tế / Hồ sơ đính kèm
                         </h4>
+
+                        @if ($profile && $profile->symptom_notes)
+                            <div class="mb-4">
+                                <p class="text-sm text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-100 whitespace-pre-line">{{ $profile->symptom_notes }}</p>
+                            </div>
+                        @endif
 
                         <div>
                             @if ($profile && $profile->medical_history)
@@ -168,25 +173,27 @@
                                 @if (is_array($historyArray) && count($historyArray) > 0)
                                     <div class="flex flex-wrap gap-4 mt-2">
                                         @foreach ($historyArray as $history)
-                                            @if (str_contains(strtolower($history), 'http') &&
-                                                    (str_contains(strtolower($history), 'cloudinary') ||
-                                                        str_contains(strtolower($history), '.jpg') ||
-                                                        str_contains(strtolower($history), '.png')))
+                                            @if (str_contains(strtolower($history), 'http') && (str_contains(strtolower($history), 'cloudinary') || str_contains(strtolower($history), '.jpg') || str_contains(strtolower($history), '.png')))
                                                 <!-- Image Thumbnail -->
-                                                <div @click="lightboxOpen = true; lightboxImg = '{{ $history }}'"
-                                                    class="w-24 h-24 rounded-xl overflow-hidden cursor-pointer border-2 border-slate-100 hover:border-primary transition-colors group relative">
-                                                    <img src="{{ $history }}" class="w-full h-full object-cover"
-                                                        alt="Tiền sử y tế">
-                                                    <div
-                                                        class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <i
-                                                            class="fa-solid fa-magnifying-glass-plus text-white text-xl"></i>
+                                                <div @click="lightboxOpen = true; lightboxImg = '{{ $history }}'" class="w-24 h-24 rounded-xl overflow-hidden cursor-pointer border-2 border-slate-100 hover:border-primary transition-colors group relative">
+                                                    <img src="{{ $history }}" class="w-full h-full object-cover" alt="Tiền sử y tế">
+                                                    <div class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <i class="fa-solid fa-magnifying-glass-plus text-white text-xl"></i>
                                                     </div>
                                                 </div>
+                                            @elseif (str_contains(strtolower($history), '.pdf'))
+                                                <!-- PDF Link -->
+                                                <a href="{{ asset('storage/' . $history) }}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-50 text-slate-700 hover:text-rose-600 hover:bg-rose-50 rounded-xl text-sm font-medium border border-slate-200 hover:border-rose-200 shadow-sm transition-colors group">
+                                                    <i class="fa-solid fa-file-pdf text-rose-500 group-hover:scale-110 transition-transform"></i>
+                                                    Tài liệu y tế đính kèm (PDF)
+                                                    <i class="fa-solid fa-download ml-2 opacity-50 group-hover:opacity-100"></i>
+                                                </a>
                                             @else
-                                                <!-- Text Badge (Fallback) -->
-                                                <span
-                                                    class="px-4 py-2 bg-slate-50 text-slate-700 rounded-xl text-sm font-medium border border-slate-200 shadow-sm">{{ $history }}</span>
+                                                <a href="{{ asset('storage/' . $history) }}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-50 text-slate-700 hover:text-primary hover:bg-primary/5 rounded-xl text-sm font-medium border border-slate-200 hover:border-primary/20 shadow-sm transition-colors group">
+                                                    <i class="fa-solid fa-file text-slate-400 group-hover:text-primary group-hover:scale-110 transition-transform"></i>
+                                                    Hồ sơ đính kèm
+                                                    <i class="fa-solid fa-download ml-2 opacity-50 group-hover:opacity-100"></i>
+                                                </a>
                                             @endif
                                         @endforeach
                                     </div>
