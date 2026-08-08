@@ -6,6 +6,7 @@
     <title>Đăng nhập - CareBook</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="font-sans antialiased bg-gray-50 text-gray-900">
     <div class="min-h-screen flex">
@@ -107,7 +108,7 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                                 <i class="fa-solid fa-lock"></i>
                             </div>
-                            <input :type="showPassword ? 'text' : 'password'" id="password" name="password" required
+                            <input type="password" :type="showPassword ? 'text' : 'password'" id="password" name="password" required
                                 class="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
                                 placeholder="Nhập mật khẩu">
                             <button type="button" @click="showPassword = !showPassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">

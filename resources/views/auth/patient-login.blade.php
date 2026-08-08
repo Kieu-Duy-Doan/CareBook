@@ -108,7 +108,7 @@
                             class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-600 transition-colors">
                             <i class="fa-solid fa-lock"></i>
                         </div>
-                        <input :type="showPassword ? 'text' : 'password'" id="password" name="password" required
+                        <input type="password" :type="showPassword ? 'text' : 'password'" id="password" name="password" required
                             class="block w-full pl-11 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none transition-all placeholder:text-slate-400"
                             placeholder="Nhập mật khẩu">
                         <button type="button" @click="showPassword = !showPassword"
