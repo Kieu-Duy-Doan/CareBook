@@ -182,8 +182,18 @@ class ReportService
         $patientPayments = $payments->whereIn('method', ['cash', 'qr']);
         $patientRevenue = $patientPayments->sum('amount');
 
-        // Doanh thu BHYT chi trả
-        $insuranceRevenue = $payments->where('method', 'insurance')->sum('amount');
+        // Doanh thu BHYT chi trả (phần chênh lệch giữa tổng chi phí và số tiền bệnh nhân đã trả, hoặc 100% nếu là insurance/waived)
+        $insuranceRevenue = $payments->sum(function ($p) {
+            $fee = $p->clinicalVisits->sum('payment_amount');
+            $totalFee = max($fee, (float) $p->amount);
+            
+            if ($p->method === 'insurance' || $p->method === 'waived') {
+                return $totalFee;
+            }
+            
+            $patientAmount = (float) $p->amount;
+            return max(0, $totalFee - $patientAmount);
+        });
 
         // Chờ thu (pending clinical visits) — vẫn lọc theo appointment_date vì chưa có paid_at
         $pendingQuery = \App\Models\ClinicalVisit::where('payment_status', 'pending')
@@ -199,6 +209,25 @@ class ReportService
             });
         $pendingRevenue = $pendingQuery->sum('payment_amount');
 
+        // Doanh thu BHYT chi trả
+        // BHYT = Tổng phí của các lượt khám - Tổng số tiền đã thanh toán cho các lượt khám đó
+        $uniqueVisits = collect();
+        foreach ($payments as $p) {
+            foreach ($p->clinicalVisits as $visit) {
+                $uniqueVisits->put($visit->id, $visit);
+            }
+        }
+        
+        $insuranceRevenue = $uniqueVisits->sum(function($visit) {
+            // Lấy tổng số tiền đã được phân bổ cho lượt khám này từ các thanh toán thành công
+            $paidForVisit = DB::table('payment_clinical_visit')
+                ->join('payments', 'payments.id', '=', 'payment_clinical_visit.payment_id')
+                ->where('payment_clinical_visit.clinical_visit_id', $visit->id)
+                ->where('payments.status', 'completed')
+                ->sum('payment_clinical_visit.amount_allocated');
+                
+            return max(0, $visit->payment_amount - $paidForVisit);
+        });
         // Phân tách theo phương thức
         $cashRevenue = $payments->where('method', 'cash')->sum('amount');
         $qrRevenue = $payments->where('method', 'qr')->sum('amount');
