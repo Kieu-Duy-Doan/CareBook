@@ -150,7 +150,11 @@
                                             title="{{ data_get($ws, 'room.name') }}">
                                             <i class="fa-solid fa-door-open text-gray-400"></i>
                                             P.{{ data_get($ws, 'room.room_number') ?? data_get($ws, 'room.name') }}
-                                            đây là override
+                                            @if(data_get($ws, 'override_type') === 'close')
+                                                <span class="text-[10px] bg-red-100 text-red-600 px-1 rounded ml-1 font-medium">Đóng ca</span>
+                                            @else
+                                                <span class="text-[10px] bg-green-100 text-green-600 px-1 rounded ml-1 font-medium">Ca thêm</span>
+                                            @endif
                                         </div>
                                     </a>
                                 @endif

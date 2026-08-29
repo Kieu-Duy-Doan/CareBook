@@ -170,6 +170,7 @@ class WorkScheduleController extends Controller
                             "max_slots" => 2,
                             "is_active" => true,
                             'is_override' => true,
+                            'override_type' => $override->type,
                             'room' => $override['room']
                         ]
                     ];
@@ -178,16 +179,32 @@ class WorkScheduleController extends Controller
                 }
 
                 foreach ($weeklySchedules[$dayOfWeek] as $key => $schedule) {
-
                     if (
                         $override->type == 'close' &&
-                        $override->start_time == $schedule->start_time &&
-                        $override->end_time == $schedule->end_time
+                        substr($override->start_time, 0, 5) == substr(data_get($schedule, 'start_time'), 0, 5) &&
+                        substr($override->end_time, 0, 5) == substr(data_get($schedule, 'end_time'), 0, 5)
                     ) {
-                        unset($weeklySchedules[$dayOfWeek][$key]);
-                    } elseif (
-                        $override->type === 'extra'
-                    ) {
+                        if (is_object($schedule)) {
+                            $schedule->is_override = true;
+                            $schedule->override_type = 'close';
+                        } else {
+                            $weeklySchedules[$dayOfWeek][$key]['is_override'] = true;
+                            $weeklySchedules[$dayOfWeek][$key]['override_type'] = 'close';
+                        }
+                    }
+                }
+
+                if ($override->type === 'extra') {
+                    // Đảm bảo không bị add nhiều lần nếu vòng lặp chạy nhiều lần
+                    $alreadyAdded = false;
+                    foreach ($weeklySchedules[$dayOfWeek] as $ws) {
+                        if (data_get($ws, 'is_override') && data_get($ws, 'override_type') === 'extra' && data_get($ws, 'start_time') === $override->start_time && data_get($ws, 'end_time') === $override->end_time) {
+                            $alreadyAdded = true;
+                            break;
+                        }
+                    }
+
+                    if (!$alreadyAdded) {
                         $weeklySchedules[$dayOfWeek][] = [
                             'id' => $override->id,
                             "doctor_profile_id" => $override['doctor_profile_id'],
@@ -199,6 +216,7 @@ class WorkScheduleController extends Controller
                             "max_slots" => 2,
                             "is_active" => true,
                             "is_override" => true,
+                            "override_type" => 'extra',
                             'room' => $override['room']
                         ];
                     }
@@ -292,6 +310,7 @@ class WorkScheduleController extends Controller
                             "max_slots" => 2,
                             "is_active" => true,
                             'is_override' => true,
+                            'override_type' => $override->type,
                             'room' => $override['room']
                         ]
                     ];
@@ -301,11 +320,29 @@ class WorkScheduleController extends Controller
                 foreach ($weeklySchedules[$ovDayOfWeek] as $key => $ws) {
                     if (
                         $override->type == 'close' &&
-                        $override->start_time == $ws->start_time &&
-                        $override->end_time == $ws->end_time
+                        substr($override->start_time, 0, 5) == substr(data_get($ws, 'start_time'), 0, 5) &&
+                        substr($override->end_time, 0, 5) == substr(data_get($ws, 'end_time'), 0, 5)
                     ) {
-                        unset($weeklySchedules[$ovDayOfWeek][$key]);
-                    } elseif ($override->type === 'extra') {
+                        if (is_object($ws)) {
+                            $ws->is_override = true;
+                            $ws->override_type = 'close';
+                        } else {
+                            $weeklySchedules[$ovDayOfWeek][$key]['is_override'] = true;
+                            $weeklySchedules[$ovDayOfWeek][$key]['override_type'] = 'close';
+                        }
+                    }
+                }
+
+                if ($override->type === 'extra') {
+                    $alreadyAdded = false;
+                    foreach ($weeklySchedules[$ovDayOfWeek] as $ws_check) {
+                        if (data_get($ws_check, 'is_override') && data_get($ws_check, 'override_type') === 'extra' && data_get($ws_check, 'start_time') === $override->start_time && data_get($ws_check, 'end_time') === $override->end_time) {
+                            $alreadyAdded = true;
+                            break;
+                        }
+                    }
+
+                    if (!$alreadyAdded) {
                         $weeklySchedules[$ovDayOfWeek][] = [
                             'id' => $override->id,
                             "doctor_profile_id" => $override['doctor_profile_id'],
@@ -317,6 +354,7 @@ class WorkScheduleController extends Controller
                             "max_slots" => 2,
                             "is_active" => true,
                             "is_override" => true,
+                            "override_type" => 'extra',
                             'room' => $override['room']
                         ];
                     }

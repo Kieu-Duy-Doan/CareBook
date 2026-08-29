@@ -17,6 +17,12 @@
         fillSchedule(data) {
             this.scheduleMode = 'edit';
             this.scheduleForm = { ...data };
+            if (this.scheduleForm.start_time) {
+                this.scheduleForm.start_time = this.scheduleForm.start_time.substring(0, 5);
+            }
+            if (this.scheduleForm.end_time) {
+                this.scheduleForm.end_time = this.scheduleForm.end_time.substring(0, 5);
+            }
             this.openSchedule = true;
         },
         get previewSlots() {
@@ -401,7 +407,7 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-700">
-                                {{ $ov->type === 'extra' ? substr($ov->start_time, 0, 5) . ' - ' . substr($ov->end_time, 0, 5) : '—' }}
+                                {{ $ov->start_time && $ov->end_time ? substr($ov->start_time, 0, 5) . ' - ' . substr($ov->end_time, 0, 5) : '—' }}
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-700">
                                 {{ $ov->reason ?? '—' }}
@@ -518,18 +524,22 @@
                                         <option value="1">Chủ Nhật</option>
                                     </select>
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Giờ bắt đầu <span
+                                <div class="sm:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Ca làm việc <span
                                             class="text-red-500">*</span></label>
-                                    <input type="time" name="start_time" x-model="scheduleForm.start_time"
-                                        required
-                                        class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Giờ kết thúc <span
-                                            class="text-red-500">*</span></label>
-                                    <input type="time" name="end_time" x-model="scheduleForm.end_time" required
-                                        class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none">
+                                    <select required
+                                            :value="scheduleForm.start_time ? (scheduleForm.start_time.substring(0,5) + '|' + scheduleForm.end_time.substring(0,5)) : ''"
+                                            @change="
+                                                scheduleForm.start_time = $event.target.value.split('|')[0];
+                                                scheduleForm.end_time = $event.target.value.split('|')[1];
+                                            "
+                                            class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
+                                        <option value="">-- Chọn ca làm việc --</option>
+                                        <option value="07:00|11:00">Ca sáng (07:00 - 11:00)</option>
+                                        <option value="13:00|17:00">Ca chiều (13:00 - 17:00)</option>
+                                    </select>
+                                    <input type="hidden" name="start_time" x-model="scheduleForm.start_time">
+                                    <input type="hidden" name="end_time" x-model="scheduleForm.end_time">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Thời lượng slot (phút)
@@ -656,17 +666,20 @@
                                     class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 text-sm outline-none">
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Giờ bắt đầu <span
-                                        class="text-red-500">*</span></label>
-                                <input type="time" name="start_time" :required="overrideType === 'extra'"
-                                    class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 text-sm outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Giờ kết thúc <span
-                                        class="text-red-500">*</span></label>
-                                <input type="time" name="end_time" :required="overrideType === 'extra'"
-                                    class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 text-sm outline-none">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Ca làm việc <span
+                                            class="text-red-500">*</span></label>
+                                    <select :required="overrideType === 'extra'" 
+                                            @change="$refs.start_time.value = $event.target.value.split('|')[0]; $refs.end_time.value = $event.target.value.split('|')[1];"
+                                            class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 text-sm outline-none bg-white">
+                                        <option value="">-- Chọn ca làm việc --</option>
+                                        <option value="07:00|11:00">Ca sáng (07:00 - 11:00)</option>
+                                        <option value="13:00|17:00">Ca chiều (13:00 - 17:00)</option>
+                                    </select>
+                                    <input type="hidden" name="start_time" x-ref="start_time">
+                                    <input type="hidden" name="end_time" x-ref="end_time">
+                                </div>
                             </div>
 
                             <div>

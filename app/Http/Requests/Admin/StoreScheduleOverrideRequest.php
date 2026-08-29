@@ -86,9 +86,18 @@ class StoreScheduleOverrideRequest extends FormRequest
 
             $existsTime = $overlapQuery->exists();
 
+            $existsOverrideForDoctor = ScheduleOverride::where('override_date', $this->input('override_date'))
+                ->where('type', 'extra')
+                ->where('doctor_profile_id', $this->input('doctor_profile_id'))
+                ->where(function ($query) {
+                    $query->where('start_time', '<', $this->input('end_time'))
+                        ->where('end_time', '>', $this->input('start_time'));
+                })
+                ->exists();
+
             if ($this->input('type') === 'extra') {
-                if ($existsTime) {
-                    $validator->errors()->add('type', 'Không thể thêm ca. Bác sĩ đã có lịch làm việc trùng thời gian này.');
+                if ($existsTime || $existsOverrideForDoctor) {
+                    $validator->errors()->add('type', 'Không thể thêm ca. Bác sĩ đã có lịch làm việc hoặc ca ngoại lệ trùng thời gian này.');
                 }
 
                 if ($this->filled('room_id')) {
