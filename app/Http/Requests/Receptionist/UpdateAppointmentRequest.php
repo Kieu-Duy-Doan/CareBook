@@ -15,7 +15,8 @@ class UpdateAppointmentRequest extends FormRequest
 
     public function rules()
     {
-        $appointment = $this->route('appointment') ?? Appointment::findOrFail($this->route('id'));
+        $appointmentId = $this->route('appointment') ?? $this->route('id');
+        $appointment = $appointmentId instanceof Appointment ? $appointmentId : Appointment::findOrFail($appointmentId);
         $isLocked = in_array($appointment->status, ['examining', 'completed']);
 
         if ($isLocked) {
@@ -55,7 +56,8 @@ class UpdateAppointmentRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            $appointment = $this->route('appointment') ?? Appointment::findOrFail($this->route('id'));
+            $appointmentId = $this->route('appointment') ?? $this->route('id');
+            $appointment = $appointmentId instanceof Appointment ? $appointmentId : Appointment::findOrFail($appointmentId);
             $oldStatus = $appointment->status;
             $newStatus = $this->status;
 

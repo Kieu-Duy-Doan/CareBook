@@ -69,13 +69,14 @@ class WorkScheduleController extends Controller
                 ->toArray();
 
             // Xây dựng chi tiết slot với info booked
-            $slotDetails = array_map(function ($slot) use ($bookedAppointments, $maxSlots) {
+            $slotDetails = array_map(function ($slot) use ($bookedAppointments, $carbonDate) {
                 $bookedCount = count(array_filter($bookedAppointments, fn($t) => $t === $slot));
+                $isPast = $carbonDate->isToday() && Carbon::parse($carbonDate->toDateString() . ' ' . $slot)->lte(now());
                 return [
                     'time' => $slot,
                     'bookedCount' => $bookedCount,
-                    'maxSlots' => $maxSlots,
-                    'isFull' => $bookedCount >= $maxSlots,
+                    'maxSlots' => 1,
+                    'isFull' => $bookedCount >= 1 || $isPast,
                 ];
             }, $slots);
 
@@ -183,7 +184,8 @@ class WorkScheduleController extends Controller
 
                         $slot = $current->copy();
                         $timeStr = $slot->format('H:i');
-                        $isFull = ($appointmentsCount[$timeStr] ?? 0) >= $maxSlots;
+                        $isPast = $carbonDate->isToday() && $slot->lte(now());
+                        $isFull = ($appointmentsCount[$timeStr] ?? 0) >= 1 || $isPast;
 
                         $slotNormals[] = [
                             'time' => $timeStr,
@@ -213,7 +215,8 @@ class WorkScheduleController extends Controller
 
                         $slot = $current->copy();
                         $timeStr = $slot->format('H:i');
-                        $isFull = ($appointmentsCount[$timeStr] ?? 0) >= $maxSlots;
+                        $isPast = $carbonDate->isToday() && $slot->lte(now());
+                        $isFull = ($appointmentsCount[$timeStr] ?? 0) >= 1 || $isPast;
 
                         $slotOverrides[] = [
                             'time' => $timeStr,
