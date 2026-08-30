@@ -156,7 +156,9 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                             <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
                                 <span class="block text-xs text-gray-500 mb-1">Học hàm/Học vị</span>
-                                <span class="block font-medium text-gray-900">{{ $doctor->academic_title ?? '—' }}</span>
+                                <span class="block font-medium text-gray-900">
+                                    {{ collect([$doctor->academic_rank === 'none' ? null : $doctor->academic_rank, $doctor->degree])->filter()->join(', ') ?: '—' }}
+                                </span>
                             </div>
                             <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
                                 <span class="block text-xs text-gray-500 mb-1">Cấp độ</span>
@@ -219,13 +221,13 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100">
-                                @forelse ($doctor->workSchedules as $schedule)
+                                @forelse ($doctor->workSchedules->sortBy('day_of_week') as $schedule)
                                     <tr class="hover:bg-gray-50 transition">
                                         <td class="px-5 py-3 font-medium text-gray-900">
                                             @php
                                                 $days = [
-                                                    1 => 'Thứ 2', 2 => 'Thứ 3', 3 => 'Thứ 4', 
-                                                    4 => 'Thứ 5', 5 => 'Thứ 6', 6 => 'Thứ 7', 0 => 'Chủ nhật'
+                                                    2 => 'Thứ 2', 3 => 'Thứ 3', 4 => 'Thứ 4', 
+                                                    5 => 'Thứ 5', 6 => 'Thứ 6', 7 => 'Thứ 7', 1 => 'Chủ nhật'
                                                 ];
                                             @endphp
                                             {{ $days[$schedule->day_of_week] ?? '' }}

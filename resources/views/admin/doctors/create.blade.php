@@ -88,22 +88,21 @@
                             </div>
 
                             <!-- Email -->
-                            <div>
+                            <div class="md:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
                                 <input type="email" name="email" value="{{ old('email') }}"
                                        class="w-full border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 px-4 py-2 @error('email') border-red-500 @enderror"
                                        placeholder="VD: bs_nguyenvana@example.com">
                                 @error('email') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
-                            
-                            <div class="hidden md:block"></div>
 
                             <!-- Password -->
                             <div x-data="{ showPass: false }">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Mật khẩu <span class="text-red-500">*</span></label>
                                 <div class="relative">
                                     <input :type="showPass ? 'text' : 'password'" name="password" required minlength="8"
-                                           class="w-full border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 px-4 py-2 pr-10 @error('password') border-red-500 @enderror">
+                                           class="w-full border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 px-4 py-2 pr-10 @error('password') border-red-500 @enderror"
+                                           placeholder="Nhập mật khẩu (tối thiểu 8 ký tự)">
                                     <button type="button" @click="showPass = !showPass" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
                                         <i class="fa-solid" :class="showPass ? 'fa-eye-slash' : 'fa-eye'"></i>
                                     </button>
@@ -116,7 +115,8 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Xác nhận mật khẩu <span class="text-red-500">*</span></label>
                                 <div class="relative">
                                     <input :type="showPass2 ? 'text' : 'password'" name="password_confirmation" required
-                                           class="w-full border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 px-4 py-2 pr-10">
+                                           class="w-full border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 px-4 py-2 pr-10"
+                                           placeholder="Nhập lại mật khẩu">
                                     <button type="button" @click="showPass2 = !showPass2" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
                                         <i class="fa-solid" :class="showPass2 ? 'fa-eye-slash' : 'fa-eye'"></i>
                                     </button>
@@ -202,7 +202,7 @@
                             </div>
 
                             <!-- Số chứng chỉ hành nghề -->
-                            <div>
+                            <div class="md:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Số chứng chỉ hành nghề <span class="text-red-500">*</span></label>
                                 <input type="text" name="license_number" value="{{ old('license_number') }}" required
                                        class="w-full border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 px-4 py-2 @error('license_number') border-red-500 @enderror"

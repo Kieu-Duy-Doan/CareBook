@@ -34,7 +34,39 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Cột trái: Form (2/3) -->
             <div class="lg:col-span-2">
-                <form action="{{ route('admin.doctors.update', $doctor->id) }}" method="POST" x-data="{ loading: false }" @submit="loading = true">
+                <form action="{{ route('admin.doctors.update', $doctor->id) }}" method="POST" 
+                      x-data="{ 
+                          loading: false,
+                          fullName: '{{ old('full_name', $doctor->user->full_name) }}',
+                          doctorCode: '{{ old('doctor_code', $doctor->doctor_code) }}',
+                          originalFullName: '{{ $doctor->user->full_name }}',
+                          originalDoctorCode: '{{ $doctor->doctor_code }}',
+                          generateDoctorCode() {
+                              if (this.fullName.trim() === '') {
+                                  this.doctorCode = this.originalDoctorCode;
+                                  return;
+                              }
+                              if (this.fullName.trim() === this.originalFullName.trim()) {
+                                  this.doctorCode = this.originalDoctorCode;
+                                  return;
+                              }
+                              fetch('{{ route('admin.doctors.generate-code') }}', {
+                                  method: 'POST',
+                                  headers: {
+                                      'Content-Type': 'application/json',
+                                      'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                  },
+                                  body: JSON.stringify({ full_name: this.fullName })
+                              })
+                              .then(res => res.json())
+                              .then(data => {
+                                  if (data.doctor_code) {
+                                      this.doctorCode = data.doctor_code;
+                                  }
+                              });
+                          }
+                      }" 
+                      @submit="loading = true">
                     @csrf
                     @method('PUT')
                     
@@ -50,7 +82,8 @@
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div class="md:col-span-2">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên đầy đủ <span class="text-red-500">*</span></label>
-                                        <input type="text" name="full_name" value="{{ old('full_name', $doctor->user->full_name) }}" required
+                                        <input type="text" name="full_name" required
+                                               x-model="fullName" @blur="generateDoctorCode"
                                                class="w-full border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 px-4 py-2 @error('full_name') border-red-500 @enderror">
                                         @error('full_name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                     </div>
@@ -69,7 +102,7 @@
                                         @error('username') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                     </div>
 
-                                    <div>
+                                    <div class="md:col-span-2">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
                                         <input type="email" name="email" value="{{ old('email', $doctor->user->email) }}"
                                                class="w-full border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 px-4 py-2 @error('email') border-red-500 @enderror">
@@ -92,8 +125,8 @@
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Mã bác sĩ <span class="text-red-500">*</span></label>
-                                        <input type="hidden" name="doctor_code" value="{{ old('doctor_code', $doctor->doctor_code) }}">
-                                        <input disabled type="text" value="{{ old('doctor_code', $doctor->doctor_code) }}"
+                                        <input type="hidden" name="doctor_code" :value="doctorCode">
+                                        <input disabled type="text" x-model="doctorCode"
                                                class="w-full border border-gray-300 rounded-lg px-4 py-2 font-mono bg-gray-100 text-gray-500 cursor-not-allowed opacity-70">
                                         @error('doctor_code') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                     </div>
@@ -155,7 +188,7 @@
                                         @error('experience_years') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                     </div>
 
-                                    <div>
+                                    <div class="md:col-span-2">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Số chứng chỉ hành nghề</label>
                                         <input type="text" name="license_number" value="{{ old('license_number', $doctor->license_number) }}"
                                                class="w-full border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 px-4 py-2 @error('license_number') border-red-500 @enderror">
