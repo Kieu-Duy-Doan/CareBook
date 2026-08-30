@@ -75,15 +75,30 @@ class StoreAppointmentRequest extends FormRequest
                 $dayOfWeek = \Carbon\Carbon::parse($this->appointment_date)->dayOfWeek + 1;
                 $reqTime = $this->appointment_time;
 
-                $hasSchedule = \App\Models\WorkSchedule::where('doctor_profile_id', $this->doctor_profile_id)
-                    ->where('day_of_week', $dayOfWeek)
-                    ->where('is_active', true)
-                    ->where('start_time', '<=', $reqTime)
-                    ->where('end_time', '>=', $reqTime)
-                    ->exists();
+                $override = \App\Models\ScheduleOverride::where('doctor_profile_id', $this->doctor_profile_id)
+                    ->whereDate('override_date', $this->appointment_date)
+                    ->first();
 
-                if (!$hasSchedule) {
-                    $validator->errors()->add('appointment_time', 'Bác sĩ không có lịch làm việc đăng ký vào ngày và khung giờ này.');
+                if ($override) {
+                    if ($override->type === 'close') {
+                        $validator->errors()->add('appointment_time', 'Bác sĩ đã đăng ký nghỉ / đóng ca vào ngày này.');
+                    } elseif ($override->type === 'extra') {
+                        $isValidTime = $override->start_time <= $reqTime && $override->end_time >= $reqTime;
+                        if (!$isValidTime) {
+                            $validator->errors()->add('appointment_time', 'Khung giờ này không nằm trong ca làm việc bổ sung của bác sĩ.');
+                        }
+                    }
+                } else {
+                    $hasSchedule = \App\Models\WorkSchedule::where('doctor_profile_id', $this->doctor_profile_id)
+                        ->where('day_of_week', $dayOfWeek)
+                        ->where('is_active', true)
+                        ->where('start_time', '<=', $reqTime)
+                        ->where('end_time', '>=', $reqTime)
+                        ->exists();
+
+                    if (!$hasSchedule) {
+                        $validator->errors()->add('appointment_time', 'Bác sĩ không có lịch làm việc đăng ký vào ngày và khung giờ này.');
+                    }
                 }
             }
 

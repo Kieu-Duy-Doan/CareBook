@@ -45,14 +45,23 @@ class BookingService
             $date = \Carbon\Carbon::parse($booking['date']);
             $dbDayOfWeek = $date->dayOfWeek === 0 ? 1 : $date->dayOfWeek + 1;
             
-            $schedule = \App\Models\WorkSchedule::with('room')
+            $override = \App\Models\ScheduleOverride::with('room')
                 ->where('doctor_profile_id', $booking['doctor_id'])
-                ->where('day_of_week', $dbDayOfWeek)
-                ->where('is_active', true)
+                ->whereDate('override_date', $booking['date'])
                 ->first();
-                
-            if ($schedule && $schedule->room) {
-                $roomName = $schedule->room->name;
+
+            if ($override && $override->type === 'extra' && $override->room) {
+                $roomName = $override->room->name;
+            } else {
+                $schedule = \App\Models\WorkSchedule::with('room')
+                    ->where('doctor_profile_id', $booking['doctor_id'])
+                    ->where('day_of_week', $dbDayOfWeek)
+                    ->where('is_active', true)
+                    ->first();
+                    
+                if ($schedule && $schedule->room) {
+                    $roomName = $schedule->room->name;
+                }
             }
         }
 
@@ -97,41 +106,68 @@ class BookingService
         $date = Carbon::parse($dateStr);
         $dayOfWeek = $date->dayOfWeek === 0 ? 1 : $date->dayOfWeek + 1;
 
-        $query = \App\Models\WorkSchedule::with('room')
-            ->where('day_of_week', $dayOfWeek)
-            ->where('is_active', true);
-
+        $doctorIds = collect();
         if ($doctorId) {
-            $query->where('doctor_profile_id', $doctorId);
+            $doctorIds->push($doctorId);
         } elseif ($specialtyId) {
-            $query->whereHas('doctorProfile', function ($q) use ($specialtyId, $level) {
-                $q->where('doctor_type', 'clinical');
-                $q->whereHas('specialties', function ($sq) use ($specialtyId) {
-                    $sq->where('specialties.id', $specialtyId);
-                });
-                if ($level) {
-                    $q->where('level', $level);
-                }
-            });
+            $query = DoctorProfile::where('doctor_type', 'clinical')
+                ->whereHas('specialties', fn($q) => $q->where('specialties.id', $specialtyId));
+            if ($level) {
+                $query->where('level', $level);
+            }
+            $doctorIds = $query->pluck('id');
         }
 
-        $schedules = $query->get();
-
-        if ($schedules->isEmpty()) {
+        if ($doctorIds->isEmpty()) {
             return [];
         }
 
         $slots = [];
 
-        foreach ($schedules as $schedule) {
-            $start    = Carbon::parse("{$dateStr} {$schedule->start_time}");
-            $end      = Carbon::parse("{$dateStr} {$schedule->end_time}");
-            $duration = $schedule->slot_duration_minutes ?: 30;
-            $maxSlots = $schedule->max_slots ?: 50;
-            $count    = 0;
+        foreach ($doctorIds as $docId) {
+            $override = ScheduleOverride::with('room')
+                ->where('doctor_profile_id', $docId)
+                ->whereDate('override_date', $dateStr)
+                ->first();
+
+            if ($override && $override->type === 'close') {
+                continue;
+            }
+
+            $schedule = \App\Models\WorkSchedule::with('room')
+                ->where('doctor_profile_id', $docId)
+                ->where('day_of_week', $dayOfWeek)
+                ->where('is_active', true)
+                ->first();
+
+            $baseSchedule = $schedule ?? \App\Models\WorkSchedule::where('doctor_profile_id', $docId)->first();
+            $duration = $baseSchedule?->slot_duration_minutes ?: 30;
+            $maxSlots = $baseSchedule?->max_slots ?: 50;
+            
+            $startTime = null;
+            $endTime = null;
+            $roomName = null;
+
+            if ($override && $override->type === 'extra') {
+                $startTime = $override->start_time;
+                $endTime = $override->end_time;
+                $roomName = $override->room?->name ?? null;
+            } elseif ($schedule) {
+                $startTime = $schedule->start_time;
+                $endTime = $schedule->end_time;
+                $roomName = $schedule->room?->name ?? null;
+            } else {
+                continue;
+            }
+
+            if (!$startTime || !$endTime) continue;
+
+            $start = Carbon::parse("{$dateStr} {$startTime}");
+            $end = Carbon::parse("{$dateStr} {$endTime}");
+            $count = 0;
 
             $bookedTimes = \App\Models\Appointment::where('appointment_date', $dateStr)
-                ->where('doctor_profile_id', $schedule->doctor_profile_id)
+                ->where('doctor_profile_id', $docId)
                 ->whereNotIn('status', ['cancelled', 'absent'])
                 ->pluck('appointment_time')
                 ->map(fn($t) => substr($t, 0, 5))
@@ -142,20 +178,24 @@ class BookingService
                 $timeStr = $current->format('H:i');
                 $isPast  = $date->isToday() && $current->lte(Carbon::now());
                 
-                $lockKey = "slot_lock_{$schedule->doctor_profile_id}_{$dateStr}_{$timeStr}";
+                $lockKey = "slot_lock_{$docId}_{$dateStr}_{$timeStr}";
                 $currentLock = \Illuminate\Support\Facades\Cache::get($lockKey);
                 $isLocked = $currentLock && $currentLock !== $draftId;
 
                 $slots[] = [
                     'time'      => $timeStr,
                     'available' => !$isPast && !in_array($timeStr, $bookedTimes) && !$isLocked,
-                    'room_name' => $schedule->room?->name ?? null,
-                    'doctor_id' => $schedule->doctor_profile_id,
+                    'room_name' => $roomName,
+                    'doctor_id' => $docId,
                 ];
 
                 $current->addMinutes($duration);
                 $count++;
             }
+        }
+
+        if (empty($slots)) {
+            return [];
         }
 
         // Group by time and randomly pick 1 doctor per time slot
@@ -281,11 +321,21 @@ class BookingService
                 ? 1
                 : Carbon::parse($data['appointment_date'])->dayOfWeek + 1;
 
-            $schedule = WorkSchedule::where('doctor_profile_id', $data['doctor_profile_id'])
-                ->where('day_of_week', $dbDayOfWeek)
-                ->where('is_active', true)
+            $override = ScheduleOverride::where('doctor_profile_id', $data['doctor_profile_id'])
+                ->whereDate('override_date', $data['appointment_date'])
                 ->lockForUpdate()
                 ->first();
+
+            if ($override && $override->type === 'extra') {
+                $roomId = $override->room_id;
+            } else {
+                $schedule = WorkSchedule::where('doctor_profile_id', $data['doctor_profile_id'])
+                    ->where('day_of_week', $dbDayOfWeek)
+                    ->where('is_active', true)
+                    ->lockForUpdate()
+                    ->first();
+                $roomId = $schedule?->room_id;
+            }
 
             // Lock hồ sơ bệnh nhân để tránh race condition khi check lịch active
             $patientProfile = PatientProfile::where('id', $data['patient_profile_id'])->lockForUpdate()->first();
@@ -343,7 +393,7 @@ class BookingService
                 'booked_by_user_id'  => $bookedBy->id,
                 'specialty_id'       => $data['specialty_id'],
                 'doctor_profile_id'  => $data['doctor_profile_id'],
-                'room_id'            => $schedule?->room_id ?? $data['room_id'] ?? 1,
+                'room_id'            => $roomId ?? $data['room_id'] ?? 1,
                 'appointment_date'   => $data['appointment_date'],
                 'appointment_time'   => $data['appointment_time'] . ':00',
                 'reason'             => $data['reason'],
@@ -379,16 +429,54 @@ class BookingService
 
     private function hasActiveSchedule(Carbon $date, int $dow, ?int $doctorId, ?int $specialtyId, ?string $level = null): bool
     {
-        // Nếu bác sĩ bị override close thì bỏ qua
+        $doctorIds = collect();
         if ($doctorId) {
-            $closed = ScheduleOverride::where('doctor_profile_id', $doctorId)
-                ->where('override_date', $date->format('Y-m-d'))
-                ->where('type', 'close')
-                ->exists();
-            if ($closed) return false;
+            $doctorIds->push($doctorId);
+        } elseif ($specialtyId) {
+            $query = DoctorProfile::where('doctor_type', 'clinical')
+                ->whereHas('specialties', fn($q) => $q->where('specialties.id', $specialtyId));
+            if ($level) {
+                $query->where('level', $level);
+            }
+            $doctorIds = $query->pluck('id');
         }
 
-        return $this->querySchedules($dow, $doctorId, $specialtyId, $level)->isNotEmpty();
+        if ($doctorIds->isEmpty()) {
+            return false;
+        }
+
+        $dateStr = $date->format('Y-m-d');
+
+        foreach ($doctorIds as $docId) {
+            $isClosed = ScheduleOverride::where('doctor_profile_id', $docId)
+                ->where('override_date', $dateStr)
+                ->where('type', 'close')
+                ->exists();
+                
+            if ($isClosed) {
+                continue;
+            }
+
+            $hasExtra = ScheduleOverride::where('doctor_profile_id', $docId)
+                ->where('override_date', $dateStr)
+                ->where('type', 'extra')
+                ->exists();
+
+            if ($hasExtra) {
+                return true;
+            }
+
+            $hasRegular = WorkSchedule::where('doctor_profile_id', $docId)
+                ->where('day_of_week', $dow)
+                ->where('is_active', true)
+                ->exists();
+
+            if ($hasRegular) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function findAlternatives(Appointment $appointment): \Illuminate\Support\Collection
