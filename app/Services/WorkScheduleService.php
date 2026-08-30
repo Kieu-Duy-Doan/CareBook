@@ -192,6 +192,37 @@ class WorkScheduleService
             'ip_address' => request()->ip()
         ]);
 
+        if ($override->type === 'close') {
+            $appointmentsToCancel = Appointment::where('doctor_profile_id', $override->doctor_profile_id)
+                ->whereDate('appointment_date', $override->override_date)
+                ->where('appointment_time', '>=', $override->start_time)
+                ->where('appointment_time', '<=', $override->end_time)
+                ->whereNotIn('status', ['cancelled', 'completed', 'absent'])
+                ->get();
+
+            foreach ($appointmentsToCancel as $appointment) {
+                $oldStatus = $appointment->status;
+                $appointment->status = 'cancelled';
+                $appointment->reason = 'Lịch hẹn bị huỷ tự động do bác sĩ có lịch đột xuất không thể khám.';
+                $appointment->save();
+
+                \App\Models\AppointmentLog::create([
+                    'appointment_id' => $appointment->id,
+                    'changed_by' => $userId,
+                    'old_status' => $oldStatus,
+                    'new_status' => 'cancelled',
+                    'action' => \App\Models\AppointmentLog::ACTION_SYSTEM_UPDATE,
+                    'reason' => 'Hủy tự động do bác sĩ thêm ngoại lệ nghỉ/đóng ca.',
+                ]);
+
+                \App\Jobs\ProcessAppointmentNotificationJob::dispatch(
+                    $appointment,
+                    'admin_cancel',
+                    'Hệ thống'
+                );
+            }
+        }
+
         return $override;
     }
 
