@@ -20,6 +20,41 @@ class ReceptionistController extends Controller
     {
         $this->receptionistProfileService = $receptionistProfileService;
     }
+    public function generateCode(Request $request)
+    {
+        $fullName = $request->input('full_name');
+        if (!$fullName) {
+            return response()->json(['employee_code' => '']);
+        }
+        
+        $nameParts = explode(' ', trim($fullName));
+        $firstName = array_pop($nameParts);
+        $initials = '';
+        foreach ($nameParts as $part) {
+            if (!empty($part)) {
+                $initials .= mb_substr($part, 0, 1);
+            }
+        }
+        $baseCode = \Illuminate\Support\Str::slug($firstName . $initials, '');
+        $baseCode = str_replace('-', '', $baseCode);
+
+        $latestProfile = StaffProfile::where('employee_code', 'like', $baseCode . '%')
+                                      ->orderBy('id', 'desc')
+                                      ->first();
+        $nextNumber = 1;
+        if ($latestProfile) {
+            $latestCode = $latestProfile->employee_code;
+            $numberPart = str_replace($baseCode, '', $latestCode);
+            if (is_numeric($numberPart)) {
+                $nextNumber = intval($numberPart) + 1;
+            }
+        }
+        
+        $employeeCode = $baseCode . str_pad($nextNumber, 2, '0', STR_PAD_LEFT);
+        
+        return response()->json(['employee_code' => $employeeCode]);
+    }
+
     public function index(Request $request)
     {
         $stats = [

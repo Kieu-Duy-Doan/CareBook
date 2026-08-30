@@ -23,9 +23,11 @@ class ReceptionistProfileService
                 'is_active'  => true,
             ]);
 
+            $employeeCode = $this->_generateEmployeeCode($data['full_name']);
+
             StaffProfile::create([
                 'user_id'        => $user->id,
-                'employee_code'  => $data['employee_code'],
+                'employee_code'  => $employeeCode,
                 'position'       => 'Lễ tân',
                 'department'     => $data['department'] ?? null,
                 'internal_phone' => $data['internal_phone'] ?? null,
@@ -84,5 +86,32 @@ class ReceptionistProfileService
             
             return $receptionist;
         });
+    }
+
+    private function _generateEmployeeCode($fullName)
+    {
+        $nameParts = explode(' ', trim($fullName));
+        $firstName = array_pop($nameParts);
+        $initials = '';
+        foreach ($nameParts as $part) {
+            if (!empty($part)) {
+                $initials .= mb_substr($part, 0, 1);
+            }
+        }
+        $baseCode = \Illuminate\Support\Str::slug($firstName . $initials, '');
+        $baseCode = str_replace('-', '', $baseCode);
+
+        $latestProfile = StaffProfile::where('employee_code', 'like', $baseCode . '%')
+                                      ->orderBy('id', 'desc')
+                                      ->first();
+        $nextNumber = 1;
+        if ($latestProfile) {
+            $latestCode = $latestProfile->employee_code;
+            $numberPart = str_replace($baseCode, '', $latestCode);
+            if (is_numeric($numberPart)) {
+                $nextNumber = intval($numberPart) + 1;
+            }
+        }
+        return $baseCode . str_pad($nextNumber, 2, '0', STR_PAD_LEFT);
     }
 }

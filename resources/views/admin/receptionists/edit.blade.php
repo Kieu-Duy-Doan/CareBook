@@ -34,7 +34,39 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Cột trái: Form (2/3) -->
             <div class="lg:col-span-2">
-                <form action="{{ route('admin.receptionists.update', $receptionist->id) }}" method="POST" x-data="{ loading: false }" @submit="loading = true">
+                <form action="{{ route('admin.receptionists.update', $receptionist->id) }}" method="POST" 
+                      x-data="{ 
+                          loading: false,
+                          fullName: '{{ old('full_name', $receptionist->full_name) }}',
+                          employeeCode: '{{ old('employee_code', $receptionist->staffProfile?->employee_code) }}',
+                          originalFullName: '{{ $receptionist->full_name }}',
+                          originalEmployeeCode: '{{ $receptionist->staffProfile?->employee_code }}',
+                          generateEmployeeCode() {
+                              if (this.fullName.trim() === '') {
+                                  this.employeeCode = this.originalEmployeeCode;
+                                  return;
+                              }
+                              if (this.fullName.trim() === this.originalFullName.trim()) {
+                                  this.employeeCode = this.originalEmployeeCode;
+                                  return;
+                              }
+                              fetch('{{ route('admin.receptionists.generate-code') }}', {
+                                  method: 'POST',
+                                  headers: {
+                                      'Content-Type': 'application/json',
+                                      'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                  },
+                                  body: JSON.stringify({ full_name: this.fullName })
+                              })
+                              .then(res => res.json())
+                              .then(data => {
+                                  if (data.employee_code) {
+                                      this.employeeCode = data.employee_code;
+                                  }
+                              });
+                          }
+                      }" 
+                      @submit="loading = true">
                     @csrf
                     @method('PUT')
                     
@@ -50,7 +82,8 @@
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div class="md:col-span-2">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên đầy đủ <span class="text-red-500">*</span></label>
-                                        <input type="text" name="full_name" value="{{ old('full_name', $receptionist->full_name) }}" required
+                                        <input type="text" name="full_name" required
+                                               x-model="fullName" @blur="generateEmployeeCode"
                                                class="w-full border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 px-4 py-2 @error('full_name') border-red-500 @enderror">
                                         @error('full_name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                     </div>
@@ -99,8 +132,9 @@
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Mã nhân viên <span class="text-red-500">*</span></label>
-                                        <input type="text" name="employee_code" value="{{ old('employee_code', $receptionist->staffProfile?->employee_code) }}" required
-                                               class="w-full border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 px-4 py-2 font-mono @error('employee_code') border-red-500 @enderror">
+                                        <input type="hidden" name="employee_code" :value="employeeCode">
+                                        <input disabled type="text" x-model="employeeCode"
+                                               class="w-full border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 px-4 py-2 font-mono bg-gray-100 text-gray-500 cursor-not-allowed opacity-70">
                                         @error('employee_code') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                     </div>
 

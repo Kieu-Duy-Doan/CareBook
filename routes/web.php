@@ -63,6 +63,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,doctor']
         Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\DoctorController::class, 'toggleActive'])->name('toggle-active');
     });
     Route::prefix('receptionists')->name('receptionists.')->group(function () {
+        Route::post('/generate-code', [\App\Http\Controllers\Admin\ReceptionistController::class, 'generateCode'])->name('generate-code');
         Route::get('/export', [\App\Http\Controllers\Admin\ReceptionistController::class, 'export'])->name('export');
         Route::get('/import/template', [\App\Http\Controllers\Admin\ReceptionistController::class, 'downloadTemplate'])->name('import.template');
         Route::post('/import', [\App\Http\Controllers\Admin\ReceptionistController::class, 'import'])->name('import');
