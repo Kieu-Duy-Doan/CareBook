@@ -415,7 +415,7 @@ class AppointmentController extends Controller
                 ]);
 
                 if ($newStatus === 'cancelled') {
-                    \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'cancellation');
+                    \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'admin_cancel', 'Lễ tân');
                 }
             });
         }

@@ -134,7 +134,7 @@
                 <div class="group bg-slate-50 border border-slate-100 rounded-2xl p-4 md:p-6 text-center hover:bg-blue-50 hover:border-blue-200 transition-all shadow-sm hover:shadow-md">
                     <div class="w-16 h-16 mx-auto bg-white border border-slate-100 text-blue-600 rounded-full flex items-center justify-center text-3xl mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors shadow-sm">
                         @if($specialty->image_url)
-                            <img src="{{ $specialty->image_url }}" alt="{{ $specialty->name }}" class="w-full h-full object-cover rounded-full">
+                            <img src="{{ asset('storage/' . $specialty->image_url) }}" alt="{{ $specialty->name }}" class="w-full h-full object-cover rounded-full">
                         @else
                             <i class="{{ getSpecialtyIcon($specialty->name) }}"></i>
                         @endif

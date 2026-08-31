@@ -261,7 +261,7 @@ class AppointmentService
                 ]);
 
                 if ($newStatus === 'cancelled') {
-                    \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'cancellation');
+                    \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'admin_cancel', 'Lễ tân');
                 }
             }
             
@@ -334,7 +334,7 @@ class AppointmentService
                 ]);
                 
                 if ($newStatus === 'cancelled') {
-                    \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'cancellation');
+                    \App\Jobs\ProcessAppointmentNotificationJob::dispatch($appointment, 'doctor_cancel', 'Bác sĩ');
                 }
             });
         }

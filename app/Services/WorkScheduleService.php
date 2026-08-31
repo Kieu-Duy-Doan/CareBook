@@ -143,6 +143,11 @@ class WorkScheduleService
     {
         $data['is_active'] = isset($data['is_active']) ? (bool)$data['is_active'] : false;
         
+        if (isset($data['start_time'])) {
+            $hour = (int) substr($data['start_time'], 0, 2);
+            $data['shift_label'] = $hour < 12 ? 'morning' : 'afternoon';
+        }
+        
         $schedule = WorkSchedule::create($data);
 
         SystemLog::create([
@@ -162,6 +167,11 @@ class WorkScheduleService
     {
         $data['is_active'] = isset($data['is_active']) ? (bool)$data['is_active'] : false;
         
+        if (isset($data['start_time'])) {
+            $hour = (int) substr($data['start_time'], 0, 2);
+            $data['shift_label'] = $hour < 12 ? 'morning' : 'afternoon';
+        }
+
         $schedule->update($data);
 
         SystemLog::create([
