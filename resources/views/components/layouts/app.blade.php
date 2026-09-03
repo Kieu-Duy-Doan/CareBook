@@ -65,6 +65,7 @@
                 <nav class="hidden lg:flex items-center gap-8 font-semibold text-slate-700 text-[15px]">
                     <a href="{{ route('home') }}" class="py-2 transition-colors relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-primary after:transition-transform after:duration-300 {{ request()->routeIs('home') ? 'text-primary after:scale-x-100' : 'hover:text-primary after:scale-x-0 hover:after:scale-x-100' }}">Trang chủ</a>
                     <a href="{{ route('doctors.directory') }}" class="py-2 transition-colors relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-primary after:transition-transform after:duration-300 {{ request()->routeIs('doctors.directory') ? 'text-primary after:scale-x-100' : 'hover:text-primary after:scale-x-0 hover:after:scale-x-100' }}">Đội ngũ bác sĩ</a>
+                    <a href="{{ route('medical-lookup.index') }}" class="py-2 transition-colors relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-primary after:transition-transform after:duration-300 {{ request()->routeIs('medical-lookup.*') ? 'text-primary after:scale-x-100' : 'hover:text-primary after:scale-x-0 hover:after:scale-x-100' }}">Tra cứu bệnh án</a>
                     <a href="{{ route('posts.index') }}" class="py-2 transition-colors relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-primary after:transition-transform after:duration-300 {{ request()->routeIs('posts.*') ? 'text-primary after:scale-x-100' : 'hover:text-primary after:scale-x-0 hover:after:scale-x-100' }}">Tin tức</a>
                 </nav>
 
@@ -151,6 +152,7 @@
             <div class="px-4 py-4 space-y-2">
                 <a href="{{ route('home') }}" class="block px-4 py-3 rounded-xl font-medium {{ request()->routeIs('home') ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50' }}">Trang chủ</a>
                 <a href="{{ route('doctors.directory') }}" class="block px-4 py-3 rounded-xl font-medium {{ request()->routeIs('doctors.directory') ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50' }}">Đội ngũ bác sĩ</a>
+                <a href="{{ route('medical-lookup.index') }}" class="block px-4 py-3 rounded-xl font-medium {{ request()->routeIs('medical-lookup.*') ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50' }}">Tra cứu bệnh án</a>
                 <a href="{{ route('posts.index') }}" class="block px-4 py-3 rounded-xl font-medium {{ request()->routeIs('posts.*') ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50' }}">Tin tức</a>
                 <a href="{{ route('patient.booking.step1') }}" class="block px-4 py-3 mt-4 rounded-xl font-bold bg-amber-400 text-slate-900 text-center shadow-sm">Đặt lịch khám ngay</a>
             </div>

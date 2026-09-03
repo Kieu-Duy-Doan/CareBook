@@ -20,6 +20,13 @@ use App\Http\Controllers\PostController;
 Route::get('/tin-tuc', [PostController::class, 'index'])->name('posts.index');
 Route::get('/tin-tuc/{slug}', [PostController::class, 'show'])->name('posts.show');
 
+// Tra cứu hồ sơ bệnh án (Không cần đăng nhập)
+use App\Http\Controllers\MedicalLookupController;
+
+Route::get('/tra-cuu-benh-an', [MedicalLookupController::class, 'index'])->name('medical-lookup.index');
+Route::post('/tra-cuu-benh-an', [MedicalLookupController::class, 'search'])->name('medical-lookup.search');
+Route::get('/tra-cuu-benh-an/{code}', [MedicalLookupController::class, 'showDetail'])->name('medical-lookup.detail');
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [AuthController::class, 'redirectToDashboard'])->name('dashboard');

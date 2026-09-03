@@ -86,13 +86,13 @@
                     </div>
                 </a>
 
-                <a href="#" class="flex-1 flex items-start gap-4 p-4 md:p-6 hover:bg-slate-50 transition-colors rounded-2xl group hidden xl:flex">
+                <a href="{{ route('medical-lookup.index') }}" class="flex-1 flex items-start gap-4 p-4 md:p-6 hover:bg-slate-50 transition-colors rounded-2xl group hidden xl:flex">
                     <div class="w-12 h-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center text-xl shrink-0 group-hover:scale-110 transition-transform duration-300">
-                        <i class="fa-solid fa-microscope"></i>
+                        <i class="fa-solid fa-file-waveform"></i>
                     </div>
                     <div>
-                        <h4 class="font-bold text-slate-800 text-lg group-hover:text-purple-600 transition-colors">Kết quả xét nghiệm</h4>
-                        <p class="text-sm text-slate-500 mt-1 line-clamp-2">Tra cứu trực tuyến kết quả xét nghiệm</p>
+                        <h4 class="font-bold text-slate-800 text-lg group-hover:text-purple-600 transition-colors">Tra cứu bệnh án</h4>
+                        <p class="text-sm text-slate-500 mt-1 line-clamp-2">Tra cứu kết quả khám, đơn thuốc & xét nghiệm</p>
                     </div>
                 </a>
 
