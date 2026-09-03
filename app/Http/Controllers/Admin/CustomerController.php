@@ -82,7 +82,7 @@ class CustomerController extends Controller
             'phone'        => ['required', 'string', 'max:15', 'regex:/^(0[35789])[0-9]{8}$/', 'unique:users,phone'],
             'password'     => 'required|string|min:8|confirmed',
             'username'     => ['nullable', 'string', 'max:50', 'regex:/^[a-zA-Z0-9_.]*$/', 'unique:users,username'],
-            'id_card'      => ['required', 'string', 'regex:/^([0-9]{9}|[0-9]{12})$/', 'unique:users,id_card'],
+            'id_card'      => ['nullable', 'string', 'regex:/^([0-9]{9}|[0-9]{12})$/', 'unique:users,id_card'],
             'email'        => 'nullable|email|max:150|unique:users,email',
             // Hồ sơ
             'profile_full_name'      => 'nullable|string|max:100',
@@ -107,7 +107,6 @@ class CustomerController extends Controller
             'password.confirmed'  => 'Xác nhận mật khẩu không khớp.',
             'username.unique'     => 'Tên đăng nhập đã tồn tại.',
             'username.regex'      => 'Tên đăng nhập không được chứa ký tự đặc biệt.',
-            'id_card.required'    => 'Vui lòng nhập số CCCD/CMND.',
             'id_card.regex'       => 'Số CCCD/CMND không đúng định dạng.',
             'id_card.unique'      => 'Số CCCD/CMND đã được sử dụng.',
             'email.unique'        => 'Email đã được sử dụng.',
@@ -131,7 +130,7 @@ class CustomerController extends Controller
                 'full_name' => $validated['full_name'],
                 'phone'     => $validated['phone'],
                 'username'  => $validated['username'] ?? $validated['phone'],
-                'id_card'   => $validated['id_card'],
+                'id_card'   => $validated['id_card'] ?? null,
                 'email'     => $validated['email'] ?? null,
                 'password'  => bcrypt($validated['password']),
                 'role'      => 'patient',
@@ -139,12 +138,12 @@ class CustomerController extends Controller
             ]);
 
             PatientProfile::create([
-                'patient_code'    => 'BN' . $validated['id_card'],
+                'patient_code'    => empty($validated['id_card']) ? null : 'BN' . $validated['id_card'],
                 'owner_id'        => $user->id,
                 'full_name'       => $validated['profile_full_name'] ?? $validated['full_name'],
                 'date_of_birth'   => $validated['date_of_birth'],
                 'gender'          => $validated['gender'],
-                'id_card'         => $validated['id_card'],
+                'id_card'         => $validated['id_card'] ?? null,
                 'phone'           => $validated['profile_phone'] ?? $validated['phone'],
                 'address'         => $validated['address'] ?? null,
                 'occupation'      => $validated['occupation'] ?? null,

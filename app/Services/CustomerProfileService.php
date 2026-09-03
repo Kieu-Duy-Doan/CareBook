@@ -22,18 +22,18 @@ class CustomerProfileService
                 'is_active' => true,
                 'email'     => $data['email'] ?? null,
                 'username'  => $data['username'] ?? null,
-                'id_card'   => $data['id_card'],
+                'id_card'   => $data['id_card'] ?? null,
             ];
             
             $user = User::create($userData);
 
             $profile = PatientProfile::create([
-                'patient_code'    => 'BN' . $data['id_card'],
+                'patient_code'    => empty($data['id_card']) ? null : 'BN' . $data['id_card'],
                 'owner_id'        => $user->id,
                 'full_name'       => $data['profile_full_name'] ?? $data['full_name'],
                 'date_of_birth'   => $data['date_of_birth'],
                 'gender'          => $data['gender'],
-                'id_card'         => $data['id_card'],
+                'id_card'         => $data['id_card'] ?? null,
                 'phone'           => $data['profile_phone'] ?? $data['phone'],
                 'address'         => $data['address'] ?? null,
                 'occupation'      => $data['occupation'] ?? null,
