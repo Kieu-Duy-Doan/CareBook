@@ -9,6 +9,7 @@
         
         <div class="flex flex-col sm:flex-row gap-3">
             <form action="{{ route('receptionist.dashboard') }}" method="GET" class="flex flex-col sm:flex-row gap-3 bg-white p-2 rounded-lg shadow-sm border border-gray-100">
+                <input type="hidden" name="chart_filter" value="{{ $chartFilter ?? '7_days' }}">
                 <div class="flex items-center gap-2">
                     <label class="text-sm text-gray-600 font-medium">Từ ngày:</label>
                     <input type="date" name="start_date" value="{{ $startDate ?? '' }}" class="text-sm border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500">
@@ -31,91 +32,91 @@
 
     <!-- Thống kê Lịch hẹn -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-        <!-- Tổng lịch hẹn hôm nay -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center">
-            <div class="h-10 w-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-lg mr-3">
+        <!-- Tổng lịch hẹn -->
+        <a href="{{ route('receptionist.appointments.index') }}" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center hover:border-blue-300 hover:shadow transition-all group">
+            <div class="h-10 w-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-lg mr-3 group-hover:scale-110 transition-transform">
                 <i class="fa-solid fa-calendar-check"></i>
             </div>
             <div>
                 <p class="text-xs font-medium text-gray-500 mb-0.5">Tổng lịch hẹn</p>
                 <p class="text-xl font-bold text-gray-900">{{ $stats['total_appointments_today'] }}</p>
             </div>
-        </div>
+        </a>
 
-        <!-- Chờ duyệt (Pending) -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center">
-            <div class="h-10 w-10 rounded-full bg-yellow-50 text-yellow-600 flex items-center justify-center text-lg mr-3">
+        <!-- Chờ tiếp nhận (Pending) -->
+        <a href="{{ route('receptionist.appointments.index', ['status' => 'pending']) }}" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center hover:border-yellow-300 hover:shadow transition-all group">
+            <div class="h-10 w-10 rounded-full bg-yellow-50 text-yellow-600 flex items-center justify-center text-lg mr-3 group-hover:scale-110 transition-transform">
                 <i class="fa-solid fa-clock"></i>
             </div>
             <div>
                 <p class="text-xs font-medium text-gray-500 mb-0.5">Chờ tiếp nhận</p>
                 <p class="text-xl font-bold text-gray-900">{{ $stats['pending_appointments'] }}</p>
             </div>
-        </div>
+        </a>
 
         <!-- Đã Check-in -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center">
-            <div class="h-10 w-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg mr-3">
+        <a href="{{ route('receptionist.appointments.index', ['status' => 'checked_in']) }}" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center hover:border-emerald-300 hover:shadow transition-all group">
+            <div class="h-10 w-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg mr-3 group-hover:scale-110 transition-transform">
                 <i class="fa-solid fa-check-double"></i>
             </div>
             <div>
                 <p class="text-xs font-medium text-gray-500 mb-0.5">Đã Check-in</p>
                 <p class="text-xl font-bold text-gray-900">{{ $stats['checked_in_today'] }}</p>
             </div>
-        </div>
+        </a>
 
         <!-- Đến muộn -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center">
-            <div class="h-10 w-10 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center text-lg mr-3">
+        <a href="{{ route('receptionist.appointments.index', ['status' => 'late']) }}" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center hover:border-orange-300 hover:shadow transition-all group">
+            <div class="h-10 w-10 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center text-lg mr-3 group-hover:scale-110 transition-transform">
                 <i class="fa-solid fa-user-clock"></i>
             </div>
             <div>
                 <p class="text-xs font-medium text-gray-500 mb-0.5">Đến muộn</p>
                 <p class="text-xl font-bold text-gray-900">{{ $stats['late_today'] }}</p>
             </div>
-        </div>
+        </a>
 
         <!-- Đã Hủy -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center">
-            <div class="h-10 w-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center text-lg mr-3">
+        <a href="{{ route('receptionist.appointments.index', ['status' => 'cancelled']) }}" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center hover:border-red-300 hover:shadow transition-all group">
+            <div class="h-10 w-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center text-lg mr-3 group-hover:scale-110 transition-transform">
                 <i class="fa-solid fa-ban"></i>
             </div>
             <div>
                 <p class="text-xs font-medium text-gray-500 mb-0.5">Đã hủy</p>
                 <p class="text-xl font-bold text-gray-900">{{ $stats['cancelled_today'] }}</p>
             </div>
-        </div>
+        </a>
     </div>
 
     <!-- Thống kê CLS & Thanh toán -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center">
-            <div class="h-10 w-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-lg mr-3">
+        <a href="{{ route('receptionist.clinical-visits.index', ['status' => 'waiting']) }}" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center hover:border-purple-300 hover:shadow transition-all group">
+            <div class="h-10 w-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-lg mr-3 group-hover:scale-110 transition-transform">
                 <i class="fa-solid fa-users"></i>
             </div>
             <div>
                 <p class="text-xs font-medium text-gray-500 mb-0.5">Đang chờ khám</p>
                 <p class="text-xl font-bold text-gray-900">{{ $stats['visits_waiting'] }}</p>
             </div>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center">
-            <div class="h-10 w-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg mr-3">
+        </a>
+        <a href="{{ route('receptionist.clinical-visits.index', ['status' => 'in_progress']) }}" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center hover:border-indigo-300 hover:shadow transition-all group">
+            <div class="h-10 w-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg mr-3 group-hover:scale-110 transition-transform">
                 <i class="fa-solid fa-stethoscope"></i>
             </div>
             <div>
                 <p class="text-xs font-medium text-gray-500 mb-0.5">Đang khám</p>
                 <p class="text-xl font-bold text-gray-900">{{ $stats['visits_in_progress'] }}</p>
             </div>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center">
-            <div class="h-10 w-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center text-lg mr-3">
+        </a>
+        <a href="{{ route('receptionist.payments.index') }}" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center hover:border-green-300 hover:shadow transition-all group">
+            <div class="h-10 w-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center text-lg mr-3 group-hover:scale-110 transition-transform">
                 <i class="fa-solid fa-file-invoice-dollar"></i>
             </div>
             <div>
                 <p class="text-xs font-medium text-gray-500 mb-0.5">Hóa đơn chờ thu</p>
                 <p class="text-xl font-bold text-gray-900">{{ $stats['pending_payments'] }}</p>
             </div>
-        </div>
+        </a>
     </div>
 
     <!-- KPIs Báo cáo -->
@@ -125,7 +126,7 @@
                 <i class="fa-solid fa-user-check"></i>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-500 mb-1">Số Check-in</p>
+                <p class="text-sm font-medium text-gray-500 mb-1">Tổng ca đã tiếp nhận</p>
                 <p class="text-2xl font-bold text-gray-900">{{ number_format($totalCheckins ?? 0) }}</p>
             </div>
         </div>
@@ -184,8 +185,9 @@
 
         <!-- Bảng danh sách chi tiết rút gọn -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-[400px]">
-            <div class="px-6 py-4 border-b border-gray-100">
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                 <h3 class="text-lg font-bold text-gray-900">Chi tiết thanh toán</h3>
+                <a href="{{ route('receptionist.payments.index') }}" class="text-xs font-semibold text-emerald-600 hover:text-emerald-800 transition-colors">Xem tất cả</a>
             </div>
             <div class="flex-1 overflow-y-auto">
                 <table class="w-full text-sm text-left">
@@ -201,22 +203,34 @@
                             @forelse($paymentsDetail->take(15) as $payment)
                             <tr class="hover:bg-gray-50">
                                 <td class="px-4 py-3">
-                                    <div class="font-medium text-gray-900 truncate max-w-[120px]" title="{{ $payment->appointment->patientProfile->full_name ?? 'N/A' }}">
-                                        {{ $payment->appointment->patientProfile->full_name ?? 'N/A' }}
+                                    <div class="font-medium text-gray-900 truncate max-w-[120px]" title="{{ $payment->appointment?->patientProfile?->full_name ?? 'Khách vãng lai' }}">
+                                        {{ $payment->appointment?->patientProfile?->full_name ?? 'Khách vãng lai' }}
                                     </div>
-                                    <div class="text-xs text-gray-500">{{ $payment->paid_at->format('d/m H:i') }}</div>
+                                    <div class="text-xs text-gray-500">{{ $payment->paid_at?->format('d/m H:i') ?? '—' }}</div>
                                 </td>
                                 <td class="px-4 py-3 text-right font-semibold text-emerald-600">
-                                    {{ number_format($payment->amount) }}
+                                    {{ number_format($payment->amount) }} ₫
                                 </td>
                                 <td class="px-4 py-3 text-center">
-                                    @if($payment->method == 'cash')
-                                        <span class="inline-flex items-center justify-center px-2 py-1 text-[10px] font-bold bg-orange-100 text-orange-700 rounded">
+                                    @if($payment->method === 'cash')
+                                        <span class="inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-bold bg-orange-100 text-orange-700 rounded" title="Tiền mặt">
                                             TM
                                         </span>
-                                    @else
-                                        <span class="inline-flex items-center justify-center px-2 py-1 text-[10px] font-bold bg-purple-100 text-purple-700 rounded">
+                                    @elseif($payment->method === 'qr')
+                                        <span class="inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-bold bg-purple-100 text-purple-700 rounded" title="Chuyển khoản QR">
                                             QR
+                                        </span>
+                                    @elseif($payment->method === 'insurance')
+                                        <span class="inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-bold bg-blue-100 text-blue-700 rounded" title="Bảo hiểm y tế">
+                                            BHYT
+                                        </span>
+                                    @elseif($payment->method === 'waived')
+                                        <span class="inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-bold bg-gray-100 text-gray-700 rounded" title="Miễn phí">
+                                            Miễn
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-bold bg-gray-100 text-gray-700 rounded">
+                                            {{ strtoupper(substr($payment->method ?? 'K', 0, 2)) }}
                                         </span>
                                     @endif
                                 </td>
@@ -266,11 +280,14 @@
                                 <div class="text-gray-500 text-xs">{{ \Carbon\Carbon::parse($appointment->appointment_date)->format('d/m/Y') }}</div>
                             </td>
                             <td class="px-6 py-4">
-                                <div class="font-medium text-gray-900">{{ $appointment->patientProfile->full_name ?? 'N/A' }}</div>
-                                <div class="text-gray-500 text-xs">{{ $appointment->patientProfile->phone ?? '' }}</div>
+                                <div class="font-medium text-gray-900">{{ $appointment->patientProfile?->full_name ?? 'Chưa có thông tin' }}</div>
+                                <div class="text-gray-500 text-xs">{{ $appointment->patientProfile?->phone ?? '—' }}</div>
                             </td>
                             <td class="px-6 py-4">
-                                <div class="font-medium text-gray-700">{{ $appointment->doctorProfile->user->full_name ?? 'Chưa xếp' }}</div>
+                                <div class="font-medium text-gray-700">{{ $appointment->doctorProfile?->full_title ?? 'Chưa chỉ định' }}</div>
+                                @if($appointment->status === 'late')
+                                    <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-orange-100 text-orange-700 rounded mt-0.5">Trễ hẹn</span>
+                                @endif
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <a href="{{ route('receptionist.appointments.show', $appointment->id) }}" class="inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors">
@@ -394,36 +411,39 @@
             }
 
             // Biểu đồ theo giờ (Dashboard cũ)
-            const ctx = document.getElementById('hourlyChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: {!! json_encode($chartLabels ?? []) !!},
-                    datasets: [{
-                        label: 'Số ca khám',
-                        data: {!! json_encode($chartData ?? []) !!},
-                        backgroundColor: '#3b82f6',
-                        borderRadius: 4,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
+            const hourlyCanvas = document.getElementById('hourlyChart');
+            if (hourlyCanvas) {
+                const ctx = hourlyCanvas.getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: {!! json_encode($chartLabels ?? []) !!},
+                        datasets: [{
+                            label: 'Số ca khám',
+                            data: {!! json_encode($chartData ?? []) !!},
+                            backgroundColor: '#3b82f6',
+                            borderRadius: 4,
+                        }]
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                stepSize: 1
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
                             }
                         }
                     }
-                }
-            });
+                });
+            }
         });
     </script>
     @endpush

@@ -25,35 +25,46 @@ class DashboardController extends Controller
         $startDate = $request->input('start_date', Carbon::today()->format('Y-m-d'));
         $endDate = $request->input('end_date', Carbon::today()->format('Y-m-d'));
 
-        $start = Carbon::parse($startDate)->startOfDay();
-        $end = Carbon::parse($endDate)->endOfDay();
+        try {
+            $start = Carbon::parse($startDate)->startOfDay();
+            $end = Carbon::parse($endDate)->endOfDay();
+            if ($start->gt($end)) {
+                $temp = $start;
+                $start = $end->copy()->startOfDay();
+                $end = $temp->copy()->endOfDay();
+                $startDate = $start->format('Y-m-d');
+                $endDate = $end->format('Y-m-d');
+            }
+        } catch (\Exception $e) {
+            $startDate = Carbon::today()->format('Y-m-d');
+            $endDate = Carbon::today()->format('Y-m-d');
+            $start = Carbon::today()->startOfDay();
+            $end = Carbon::today()->endOfDay();
+        }
+
         $receptionistId = Auth::id();
 
         $dashboardData = $this->dashboardService->getReceptionistDashboardData($start, $end);
 
-        $totalCheckins = Appointment::whereBetween('appointment_date', [$start, $end])
+        $startDateStr = $start->format('Y-m-d');
+        $endDateStr = $end->format('Y-m-d');
+
+        $totalCheckins = Appointment::whereBetween('appointment_date', [$startDateStr, $endDateStr])
             ->whereIn('status', ['checked_in', 'examining', 'completed'])
             ->count();
 
-        $payments = Payment::with(['clinicalVisits'])
-            ->where('collected_by', $receptionistId)
-            ->whereBetween('paid_at', [$start, $end])
-            ->where('status', 'completed')
-            ->get();
-
-        $totalRevenue = $payments->sum(function($p) {
-            $fee = $p->clinicalVisits->sum('payment_amount');
-            return max($fee, (float) $p->amount);
-        });
-        $cashRevenue = $payments->where('method', 'cash')->sum('amount');
-        $qrRevenue = $payments->where('method', 'qr')->sum('amount');
-
-        $paymentsDetail = Payment::with(['appointment.patientProfile'])
+        // Tối ưu gộp 1 truy vấn duy nhất vừa tính tổng doanh thu vừa làm chi tiết giao dịch
+        $payments = Payment::with(['appointment.patientProfile', 'clinicalVisits'])
             ->where('collected_by', $receptionistId)
             ->whereBetween('paid_at', [$start, $end])
             ->where('status', 'completed')
             ->orderBy('paid_at', 'desc')
             ->get();
+
+        $totalRevenue = (float) $payments->sum('amount');
+        $cashRevenue = (float) $payments->where('method', 'cash')->sum('amount');
+        $qrRevenue = (float) $payments->where('method', 'qr')->sum('amount');
+        $paymentsDetail = $payments;
 
         $chartFilter = $request->input('chart_filter', '7_days');
         $chartData = $this->dashboardService->getReceptionistRevenueChartData($receptionistId, $chartFilter);
@@ -73,8 +84,23 @@ class DashboardController extends Controller
         $startDate = $request->input('start_date', Carbon::today()->format('Y-m-d'));
         $endDate = $request->input('end_date', Carbon::today()->format('Y-m-d'));
 
-        $start = Carbon::parse($startDate)->startOfDay();
-        $end = Carbon::parse($endDate)->endOfDay();
+        try {
+            $start = Carbon::parse($startDate)->startOfDay();
+            $end = Carbon::parse($endDate)->endOfDay();
+            if ($start->gt($end)) {
+                $temp = $start;
+                $start = $end->copy()->startOfDay();
+                $end = $temp->copy()->endOfDay();
+                $startDate = $start->format('Y-m-d');
+                $endDate = $end->format('Y-m-d');
+            }
+        } catch (\Exception $e) {
+            $startDate = Carbon::today()->format('Y-m-d');
+            $endDate = Carbon::today()->format('Y-m-d');
+            $start = Carbon::today()->startOfDay();
+            $end = Carbon::today()->endOfDay();
+        }
+
         $receptionistId = Auth::id();
 
         $payments = Payment::with(['appointment.patientProfile'])
@@ -92,17 +118,24 @@ class DashboardController extends Controller
 
         $callback = function () use ($payments, $startDate, $endDate) {
             $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM
-            fputcsv($file, ['Từ ngày', 'Đến ngày', $startDate, $endDate]);
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM chống vỡ font tiếng Việt
+            fputcsv($file, ['BÁO CÁO THU TIỀN CA LỄ TÂN']);
+            fputcsv($file, ['Từ ngày', $startDate, 'Đến ngày', $endDate]);
             fputcsv($file, []);
             fputcsv($file, ['Thời gian thanh toán', 'Mã Lịch hẹn', 'Bệnh nhân', 'Phương thức', 'Số tiền (₫)']);
 
             foreach ($payments as $payment) {
                 fputcsv($file, [
-                    $payment->paid_at?->format('d/m/Y H:i'),
-                    $payment->appointment->appointment_code ?? '',
-                    $payment->appointment->patientProfile->full_name ?? '',
-                    $payment->method === 'cash' ? 'Tiền mặt' : 'QR/Chuyển khoản',
+                    $payment->paid_at?->format('d/m/Y H:i') ?? '—',
+                    $payment->appointment?->appointment_code ?? '—',
+                    $payment->appointment?->patientProfile?->full_name ?? 'Khách vãng lai',
+                    match($payment->method) {
+                        'cash' => 'Tiền mặt',
+                        'qr' => 'Chuyển khoản QR',
+                        'insurance' => 'BHYT',
+                        'waived' => 'Miễn phí',
+                        default => $payment->method ?? 'Khác',
+                    },
                     number_format($payment->amount, 0, ',', '.'),
                 ]);
             }

@@ -256,27 +256,30 @@ class DashboardService
      */
     public function getReceptionistDashboardData(Carbon $start, Carbon $end): array
     {
+        $startDateStr = $start->format('Y-m-d');
+        $endDateStr = $end->format('Y-m-d');
+
         $stats = [
-            'total_appointments_today' => Appointment::whereBetween('appointment_date', [$start, $end])->count(),
-            'pending_appointments' => Appointment::whereBetween('appointment_date', [$start, $end])->where('status', 'pending')->count(),
-            'checked_in_today' => Appointment::whereBetween('appointment_date', [$start, $end])->where('status', 'checked_in')->count(),
-            'late_today' => Appointment::whereBetween('appointment_date', [$start, $end])->where('status', 'late')->count(),
-            'cancelled_today' => Appointment::whereBetween('appointment_date', [$start, $end])->where('status', 'cancelled')->count(),
-            'visits_in_progress' => ClinicalVisit::whereBetween('created_at', [$start, $end])->where('status', 'in_progress')->count(),
-            'visits_waiting' => ClinicalVisit::whereBetween('created_at', [$start, $end])->where('status', 'waiting')->count(),
-            'pending_payments' => Payment::where('status', 'pending')->count(),
+            'total_appointments_today' => Appointment::whereBetween('appointment_date', [$startDateStr, $endDateStr])->count(),
+            'pending_appointments'     => Appointment::whereBetween('appointment_date', [$startDateStr, $endDateStr])->where('status', 'pending')->count(),
+            'checked_in_today'         => Appointment::whereBetween('appointment_date', [$startDateStr, $endDateStr])->where('status', 'checked_in')->count(),
+            'late_today'               => Appointment::whereBetween('appointment_date', [$startDateStr, $endDateStr])->where('status', 'late')->count(),
+            'cancelled_today'          => Appointment::whereBetween('appointment_date', [$startDateStr, $endDateStr])->where('status', 'cancelled')->count(),
+            'visits_in_progress'       => ClinicalVisit::whereHas('appointment', fn($q) => $q->whereBetween('appointment_date', [$startDateStr, $endDateStr]))->where('status', 'in_progress')->count(),
+            'visits_waiting'           => ClinicalVisit::whereHas('appointment', fn($q) => $q->whereBetween('appointment_date', [$startDateStr, $endDateStr]))->where('status', 'waiting')->count(),
+            'pending_payments'         => ClinicalVisit::where('payment_status', 'pending')->distinct('appointment_id')->count('appointment_id'),
         ];
 
         $upcomingPatients = Appointment::with(['patientProfile', 'doctorProfile.user'])
-            ->whereBetween('appointment_date', [$start, $end])
-            ->where('status', 'pending')
+            ->whereBetween('appointment_date', [$startDateStr, $endDateStr])
+            ->whereIn('status', ['pending', 'late'])
             ->orderBy('appointment_date')
             ->orderBy('appointment_time')
             ->take(10)
             ->get();
 
         $hourlyDistribution = Appointment::select(DB::raw('HOUR(appointment_time) as hour'), DB::raw('count(*) as count'))
-            ->whereBetween('appointment_date', [$start, $end])
+            ->whereBetween('appointment_date', [$startDateStr, $endDateStr])
             ->groupBy('hour')
             ->pluck('count', 'hour')->toArray();
 
