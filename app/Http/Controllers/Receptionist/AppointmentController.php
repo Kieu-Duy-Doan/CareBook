@@ -266,8 +266,16 @@ class AppointmentController extends Controller
     {
         $appointment = Appointment::findOrFail($id);
         
+        if ($appointment->status === 'cancelled' && $request->status !== 'cancelled') {
+            return back()->withInput()->with('error', 'Lịch hẹn đã ở trạng thái Đã huỷ, không thể chuyển sang trạng thái khác.');
+        }
+
+        if ($appointment->status === 'completed' && $request->status !== 'completed') {
+            return back()->withInput()->with('error', 'Lịch hẹn đã ở trạng thái Hoàn thành, không thể chuyển sang trạng thái khác.');
+        }
+
         $data = $request->validated();
-        $isLocked = in_array($appointment->status, ['examining', 'completed']);
+        $isLocked = in_array($appointment->status, ['examining', 'completed', 'cancelled']);
         
         $doctor = null;
         $patient = null;
@@ -356,6 +364,11 @@ class AppointmentController extends Controller
         $appointment = Appointment::findOrFail($id);
         $oldStatus = $appointment->status;
         $newStatus = $request->status;
+
+        // Chặn chuyển đổi trạng thái của lịch hẹn đã bị huỷ
+        if ($oldStatus === 'cancelled' && $newStatus !== 'cancelled') {
+            return back()->with('error', 'Lịch hẹn đã ở trạng thái Đã huỷ, không thể chuyển sang trạng thái khác.');
+        }
 
         // Chặn chuyển đổi trạng thái của lịch hẹn đã khám hoàn thành
         if ($oldStatus === 'completed' && $newStatus !== 'completed') {

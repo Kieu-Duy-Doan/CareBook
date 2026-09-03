@@ -261,6 +261,15 @@ class AppointmentController extends Controller
     public function update(UpdateAppointmentRequest $request, $id)
     {
         $appointment = Appointment::findOrFail($id);
+
+        if ($appointment->status === 'cancelled' && $request->status !== 'cancelled') {
+            return back()->withInput()->with('error', 'Lịch hẹn đã ở trạng thái Đã huỷ, không thể chuyển sang trạng thái khác.');
+        }
+
+        if ($appointment->status === 'completed' && $request->status !== 'completed') {
+            return back()->withInput()->with('error', 'Lịch hẹn đã ở trạng thái Hoàn thành, không thể chuyển sang trạng thái khác.');
+        }
+
         $validated = $request->validated();
 
         $patient = PatientProfile::findOrFail($request->patient_profile_id);
@@ -316,6 +325,16 @@ class AppointmentController extends Controller
         $appointment = Appointment::findOrFail($id);
         $oldStatus = $appointment->status;
         $newStatus = $request->status;
+
+        // Chặn chuyển đổi trạng thái của lịch hẹn đã bị huỷ
+        if ($oldStatus === 'cancelled' && $newStatus !== 'cancelled') {
+            return back()->with('error', 'Lịch hẹn đã ở trạng thái Đã huỷ, không thể chuyển sang trạng thái khác.');
+        }
+
+        // Chặn chuyển đổi trạng thái của lịch hẹn đã hoàn thành
+        if ($oldStatus === 'completed' && $newStatus !== 'completed') {
+            return back()->with('error', 'Không thể thay đổi trạng thái của lịch hẹn đã hoàn thành.');
+        }
 
         if ($oldStatus !== $newStatus) {
             DB::transaction(function () use ($appointment, $request, $oldStatus, $newStatus) {

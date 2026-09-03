@@ -24,10 +24,10 @@ class HealthInsuranceService
 
         if (empty($profile->insurance_code)) {
             $insuranceRate = 0;
-        } elseif (empty($profile->insurance_expiry) || Carbon::parse($profile->insurance_expiry)->isPast()) {
+        } elseif (!empty($profile->insurance_expiry) && Carbon::parse($profile->insurance_expiry)->isPast()) {
             $isExpired = true;
             $insuranceRate = 0;
-            $expiryDate = $profile->insurance_expiry ? Carbon::parse($profile->insurance_expiry)->format('d/m/Y') : 'Không rõ';
+            $expiryDate = Carbon::parse($profile->insurance_expiry)->format('d/m/Y');
             $warningMessage = "Thẻ BHYT đã hết hạn ngày {$expiryDate}. Bệnh nhân thanh toán toàn bộ.";
         } else {
             // Tra cứu tỷ lệ chi trả từ bảng insurance_types thay vì fix cứng

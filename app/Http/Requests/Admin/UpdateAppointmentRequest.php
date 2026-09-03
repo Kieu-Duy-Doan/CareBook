@@ -82,7 +82,18 @@ class UpdateAppointmentRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            $appointmentId = $this->route('id');
+            $appointmentId = $this->route('id') ?? $this->route('appointment');
+            $appointment = $appointmentId instanceof \App\Models\Appointment ? $appointmentId : \App\Models\Appointment::find($appointmentId);
+
+            if ($appointment) {
+                if ($appointment->status === 'cancelled' && $this->input('status') !== 'cancelled') {
+                    $validator->errors()->add('status', 'Lịch hẹn đã ở trạng thái Đã huỷ, không thể chuyển sang trạng thái khác.');
+                }
+                if ($appointment->status === 'completed' && $this->input('status') !== 'completed') {
+                    $validator->errors()->add('status', 'Không thể thay đổi trạng thái của lịch hẹn đã hoàn thành.');
+                }
+            }
+
             $exists = \App\Models\Appointment::where('patient_profile_id', $this->input('patient_profile_id'))
                 ->where('doctor_profile_id', $this->input('doctor_profile_id'))
                 ->whereDate('appointment_date', $this->input('appointment_date'))

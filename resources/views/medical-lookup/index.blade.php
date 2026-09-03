@@ -3,7 +3,7 @@
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             
             <!-- Breadcrumb -->
-            <nav class="flex items-center gap-2 text-sm text-slate-500 mb-6">
+            <nav class="flex flex-wrap items-center gap-2 text-sm text-slate-500 mb-6">
                 <a href="{{ route('home') }}" class="hover:text-primary transition-colors">Trang chủ</a>
                 <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
                 <span class="text-slate-800 font-semibold">Tra cứu hồ sơ bệnh án</span>
@@ -103,22 +103,22 @@
             @if(isset($searched) && $searched)
                 <div class="space-y-6 animate-fade-in" id="search-results">
                     <!-- Patient Summary Card -->
-                    <div class="bg-blue-50/80 border border-blue-100 rounded-3xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div class="flex items-center gap-4">
-                            <div class="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-2xl font-bold shadow-md shadow-blue-600/20">
+                    <div class="bg-blue-50/80 border border-blue-100 rounded-3xl p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div class="flex items-start sm:items-center gap-3 sm:gap-4">
+                            <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl sm:text-2xl font-bold shadow-md shadow-blue-600/20 shrink-0">
                                 <i class="fa-solid fa-user-check"></i>
                             </div>
                             <div>
-                                <h3 class="text-xl font-bold text-slate-900">{{ $patientName }}</h3>
-                                <p class="text-sm text-slate-600 mt-0.5">
+                                <h3 class="text-lg sm:text-xl font-bold text-slate-900">{{ $patientName }}</h3>
+                                <p class="text-xs sm:text-sm text-slate-600 mt-0.5">
                                     Số điện thoại: <span class="font-semibold text-slate-800">{{ $maskedPhone }}</span>
-                                    <span class="mx-2 text-slate-300">|</span>
-                                    Tìm thấy: <span class="font-bold text-blue-600">{{ $appointments->count() }}</span> lượt khám có kết quả
+                                    <span class="mx-1 sm:mx-2 text-slate-300">|</span>
+                                    Tìm thấy: <span class="font-bold text-blue-600">{{ $appointments->count() }}</span> lượt khám
                                 </p>
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-2 px-4 py-2 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-800 text-xs font-semibold self-start md:self-center">
+                        <div class="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-800 text-xs font-semibold self-start md:self-center">
                             <i class="fa-regular fa-clock text-amber-600"></i>
                             <span>Link xem chi tiết hết hạn sau 45 phút</span>
                         </div>
@@ -127,10 +127,10 @@
                     <!-- Danh sách lượt khám -->
                     <div class="space-y-4">
                         @foreach($appointments as $appointment)
-                            <div class="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-all">
+                            <div class="bg-white rounded-3xl border border-slate-200 p-5 sm:p-6 shadow-sm hover:shadow-md transition-all">
                                 <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
                                     <div>
-                                        <div class="flex items-center gap-3">
+                                        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
                                             <span class="text-xs font-extrabold uppercase px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 tracking-wider">
                                                 Mã: {{ $appointment->appointment_code }}
                                             </span>
@@ -147,8 +147,8 @@
                                         </h4>
                                     </div>
 
-                                    <div class="flex items-center gap-3">
-                                        <a href="{{ $appointment->signed_url }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700 transition shadow-sm hover:shadow">
+                                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                                        <a href="{{ $appointment->signed_url }}" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700 transition shadow-sm hover:shadow">
                                             <i class="fa-solid fa-eye"></i> Xem chi tiết bệnh án
                                         </a>
                                     </div>
