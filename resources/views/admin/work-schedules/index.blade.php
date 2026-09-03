@@ -40,8 +40,7 @@
         openOverride: false,
         overrideType: 'close',
         openImport: false,
-        openTransfer: false,
-        transferType: 'all'
+        openTransfer: false
     }">
 
         <!-- Session Alerts -->
@@ -836,43 +835,10 @@
                                 </div>
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Phạm vi chuyển đổi <span
-                                        class="text-red-500">*</span></label>
-                                <div class="flex gap-4">
-                                    <label class="inline-flex items-center cursor-pointer">
-                                        <input type="radio" name="transfer_type" value="all" x-model="transferType"
-                                            class="text-purple-600 focus:ring-purple-500 border-gray-300">
-                                        <span class="ml-2 text-sm text-gray-700">Toàn bộ (Lịch tuần & Lịch hẹn)</span>
-                                    </label>
-                                    <label class="inline-flex items-center cursor-pointer">
-                                        <input type="radio" name="transfer_type" value="date_range" x-model="transferType"
-                                            class="text-purple-600 focus:ring-purple-500 border-gray-300">
-                                        <span class="ml-2 text-sm text-gray-700">Theo khoảng thời gian</span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div x-show="transferType === 'date_range'" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Từ ngày <span
-                                            class="text-red-500">*</span></label>
-                                    <input type="date" name="start_date" :required="transferType === 'date_range'"
-                                        class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 text-sm outline-none">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Đến ngày <span
-                                            class="text-red-500">*</span></label>
-                                    <input type="date" name="end_date" :required="transferType === 'date_range'"
-                                        class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 text-sm outline-none">
-                                </div>
-                            </div>
-
                             <div class="bg-blue-50 text-blue-800 p-3 rounded-lg text-sm flex items-start gap-2">
                                 <i class="fa-solid fa-circle-info mt-0.5"></i>
                                 <div>
-                                    <p><strong>Lưu ý:</strong> Hành động này sẽ chuyển các lịch hẹn của Bác sĩ Nguồn sang Bác sĩ Đích.</p>
-                                    <p x-show="transferType === 'all'" class="mt-1">Ngoài ra, lịch làm việc định kỳ (theo thứ) cũng sẽ được chuyển hoàn toàn sang Bác sĩ Đích.</p>
+                                    <p><strong>Lưu ý:</strong> Hành động này sẽ chuyển lịch làm việc định kỳ (theo thứ) sẽ được chuyển hoàn toàn sang Bác sĩ Đích.</p>
                                 </div>
                             </div>
                         </div>

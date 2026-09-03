@@ -240,13 +240,11 @@ class WorkScheduleService
     {
         $fromDoctorId = $data['from_doctor_id'];
         $toDoctorId = $data['to_doctor_id'];
-        $transferType = $data['transfer_type'];
 
         DB::beginTransaction();
 
         try {
-            if ($transferType === 'all') {
-                $schedulesA = WorkSchedule::where('doctor_profile_id', $fromDoctorId)->get();
+            $schedulesA = WorkSchedule::where('doctor_profile_id', $fromDoctorId)->get();
 
                 foreach ($schedulesA as $scheduleA) {
                     $existsTime = WorkSchedule::where('doctor_profile_id', $toDoctorId)
@@ -287,31 +285,6 @@ class WorkScheduleService
                 }
 
                 $logDesc = "Chuyển toàn bộ ca khám và lịch hẹn từ BS $fromDoctorId sang BS $toDoctorId";
-            } else {
-                $startDate = $data['start_date'];
-                $endDate = $data['end_date'];
-
-                $appointmentsToUpdate = \App\Models\Appointment::where('doctor_profile_id', $fromDoctorId)
-                    ->whereBetween('appointment_date', [$startDate, $endDate])
-                    ->whereIn('status', ['pending', 'confirmed', 'checked_in'])
-                    ->get();
-
-                foreach ($appointmentsToUpdate as $appointment) {
-                    $appointment->doctor_profile_id = $toDoctorId;
-                    $appointment->save();
-                }
-
-                $overridesToUpdate = ScheduleOverride::where('doctor_profile_id', $fromDoctorId)
-                    ->whereBetween('override_date', [$startDate, $endDate])
-                    ->get();
-
-                foreach ($overridesToUpdate as $override) {
-                    $override->doctor_profile_id = $toDoctorId;
-                    $override->save();
-                }
-
-                $logDesc = "Chuyển ca khám từ BS $fromDoctorId sang BS $toDoctorId (Từ $startDate đến $endDate)";
-            }
 
             SystemLog::create([
                 'user_id' => $userId,
