@@ -19,12 +19,27 @@ class SpecialtyController extends Controller {
     {
         $this->specialtyService = $specialtyService;
     }
-public function index() 
+    public function index(Request $request) 
     {
-     $specialties = Specialty::withCount(['doctors', 'rooms'])
+        $query = Specialty::withCount(['doctors', 'rooms']);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status);
+        }
+
+        $specialties = $query->orderBy('display_order', 'asc')
             ->orderBy('updated_at', 'desc')
             ->orderBy('id', 'desc')
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
 
         return view('admin.specialties.index', compact('specialties'));
     }
@@ -152,11 +167,16 @@ public function index()
 
     public function addDoctor(Request $request, $id)
     {
+        $request->validate([
+            'doctor_id' => 'required|exists:doctor_profiles,id',
+            'is_primary' => 'nullable|in:0,1',
+        ]);
+
         $specialty = Specialty::findOrFail($id);
         $doctorId = $request->input('doctor_id');
-        $isPrimary = $request->input('is_primary', 0);
+        $isPrimary = (int) $request->input('is_primary', 0);
 
-        $specialty->doctors()->attach($doctorId, ['is_primary' => $isPrimary]);
+        $specialty->doctors()->syncWithoutDetaching([$doctorId => ['is_primary' => $isPrimary]]);
 
         SystemLog::create([
             'user_id' => Auth::id(),
@@ -196,11 +216,16 @@ public function index()
 
     public function addRoom(Request $request, $id)
     {
+        $request->validate([
+            'room_id' => 'required|exists:rooms,id',
+            'is_primary' => 'nullable|in:0,1',
+        ]);
+
         $specialty = Specialty::findOrFail($id);
         $roomId = $request->input('room_id');
-        $isPrimary = $request->input('is_primary', 0);
+        $isPrimary = (int) $request->input('is_primary', 0);
 
-        $specialty->rooms()->attach($roomId, ['is_primary' => $isPrimary]);
+        $specialty->rooms()->syncWithoutDetaching([$roomId => ['is_primary' => $isPrimary]]);
 
         SystemLog::create([
             'user_id' => Auth::id(),

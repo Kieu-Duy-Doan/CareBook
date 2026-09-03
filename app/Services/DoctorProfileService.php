@@ -16,6 +16,7 @@ class DoctorProfileService
                 'full_name' => $data['full_name'],
                 'phone' => $data['phone'],
                 'username' => $data['username'],
+                'id_card' => $data['id_card'] ?? null,
                 'email' => $data['email'] ?? null,
                 'password' => bcrypt($data['password']),
                 'role' => 'doctor',
@@ -74,6 +75,7 @@ class DoctorProfileService
                 'full_name' => $data['full_name'],
                 'phone'     => $data['phone'],
                 'username'  => $data['username'],
+                'id_card'   => $data['id_card'] ?? null,
                 'email'     => $data['email'] ?? null,
             ];
             $doctor->user->update($userData);

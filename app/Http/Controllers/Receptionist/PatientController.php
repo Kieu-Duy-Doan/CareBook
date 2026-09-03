@@ -76,7 +76,13 @@ class PatientController extends Controller
 
     public function create()
     {
-        $customers = User::where('role', 'patient')->where('is_active', true)->get();
+        // Tối ưu: Chỉ lấy 20 khách hàng mới nhất làm gợi ý ban đầu, tìm kiếm nhanh qua AJAX
+        $customers = User::where('role', 'patient')
+            ->where('is_active', true)
+            ->latest('id')
+            ->limit(20)
+            ->get();
+
         return view('receptionist.patients.create', compact('customers'));
     }
 
@@ -138,7 +144,18 @@ class PatientController extends Controller
     public function edit($id)
     {
         $profile = PatientProfile::with('user')->findOrFail($id);
-        $customers = User::where('role', 'patient')->where('is_active', true)->get();
+        
+        $customers = User::where('role', 'patient')
+            ->where('is_active', true)
+            ->where('id', '!=', $profile->owner_id)
+            ->latest('id')
+            ->limit(20)
+            ->get();
+
+        if ($profile->user) {
+            $customers->prepend($profile->user);
+        }
+
         return view('receptionist.patients.edit', compact('profile', 'customers'));
     }
 

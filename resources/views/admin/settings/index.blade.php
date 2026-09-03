@@ -363,8 +363,9 @@
                                             $color = $log->action_color;
                                         @endphp
                                         <span
-                                            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold font-mono bg-{{ $color }}-50 text-{{ $color }}-700 border border-{{ $color }}-200">
-                                            {{ $log->action }}
+                                            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-{{ $color }}-50 text-{{ $color }}-700 border border-{{ $color }}-200"
+                                            title="{{ $log->action }}">
+                                            {{ $log->action_label }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

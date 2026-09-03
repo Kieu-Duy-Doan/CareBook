@@ -141,12 +141,22 @@ class ReceptionistController extends Controller
             'total' => \App\Models\Appointment::where('measured_by', $id)->count(),
         ];
 
-        $logs = SystemLog::where('user_id', $id)
+        // Lịch sử thay đổi hồ sơ lễ tân (do Admin/Hệ thống thực hiện trên hồ sơ này)
+        $changeLogs = SystemLog::with('user')
+            ->where('module', 'receptionists')
+            ->where('ref_id', $id)
             ->latest('created_at')
             ->limit(10)
             ->get();
 
-        return view('admin.receptionists.show', compact('receptionist', 'checkInStats', 'logs'));
+        // Hoạt động gần đây của tài khoản lễ tân (đăng nhập, đăng xuất,...)
+        $activityLogs = SystemLog::with('user')
+            ->where('user_id', $id)
+            ->latest('created_at')
+            ->limit(10)
+            ->get();
+
+        return view('admin.receptionists.show', compact('receptionist', 'checkInStats', 'changeLogs', 'activityLogs'));
     }
 
     public function edit($id)

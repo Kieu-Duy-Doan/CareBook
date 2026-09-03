@@ -96,11 +96,11 @@
                             <td class="px-4 py-3">
                                 <div class="flex items-center">
                                     <div class="h-8 w-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs mr-3">
-                                        {{ $doctor->user->avatar_initials }}
+                                        {{ $doctor->user?->avatar_initials ?? mb_substr($doctor->user?->full_name ?? 'BS', 0, 1) }}
                                     </div>
                                     <div>
                                         <div class="text-sm font-bold text-gray-900">{{ $doctor->full_title }}</div>
-                                        <div class="text-xs text-gray-500">{{ $doctor->user->phone }}</div>
+                                        <div class="text-xs text-gray-500">{{ $doctor->user?->phone ?? '—' }}</div>
                                     </div>
                                 </div>
                             </td>
@@ -208,8 +208,8 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">Chọn Bác sĩ</label>
                     <select name="doctor_id" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none" required>
                         <option value="">-- Chọn bác sĩ --</option>
-                        @foreach(\App\Models\DoctorProfile::whereNotIn('id', $specialty->doctors->pluck('id'))->get() as $doctor)
-                            <option value="{{ $doctor->id }}">{{ $doctor->full_title }} ({{ $doctor->user->phone }})</option>
+                        @foreach(\App\Models\DoctorProfile::with('user')->whereNotIn('id', $specialty->doctors->pluck('id'))->get() as $doctor)
+                            <option value="{{ $doctor->id }}">{{ $doctor->full_title }} ({{ $doctor->user?->phone ?? 'Không có SĐT' }})</option>
                         @endforeach
                     </select>
                 </div>
@@ -260,4 +260,44 @@
         </div>
     </div>
     </div>
+
+    <x-slot name="scripts">
+        <script>
+            function specialtyManager() {
+                return {
+                    showAddDoctor: false,
+                    showAddRoom: false,
+                    successMessage: '',
+                    deleteInProgress: false,
+                    deleteHandler(url, message, id, type) {
+                        if (!confirm('Bạn có chắc chắn muốn xóa không?')) return;
+                        this.deleteInProgress = true;
+                        const bodyData = type === 'doctor' ? { doctor_id: id } : { room_id: id };
+                        fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify(bodyData)
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            this.deleteInProgress = false;
+                            if (data.success) {
+                                window.location.reload();
+                            } else {
+                                alert(data.message || 'Có lỗi xảy ra.');
+                            }
+                        })
+                        .catch(err => {
+                            this.deleteInProgress = false;
+                            window.location.reload();
+                        });
+                    }
+                };
+            }
+        </script>
+    </x-slot>
 </x-layouts.admin>

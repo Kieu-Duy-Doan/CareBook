@@ -13,25 +13,62 @@ class UserController extends Controller
     // Hàm cung cấp API tìm kiếm người dùng (để các ô chọn người chạy nhanh hơn, không bị đơ)
     public function ajaxSearch(Request $request)
     {
-        // Nhận chữ người dùng gõ vào ô tìm kiếm
-        $search = $request->query('q');
+        $search = trim($request->query('q', ''));
+        $role   = $request->query('role');
         
-        $query = User::select('id', 'full_name', 'email', 'role')->where('is_active', true);
+        $query = User::select('id', 'full_name', 'phone', 'email', 'id_card', 'role')
+            ->where('is_active', true);
+
+        if ($role) {
+            $query->where('role', $role);
+        }
         
         if ($search) {
             $query->where(function($q) use ($search) {
                 $q->where('full_name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhere('id_card', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('username', 'like', "%{$search}%");
             });
         }
         
-        $users = $query->limit(50)->get();
+        $users = $query->latest('id')->limit(30)->get();
         
         return response()->json([
-            'items' => $users->map(function($user) {
+            'items' => $users->map(function($user) use ($role) {
+                $info = [];
+                if ($user->phone) {
+                    $info[] = $user->phone;
+                }
+                if ($user->id_card) {
+                    $info[] = 'CCCD: ' . $user->id_card;
+                }
+                if ($user->email) {
+                    $info[] = $user->email;
+                }
+                $extra = !empty($info) ? ' (' . implode(' | ', $info) . ')' : '';
+
+                // Nếu là tìm kiếm chung (như ở Nhật ký hệ thống, Gửi thông báo) thì hiển thị thêm vai trò tiếng Việt
+                $roleLabel = '';
+                if (!$role) {
+                    $roleLabel = ' - ' . match($user->role) {
+                        'admin'        => 'Quản trị viên',
+                        'doctor'       => 'Bác sĩ',
+                        'receptionist' => 'Lễ tân',
+                        'patient'      => 'Khách hàng',
+                        default        => ucfirst($user->role),
+                    };
+                }
+
                 return [
-                    'id' => $user->id,
-                    'text' => $user->full_name . ' (' . ($user->email ?? 'Không có email') . ') - ' . ucfirst($user->role)
+                    'id'        => $user->id,
+                    'text'      => $user->full_name . $extra . $roleLabel,
+                    'full_name' => $user->full_name,
+                    'phone'     => $user->phone,
+                    'email'     => $user->email,
+                    'id_card'   => $user->id_card,
+                    'role'      => $user->role,
                 ];
             })
         ]);

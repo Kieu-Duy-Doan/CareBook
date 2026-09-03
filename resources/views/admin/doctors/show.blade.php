@@ -373,9 +373,16 @@
                             @foreach($logs as $log)
                                 <div class="relative pl-6">
                                     <span class="absolute -left-1.5 top-1 w-3 h-3 rounded-full bg-blue-400 ring-4 ring-white"></span>
-                                    <p class="text-sm font-medium text-gray-900">{{ $log->description ?? $log->action }}</p>
-                                    <div class="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                                    <p class="text-sm font-medium text-gray-900">{{ $log->description ?? $log->action_label }}</p>
+                                    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-gray-500">
                                         <span><i class="fa-regular fa-clock mr-1"></i> {{ $log->created_at->diffForHumans() }}</span>
+                                        @if($log->user)
+                                            <span class="text-gray-300">•</span>
+                                            <span>Bởi: <strong class="text-gray-700 font-medium">{{ $log->user->full_name }}</strong> ({{ $log->user->role === 'admin' ? 'Quản trị viên' : ($log->user->role === 'doctor' ? 'Bác sĩ' : ($log->user->role === 'receptionist' ? 'Lễ tân' : 'Người dùng')) }})</span>
+                                        @else
+                                            <span class="text-gray-300">•</span>
+                                            <span>Bởi: <span class="italic text-gray-400">Hệ thống</span></span>
+                                        @endif
                                     </div>
                                 </div>
                             @endforeach

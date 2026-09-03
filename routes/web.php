@@ -36,6 +36,8 @@ Route::post('/dat-lai-mat-khau', [AuthController::class, 'reset'])->name('passwo
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout'])->name('logout');
 
+Route::get('/ajax-search-users', [\App\Http\Controllers\Admin\UserController::class, 'ajaxSearch'])->middleware(['auth'])->name('users.ajax-search');
+
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,doctor'])->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/data', [AdminDashboardController::class, 'data'])->name('dashboard.data');

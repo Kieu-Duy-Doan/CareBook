@@ -20,6 +20,7 @@ class StoreDoctorRequest extends FormRequest
             'phone' => ['required', 'string', 'max:15', 'regex:/^(0|\+84)[3|5|7|8|9][0-9]{8}$/', 'unique:users,phone'],
             'username' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z0-9_\.]+$/', 'unique:users,username'],
             'email' => 'nullable|email|max:150|unique:users,email',
+            'id_card' => ['nullable', 'string', 'regex:/^([0-9]{9}|[0-9]{12})$/', 'unique:users,id_card'],
             'password' => ['required', 'string', Password::min(8)->letters()->mixedCase()->numbers()->symbols(), 'confirmed'],
             // Hồ sơ chuyên môn
             'academic_rank' => 'required|in:none,PGS,GS',
@@ -56,6 +57,8 @@ class StoreDoctorRequest extends FormRequest
             'username.required' => 'Vui lòng nhập tên đăng nhập.',
             'username.regex' => 'Tên đăng nhập chỉ được chứa chữ cái, số, dấu gạch dưới và dấu chấm.',
             'username.unique' => 'Tên đăng nhập đã tồn tại.',
+            'id_card.regex' => 'Số CCCD/CMND không đúng định dạng (9 hoặc 12 số).',
+            'id_card.unique' => 'Số CCCD/CMND đã được sử dụng.',
             'password.required' => 'Vui lòng nhập mật khẩu.',
             'password.min' => 'Mật khẩu tối thiểu :min ký tự.',
             'password.letters' => 'Mật khẩu phải chứa ít nhất một chữ cái.',

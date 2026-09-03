@@ -175,7 +175,8 @@ class DoctorController extends Controller
             ->limit(5)
             ->get();
 
-        $logs = SystemLog::where('ref_type', 'doctor_profiles')
+        $logs = SystemLog::with('user')
+            ->where('ref_type', 'doctor_profiles')
             ->where('ref_id', $id)
             ->latest()
             ->limit(10)

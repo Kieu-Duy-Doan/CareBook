@@ -134,9 +134,9 @@
                             <td class="px-4 py-3">
                                 <div class="flex items-center">
                                     <div class="h-6 w-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-[10px] mr-2">
-                                        {{ $ws->doctor->user->avatar_initials }}
+                                        {{ $ws->doctor?->user?->avatar_initials ?? mb_substr($ws->doctor?->user?->full_name ?? 'BS', 0, 1) }}
                                     </div>
-                                    <div class="text-sm font-medium text-gray-900">{{ $ws->doctor->full_title }}</div>
+                                    <div class="text-sm font-medium text-gray-900">{{ $ws->doctor?->full_title ?? 'Chưa phân công' }}</div>
                                 </div>
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
@@ -187,11 +187,11 @@
                                 {{ substr($apt->appointment_time, 0, 5) }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">{{ $apt->patientProfile->full_name }}</div>
-                                <div class="text-xs text-gray-500">{{ $apt->patientProfile->phone }}</div>
+                                <div class="text-sm font-medium text-gray-900">{{ $apt->patientProfile?->full_name ?? 'Chưa có thông tin' }}</div>
+                                <div class="text-xs text-gray-500">{{ $apt->patientProfile?->phone ?? '—' }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">{{ $apt->doctorProfile->full_title }}</div>
+                                <div class="text-sm text-gray-900">{{ $apt->doctorProfile?->full_title ?? 'Chưa chỉ định' }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-center">
                                 @php

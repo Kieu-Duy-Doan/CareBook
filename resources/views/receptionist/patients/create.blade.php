@@ -46,7 +46,7 @@
                     <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
                         <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                             <h3 class="font-semibold text-gray-800 flex items-center gap-2">
-                                <i class="fa-solid fa-user-link text-blue-600"></i> Liên kết Tài khoản Khách hàng
+                                <i class="fa-solid fa-link text-blue-600"></i> Liên kết Tài khoản Khách hàng
                                 <span class="text-red-500">*</span>
                             </h3>
                         </div>
@@ -55,16 +55,15 @@
                                 <div class="md:col-span-2">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Khách hàng quản lý hồ sơ này
                                         <span class="text-red-500">*</span></label>
-                                    <select name="owner_id" required
-                                        class="w-full border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2 @error('owner_id') border-red-500 @enderror">
-                                        <option value="">-- Chọn khách hàng --</option>
+                                    <select id="select-customer" name="owner_id" required class="w-full">
+                                        <option value=""></option>
                                         @foreach($customers as $customer)
                                             <option value="{{ $customer->id }}" {{ old('owner_id') == $customer->id ? 'selected' : '' }}>
-                                                {{ $customer->full_name }} ({{ $customer->phone }})
+                                                {{ $customer->full_name }} ({{ $customer->phone ?? 'Không có SĐT' }}{{ $customer->id_card ? ' | CCCD: ' . $customer->id_card : '' }})
                                             </option>
                                         @endforeach
                                     </select>
-                                    <p class="text-xs text-gray-500 mt-1">Chọn tài khoản sẽ đứng tên quản lý hồ sơ bệnh nhân này.</p>
+                                    <p class="text-xs text-gray-500 mt-1">Gõ tên, số điện thoại hoặc số CCCD để tìm kiếm nhanh trong hàng chục ngàn khách hàng.</p>
                                 </div>
                                 <div class="md:col-span-2">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Loại hồ sơ <span class="text-red-500">*</span></label>
@@ -258,4 +257,78 @@
         </form>
 
     </div>
+
+    <x-slot name="styles">
+        <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+        <style>
+            .ts-wrapper {
+                border: none !important;
+                padding: 0 !important;
+                background: transparent !important;
+                box-shadow: none !important;
+            }
+            .ts-control {
+                border: 1px solid #d1d5db !important;
+                border-radius: 0.5rem !important;
+                padding: 0.55rem 0.75rem !important;
+                min-height: 42px;
+                font-size: 0.875rem !important;
+                background-color: #ffffff !important;
+                box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+            }
+            .ts-control.focus {
+                border-color: #059669 !important;
+                box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.2) !important;
+            }
+            .ts-dropdown {
+                border-radius: 0.5rem !important;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+                border-color: #e5e7eb !important;
+                z-index: 50 !important;
+            }
+            .ts-dropdown .active {
+                background-color: #ecfdf5 !important;
+                color: #047857 !important;
+            }
+        </style>
+    </x-slot>
+
+    <x-slot name="scripts">
+        <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const selectEl = document.getElementById('select-customer');
+                if (selectEl) {
+                    new TomSelect(selectEl, {
+                        valueField: 'id',
+                        labelField: 'text',
+                        searchField: ['text', 'phone', 'id_card', 'full_name'],
+                        placeholder: 'Gõ tên, SĐT hoặc số CCCD để tìm nhanh...',
+                        plugins: ['clear_button'],
+                        maxOptions: 50,
+                        loadThrottle: 300,
+                        load: function(query, callback) {
+                            if (!query.length) return callback();
+                            fetch(`{{ route('users.ajax-search') }}?role=patient&q=${encodeURIComponent(query)}`)
+                                .then(response => response.json())
+                                .then(json => {
+                                    callback(json.items);
+                                })
+                                .catch(() => {
+                                    callback();
+                                });
+                        },
+                        render: {
+                            no_results: function(data, escape) {
+                                return '<div class="no-results p-3 text-sm text-gray-500 text-center"><i class="fa-solid fa-magnifying-glass mr-1"></i> Không tìm thấy khách hàng phù hợp</div>';
+                            },
+                            loading: function(data, escape) {
+                                return '<div class="spinner p-3 text-sm text-gray-500 text-center"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Đang tìm kiếm...</div>';
+                            }
+                        }
+                    });
+                }
+            });
+        </script>
+    </x-slot>
 </x-layouts.receptionist>

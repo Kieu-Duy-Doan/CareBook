@@ -88,12 +88,21 @@
                             </div>
 
                             <!-- Email -->
-                            <div class="md:col-span-2">
+                            <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
                                 <input type="email" name="email" value="{{ old('email') }}"
                                        class="w-full border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 px-4 py-2 @error('email') border-red-500 @enderror"
                                        placeholder="VD: bs_nguyenvana@example.com">
                                 @error('email') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </div>
+
+                            <!-- CCCD/CMND -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Số CCCD/CMND</label>
+                                <input type="text" name="id_card" value="{{ old('id_card') }}"
+                                       class="w-full border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 px-4 py-2 @error('id_card') border-red-500 @enderror"
+                                       placeholder="VD: 001201000101 (9 hoặc 12 số)">
+                                @error('id_card') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
                             <!-- Password -->

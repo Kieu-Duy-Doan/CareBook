@@ -31,6 +31,33 @@
 
     <div class="flex flex-col lg:flex-row gap-6">
         <div class="w-full lg:w-2/3">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-4">
+                <form action="{{ route('admin.specialties.index') }}" method="GET" class="flex flex-col sm:flex-row gap-3 items-center">
+                    <div class="w-full sm:flex-1 relative">
+                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Tìm theo tên hoặc mô tả chuyên khoa..."
+                            class="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                    </div>
+                    <div class="w-full sm:w-44">
+                        <select name="status" class="w-full py-2 px-3 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none bg-white">
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>Đang hiển thị</option>
+                            <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>Đã ẩn</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                            Lọc
+                        </button>
+                        @if(request()->hasAny(['search', 'status']))
+                            <a href="{{ route('admin.specialties.index') }}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors" title="Đặt lại bộ lọc">
+                                <i class="fa-solid fa-rotate-left"></i>
+                            </a>
+                        @endif
+                    </div>
+                </form>
+            </div>
+
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">

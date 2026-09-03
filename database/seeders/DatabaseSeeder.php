@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             DoctorSpecialtySeeder::class,
             WorkScheduleSeeder::class,
             DoctorLevelFeeSeeder::class,
+            InsuranceTypeSeeder::class,
             AppointmentSeeder::class,
             PaymentDemoSeeder::class,
             ChatbotSeeder::class,
