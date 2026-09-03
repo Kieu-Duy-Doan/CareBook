@@ -24,7 +24,7 @@ class PrescriptionController extends Controller
             ->findOrFail($id);
 
         // Optional: Check if the prescription belongs to the logged-in user
-        if ($prescription->medicalRecord->appointment->booked_by_user_id !== auth()->id()) {
+        if ($prescription->medicalRecord->appointment->patientProfile->owner_id !== auth()->id()) {
             abort(403, 'Unauthorized action.');
         }
 

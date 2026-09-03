@@ -17,7 +17,9 @@ class PaymentController extends Controller
     {
         // 1. Xác minh quyền sở hữu: Cuộc hẹn này phải thuộc về user đang đăng nhập
         $appointment = Appointment::with(['patientProfile'])
-            ->where('booked_by_user_id', auth()->id())
+            ->whereHas('patientProfile', function ($query) {
+                $query->where('owner_id', auth()->id());
+            })
             ->findOrFail($appointment_id);
 
         // 2. Lấy chi tiết payment cùng với các dịch vụ đã thanh toán trong hóa đơn này

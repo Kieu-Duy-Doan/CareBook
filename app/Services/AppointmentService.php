@@ -162,6 +162,15 @@ class AppointmentService
     public function storeByReceptionist(array $data, \App\Models\DoctorProfile $doctor, \App\Models\PatientProfile $patient, $userId)
     {
         return \Illuminate\Support\Facades\DB::transaction(function () use ($data, $doctor, $patient, $userId) {
+            // Kiểm tra 1 hồ sơ chỉ có 1 lịch active
+            $hasActiveAppointment = \App\Models\Appointment::where('patient_profile_id', $patient->id)
+                ->whereIn('status', ['pending', 'checked_in', 'examining', 'late'])
+                ->exists();
+
+            if ($hasActiveAppointment) {
+                throw new \Exception('Hồ sơ bệnh nhân này đang có 1 lịch hẹn chưa hoàn thành. Vui lòng hoàn thành hoặc hủy lịch cũ trước khi tạo lịch mới.');
+            }
+
             $appointmentCode = $this->generateUniqueCode();
 
             $totalFee = 0;

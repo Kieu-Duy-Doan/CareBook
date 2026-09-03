@@ -233,9 +233,12 @@ class AppointmentController extends Controller
             $data['measured_by'] = $hasVitals ? Auth::id() : null;
         }
 
-        $this->appointmentService->storeByReceptionist($data, $doctor, $patient, Auth::id());
-
-        return redirect()->route('receptionist.appointments.index')->with('success', 'Tạo lịch hẹn mới thành công.');
+        try {
+            $this->appointmentService->storeByReceptionist($data, $doctor, $patient, Auth::id());
+            return redirect()->route('receptionist.appointments.index')->with('success', 'Tạo lịch hẹn mới thành công.');
+        } catch (\Exception $e) {
+            return back()->withInput()->withErrors(['error' => $e->getMessage()]);
+        }
     }
 
     public function edit($id)

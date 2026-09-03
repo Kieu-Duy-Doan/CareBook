@@ -305,7 +305,9 @@ class BookingController extends Controller
             'specialty',
             'room',
         ])
-        ->where('booked_by_user_id', auth()->id())
+        ->whereHas('patientProfile', function ($query) {
+            $query->where('owner_id', auth()->id());
+        })
         ->findOrFail($id);
 
         return view('patient.booking.success', compact('appointment'));

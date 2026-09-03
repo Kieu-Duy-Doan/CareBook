@@ -229,9 +229,12 @@ class AppointmentController extends Controller
         $patient = PatientProfile::findOrFail($request->patient_profile_id);
         $doctor = DoctorProfile::findOrFail($request->doctor_profile_id);
 
-        $this->appointmentService->storeByReceptionist($validated, $doctor, $patient, Auth::id());
-
-        return redirect()->route('admin.appointments.index')->with('success', 'Tạo lịch hẹn mới thành công.');
+        try {
+            $this->appointmentService->storeByReceptionist($validated, $doctor, $patient, Auth::id());
+            return redirect()->route('admin.appointments.index')->with('success', 'Tạo lịch hẹn mới thành công.');
+        } catch (\Exception $e) {
+            return back()->withInput()->withErrors(['error' => $e->getMessage()]);
+        }
     }
 
     public function edit($id)

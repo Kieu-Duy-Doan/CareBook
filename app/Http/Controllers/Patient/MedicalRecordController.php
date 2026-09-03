@@ -17,7 +17,9 @@ class MedicalRecordController extends Controller
             'room',
             'medicalRecord',
         ])
-        ->where('booked_by_user_id', auth()->id())
+        ->whereHas('patientProfile', function ($query) {
+            $query->where('owner_id', auth()->id());
+        })
         ->whereHas('medicalRecord');
 
         if ($request->filled('appointment_code')) {
@@ -45,7 +47,9 @@ class MedicalRecordController extends Controller
             'clinicalVisits.doctorProfile.user',
             'clinicalVisits.room',
         ])
-        ->where('booked_by_user_id', auth()->id())
+        ->whereHas('patientProfile', function ($query) {
+            $query->where('owner_id', auth()->id());
+        })
         ->whereHas('medicalRecord')
         ->findOrFail($id);
 

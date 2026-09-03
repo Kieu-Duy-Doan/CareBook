@@ -16,7 +16,9 @@ class AppointmentController extends Controller
             'specialty',
             'room',
         ])
-        ->where('booked_by_user_id', auth()->id());
+        ->whereHas('patientProfile', function ($query) {
+            $query->where('owner_id', auth()->id());
+        });
 
         if ($request->filled('appointment_code')) {
             $query->where('appointment_code', 'like', '%' . $request->appointment_code . '%');
@@ -48,7 +50,9 @@ class AppointmentController extends Controller
 
             'logs.changedBy',
         ])
-        ->where('booked_by_user_id', auth()->id())
+        ->whereHas('patientProfile', function ($query) {
+            $query->where('owner_id', auth()->id());
+        })
         ->findOrFail($id);
 
         $latestVisit = $appointment->clinicalVisits->sortByDesc('created_at')->first();
@@ -59,7 +63,9 @@ class AppointmentController extends Controller
 
     public function cancel(Request $request, $id)
     {
-        $appointment = Appointment::where('booked_by_user_id', auth()->id())
+        $appointment = Appointment::whereHas('patientProfile', function ($query) {
+            $query->where('owner_id', auth()->id());
+        })
             ->findOrFail($id);
 
         if (!in_array($appointment->status, ['pending'])) {
@@ -72,7 +78,9 @@ class AppointmentController extends Controller
         $threshold = config('booking.spam_threshold', 3);
         $today = \Carbon\Carbon::today();
         
-        $cancellationsToday = Appointment::where('booked_by_user_id', auth()->id())
+        $cancellationsToday = Appointment::whereHas('patientProfile', function ($query) {
+            $query->where('owner_id', auth()->id());
+        })
             ->where('status', 'cancelled')
             // Apply only to appointments booked by the patient themselves, usually source = web
             ->where('source', 'web')

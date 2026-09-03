@@ -15,7 +15,9 @@ class ExaminationProgressController extends Controller
             'room',
             'clinicalVisits.room',
         ])
-        ->where('booked_by_user_id', auth()->id())
+        ->whereHas('patientProfile', function ($query) {
+            $query->where('owner_id', auth()->id());
+        })
         ->whereIn('status', ['checked_in', 'examining'])
         ->orderByDesc('appointment_date')
         ->orderByDesc('appointment_time')
@@ -37,7 +39,9 @@ class ExaminationProgressController extends Controller
             'clinicalVisits.room',
             'clinicalVisits.doctorProfile.user',
         ])
-        ->where('booked_by_user_id', auth()->id())
+        ->whereHas('patientProfile', function ($query) {
+            $query->where('owner_id', auth()->id());
+        })
         ->whereIn('status', ['checked_in', 'examining'])
         ->findOrFail($id);
 
