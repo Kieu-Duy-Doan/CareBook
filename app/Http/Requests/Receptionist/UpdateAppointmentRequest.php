@@ -17,7 +17,7 @@ class UpdateAppointmentRequest extends FormRequest
     {
         $appointmentId = $this->route('appointment') ?? $this->route('id');
         $appointment = $appointmentId instanceof Appointment ? $appointmentId : Appointment::findOrFail($appointmentId);
-        $isLocked = in_array($appointment->status, ['examining', 'completed']);
+        $isLocked = in_array($appointment->status, ['examining', 'completed', 'cancelled']);
 
         if ($isLocked) {
             return [
@@ -61,6 +61,10 @@ class UpdateAppointmentRequest extends FormRequest
             $oldStatus = $appointment->status;
             $newStatus = $this->status;
 
+            if ($oldStatus === 'cancelled' && $newStatus !== 'cancelled') {
+                $validator->errors()->add('status', 'Lịch hẹn đã ở trạng thái Đã huỷ, không thể chuyển sang trạng thái khác.');
+            }
+
             if ($oldStatus === 'completed' && $newStatus !== 'completed') {
                 $validator->errors()->add('status', 'Không thể thay đổi trạng thái của lịch hẹn đã hoàn thành.');
             }
@@ -69,7 +73,7 @@ class UpdateAppointmentRequest extends FormRequest
                 $validator->errors()->add('status', 'Lịch hẹn đang khám chỉ có thể chuyển sang trạng thái Hoàn thành.');
             }
 
-            $isLocked = in_array($oldStatus, ['examining', 'completed']);
+            $isLocked = in_array($oldStatus, ['examining', 'completed', 'cancelled']);
             if ($isLocked) return; // Nếu đã khóa thì bỏ qua kiểm tra ngày giờ dưới đây
 
             // Xác thực chuyên khoa

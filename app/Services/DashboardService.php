@@ -332,9 +332,8 @@ class DashboardService
 
         if ($isYearly) {
             $chartDataObj = Payment::select(DB::raw('MONTH(paid_at) as month'), 'method', DB::raw('SUM(amount) as total'))
-                ->where('collected_by', $receptionistId)
                 ->whereBetween('paid_at', [$chartStart, $chartEnd])
-                ->where('status', 'completed')
+                ->whereIn('status', ['completed', 'needs_review'])
                 ->groupBy('month', 'method')
                 ->get();
                 
@@ -349,13 +348,12 @@ class DashboardService
             }
         } elseif ($isHourly) {
             $chartDataObj = Payment::select(DB::raw('HOUR(paid_at) as hour'), 'method', DB::raw('SUM(amount) as total'))
-                ->where('collected_by', $receptionistId)
                 ->whereBetween('paid_at', [$chartStart, $chartEnd])
-                ->where('status', 'completed')
+                ->whereIn('status', ['completed', 'needs_review'])
                 ->groupBy('hour', 'method')
                 ->get();
                 
-            for ($h = 7; $h <= 20; $h++) { // 7h - 20h
+            for ($h = 0; $h <= 23; $h++) { // 0h - 23h
                 $chartDates[] = $h . ':00';
                 
                 $cashForHour = $chartDataObj->where('hour', $h)->where('method', 'cash')->first();
@@ -366,9 +364,8 @@ class DashboardService
             }
         } else {
             $chartDataObj = Payment::select(DB::raw('DATE(paid_at) as date'), 'method', DB::raw('SUM(amount) as total'))
-                ->where('collected_by', $receptionistId)
                 ->whereBetween('paid_at', [$chartStart, $chartEnd])
-                ->where('status', 'completed')
+                ->whereIn('status', ['completed', 'needs_review'])
                 ->groupBy('date', 'method')
                 ->get();
                 

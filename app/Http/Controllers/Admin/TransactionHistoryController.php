@@ -94,8 +94,8 @@ class TransactionHistoryController extends Controller
         }
 
         $totalCount    = $summaryQuery->count();
-        $totalCash     = (clone $summaryQuery)->where('status', 'completed')->where('method', 'cash')->sum('amount');
-        $totalSepay    = (clone $summaryQuery)->where('status', 'completed')->where('method', 'qr')->sum('amount');
+        $totalCash     = (clone $summaryQuery)->whereIn('status', ['completed', 'needs_review'])->where('method', 'cash')->sum('amount');
+        $totalSepay    = (clone $summaryQuery)->whereIn('status', ['completed', 'needs_review'])->where('method', 'qr')->sum('amount');
         
         $pendingQuery = \App\Models\ClinicalVisit::with(['appointment.patientProfile', 'appointment.doctorProfile.user', 'room'])
             ->where('payment_status', 'pending');
@@ -264,6 +264,8 @@ class TransactionHistoryController extends Controller
         $totalFee = 0;
         if ($payment->relationLoaded('clinicalVisits')) {
             $totalFee += $payment->clinicalVisits->sum('payment_amount');
+        } else {
+            $totalFee += $payment->clinicalVisits()->sum('payment_amount');
         }
 
 

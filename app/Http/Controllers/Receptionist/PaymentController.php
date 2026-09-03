@@ -125,7 +125,7 @@ class PaymentController extends Controller
         }
 
         // --- Calculate Statistics based on $from and $to ---
-        $basePaymentQuery = Payment::whereBetween('paid_at', [$from, $to])->where('status', 'completed');
+        $basePaymentQuery = Payment::whereBetween('paid_at', [$from, $to])->whereIn('status', ['completed', 'needs_review']);
 
         if ($request->filled('method')) {
             $basePaymentQuery->where('method', $request->input('method'));
@@ -193,6 +193,8 @@ class PaymentController extends Controller
         $totalFee = 0;
         if ($payment->relationLoaded('clinicalVisits')) {
             $totalFee += $payment->clinicalVisits->sum('payment_amount');
+        } else {
+            $totalFee += $payment->clinicalVisits()->sum('payment_amount');
         }
 
 

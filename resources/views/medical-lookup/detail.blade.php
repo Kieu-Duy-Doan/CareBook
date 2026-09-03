@@ -4,7 +4,7 @@
             
             <!-- Breadcrumb & Actions (Hidden when printing) -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
-                <nav class="flex items-center gap-2 text-sm text-slate-500">
+                <nav class="flex flex-wrap items-center gap-2 text-sm text-slate-500">
                     <a href="{{ route('home') }}" class="hover:text-primary transition-colors">Trang chủ</a>
                     <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
                     <a href="{{ route('medical-lookup.index') }}" class="hover:text-primary transition-colors">Tra cứu bệnh án</a>
@@ -12,11 +12,11 @@
                     <span class="text-slate-800 font-semibold truncate max-w-[200px]">{{ $appointment->appointment_code }}</span>
                 </nav>
 
-                <div class="flex items-center gap-3">
-                    <a href="{{ route('medical-lookup.index') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-sm font-semibold transition shadow-sm">
+                <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                    <a href="{{ route('medical-lookup.index') }}" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-sm font-semibold transition shadow-sm">
                         <i class="fa-solid fa-arrow-left"></i> Quay lại
                     </a>
-                    <button onclick="window.print()" class="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 text-sm font-semibold transition shadow-sm hover:shadow">
+                    <button onclick="window.print()" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-blue-600 text-white hover:bg-blue-700 text-sm font-semibold transition shadow-sm hover:shadow cursor-pointer">
                         <i class="fa-solid fa-print"></i> In bệnh án
                     </button>
                 </div>
@@ -45,7 +45,7 @@
             </div>
 
             <!-- 1. Header ca khám -->
-            <div class="bg-white rounded-3xl border border-slate-200 p-6 md:p-8 shadow-sm">
+            <div class="bg-white rounded-3xl border border-slate-200 p-5 sm:p-6 md:p-8 shadow-sm">
                 <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-100">
                     <div>
                         <div class="flex flex-wrap items-center gap-2 mb-2">
@@ -70,7 +70,7 @@
                         </p>
                     </div>
 
-                    <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 min-w-[240px]">
+                    <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 w-full lg:w-auto lg:min-w-[240px]">
                         <span class="text-xs uppercase text-slate-400 font-bold tracking-wider block">Bác sĩ khám chính</span>
                         <div class="text-base font-bold text-slate-900 mt-1">
                             {{ $appointment->doctorProfile->full_title ?? 'Chưa chỉ định' }}
@@ -86,7 +86,7 @@
                 <!-- Thông tin bệnh nhân -->
                 <div class="mt-6">
                     <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-3">Thông tin bệnh nhân</h3>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 text-sm bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
                         <div>
                             <span class="text-xs text-slate-500 block">Họ và tên</span>
                             <strong class="text-slate-900 font-bold block mt-0.5">{{ $appointment->patientProfile->full_name ?? '—' }}</strong>
@@ -241,8 +241,8 @@
                         </h3>
 
                         @if($appointment->medicalRecord->prescription && $appointment->medicalRecord->prescription->items && is_array($appointment->medicalRecord->prescription->items) && count($appointment->medicalRecord->prescription->items) > 0)
-                            <div class="mt-4 overflow-hidden rounded-2xl border border-slate-200">
-                                <table class="w-full text-left text-sm text-slate-700">
+                            <div class="mt-4 overflow-x-auto rounded-2xl border border-slate-200">
+                                <table class="w-full min-w-[320px] text-left text-sm text-slate-700">
                                     <thead class="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 font-bold border-b border-slate-200">
                                         <tr>
                                             <th class="px-3.5 py-2.5">Tên thuốc</th>

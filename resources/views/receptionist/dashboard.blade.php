@@ -120,44 +120,54 @@
     </div>
 
     <!-- KPIs Báo cáo -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center">
-            <div class="h-12 w-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xl mr-4">
+            <div class="h-12 w-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xl mr-3 shrink-0">
                 <i class="fa-solid fa-user-check"></i>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-500 mb-1">Tổng ca đã tiếp nhận</p>
-                <p class="text-2xl font-bold text-gray-900">{{ number_format($totalCheckins ?? 0) }}</p>
+                <p class="text-xs sm:text-sm font-medium text-gray-500 mb-1">Tổng ca tiếp nhận</p>
+                <p class="text-xl sm:text-2xl font-bold text-gray-900">{{ number_format($totalCheckins ?? 0) }}</p>
             </div>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center">
-            <div class="h-12 w-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl mr-4">
+            <div class="h-12 w-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl mr-3 shrink-0">
                 <i class="fa-solid fa-money-bill-trend-up"></i>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-500 mb-1">Tổng Doanh thu</p>
-                <p class="text-2xl font-bold text-gray-900">{{ number_format($totalRevenue ?? 0) }} ₫</p>
+                <p class="text-xs sm:text-sm font-medium text-gray-500 mb-1">Tổng Doanh thu</p>
+                <p class="text-xl sm:text-2xl font-bold text-emerald-600">{{ number_format($totalRevenue ?? 0) }} ₫</p>
             </div>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center">
-            <div class="h-12 w-12 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center text-xl mr-4">
+            <div class="h-12 w-12 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center text-xl mr-3 shrink-0">
                 <i class="fa-solid fa-money-bill-wave"></i>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-500 mb-1">Tiền mặt</p>
-                <p class="text-2xl font-bold text-gray-900">{{ number_format($cashRevenue ?? 0) }} ₫</p>
+                <p class="text-xs sm:text-sm font-medium text-gray-500 mb-1">Tiền mặt</p>
+                <p class="text-xl sm:text-2xl font-bold text-gray-900">{{ number_format($cashRevenue ?? 0) }} ₫</p>
             </div>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center">
-            <div class="h-12 w-12 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-xl mr-4">
+            <div class="h-12 w-12 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-xl mr-3 shrink-0">
                 <i class="fa-solid fa-qrcode"></i>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-500 mb-1">Chuyển khoản QR</p>
-                <p class="text-2xl font-bold text-gray-900">{{ number_format($qrRevenue ?? 0) }} ₫</p>
+                <p class="text-xs sm:text-sm font-medium text-gray-500 mb-1">Chuyển khoản QR</p>
+                <p class="text-xl sm:text-2xl font-bold text-purple-600">{{ number_format($qrRevenue ?? 0) }} ₫</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center">
+            <div class="h-12 w-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl mr-3 shrink-0">
+                <i class="fa-solid fa-notes-medical"></i>
+            </div>
+            <div>
+                <p class="text-xs sm:text-sm font-medium text-gray-500 mb-1">BHYT chi trả</p>
+                <p class="text-xl sm:text-2xl font-bold text-indigo-600">{{ number_format($insuranceRevenue ?? 0) }} ₫</p>
             </div>
         </div>
     </div>
@@ -209,7 +219,11 @@
                                     <div class="text-xs text-gray-500">{{ $payment->paid_at?->format('d/m H:i') ?? '—' }}</div>
                                 </td>
                                 <td class="px-4 py-3 text-right font-semibold text-emerald-600">
-                                    {{ number_format($payment->amount) }} ₫
+                                    @if($payment->method === 'insurance')
+                                        <span class="text-indigo-600" title="BHYT chi trả">{{ number_format($payment->insurance_amount ?? $payment->total_fee ?? 0) }} ₫</span>
+                                    @else
+                                        {{ number_format($payment->amount) }} ₫
+                                    @endif
                                 </td>
                                 <td class="px-4 py-3 text-center">
                                     @if($payment->method === 'cash')
