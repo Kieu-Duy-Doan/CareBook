@@ -22,7 +22,7 @@ class HospitalHistoryController extends Controller
             'clinicalVisits',
             'medicalRecord',
             'payments' => function ($q) {
-                $q->where('status', 'paid');
+                $q->where('status', 'completed');
             }
         ])->where('status', 'completed')
           ->latest('appointment_date')->latest('appointment_time');
@@ -79,7 +79,7 @@ class HospitalHistoryController extends Controller
             'room',
             'clinicalVisits',
             'payments' => function ($q) {
-                $q->where('status', 'paid');
+                $q->where('status', 'completed');
             }
         ])->where('status', 'completed')->latest('appointment_date')->latest('appointment_time');
 

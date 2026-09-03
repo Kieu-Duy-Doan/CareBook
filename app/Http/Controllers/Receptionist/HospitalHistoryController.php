@@ -18,7 +18,7 @@ class HospitalHistoryController extends Controller
             'doctor.user',
             'specialty',
             'room',
-            'payments' => fn($q) => $q->where('status', 'paid'),
+            'payments' => fn($q) => $q->where('status', 'completed'),
             'medicalRecord',
         ])->where('status', 'completed')
           ->latest('appointment_date')
