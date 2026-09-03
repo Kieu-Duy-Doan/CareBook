@@ -76,6 +76,7 @@ class AppointmentController extends Controller
                         'patientProfile',
                         fn($pq) =>
                         $pq->where('full_name', 'like', '%' . $search . '%')
+                           ->orWhere('phone', 'like', '%' . $search . '%')
                     );
             });
         }
@@ -101,6 +102,7 @@ class AppointmentController extends Controller
                             'patientProfile',
                             fn($pq) =>
                             $pq->where('full_name', 'like', '%' . $search . '%')
+                               ->orWhere('phone', 'like', '%' . $search . '%')
                         );
                 });
             })

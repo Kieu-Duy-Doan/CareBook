@@ -54,7 +54,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                     <input type="text" name="search" value="{{ request('search') }}"
-                        placeholder="Tìm mã LH hoặc tên bệnh nhân..."
+                        placeholder="Tìm mã LH, tên bệnh nhân, số điện thoại..."
                         class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none">
                 </div>
                 <div>
