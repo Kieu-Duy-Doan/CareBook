@@ -1066,14 +1066,15 @@
                                 default => [$payment->method ?? '—', 'bg-gray-100 text-gray-600'],
                                 };
                                 [$statusLabel, $statusClass] = match($payment->status) {
-                                'completed' => ['Đã thu', 'bg-green-100 text-green-700'],
-                                default => [$payment->status, 'bg-gray-100 text-gray-600'],
+                                    'completed' => ['Đã thu', 'bg-green-100 text-green-700'],
+                                    'needs_review' => ['Cần xem xét', 'bg-amber-100 text-amber-700'],
+                                    default => [$payment->status, 'bg-gray-100 text-gray-600'],
                                 };
                                 @endphp
                                 <div class="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors">
                                     <div class="flex items-center gap-3 min-w-0">
                                         <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0
-                                        {{ $payment->status === 'completed' ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600' }}">
+                                        {{ $payment->status === 'completed' ? 'bg-green-100 text-green-600' : ($payment->status === 'needs_review' ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-gray-600') }}">
                                             <i class="fa-solid {{ $payment->status === 'completed' ? 'fa-check' : 'fa-circle-exclamation' }} text-xs"></i>
                                         </div>
                                         <div class="min-w-0">

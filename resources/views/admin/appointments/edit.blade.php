@@ -134,26 +134,46 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Trạng thái <span
                                     class="text-red-500">*</span></label>
-                            <select name="status" required
-                                class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
-                                <option value="pending"
-                                    {{ old('status', $appointment->status) === 'pending' ? 'selected' : '' }}>Đã tiếp nhận
-                                </option>
-                                <option value="checked_in"
-                                    {{ old('status', $appointment->status) === 'checked_in' ? 'selected' : '' }}>Đã checkin</option>
-                                <option value="examining"
-                                    {{ old('status', $appointment->status) === 'examining' ? 'selected' : '' }}>Đang
-                                    khám</option>
-                                <option value="completed"
-                                    {{ old('status', $appointment->status) === 'completed' ? 'selected' : '' }}>Hoàn
-                                    thành</option>
-                                <option value="cancelled"
-                                    {{ old('status', $appointment->status) === 'cancelled' ? 'selected' : '' }}>Đã huỷ
-                                </option>
-                                <option value="absent"
-                                    {{ old('status', $appointment->status) === 'absent' ? 'selected' : '' }}>Vắng mặt
-                                </option>
-                            </select>
+                            @if ($appointment->status === 'cancelled')
+                                <input type="hidden" name="status" value="cancelled">
+                                <select disabled
+                                    class="block w-full py-2 px-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 text-sm outline-none cursor-not-allowed">
+                                    <option value="cancelled" selected>Đã huỷ</option>
+                                </select>
+                                <p class="text-xs text-red-600 mt-1.5 font-medium flex items-center gap-1.5">
+                                    <i class="fa-solid fa-lock text-red-500"></i> Lịch hẹn đã ở trạng thái Đã huỷ, không thể chuyển sang trạng thái khác.
+                                </p>
+                            @elseif ($appointment->status === 'completed')
+                                <input type="hidden" name="status" value="completed">
+                                <select disabled
+                                    class="block w-full py-2 px-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 text-sm outline-none cursor-not-allowed">
+                                    <option value="completed" selected>Hoàn thành</option>
+                                </select>
+                                <p class="text-xs text-emerald-600 mt-1.5 font-medium flex items-center gap-1.5">
+                                    <i class="fa-solid fa-lock text-emerald-500"></i> Lịch hẹn đã hoàn thành, không thể thay đổi trạng thái.
+                                </p>
+                            @else
+                                <select name="status" required
+                                    class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
+                                    <option value="pending"
+                                        {{ old('status', $appointment->status) === 'pending' ? 'selected' : '' }}>Đã tiếp nhận
+                                    </option>
+                                    <option value="checked_in"
+                                        {{ old('status', $appointment->status) === 'checked_in' ? 'selected' : '' }}>Đã checkin</option>
+                                    <option value="examining"
+                                        {{ old('status', $appointment->status) === 'examining' ? 'selected' : '' }}>Đang
+                                        khám</option>
+                                    <option value="completed"
+                                        {{ old('status', $appointment->status) === 'completed' ? 'selected' : '' }}>Hoàn
+                                        thành</option>
+                                    <option value="cancelled"
+                                        {{ old('status', $appointment->status) === 'cancelled' ? 'selected' : '' }}>Đã huỷ
+                                    </option>
+                                    <option value="absent"
+                                        {{ old('status', $appointment->status) === 'absent' ? 'selected' : '' }}>Vắng mặt
+                                    </option>
+                                </select>
+                            @endif
                         </div>
 
                         <div>

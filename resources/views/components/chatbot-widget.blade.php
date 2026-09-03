@@ -143,27 +143,40 @@
             </div>
         </div>
 
-        <!-- Suggested Questions Header/Toggle (Mobile only) -->
-        <div class="px-3 pt-2 bg-white border-t border-gray-100 flex justify-between items-center z-10 relative sm:hidden">
-            <span class="text-[12px] text-gray-500 font-medium"><i class="fa-regular fa-lightbulb text-yellow-500 mr-1"></i> Gợi ý câu hỏi</span>
-            <button type="button" @click="showSuggestions = !showSuggestions" class="text-gray-400 hover:text-blue-600 px-2 py-1 focus:outline-none">
-                <i class="fa-solid text-xs" :class="showSuggestions ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
+        <!-- Suggested Questions Header/Toggle -->
+        <div class="px-3 py-2 bg-white border-t border-gray-100 flex justify-between items-center z-10 relative select-none">
+            <button type="button" @click="showSuggestions = !showSuggestions" class="w-full flex justify-between items-center text-gray-500 hover:text-blue-600 focus:outline-none transition-colors group cursor-pointer">
+                <span class="text-[12px] font-medium flex items-center gap-1.5">
+                    <i class="fa-regular fa-lightbulb text-yellow-500"></i>
+                    <span>Gợi ý câu hỏi</span>
+                </span>
+                <span class="flex items-center gap-1 text-[11px] text-gray-400 group-hover:text-blue-600 transition-colors">
+                    <span x-text="showSuggestions ? 'Thu gọn' : 'Mở rộng'"></span>
+                    <i class="fa-solid text-[10px] transition-transform duration-200" :class="showSuggestions ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
+                </span>
             </button>
         </div>
 
         <!-- Suggested Questions -->
-        <div :class="showSuggestions ? 'flex' : 'hidden sm:flex'" class="px-3 pb-2 pt-2 sm:pt-3 bg-white sm:border-t border-gray-100 flex-col items-start gap-2 relative z-10">
-            <button @click="sendSuggestion('Cho tôi xem danh sách chuyên khoa')" class="bg-blue-50 hover:bg-blue-100 text-blue-700 text-[13px] px-4 py-2 rounded-xl transition-colors border border-blue-100 shadow-sm flex items-center w-full text-left">
-                <i class="fa-solid fa-stethoscope w-5 text-center mr-2"></i> Danh sách chuyên khoa
+        <div x-show="showSuggestions" 
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 -translate-y-1"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 -translate-y-1"
+             class="px-3 pb-2 pt-1 bg-white border-t border-gray-50 flex flex-col items-start gap-1.5 relative z-10">
+            <button @click="sendSuggestion('Cho tôi xem danh sách chuyên khoa')" class="bg-blue-50 hover:bg-blue-100 text-blue-700 text-[13px] px-3.5 py-2 rounded-xl transition-colors border border-blue-100 shadow-sm flex items-center w-full text-left cursor-pointer">
+                <i class="fa-solid fa-stethoscope w-5 text-center mr-2 text-blue-600"></i> Danh sách chuyên khoa
             </button>
-            <button @click="sendSuggestion('Xin lịch làm việc của bác sĩ')" class="bg-blue-50 hover:bg-blue-100 text-blue-700 text-[13px] px-4 py-2 rounded-xl transition-colors border border-blue-100 shadow-sm flex items-center w-full text-left">
-                <i class="fa-regular fa-calendar-days w-5 text-center mr-2"></i> Lịch bác sĩ
+            <button @click="sendSuggestion('Xin lịch làm việc của bác sĩ')" class="bg-blue-50 hover:bg-blue-100 text-blue-700 text-[13px] px-3.5 py-2 rounded-xl transition-colors border border-blue-100 shadow-sm flex items-center w-full text-left cursor-pointer">
+                <i class="fa-regular fa-calendar-days w-5 text-center mr-2 text-blue-600"></i> Lịch bác sĩ
             </button>
-            <button @click="sendSuggestion('Bảng giá dịch vụ khám thế nào?')" class="bg-blue-50 hover:bg-blue-100 text-blue-700 text-[13px] px-4 py-2 rounded-xl transition-colors border border-blue-100 shadow-sm flex items-center w-full text-left">
-                <i class="fa-solid fa-hand-holding-dollar w-5 text-center mr-2"></i> Bảng giá khám
+            <button @click="sendSuggestion('Bảng giá dịch vụ khám thế nào?')" class="bg-blue-50 hover:bg-blue-100 text-blue-700 text-[13px] px-3.5 py-2 rounded-xl transition-colors border border-blue-100 shadow-sm flex items-center w-full text-left cursor-pointer">
+                <i class="fa-solid fa-hand-holding-dollar w-5 text-center mr-2 text-blue-600"></i> Bảng giá khám
             </button>
-            <button @click="sendSuggestion('Làm sao để đặt lịch khám?')" class="bg-blue-50 hover:bg-blue-100 text-blue-700 text-[13px] px-4 py-2 rounded-xl transition-colors border border-blue-100 shadow-sm flex items-center w-full text-left">
-                <i class="fa-solid fa-circle-question w-5 text-center mr-2"></i> Cách đặt lịch
+            <button @click="sendSuggestion('Làm sao để đặt lịch khám?')" class="bg-blue-50 hover:bg-blue-100 text-blue-700 text-[13px] px-3.5 py-2 rounded-xl transition-colors border border-blue-100 shadow-sm flex items-center w-full text-left cursor-pointer">
+                <i class="fa-solid fa-circle-question w-5 text-center mr-2 text-blue-600"></i> Cách đặt lịch
             </button>
         </div>
 
@@ -197,7 +210,7 @@
             isTyping: false,
             sessionToken: null,
             unreadCount: 0,
-            showSuggestions: false,
+            showSuggestions: true,
 
             initWidget() {
                 // Load history from localStorage
@@ -287,6 +300,7 @@
 
             sendSuggestion(text) {
                 this.inputMessage = text;
+                this.showSuggestions = false;
                 this.sendMessage();
             },
 

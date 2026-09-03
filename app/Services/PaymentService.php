@@ -55,8 +55,8 @@ class PaymentService
 
         foreach ($allVisits as $visit) {
             if ($visit->payment_status !== 'pending') {
-                // If paid or waived, use the exact amount allocated from completed payments
-                $paidForVisit = $visit->payments->where('status', 'completed')->sum('pivot.amount_allocated');
+                // If paid or waived, use the exact amount allocated from completed or under-review payments
+                $paidForVisit = $visit->payments->whereIn('status', ['completed', 'needs_review'])->sum('pivot.amount_allocated');
                 $actualPatientPays += $paidForVisit;
                 $actualInsuranceCovers += max(0, $visit->payment_amount - $paidForVisit);
             } else {
@@ -79,7 +79,16 @@ class PaymentService
                 $payments->push($payment);
             }
         }
-        $payments = $payments->unique('id')->where('status', 'completed');
+        if ($appointment->relationLoaded('payments')) {
+            foreach ($appointment->payments as $payment) {
+                $payments->push($payment);
+            }
+        } else {
+            foreach ($appointment->payments()->get() as $payment) {
+                $payments->push($payment);
+            }
+        }
+        $payments = $payments->unique('id')->whereIn('status', ['completed', 'needs_review']);
 
         $amountPaid = $payments->sum('amount');
 
@@ -445,5 +454,48 @@ class PaymentService
                 'created_at' => now()
             ]);
         }
+    }
+
+    /**
+     * Tính toán thông tin BHYT/bệnh nhân chi trả cho một payment.
+     */
+    public function enrichPayment(Payment $payment, array &$insuranceCache = []): Payment
+    {
+        $totalFee = 0;
+        if ($payment->relationLoaded('clinicalVisits')) {
+            $totalFee += $payment->clinicalVisits->sum('payment_amount');
+        } else {
+            $totalFee += $payment->clinicalVisits()->sum('payment_amount');
+        }
+
+        if ($totalFee == 0) {
+            $totalFee = (float) ($payment->amount ?? 0);
+        }
+
+        if ($payment->method === 'insurance' || $payment->method === 'waived') {
+            $insuranceAmount = $totalFee;
+            $patientAmount   = 0;
+            $patientPercent  = 0;
+            $insurancePercent= 100;
+        } else {
+            $patientAmount   = (float) $payment->amount;
+            $insuranceAmount = max(0, $totalFee - $patientAmount);
+            
+            if ($totalFee > 0) {
+                $patientPercent = round(($patientAmount / $totalFee) * 100);
+                $insurancePercent = 100 - $patientPercent;
+            } else {
+                $patientPercent = 100;
+                $insurancePercent = 0;
+            }
+        }
+
+        $payment->total_fee         = $totalFee;
+        $payment->insurance_percent = $insurancePercent;
+        $payment->insurance_amount  = $insuranceAmount;
+        $payment->patient_percent   = $patientPercent;
+        $payment->patient_amount    = $patientAmount;
+
+        return $payment;
     }
 }

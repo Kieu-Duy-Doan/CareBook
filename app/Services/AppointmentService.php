@@ -212,11 +212,19 @@ class AppointmentService
     {
         $oldStatus = $appointment->status;
         $newStatus = $data['status'];
+
+        if ($oldStatus === 'cancelled' && $newStatus !== 'cancelled') {
+            throw new \Exception('Lịch hẹn đã ở trạng thái Đã huỷ, không thể chuyển sang trạng thái khác.');
+        }
+
+        if ($oldStatus === 'completed' && $newStatus !== 'completed') {
+            throw new \Exception('Lịch hẹn đã ở trạng thái Hoàn thành, không thể chuyển sang trạng thái khác.');
+        }
         
         return \Illuminate\Support\Facades\DB::transaction(function () use ($appointment, $data, $oldStatus, $newStatus, $userId, $doctor, $patient) {
             if ($doctor && $patient) {
                 // Lịch chưa khóa
-                $data['booked_by_user_id'] = $data['source'] === 'counter' ? $userId : ($patient->owner_id ?? $userId);
+                $data['booked_by_user_id'] = ($data['source'] ?? $appointment->source) === 'counter' ? $userId : ($patient->owner_id ?? $userId);
                 $data['doctor_level'] = $doctor->level;
                 
                 $totalFee = 0;

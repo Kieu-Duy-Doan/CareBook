@@ -14,10 +14,12 @@ use Illuminate\Support\Facades\DB;
 class DashboardController extends Controller
 {
     protected $dashboardService;
+    protected $paymentService;
 
-    public function __construct(DashboardService $dashboardService)
+    public function __construct(DashboardService $dashboardService, \App\Services\PaymentService $paymentService)
     {
         $this->dashboardService = $dashboardService;
+        $this->paymentService = $paymentService;
     }
 
     public function index(Request $request)
@@ -53,17 +55,27 @@ class DashboardController extends Controller
             ->whereIn('status', ['checked_in', 'examining', 'completed'])
             ->count();
 
-        // Tối ưu gộp 1 truy vấn duy nhất vừa tính tổng doanh thu vừa làm chi tiết giao dịch
+        // Lấy tất cả giao dịch thanh toán hoàn tất trong khoảng thời gian
+        // Không lọc cứng theo collected_by để các giao dịch chuyển khoản VietQR/SePay (có collected_by = null hoặc do hệ thống ghi nhận)
+        // và doanh thu chung của phòng khám/ca trực đều được hiển thị đầy đủ, chính xác.
         $payments = Payment::with(['appointment.patientProfile', 'clinicalVisits'])
-            ->where('collected_by', $receptionistId)
             ->whereBetween('paid_at', [$start, $end])
-            ->where('status', 'completed')
+            ->whereIn('status', ['completed', 'needs_review'])
             ->orderBy('paid_at', 'desc')
             ->get();
 
-        $totalRevenue = (float) $payments->sum('amount');
         $cashRevenue = (float) $payments->where('method', 'cash')->sum('amount');
         $qrRevenue = (float) $payments->where('method', 'qr')->sum('amount');
+
+        $insuranceCache = [];
+        $insuranceRevenue = 0;
+        foreach ($payments as $payment) {
+            $this->paymentService->enrichPayment($payment, $insuranceCache);
+            $insuranceRevenue += (float) $payment->insurance_amount;
+        }
+
+        // Tổng Doanh thu = Tiền mặt + Chuyển khoản QR + BHYT chi trả
+        $totalRevenue = $cashRevenue + $qrRevenue + $insuranceRevenue;
         $paymentsDetail = $payments;
 
         $chartFilter = $request->input('chart_filter', '7_days');
@@ -74,7 +86,7 @@ class DashboardController extends Controller
         $revenueQrData = $chartData['revenueQrData'];
 
         return view('receptionist.dashboard', array_merge($dashboardData, compact(
-            'startDate', 'endDate', 'totalCheckins', 'totalRevenue', 'cashRevenue', 'qrRevenue',
+            'startDate', 'endDate', 'totalCheckins', 'totalRevenue', 'cashRevenue', 'qrRevenue', 'insuranceRevenue',
             'chartDates', 'revenueCashData', 'revenueQrData', 'paymentsDetail', 'chartFilter'
         )));
     }
@@ -101,16 +113,18 @@ class DashboardController extends Controller
             $end = Carbon::today()->endOfDay();
         }
 
-        $receptionistId = Auth::id();
-
-        $payments = Payment::with(['appointment.patientProfile'])
-            ->where('collected_by', $receptionistId)
+        $payments = Payment::with(['appointment.patientProfile', 'clinicalVisits'])
             ->whereBetween('paid_at', [$start, $end])
-            ->where('status', 'completed')
+            ->whereIn('status', ['completed', 'needs_review'])
             ->orderBy('paid_at')
             ->get();
 
-        $filename = 'bao-cao-le-tan-' . now()->format('Ymd-His') . '.csv';
+        $insuranceCache = [];
+        foreach ($payments as $payment) {
+            $this->paymentService->enrichPayment($payment, $insuranceCache);
+        }
+
+        $filename = 'bao-cao-doanh-thu-le-tan-' . now()->format('Ymd-His') . '.csv';
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"$filename\"",
@@ -119,12 +133,24 @@ class DashboardController extends Controller
         $callback = function () use ($payments, $startDate, $endDate) {
             $file = fopen('php://output', 'w');
             fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM chống vỡ font tiếng Việt
-            fputcsv($file, ['BÁO CÁO THU TIỀN CA LỄ TÂN']);
+            fputcsv($file, ['BÁO CÁO THU TIỀN VÀ BHYT CHI TRẢ CA LỄ TÂN']);
             fputcsv($file, ['Từ ngày', $startDate, 'Đến ngày', $endDate]);
             fputcsv($file, []);
-            fputcsv($file, ['Thời gian thanh toán', 'Mã Lịch hẹn', 'Bệnh nhân', 'Phương thức', 'Số tiền (₫)']);
+            fputcsv($file, ['Thời gian thanh toán', 'Mã Lịch hẹn', 'Bệnh nhân', 'Phương thức', 'Tiền BN trả (₫)', 'BHYT chi trả (₫)', 'Tổng chi phí (₫)']);
+
+            $totalPatient = 0;
+            $totalInsurance = 0;
+            $totalAll = 0;
 
             foreach ($payments as $payment) {
+                $patientAmt = (float) $payment->patient_amount;
+                $insAmt = (float) $payment->insurance_amount;
+                $totalAmt = (float) $payment->total_fee;
+
+                $totalPatient += $patientAmt;
+                $totalInsurance += $insAmt;
+                $totalAll += $totalAmt;
+
                 fputcsv($file, [
                     $payment->paid_at?->format('d/m/Y H:i') ?? '—',
                     $payment->appointment?->appointment_code ?? '—',
@@ -136,12 +162,19 @@ class DashboardController extends Controller
                         'waived' => 'Miễn phí',
                         default => $payment->method ?? 'Khác',
                     },
-                    number_format($payment->amount, 0, ',', '.'),
+                    number_format($patientAmt, 0, ',', '.'),
+                    number_format($insAmt, 0, ',', '.'),
+                    number_format($totalAmt, 0, ',', '.'),
                 ]);
             }
 
             fputcsv($file, []);
-            fputcsv($file, ['Tổng thu', '', '', '', number_format($payments->sum('amount'), 0, ',', '.')]);
+            fputcsv($file, [
+                'Tổng cộng', '', '', '',
+                number_format($totalPatient, 0, ',', '.'),
+                number_format($totalInsurance, 0, ',', '.'),
+                number_format($totalAll, 0, ',', '.')
+            ]);
             fclose($file);
         };
 

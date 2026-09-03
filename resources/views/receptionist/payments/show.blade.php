@@ -164,6 +164,10 @@
                             <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
                                 THÀNH CÔNG
                             </span>
+                            @elseif($payment->status === 'needs_review')
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">
+                                CẦN XEM XÉT
+                            </span>
                             @else
                             <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-800">
                                 {{ strtoupper($payment->status) }}
